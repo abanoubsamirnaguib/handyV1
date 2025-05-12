@@ -1,0 +1,133 @@
+/* Dashboard Sidebar Styles */
+.sidebar-collapsed {
+  width: 5rem;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar-expanded {
+  width: 16rem;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 35;
+  animation: fadeIn 0.2s ease-in-out;
+  backdrop-filter: blur(2px);
+  touch-action: none; /* Prevents scrolling on touch devices when overlay is active */
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Improved icon transitions */
+.sidebar-icon {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform;
+}
+
+.sidebar-icon-rotated {
+  transform: rotate(180deg);
+}
+
+/* Button hover transitions */
+button:hover .sidebar-icon {
+  transform: scale(1.1);
+}
+
+/* Text fade transitions */
+@media (min-width: 768px) {
+  .sidebar-expanded button span {
+    opacity: 1;
+    transform: translateX(0);
+    transition: opacity 0.2s ease 0.1s, transform 0.2s ease 0.1s;
+  }
+
+  .sidebar-collapsed button span {
+    opacity: 0;
+    transform: translateX(-10px);
+    transition: opacity 0.1s ease, transform 0.1s ease;
+  }
+}
+
+/* Responsive Dashboard Content */
+@media (max-width: 767px) {
+  .dashboard-content {
+    padding: 0.5rem;
+    margin-right: 0 !important;
+    transition: all 0.3s ease;
+  }
+  
+  .mobile-header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background-color: white;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  }
+  /* Development mode indicators */
+.screen-size-indicator {
+  display: none;
+  position: fixed;
+  bottom: 10px;
+  left: 10px;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  z-index: 9999;
+  pointer-events: none;
+  color: white;
+}
+
+.dev-mode-enabled .mobile-indicator,
+.dev-mode-enabled .tablet-indicator,
+.dev-mode-enabled .desktop-indicator {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .dev-mode-enabled .mobile-indicator {
+    display: none;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .dev-mode-enabled .tablet-indicator {
+    display: none;
+  }
+}
+
+@media (min-width: 1024px) {
+  .dev-mode-enabled .desktop-indicator {
+    display: none;
+  }
+}
+}
+
+@media (min-width: 768px) {
+  .dashboard-content {
+    transition: margin-right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: margin-right;
+    padding: 1rem;
+  }
+  
+  .dashboard-content-collapsed {
+    margin-right: 5rem;
+  }
+  /* Removed unnecessary margin for expanded content */
+  .dashboard-content-expanded {
+    margin-right: 0;
+  }
+}
+
+@media (min-width: 1024px) {
+  /* Desktop specific styles */
+}

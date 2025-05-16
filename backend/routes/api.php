@@ -1,5 +1,7 @@
 <?php
 
+
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\SellerController;
 use App\Http\Controllers\Api\ProductController;
@@ -22,17 +24,17 @@ use App\Http\Controllers\Api\OrderHistoryCrudController;
 use App\Http\Controllers\Api\FileUploadController;
 use App\Http\Controllers\Api\SiteSettingController;
 
-Route::prefix('sellers')->group(function () {
+Route::prefix('listsellers')->group(function () {
     Route::get('{id}', [SellerController::class, 'show']);
     Route::get('{id}/products', [SellerController::class, 'products']);
 });
 
-Route::prefix('products')->group(function () {
+Route::prefix('Listpoducts')->group(function () {
     Route::get('{id}', [ProductController::class, 'show']);
     Route::get('{id}/reviews', [ProductController::class, 'reviews']);
 });
 
-Route::get('categories', [CategoryController::class, 'index']);
+Route::get('listcategories', [CategoryController::class, 'index']);
 
 // Public product and seller search/filter endpoints
 Route::get('products/search', [ProductController::class, 'search']);
@@ -83,4 +85,8 @@ Route::middleware('auth:sanctum')->group(function () {
     // Site Settings
     Route::get('settings', [SiteSettingController::class, 'index']);
     Route::post('settings', [SiteSettingController::class, 'update']);
+});
+
+Route::get('test', function () {
+    return 'API route works';
 });

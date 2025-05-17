@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Menu, X, ShoppingCart, Bell, Search, User, Shield } from 'lucide-react';
@@ -31,6 +31,16 @@ const Navbar = () => {
       navigate(`/explore?search=${searchTerm}`);
     }
   };
+
+  // Memoize the avatar to prevent unnecessary re-renders
+  const userAvatar = useMemo(() => {
+    return (
+      <Avatar>
+        <AvatarImage src={user?.avatar} />
+        <AvatarFallback>{user?.name ? user.name.charAt(0) : 'U'}</AvatarFallback>
+      </Avatar>
+    );
+  }, [user?.avatar, user?.name]);
 
   return (
     <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b">
@@ -98,16 +108,13 @@ const Navbar = () => {
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="p-0 rounded-full">
-                      <Avatar>
-                        <AvatarImage src={user.avatar} />
-                        <AvatarFallback>{user.name?.charAt(0)}</AvatarFallback>
-                      </Avatar>
+                      {userAvatar}
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-48">
                     <DropdownMenuLabel>مرحباً, {user.name}</DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => navigate(`/profile/${user.id}`)}>
+                    <DropdownMenuItem onClick={() => navigate('/profile/me')}>
                       الملف الشخصي
                     </DropdownMenuItem>
                     {user.role === 'admin' ? (
@@ -190,7 +197,7 @@ const Navbar = () => {
               )}
               {user ? (
                 <>
-                  <Link to={`/profile/${user.id}`} className="px-3 py-2 text-sm font-medium hover:text-primary" onClick={toggleMenu}>
+                  <Link to="/profile/me" className="px-3 py-2 text-sm font-medium hover:text-primary" onClick={toggleMenu}>
                     الملف الشخصي
                   </Link>
                   <Link to="/chat" className="px-3 py-2 text-sm font-medium hover:text-primary" onClick={toggleMenu}>
@@ -227,4 +234,5 @@ const Navbar = () => {
   );
 };
 
-export default Navbar;
+// Use React.memo to prevent unnecessary re-renders of the entire navbar
+export default React.memo(Navbar);

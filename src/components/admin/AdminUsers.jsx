@@ -53,72 +53,11 @@ const AdminUsers = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   
-  // تحضير بيانات المستخدمين (في تطبيق حقيقي ستأتي من API)
-  const mockUsers = [
-    {
-      id: 'u1',
-      email: 'user@example.com',
-      name: 'أحمد محمد',
-      role: 'buyer',
-      avatar: '',
-      status: 'active',
-      registrationDate: '2025-01-15',
-      lastLogin: '2025-05-08',
-      ordersCount: 12
-    },
-    {
-      id: 'u2',
-      email: 'seller@example.com',
-      name: 'سارة أحمد',
-      role: 'seller',
-      avatar: '',
-      status: 'active',
-      registrationDate: '2025-02-20',
-      lastLogin: '2025-05-09',
-      ordersCount: 0,
-      productsCount: 8
-    },
-    {
-      id: 'u3',
-      email: 'user2@example.com',
-      name: 'محمود عزت',
-      role: 'buyer',
-      avatar: '',
-      status: 'active',
-      registrationDate: '2025-03-10',
-      lastLogin: '2025-04-30',
-      ordersCount: 5
-    },
-    {
-      id: 'u4',
-      email: 'seller2@example.com',
-      name: 'ليلى علي',
-      role: 'seller',
-      avatar: '',
-      status: 'suspended',
-      registrationDate: '2025-01-25',
-      lastLogin: '2025-03-15',
-      ordersCount: 0,
-      productsCount: 3
-    },
-    {
-      id: 'u5',
-      email: 'user3@example.com',
-      name: 'خالد محمد',
-      role: 'buyer',
-      avatar: '',
-      status: 'inactive',
-      registrationDate: '2025-04-05',
-      lastLogin: '2025-04-05',
-      ordersCount: 0
-    }
-  ];
-  
-  const [users, setUsers] = useState(mockUsers);
+  const [users, setUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-  const [filteredUsers, setFilteredUsers] = useState([...users]);
+  const [filteredUsers, setFilteredUsers] = useState([]);
 
   useEffect(() => {
     if (user?.role !== 'admin') {
@@ -129,6 +68,28 @@ const AdminUsers = () => {
       });
     }
   }, [user, toast]);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/users`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        if (!res.ok) throw new Error('Failed to fetch users');
+        const data = await res.json();
+        setUsers(data.data || []);
+        setFilteredUsers(data.data || []);
+      } catch {
+        toast({
+          variant: 'destructive',
+          title: 'خطأ',
+          description: 'تعذر تحميل المستخدمين من الخادم.'
+        });
+      }
+    };
+    fetchUsers();
+  }, []);
 
   useEffect(() => {
     // تطبيق الفلاتر

@@ -8,9 +8,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('transactions', function (Blueprint $table) {
-            $table->uuid('id')->primary();
-            $table->uuid('order_id');
-            $table->uuid('user_id');
+            $table->bigIncrements('id');
+            $table->unsignedBigInteger('order_id');
+            $table->unsignedBigInteger('user_id');
             $table->decimal('amount', 10, 2);
             $table->string('payment_method', 50);
             $table->enum('status', ['pending', 'completed', 'failed', 'refunded'])->default('pending');

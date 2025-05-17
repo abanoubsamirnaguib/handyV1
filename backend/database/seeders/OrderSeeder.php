@@ -8,11 +8,13 @@ class OrderSeeder extends Seeder
 {
     public function run(): void
     {
+        $userIds = DB::table('users')->pluck('id')->toArray();
+        $sellerIds = DB::table('sellers')->pluck('id')->toArray();
+
         $orders = [
             [
-                'id' => 'o1',
-                'user_id' => 'u1',
-                'seller_id' => 's1',
+                'user_id' => $userIds[0] ?? 1,
+                'seller_id' => $sellerIds[0] ?? 1,
                 'status' => 'completed',
                 'total_price' => 350,
                 'order_date' => '2023-08-10',
@@ -22,9 +24,8 @@ class OrderSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
-                'id' => 'o2',
-                'user_id' => 'u2',
-                'seller_id' => 's2',
+                'user_id' => $userIds[1] ?? 1,
+                'seller_id' => $sellerIds[1] ?? 1,
                 'status' => 'in_progress',
                 'total_price' => 250,
                 'order_date' => '2023-09-05',
@@ -34,9 +35,8 @@ class OrderSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
-                'id' => 'o3',
-                'user_id' => 'u3',
-                'seller_id' => 's3',
+                'user_id' => $userIds[2] ?? 1,
+                'seller_id' => $sellerIds[2] ?? 1,
                 'status' => 'completed',
                 'total_price' => 360,
                 'order_date' => '2023-07-20',

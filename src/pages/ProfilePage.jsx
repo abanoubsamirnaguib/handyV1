@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -12,53 +11,166 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/AuthContext';
 import { useChat } from '@/contexts/ChatContext';
-import { getSellerById, getGigsBySellerId } from '@/lib/data'; 
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '');
+const getApiUrl = (path) => `${API_BASE_URL}${path.startsWith('/') ? path : '/' + path}`;
 
 const ProfilePage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user, updateProfile } = useAuth();
   const { startConversation, setActiveConversation } = useChat();
-  
   const [profileData, setProfileData] = useState(null);
   const [userGigs, setUserGigs] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
   const [editFormData, setEditFormData] = useState({ name: '', bio: '', location: '', skills: '' });
+  const [loading, setLoading] = useState(true);
 
-  const isOwnProfile = user && user.id === id;
+  const isOwnProfile = !id || id === 'me' || (user && user.id === id);
+
+  // Add a dependency array tracking variable to prevent multiple fetches
+  const [fetchCounter, setFetchCounter] = useState(0);
 
   useEffect(() => {
-    let data;
-    if (isOwnProfile) {
-      data = user;
-    } else {
-      data = getSellerById(id);
-    }
+    // Only fetch once per component mount
+    if (fetchCounter > 0) return;
 
-    if (data) {
-      setProfileData(data);
-      setUserGigs(getGigsBySellerId(data.id));
-      if (isOwnProfile) {
-        setEditFormData({
-          name: data.name || '',
-          bio: data.bio || '',
-          location: data.location || '',
-          skills: data.skills ? data.skills.join(', ') : '',
+    const fetchProfile = async () => {
+      setLoading(true);
+      setFetchCounter(prev => prev + 1);
+
+      try {
+        // Set URL based on whether this is the user's own profile
+        const url = isOwnProfile 
+          ? getApiUrl('/api/me')
+          : getApiUrl(`/api/users/${id}`);
+
+        const token = localStorage.getItem('token');
+        const res = await fetch(url, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+          // Add cache control headers to prevent repeated fetches
+          cache: 'force-cache'
         });
+
+        if (!res.ok) throw new Error('Not found');
+
+        const data = await res.json();
+        setProfileData(data);
+
+        // Update form data if this is the user's own profile
+        if (isOwnProfile) {
+          setEditFormData({
+            name: data.name || '',
+            bio: data.bio || '',
+            location: data.location || '',
+            skills: data.skills ? data.skills.join(', ') : '',
+          });
+
+          // Also update localStorage with the fresh data
+          if (user) {
+            const updatedUser = { ...user, ...data };
+            localStorage.setItem('user', JSON.stringify(updatedUser));
+          }
+        }
+
+        // Fetch gigs if the user is a seller - only do this once
+        if (data.role === 'seller') {
+          const sellerID = data.id;
+          const gigsRes = await fetch(getApiUrl(`/api/sellers/${sellerID}`), {
+            cache: 'force-cache'
+          });
+          if (gigsRes.ok) {
+            const sellerData = await gigsRes.json();
+            setUserGigs(sellerData.gigs || []);
+          } else {
+            setUserGigs([]);
+          }
+        } else {
+          setUserGigs([]);
+        }
+      } catch (error) {
+        console.error("Error fetching profile:", error);
+        setProfileData(null);
+        setUserGigs([]);
+        navigate('/404');
+      } finally {
+        setLoading(false);
       }
-    } else {
-      navigate('/404'); 
-    }
-  }, [id, user, isOwnProfile, navigate]);
+    };
+    fetchProfile();
+
+    // Add cleanup function
+    return () => {
+      console.log('Profile page unmounted');
+    };
+  }, [id, isOwnProfile, navigate]); // Remove user from dependency array to prevent re-fetches
 
   const handleEditFormChange = (e) => {
     setEditFormData({ ...editFormData, [e.target.name]: e.target.value });
   };
 
-  const handleSaveChanges = () => {
-    const updatedSkills = editFormData.skills.split(',').map(skill => skill.trim()).filter(skill => skill);
-    updateProfile({ ...editFormData, skills: updatedSkills });
-    setIsEditing(false);
+  const handleSaveChanges = async () => {
+    const updatedSkills = editFormData.skills
+      ? editFormData.skills.split(',').map(skill => skill.trim()).filter(skill => skill)
+      : [];
+    
+    try {
+      // Create an object with the data to update
+      const dataToUpdate = {
+        name: editFormData.name,
+        bio: editFormData.bio,
+        location: editFormData.location,
+        skills: updatedSkills
+      };
+      
+      console.log('Sending profile update:', dataToUpdate);
+      
+      const success = await updateProfile(dataToUpdate);
+      
+      if (success) {
+        // Immediately update the profile data state to reflect changes
+        setProfileData(prev => ({
+          ...prev,
+          ...dataToUpdate
+        }));
+        
+        setIsEditing(false);
+        
+        // Update localStorage directly to ensure consistency
+        const storedUserData = localStorage.getItem('user');
+        if (storedUserData) {
+          try {
+            const parsedData = JSON.parse(storedUserData);
+            const updatedUser = {
+              ...parsedData,
+              ...dataToUpdate
+            };
+            
+            // Store the updated data back to localStorage
+            localStorage.setItem('user', JSON.stringify(updatedUser));
+            console.log('Updated user data in localStorage:', updatedUser);
+            
+            // Force a re-fetch of profile data from API to ensure everything is in sync
+            const token = localStorage.getItem('token');
+            const url = getApiUrl('/api/me');
+            const response = await fetch(url, {
+              headers: token ? { Authorization: `Bearer ${token}` } : {},
+            });
+            
+            if (response.ok) {
+              const freshData = await response.json();
+              setProfileData(freshData);
+            }
+          } catch (e) {
+            console.error('Error updating localStorage:', e);
+          }
+        }
+      } else {
+        console.warn("Profile update was not successful");
+      }
+    } catch (error) {
+      console.error("Failed to update profile:", error);
+    }
   };
 
   const handleContactSeller = () => {
@@ -66,14 +178,17 @@ const ProfilePage = () => {
       navigate('/login');
       return;
     }
-    if (user.id === profileData.id) return; 
+    if (user.id === profileData.id) return;
     const conversationId = startConversation(profileData);
     setActiveConversation(conversationId);
     navigate('/chat');
   };
 
-  if (!profileData) {
+  if (loading) {
     return <div className="container mx-auto px-4 py-8 text-center">جاري تحميل الملف الشخصي...</div>;
+  }
+  if (!profileData) {
+    return <div className="container mx-auto px-4 py-8 text-center">تعذر تحميل الملف الشخصي.</div>;
   }
 
   return (
@@ -83,7 +198,6 @@ const ProfilePage = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        {/* Profile Header */}
         <Card className="mb-8 shadow-xl overflow-hidden border-orange-200 bg-gradient-to-br from-orange-50 via-amber-50 to-white">
           <div className="relative h-48 bg-gradient-to-r from-orange-500 to-amber-400">
             <img src="https://images.unsplash.com/photo-1692975716697-4abaff365786" alt="غلاف الملف الشخصي" className="w-full h-full object-cover opacity-30" />
@@ -115,7 +229,6 @@ const ProfilePage = () => {
           </CardContent>
         </Card>
 
-        {/* Edit Profile Form (Conditional) */}
         {isEditing && isOwnProfile && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
@@ -153,9 +266,7 @@ const ProfilePage = () => {
           </motion.div>
         )}
 
-        {/* Profile Details & Gigs */}
         <div className="grid md:grid-cols-3 gap-8">
-          {/* Left Sidebar: About */}
           <motion.div 
             className="md:col-span-1 space-y-6"
             initial={{ opacity: 0, x: -20 }}
@@ -222,7 +333,6 @@ const ProfilePage = () => {
             )}
           </motion.div>
 
-          {/* Right Content: Gigs */}
           <motion.div 
             className="md:col-span-2 space-y-6"
             initial={{ opacity: 0, x: 20 }}

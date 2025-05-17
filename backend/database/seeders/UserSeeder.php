@@ -8,11 +8,11 @@ use Illuminate\Support\Facades\Hash;
 
 class UserSeeder extends Seeder
 {
+    
     public function run(): void
     {
         $users = [
             [
-                'id' => 'u1',
                 'name' => 'سارة محمد',
                 'email' => 'sara@example.com',
                 'password' => Hash::make('password123'),
@@ -25,7 +25,6 @@ class UserSeeder extends Seeder
                 'location' => 'القاهرة، مصر',
             ],
             [
-                'id' => 'u2',
                 'name' => 'محمد أحمد',
                 'email' => 'mohammed@example.com',
                 'password' => Hash::make('password123'),
@@ -38,7 +37,6 @@ class UserSeeder extends Seeder
                 'location' => 'الإسكندرية، مصر',
             ],
             [
-                'id' => 'u3',
                 'name' => 'نورا علي',
                 'email' => 'nora@example.com',
                 'password' => Hash::make('password123'),
@@ -51,7 +49,6 @@ class UserSeeder extends Seeder
                 'location' => 'عمان، الأردن',
             ],
             [
-                'id' => 'u4',
                 'name' => 'أحمد محمود',
                 'email' => 'ahmed@example.com',
                 'password' => Hash::make('password123'),
@@ -64,7 +61,6 @@ class UserSeeder extends Seeder
                 'location' => 'دبي، الإمارات',
             ],
             [
-                'id' => 'admin1',
                 'name' => 'مدير النظام',
                 'email' => 'admin@example.com',
                 'password' => Hash::make('admin123'),
@@ -77,7 +73,6 @@ class UserSeeder extends Seeder
                 'location' => 'القاهرة، مصر',
             ],
             [
-                'id' => 's1',
                 'name' => 'فاطمة خالد',
                 'email' => 'fatima.seller@example.com',
                 'password' => Hash::make('sellerpass1'),
@@ -90,7 +85,6 @@ class UserSeeder extends Seeder
                 'location' => 'الرياض، السعودية',
             ],
             [
-                'id' => 's2',
                 'name' => 'علي حسن',
                 'email' => 'ali.seller@example.com',
                 'password' => Hash::make('sellerpass2'),
@@ -103,7 +97,6 @@ class UserSeeder extends Seeder
                 'location' => 'الكويت العاصمة، الكويت',
             ],
             [
-                'id' => 's3',
                 'name' => 'ليلى إبراهيم',
                 'email' => 'layla.seller@example.com',
                 'password' => Hash::make('sellerpass3'),
@@ -116,7 +109,6 @@ class UserSeeder extends Seeder
                 'location' => 'الدوحة، قطر',
             ],
             [
-                'id' => 's4',
                 'name' => 'خالد عبدالله',
                 'email' => 'khaled.seller@example.com',
                 'password' => Hash::make('sellerpass4'),
@@ -129,7 +121,6 @@ class UserSeeder extends Seeder
                 'location' => 'المنامة، البحرين',
             ],
             [
-                'id' => 's5',
                 'name' => 'مريم سعيد',
                 'email' => 'mariam.seller@example.com',
                 'password' => Hash::make('sellerpass5'),
@@ -142,7 +133,6 @@ class UserSeeder extends Seeder
                 'location' => 'مسقط، عمان',
             ],
             [
-                'id' => 's6',
                 'name' => 'مصممة أزياء',
                 'email' => 'designer@example.com',
                 'password' => Hash::make('designerpass'),
@@ -155,7 +145,6 @@ class UserSeeder extends Seeder
                 'location' => 'المنصورة، مصر',
             ],
             [
-                'id' => 's7',
                 'name' => 'فنان تشكيلي',
                 'email' => 'artist@example.com',
                 'password' => Hash::make('artistpass'),
@@ -168,7 +157,6 @@ class UserSeeder extends Seeder
                 'location' => 'أسوان، مصر',
             ],
             [
-                'id' => 's8',
                 'name' => 'حرفية كروشيه',
                 'email' => 'crochet@example.com',
                 'password' => Hash::make('crochetpass'),
@@ -181,7 +169,6 @@ class UserSeeder extends Seeder
                 'location' => 'طنطا، مصر',
             ],
             [
-                'id' => 's9',
                 'name' => 'مهندس معماري',
                 'email' => 'architect@example.com',
                 'password' => Hash::make('architectpass'),
@@ -194,7 +181,6 @@ class UserSeeder extends Seeder
                 'location' => 'بورسعيد، مصر',
             ],
             [
-                'id' => 's10',
                 'name' => 'مصممة اكسسوارات',
                 'email' => 'accessories@example.com',
                 'password' => Hash::make('accessoriespass'),
@@ -207,7 +193,6 @@ class UserSeeder extends Seeder
                 'location' => 'الجيزة، مصر',
             ],
             [
-                'id' => 's11',
                 'name' => 'حرفي متخصص في أعمال الريزن',
                 'email' => 'resin.artist@example.com',
                 'password' => Hash::make('resinpass'),
@@ -220,7 +205,6 @@ class UserSeeder extends Seeder
                 'location' => 'الإسماعيلية، مصر',
             ],
             [
-                'id' => 's12',
                 'name' => 'طاهية متخصصة في المأكولات المصرية',
                 'email' => 'chef@example.com',
                 'password' => Hash::make('chefpass'),
@@ -234,19 +218,7 @@ class UserSeeder extends Seeder
             ],
         ];
         foreach ($users as $user) {
-            DB::table('users')->insert([
-                'id' => $user['id'],
-                'name' => $user['name'],
-                'email' => $user['email'],
-                'password' => $user['password'],
-                'role' => $user['role'],
-                'avatar' => $user['avatar'],
-                'status' => $user['status'],
-                'created_at' => $user['created_at'],
-                'last_login' => $user['last_login'],
-                'phone' => $user['phone'],
-                'location' => $user['location'],
-            ]);
+            DB::table('users')->insert($user);
         }
     }
 }

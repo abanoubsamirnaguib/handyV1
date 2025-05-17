@@ -9,7 +9,7 @@ return new class extends Migration
     {
         Schema::create('activity_logs', function (Blueprint $table) {
             $table->id();
-            $table->uuid('user_id')->nullable();
+            $table->unsignedBigInteger('user_id')->nullable();
             $table->string('activity_type', 100);
             $table->text('activity_description');
             $table->string('ip_address', 45)->nullable();

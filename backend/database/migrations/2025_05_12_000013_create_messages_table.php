@@ -8,10 +8,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('messages', function (Blueprint $table) {
-            $table->uuid('id')->primary();
-            $table->uuid('conversation_id');
-            $table->uuid('sender_id');
-            $table->uuid('recipient_id');
+            $table->bigIncrements('id');
+            $table->unsignedBigInteger('conversation_id');
+            $table->unsignedBigInteger('sender_id');
+            $table->unsignedBigInteger('recipient_id');
             $table->text('message_text');
             $table->boolean('read_status')->default(false);
             $table->dateTime('message_time')->default(DB::raw('CURRENT_TIMESTAMP'));

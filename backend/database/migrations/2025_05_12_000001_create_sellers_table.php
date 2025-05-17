@@ -9,8 +9,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('sellers', function (Blueprint $table) {
-            $table->uuid('id')->primary();
-            $table->foreignUuid('user_id')->constrained('users')->onDelete('cascade');
+            $table->bigIncrements('id');
+            $table->unsignedBigInteger('user_id');
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
             $table->text('bio')->nullable();
             $table->string('location', 100)->nullable();
             $table->dateTime('member_since')->default(DB::raw('CURRENT_TIMESTAMP'));

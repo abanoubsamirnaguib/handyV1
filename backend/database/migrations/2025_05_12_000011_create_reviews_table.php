@@ -8,9 +8,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('reviews', function (Blueprint $table) {
-            $table->uuid('id')->primary();
-            $table->uuid('product_id');
-            $table->uuid('user_id');
+            $table->bigIncrements('id');
+            $table->unsignedBigInteger('product_id');
+            $table->unsignedBigInteger('user_id');
             $table->integer('rating');
             $table->text('comment')->nullable();
             $table->dateTime('review_date')->default(DB::raw('CURRENT_TIMESTAMP'));

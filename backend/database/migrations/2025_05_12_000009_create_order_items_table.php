@@ -9,8 +9,8 @@ return new class extends Migration
     {
         Schema::create('order_items', function (Blueprint $table) {
             $table->id();
-            $table->uuid('order_id');
-            $table->uuid('product_id');
+            $table->unsignedBigInteger('order_id');
+            $table->unsignedBigInteger('product_id');
             $table->integer('quantity')->default(1);
             $table->decimal('price', 10, 2);
             $table->decimal('subtotal', 10, 2);

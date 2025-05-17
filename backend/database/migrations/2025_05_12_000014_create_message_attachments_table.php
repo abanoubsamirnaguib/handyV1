@@ -9,7 +9,7 @@ return new class extends Migration
     {
         Schema::create('message_attachments', function (Blueprint $table) {
             $table->id();
-            $table->uuid('message_id');
+            $table->unsignedBigInteger('message_id');
             $table->string('file_url', 255);
             $table->string('file_type', 50)->nullable();
             $table->dateTime('uploaded_at')->default(DB::raw('CURRENT_TIMESTAMP'));

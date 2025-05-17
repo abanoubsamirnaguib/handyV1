@@ -8,9 +8,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('conversations', function (Blueprint $table) {
-            $table->uuid('id')->primary();
-            $table->uuid('buyer_id');
-            $table->uuid('seller_id');
+            $table->bigIncrements('id');
+            $table->unsignedBigInteger('buyer_id');
+            $table->unsignedBigInteger('seller_id');
             $table->dateTime('last_message_time')->nullable();
             $table->dateTime('created_at')->default(DB::raw('CURRENT_TIMESTAMP'));
             $table->dateTime('updated_at')->default(DB::raw('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'));

@@ -9,9 +9,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('orders', function (Blueprint $table) {
-            $table->uuid('id')->primary();
-            $table->uuid('user_id');
-            $table->uuid('seller_id');
+            $table->bigIncrements('id');
+            $table->unsignedBigInteger('user_id');
+            $table->unsignedBigInteger('seller_id');
             $table->enum('status', ['pending', 'paid', 'in_progress', 'completed', 'cancelled', 'refunded'])->default('pending');
             $table->decimal('total_price', 10, 2);
             $table->dateTime('order_date')->default(DB::raw('CURRENT_TIMESTAMP'));

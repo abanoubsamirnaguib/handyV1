@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { User, Lock, Bell, CreditCard, Shield, Save } from 'lucide-react';
@@ -57,17 +56,23 @@ const DashboardSettings = () => {
     setPasswordData({ ...passwordData, [e.target.name]: e.target.value });
   };
 
-  const handleProfileSubmit = (e) => {
+  const handleProfileSubmit = async (e) => {
     e.preventDefault();
-    // Basic validation
     if (!profileData.name || !profileData.email) {
-        toast({ variant: "destructive", title: "خطأ", description: "الاسم والبريد الإلكتروني حقول إلزامية." });
-        return;
+      toast({ variant: "destructive", title: "خطأ", description: "الاسم والبريد الإلكتروني حقول إلزامية." });
+      return;
     }
-    updateProfile({ name: profileData.name, email: profileData.email, bio: profileData.bio, avatar: profileData.avatarUrl });
-    // toast({ title: "تم تحديث الملف الشخصي", description: "تم حفظ تغييرات ملفك الشخصي بنجاح." });
+    const success = await updateProfile({
+      name: profileData.name,
+      email: profileData.email,
+      bio: profileData.bio,
+      avatar: profileData.avatarUrl
+    });
+    if (success) {
+      toast({ title: "تم تحديث الملف الشخصي", description: "تم حفظ تغييرات ملفك الشخصي بنجاح." });
+    }
   };
-  
+
   const handlePasswordSubmit = (e) => {
     e.preventDefault();
     if (passwordData.newPassword !== passwordData.confirmPassword) {

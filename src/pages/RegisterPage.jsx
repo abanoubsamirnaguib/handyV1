@@ -45,89 +45,89 @@ const RegisterPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-100 via-amber-50 to-white p-4 py-12">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-lightGreen via-lightBeige to-white p-4 py-12">
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5 }}
         className="w-full max-w-lg"
       >
-        <Card className="shadow-2xl border-orange-200">
+        <Card className="shadow-2xl border-olivePrimary/20">
           <CardHeader className="text-center">
-             <div className="mx-auto p-3 bg-primary/10 rounded-full w-fit mb-4">
-              <UserPlus className="h-10 w-10 text-primary" />
+             <div className="mx-auto p-3 bg-olivePrimary/10 rounded-full w-fit mb-4">
+              <UserPlus className="h-10 w-10 text-olivePrimary" />
             </div>
-            <CardTitle className="text-3xl font-bold text-gray-800">إنشاء حساب جديد</CardTitle>
-            <CardDescription className="text-gray-500">انضم إلينا اليوم واكتشف عالم الإبداع اليدوي.</CardDescription>
+            <CardTitle className="text-3xl font-bold text-darkOlive">إنشاء حساب جديد</CardTitle>
+            <CardDescription className="text-darkOlive/70">انضم إلينا اليوم واكتشف عالم الإبداع اليدوي.</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="space-y-2">
-                <Label htmlFor="name" className="text-gray-700">الاسم الكامل</Label>
+                <Label htmlFor="name" className="text-darkOlive">الاسم الكامل</Label>
                 <div className="relative">
-                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                  <Input id="name" type="text" placeholder="اسمك الكامل" value={name} onChange={(e) => setName(e.target.value)} required className="pr-10" />
+                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-olivePrimary/60" />
+                  <Input id="name" type="text" placeholder="اسمك الكامل" value={name} onChange={(e) => setName(e.target.value)} required className="pr-10 border-olivePrimary/30 focus:border-olivePrimary focus:ring-olivePrimary/20" />
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="email-register" className="text-gray-700">البريد الإلكتروني</Label>
+                <Label htmlFor="email-register" className="text-darkOlive">البريد الإلكتروني</Label>
                  <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                  <Input id="email-register" type="email" placeholder="example@mail.com" value={email} onChange={(e) => setEmail(e.target.value)} required className="pr-10" />
+                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-olivePrimary/60" />
+                  <Input id="email-register" type="email" placeholder="example@mail.com" value={email} onChange={(e) => setEmail(e.target.value)} required className="pr-10 border-olivePrimary/30 focus:border-olivePrimary focus:ring-olivePrimary/20" />
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password-register" className="text-gray-700">كلمة المرور</Label>
+                <Label htmlFor="password-register" className="text-darkOlive">كلمة المرور</Label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                  <Input id="password-register" type={showPassword ? 'text' : 'password'} placeholder="********" value={password} onChange={(e) => setPassword(e.target.value)} required className="pr-10" />
-                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-primary">
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-olivePrimary/60" />
+                  <Input id="password-register" type={showPassword ? 'text' : 'password'} placeholder="********" value={password} onChange={(e) => setPassword(e.target.value)} required className="pr-10 border-olivePrimary/30 focus:border-olivePrimary focus:ring-olivePrimary/20" />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-olivePrimary/60 hover:text-olivePrimary">
                     {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                   </button>
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="confirm-password">تأكيد كلمة المرور</Label>
+                <Label htmlFor="confirm-password" className="text-darkOlive">تأكيد كلمة المرور</Label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                  <Input id="confirm-password" type={showConfirmPassword ? 'text' : 'password'} placeholder="********" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required className="pr-10" />
-                   <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-primary">
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-olivePrimary/60" />
+                  <Input id="confirm-password" type={showConfirmPassword ? 'text' : 'password'} placeholder="********" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required className="pr-10 border-olivePrimary/30 focus:border-olivePrimary focus:ring-olivePrimary/20" />
+                   <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-olivePrimary/60 hover:text-olivePrimary">
                     {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                   </button>
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="role" className="text-gray-700">أرغب في التسجيل كـ:</Label>
+                <Label htmlFor="role" className="text-darkOlive">أرغب في التسجيل كـ:</Label>
                 <Select value={role} onValueChange={setRole}>
-                  <SelectTrigger id="role" className="w-full">
+                  <SelectTrigger id="role" className="w-full border-olivePrimary/30 focus:border-olivePrimary focus:ring-olivePrimary/20">
                     <div className="flex items-center">
-                      {role === 'seller' ? <Briefcase className="ml-2 h-5 w-5 text-gray-400" /> : <User className="ml-2 h-5 w-5 text-gray-400" />}
+                      {role === 'seller' ? <Briefcase className="ml-2 h-5 w-5 text-olivePrimary/60" /> : <User className="ml-2 h-5 w-5 text-olivePrimary/60" />}
                       <SelectValue placeholder="اختر نوع الحساب" />
                     </div>
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="border-olivePrimary/30">
                     <SelectItem value="buyer">
-                      <div className="flex items-center"><User className="ml-2 h-5 w-5" /> مشتري</div>
+                      <div className="flex items-center"><User className="ml-2 h-5 w-5 text-olivePrimary" /> مشتري</div>
                     </SelectItem>
                     <SelectItem value="seller">
-                      <div className="flex items-center"><Briefcase className="ml-2 h-5 w-5" /> بائع (حرفي)</div>
+                      <div className="flex items-center"><Briefcase className="ml-2 h-5 w-5 text-olivePrimary" /> بائع (حرفي)</div>
                     </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              <Button type="submit" className="w-full bg-orange-500 hover:bg-orange-600 text-lg py-3" disabled={isLoading}>
+              <Button type="submit" className="w-full bg-burntOrange hover:bg-burntOrange/90 text-white text-lg py-3" disabled={isLoading}>
                 {isLoading ? 'جاري إنشاء الحساب...' : 'إنشاء حساب'}
               </Button>
             </form>
           </CardContent>
           <CardFooter className="flex flex-col items-center space-y-3">
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-darkOlive/80">
               لديك حساب بالفعل؟{' '}
-              <Link to="/login" className="font-medium text-primary hover:underline">
+              <Link to="/login" className="font-medium text-olivePrimary hover:underline">
                 تسجيل الدخول
               </Link>
             </p>
-             <Button variant="outline" onClick={() => navigate('/')} className="w-full">
+             <Button variant="outline" onClick={() => navigate('/')} className="w-full border-olivePrimary/50 text-olivePrimary hover:bg-olivePrimary hover:text-white">
               العودة إلى الصفحة الرئيسية
             </Button>
           </CardFooter>

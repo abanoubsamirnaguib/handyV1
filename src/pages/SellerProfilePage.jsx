@@ -81,10 +81,9 @@ const SellerProfilePage = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        {/* Seller Profile Header */}
-        <Card className="mb-8 overflow-hidden border-amber-200">
-          <div className="h-48 bg-gradient-to-r from-orange-400 to-amber-500 relative">
-            <div className="absolute -bottom-16 right-8 h-32 w-32 rounded-full bg-white flex items-center justify-center text-5xl font-bold text-orange-500 shadow-lg border-4 border-white">
+        {/* Seller Profile Header */}        <Card className="mb-8 overflow-hidden border-lightBeige/50">
+          <div className="h-48 bg-gradient-to-r from-olivePrimary to-burntOrange relative">
+            <div className="absolute -bottom-16 right-8 h-32 w-32 rounded-full bg-white flex items-center justify-center text-5xl font-bold text-olivePrimary shadow-lg border-4 border-white">
               {seller.name.charAt(0)}
             </div>
           </div>
@@ -101,15 +100,15 @@ const SellerProfilePage = () => {
                 </div>
                 <p className="text-gray-700 mb-4 max-w-3xl">{seller.bio}</p>
                 <div className="flex flex-wrap gap-2">
-                  {seller.skills.map((skill, index) => (
-                    <Badge key={index} variant="outline" className="border-amber-200">
-                      {skill}
+                  {seller.skills.map((_, index) => (
+                    <Badge key={index} variant="outline" className="border-olivePrimary/30 bg-lightGreen/10">
+                      {seller.skills[index]}
                     </Badge>
                   ))}
                 </div>
               </div>
               <div className="mt-6 md:mt-0 flex md:flex-col gap-3">
-                <Button asChild className="bg-orange-500 hover:bg-orange-600">
+                <Button asChild className="bg-burntOrange hover:bg-burntOrange/90 text-white">
                   <Link to={`/message/${seller.id}`}>
                     <Mail className="ml-2 h-4 w-4" />
                     تواصل مع الحرفي
@@ -121,8 +120,7 @@ const SellerProfilePage = () => {
         </Card>
 
         {/* Seller Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <Card className="border-amber-200">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">          <Card className="border-lightBeige/50 bg-lightBeige/10">
             <CardContent className="p-6 flex items-center">
               <Star className="h-10 w-10 text-yellow-500 ml-4" />
               <div>
@@ -130,8 +128,7 @@ const SellerProfilePage = () => {
                 <p className="text-2xl font-bold">{seller.rating} <span className="text-sm text-gray-500">({seller.reviewCount})</span></p>
               </div>
             </CardContent>
-          </Card>
-          <Card className="border-amber-200">
+          </Card>          <Card className="border-lightBeige/50 bg-lightBeige/10">
             <CardContent className="p-6 flex items-center">
               <Package className="h-10 w-10 text-blue-500 ml-4" />
               <div>
@@ -139,8 +136,7 @@ const SellerProfilePage = () => {
                 <p className="text-2xl font-bold">{seller.completedOrders}</p>
               </div>
             </CardContent>
-          </Card>
-          <Card className="border-amber-200">
+          </Card>          <Card className="border-lightBeige/50 bg-lightBeige/10">
             <CardContent className="p-6 flex items-center">
               <Clock className="h-10 w-10 text-green-500 ml-4" />
               <div>
@@ -148,8 +144,7 @@ const SellerProfilePage = () => {
                 <p className="text-2xl font-bold">{seller.responseTime}</p>
               </div>
             </CardContent>
-          </Card>
-          <Card className="border-amber-200">
+          </Card>          <Card className="border-lightBeige/50 bg-lightBeige/10">
             <CardContent className="p-6 flex items-center">
               <Award className="h-10 w-10 text-purple-500 ml-4" />
               <div>
@@ -172,7 +167,7 @@ const SellerProfilePage = () => {
             {sellerGigs.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                 {sellerGigs.map((gig) => (
-                  <Card key={gig.id} className="overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 flex flex-col h-full card-hover border-amber-200">
+                  <Card key={gig.id} className="overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 flex flex-col h-full card-hover border-lightBeige/50">
                     <div className="relative h-56">
                       <img 
                         src={gig.images && gig.images.length > 0 
@@ -181,7 +176,7 @@ const SellerProfilePage = () => {
                         alt={gig.title} 
                         className="w-full h-full object-cover" 
                       />
-                      <Badge variant="secondary" className="absolute top-2 right-2 bg-amber-500 text-white">{gig.category}</Badge>
+                      <Badge variant="secondary" className="absolute top-2 right-2 bg-olivePrimary text-white">{gig.category}</Badge>
                     </div>
                     <CardHeader className="pb-2">
                       <CardTitle className="text-lg font-semibold text-gray-800 h-14 overflow-hidden">{gig.title}</CardTitle>
@@ -194,7 +189,7 @@ const SellerProfilePage = () => {
                       <p className="text-xl font-bold text-primary mb-2">{gig.price} جنيه</p>
                     </CardContent>
                     <CardFooter>
-                      <Button asChild className="w-full bg-orange-500 hover:bg-orange-600">
+                      <Button asChild className="w-full bg-burntOrange hover:bg-burntOrange/90 text-white">
                         <Link to={`/gigs/${gig.id}`}>
                           عرض التفاصيل
                           <ArrowRight className="mr-2 h-4 w-4" />

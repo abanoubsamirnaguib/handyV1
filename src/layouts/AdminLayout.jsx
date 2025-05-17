@@ -96,11 +96,12 @@ const AdminSidebar = () => {
                   onClick={() => {
                     navigate(link.path);
                     if (isMobile) toggleSidebar();
-                  }}
-                >                  <link.icon className={`${isSidebarOpen || isMobile ? 'ml-2' : ''} h-4 w-4`} />
-                  <span className={`${!isSidebarOpen && !isMobile ? 'w-0 opacity-0 scale-0' : 'w-auto opacity-100 scale-100'} transition-all duration-200 origin-right`}>
-                    {(isSidebarOpen || isMobile) && link.label}
-                  </span>
+                  }}                >                  <link.icon className={`${isSidebarOpen || isMobile ? 'ml-2' : ''} h-4 w-4`} />
+                  {(isSidebarOpen || isMobile) && (
+                    <span className="text-darkOlive">
+                      {link.label}
+                    </span>
+                  )}
                 </Button>
               ))}
             </nav>
@@ -112,9 +113,9 @@ const AdminSidebar = () => {
                 navigate('/');
               }}
             >              <LogOut className={`${isSidebarOpen || isMobile ? 'ml-2' : ''} h-4 w-4`} />
-              <span className={`${!isSidebarOpen && !isMobile ? 'w-0 opacity-0 scale-0' : 'w-auto opacity-100 scale-100'} transition-all duration-200 origin-right`}>
-                {(isSidebarOpen || isMobile) && 'تسجيل الخروج'}
-              </span>
+              {(isSidebarOpen || isMobile) && (
+                <span className="text-destructive">تسجيل الخروج</span>
+              )}
             </Button>
           </div>
         </motion.aside>

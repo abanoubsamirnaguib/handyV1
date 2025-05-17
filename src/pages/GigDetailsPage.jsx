@@ -128,7 +128,7 @@ const GigDetailsPage = () => {
           {/* Image Gallery */}
           <div className="relative">
             <motion.div 
-              className="aspect-square rounded-lg overflow-hidden shadow-xl border border-orange-200"
+              className="aspect-square rounded-lg overflow-hidden shadow-xl border border-olivePrimary/20"
               key={currentImageIndex}
               initial={{ opacity: 0.8, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -144,18 +144,18 @@ const GigDetailsPage = () => {
                 <Button 
                   variant="outline" 
                   size="icon" 
-                  className="absolute top-1/2 left-2 transform -translate-y-1/2 bg-white/70 hover:bg-white"
+                  className="absolute top-1/2 left-2 transform -translate-y-1/2 bg-white/70 hover:bg-white border-olivePrimary/30"
                   onClick={() => handleImageNavigation('prev')}
                 >
-                  <ChevronLeft className="h-6 w-6 text-primary" />
+                  <ChevronLeft className="h-6 w-6 text-olivePrimary" />
                 </Button>
                 <Button 
                   variant="outline" 
                   size="icon" 
-                  className="absolute top-1/2 right-2 transform -translate-y-1/2 bg-white/70 hover:bg-white"
+                  className="absolute top-1/2 right-2 transform -translate-y-1/2 bg-white/70 hover:bg-white border-olivePrimary/30"
                   onClick={() => handleImageNavigation('next')}
                 >
-                  <ChevronRight className="h-6 w-6 text-primary" />
+                  <ChevronRight className="h-6 w-6 text-olivePrimary" />
                 </Button>
               </>
             )}
@@ -163,7 +163,7 @@ const GigDetailsPage = () => {
               {gigImages.map((img, index) => (
                 <button 
                   key={index} 
-                  className={`w-16 h-16 rounded-md overflow-hidden border-2 ${index === currentImageIndex ? 'border-primary' : 'border-transparent'} transition-all`}
+                  className={`w-16 h-16 rounded-md overflow-hidden border-2 ${index === currentImageIndex ? 'border-olivePrimary' : 'border-transparent'} transition-all`}
                   onClick={() => setCurrentImageIndex(index)}
                 >
                   <img src={img} alt={`صورة مصغرة ${index + 1}`} className="w-full h-full object-cover" />
@@ -175,7 +175,7 @@ const GigDetailsPage = () => {
           {/* Gig Details */}
           <div className="space-y-6">
             <motion.h1 
-              className="text-3xl lg:text-4xl font-bold text-gray-800"
+              className="text-3xl lg:text-4xl font-bold text-darkOlive"
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.1 }}
@@ -184,67 +184,67 @@ const GigDetailsPage = () => {
             </motion.h1>
             
             <div className="flex items-center space-x-4 space-x-reverse">
-              <div className="flex items-center text-yellow-500">
+              <div className="flex items-center text-burntOrange">
                 {[...Array(5)].map((_, i) => (
                   <Star key={i} className={`h-5 w-5 ${i < Math.round(gig.rating) ? 'fill-current' : ''}`} />
                 ))}
-                <span className="ml-2 text-gray-600">({gig.rating.toFixed(1)} / {reviews.length} تقييمات)</span>
+                <span className="ml-2 text-darkOlive/70">({gig.rating.toFixed(1)} / {reviews.length} تقييمات)</span>
               </div>
-              <Badge variant="secondary" className="bg-orange-100 text-orange-700">{gig.category}</Badge>
+              <Badge variant="secondary" className="bg-lightGreen/50 text-olivePrimary">{gig.category}</Badge>
             </div>
 
-            <p className="text-gray-600 leading-relaxed">{gig.description}</p>
+            <p className="text-darkOlive/80 leading-relaxed">{gig.description}</p>
             
-            <div className="text-3xl font-bold text-primary">{gig.price} جنيه</div>
+            <div className="text-3xl font-bold text-olivePrimary">{gig.price} جنيه</div>
 
             <div className="flex items-center space-x-3 space-x-reverse">
-              <Label htmlFor="quantity" className="text-gray-700">الكمية:</Label>
+              <Label htmlFor="quantity" className="text-darkOlive">الكمية:</Label>
               <Input 
                 type="number" 
                 id="quantity" 
                 value={quantity} 
                 onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value)))} 
                 min="1" 
-                className="w-20 text-center"
+                className="w-20 text-center border-olivePrimary/30 focus:border-olivePrimary focus:ring-olivePrimary/20"
               />
             </div>
 
             <div className="flex flex-col sm:flex-row gap-3">
-              <Button size="lg" onClick={handleAddToCart} className="bg-orange-500 hover:bg-orange-600 flex-1">
+              <Button size="lg" onClick={handleAddToCart} className="bg-burntOrange hover:bg-burntOrange/90 text-white flex-1">
                 <ShoppingCart className="ml-2 h-5 w-5" /> أضف إلى السلة
               </Button>
-              <Button size="lg" variant="outline" className="border-primary text-primary hover:bg-primary hover:text-white flex-1">
+              <Button size="lg" variant="outline" className="border-olivePrimary/50 text-olivePrimary hover:bg-olivePrimary hover:text-white flex-1">
                 <Heart className="ml-2 h-5 w-5" /> أضف إلى المفضلة
               </Button>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
-                <div className="flex items-center"><ShieldCheck className="h-5 w-5 text-green-500 ml-2" /> دفع آمن ومضمون</div>
-                <div className="flex items-center"><Truck className="h-5 w-5 text-blue-500 ml-2" /> شحن لجميع المحافظات</div>
-                <div className="flex items-center"><CheckCircle className="h-5 w-5 text-orange-500 ml-2" /> منتج يدوي أصلي</div>
-                <div className="flex items-center"><MessageSquare className="h-5 w-5 text-purple-500 ml-2" /> دعم فني مباشر</div>
+            <div className="grid grid-cols-2 gap-4 text-sm text-darkOlive/80">
+                <div className="flex items-center"><ShieldCheck className="h-5 w-5 text-olivePrimary ml-2" /> دفع آمن ومضمون</div>
+                <div className="flex items-center"><Truck className="h-5 w-5 text-olivePrimary ml-2" /> شحن لجميع المحافظات</div>
+                <div className="flex items-center"><CheckCircle className="h-5 w-5 text-burntOrange ml-2" /> منتج يدوي أصلي</div>
+                <div className="flex items-center"><MessageSquare className="h-5 w-5 text-burntOrange ml-2" /> دعم فني مباشر</div>
             </div>
 
             <Separator />
 
             {/* Seller Info */}
-            <Card className="bg-orange-50 border-orange-200">
+            <Card className="bg-lightGreen/30 border-olivePrimary/20">
               <CardHeader>
-                <CardTitle className="text-xl text-gray-700">معلومات البائع</CardTitle>
+                <CardTitle className="text-xl text-darkOlive">معلومات البائع</CardTitle>
               </CardHeader>
               <CardContent className="flex items-center space-x-4 space-x-reverse">
-                <Avatar className="h-16 w-16 border-2 border-primary">
+                <Avatar className="h-16 w-16 border-2 border-olivePrimary">
                   <AvatarImage src={seller.avatar} alt={seller.name} />
-                  <AvatarFallback>{seller.name.charAt(0)}</AvatarFallback>
+                  <AvatarFallback className="bg-olivePrimary text-white">{seller.name.charAt(0)}</AvatarFallback>
                 </Avatar>
                 <div>
-                  <Link to={`/profile/${seller.id}`} className="text-lg font-semibold text-primary hover:underline">{seller.name}</Link>
-                  <p className="text-sm text-gray-500">{seller.location}</p>
-                  <div className="flex items-center text-sm text-yellow-500">
+                  <Link to={`/profile/${seller.id}`} className="text-lg font-semibold text-olivePrimary hover:underline">{seller.name}</Link>
+                  <p className="text-sm text-darkOlive/70">{seller.location}</p>
+                  <div className="flex items-center text-sm text-burntOrange">
                     <Star className="h-4 w-4 mr-1" /> {seller.rating} ({seller.reviewCount} تقييمات)
                   </div>
                 </div>
-                <Button variant="outline" onClick={handleContactSeller} className="mr-auto">
+                <Button variant="outline" onClick={handleContactSeller} className="mr-auto border-olivePrimary/50 text-olivePrimary hover:bg-olivePrimary hover:text-white">
                   <MessageSquare className="ml-2 h-4 w-4" /> تواصل مع البائع
                 </Button>
               </CardContent>
@@ -256,8 +256,8 @@ const GigDetailsPage = () => {
         <div className="mt-12">
           {/* For simplicity, we'll just stack them. shadcn/ui Tabs can be used for a tabbed interface */}
           <section className="mb-10">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">تفاصيل إضافية</h2>
-            <div className="prose max-w-none text-gray-600">
+            <h2 className="text-2xl font-bold text-darkOlive mb-4">تفاصيل إضافية</h2>
+            <div className="prose max-w-none text-darkOlive/80">
               <p>وقت التسليم المتوقع: {gig.deliveryTime}</p>
               <p>الوسوم: {gig.tags.join(', ')}</p>
               {/* Add more detailed description if available */}
@@ -268,14 +268,14 @@ const GigDetailsPage = () => {
 
           {/* Reviews Section */}
           <section className="mb-10">
-            <h2 className="text-2xl font-bold text-gray-800 mb-6">تقييمات العملاء ({reviews.length})</h2>
+            <h2 className="text-2xl font-bold text-darkOlive mb-6">تقييمات العملاء ({reviews.length})</h2>
             {user && (
-              <form onSubmit={handleSubmitReview} className="mb-8 p-4 border rounded-lg bg-gray-50">
-                <h3 className="text-lg font-semibold mb-2">أضف تقييمك</h3>
+              <form onSubmit={handleSubmitReview} className="mb-8 p-4 border rounded-lg bg-lightGreen/20 border-olivePrimary/20">
+                <h3 className="text-lg font-semibold mb-2 text-darkOlive">أضف تقييمك</h3>
                 <div className="flex items-center mb-2">
                   {[1, 2, 3, 4, 5].map(star => (
                     <button type="button" key={star} onClick={() => setNewRating(star)}>
-                      <Star className={`h-6 w-6 cursor-pointer ${newRating >= star ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} />
+                      <Star className={`h-6 w-6 cursor-pointer ${newRating >= star ? 'text-burntOrange fill-current' : 'text-lightGreen'}`} />
                     </button>
                   ))}
                 </div>
@@ -284,31 +284,31 @@ const GigDetailsPage = () => {
                   onChange={(e) => setNewReview(e.target.value)} 
                   placeholder="اكتب تقييمك هنا..." 
                   rows={3}
-                  className="mb-2"
+                  className="mb-2 border-olivePrimary/30 focus:border-olivePrimary focus:ring-olivePrimary/20"
                 />
-                <Button type="submit">إرسال التقييم</Button>
+                <Button type="submit" className="bg-burntOrange hover:bg-burntOrange/90 text-white">إرسال التقييم</Button>
               </form>
             )}
             {reviews.length > 0 ? (
               <div className="space-y-6">
                 {reviews.map(review => (
-                  <Card key={review.id} className="shadow-sm border-gray-200">
+                  <Card key={review.id} className="shadow-sm border-olivePrimary/20">
                     <CardContent className="pt-6">
                       <div className="flex items-start space-x-3 space-x-reverse">
                         <Avatar className="h-10 w-10">
-                          <AvatarFallback>{review.userName.charAt(0)}</AvatarFallback>
+                          <AvatarFallback className="bg-olivePrimary text-white">{review.userName.charAt(0)}</AvatarFallback>
                         </Avatar>
                         <div>
                           <div className="flex items-center space-x-2 space-x-reverse mb-1">
-                            <p className="font-semibold text-gray-700">{review.userName}</p>
-                            <div className="flex text-yellow-500">
+                            <p className="font-semibold text-darkOlive">{review.userName}</p>
+                            <div className="flex text-burntOrange">
                               {[...Array(5)].map((_, i) => (
                                 <Star key={i} className={`h-4 w-4 ${i < review.rating ? 'fill-current' : ''}`} />
                               ))}
                             </div>
                           </div>
-                          <p className="text-sm text-gray-500 mb-2">{new Date(review.date).toLocaleDateString('ar-EG')}</p>
-                          <p className="text-gray-600">{review.comment}</p>
+                          <p className="text-sm text-darkOlive/60 mb-2">{new Date(review.date).toLocaleDateString('ar-EG')}</p>
+                          <p className="text-darkOlive/80">{review.comment}</p>
                         </div>
                       </div>
                     </CardContent>
@@ -316,7 +316,7 @@ const GigDetailsPage = () => {
                 ))}
               </div>
             ) : (
-              <p className="text-gray-500">لا توجد تقييمات لهذا المنتج حتى الآن.</p>
+              <p className="text-darkOlive/70">لا توجد تقييمات لهذا المنتج حتى الآن.</p>
             )}
           </section>
 
@@ -325,10 +325,10 @@ const GigDetailsPage = () => {
           {/* Related Gigs Section */}
           {relatedGigs.length > 0 && (
             <section>
-              <h2 className="text-2xl font-bold text-gray-800 mb-6">منتجات مشابهة من نفس البائع</h2>
+              <h2 className="text-2xl font-bold text-darkOlive mb-6">منتجات مشابهة من نفس البائع</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {relatedGigs.map(relatedGig => (
-                  <Card key={relatedGig.id} className="overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 card-hover border-amber-100">
+                  <Card key={relatedGig.id} className="overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 card-hover border-olivePrimary/20">
                     <div className="relative h-48">
                       <img 
                         src={relatedGig.images && relatedGig.images.length > 0 
@@ -339,13 +339,13 @@ const GigDetailsPage = () => {
                       />
                     </div>
                     <CardHeader className="pb-1">
-                      <CardTitle className="text-md font-semibold text-gray-700 h-12 overflow-hidden">{relatedGig.title}</CardTitle>
+                      <CardTitle className="text-md font-semibold text-darkOlive h-12 overflow-hidden">{relatedGig.title}</CardTitle>
                     </CardHeader>
                     <CardContent className="pb-3">
-                      <p className="text-lg font-bold text-primary">{relatedGig.price} جنيه</p>
+                      <p className="text-lg font-bold text-olivePrimary">{relatedGig.price} جنيه</p>
                     </CardContent>
                     <CardFooter>
-                      <Button asChild variant="outline" className="w-full border-orange-400 text-orange-500 hover:bg-orange-500 hover:text-white">
+                      <Button asChild variant="outline" className="w-full border-olivePrimary/50 text-olivePrimary hover:bg-olivePrimary hover:text-white">
                         <Link to={`/gigs/${relatedGig.id}`}>عرض التفاصيل</Link>
                       </Button>
                     </CardFooter>

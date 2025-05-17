@@ -116,7 +116,7 @@ const DashboardSettings = () => {
             <Label htmlFor="avatarUrl">رابط صورة الملف الشخصي</Label>
             <Input id="avatarUrl" name="avatarUrl" value={profileData.avatarUrl} onChange={handleProfileChange} placeholder="https://example.com/avatar.jpg" />
           </div>
-          <Button type="submit" className="bg-orange-500 hover:bg-orange-600">
+          <Button type="submit" className="bg-burntOrange hover:bg-burntOrange/90 text-white">
             <Save className="ml-2 h-4 w-4" /> حفظ تغييرات الملف الشخصي
           </Button>
         </form>

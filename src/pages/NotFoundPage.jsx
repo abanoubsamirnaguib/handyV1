@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 
 const NotFoundPage = () => {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-100 via-amber-50 to-white p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-lightBeige via-lightGreen/20 to-white p-4">
       <motion.div
         initial={{ opacity: 0, y: -50 }}
         animate={{ opacity: 1, y: 0 }}
@@ -16,10 +16,10 @@ const NotFoundPage = () => {
         className="w-full max-w-lg text-center"
       >
         <Card className="shadow-2xl border-orange-200 overflow-hidden">
-          <CardHeader className="bg-orange-500 p-8">
+          <CardHeader className="bg-olivePrimary p-8">
             <AlertTriangle className="h-20 w-20 text-white mx-auto mb-4" />
             <CardTitle className="text-5xl font-extrabold text-white">404</CardTitle>
-            <CardDescription className="text-xl text-orange-100 mt-2">
+            <CardDescription className="text-xl text-lightBeige mt-2">
               عفواً، الصفحة التي تبحث عنها غير موجودة.
             </CardDescription>
           </CardHeader>

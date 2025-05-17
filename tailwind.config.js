@@ -50,6 +50,19 @@ module.exports = {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))',
 				},
+				// Custom colors from the palette
+				olivePrimary: '#859569',  // Primary - olive green
+				lightBeige: '#EFEDE6',    // Secondary - very light beige
+				burntOrange: '#E18562',   // Accent - burnt orange
+				lightGreen: '#D0E0BF',    // Light green
+				creamyBeige: '#F7EAC8',   // Creamy beige
+				lightBrownGray: '#B2AD9A', // Light brown-gray
+				darkBrown: '#6F5C4E',     // Dark brown
+				paleGreen: '#E6F0DC',     // Pale green
+				darkOlive: '#524F39',     // Dark olive
+				palePink: '#F5DAC6',      // Pale pink
+				brightOrange: '#F15A46',  // Bright orange
+				peachOrange: '#F6906A',   // Peach orange
 			},
 			borderRadius: {
 				lg: 'var(--radius)',

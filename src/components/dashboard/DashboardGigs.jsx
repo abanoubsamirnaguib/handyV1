@@ -71,7 +71,7 @@ const DashboardGigs = () => {
           <ShoppingBag className="h-24 w-24 text-gray-300 mx-auto mb-6" />
           <h2 className="text-2xl font-semibold text-gray-700 mb-2">ليس لديك خدمات معروضة بعد</h2>
           <p className="text-gray-500">ابدأ بإضافة خدماتك ليراها العملاء!</p>
-          <Button onClick={() => navigate('/dashboard/gigs/new')} className="mt-6 bg-orange-500 hover:bg-orange-600">
+          <Button onClick={() => navigate('/dashboard/gigs/new')} className="mt-6 bg-olivePrimary hover:bg-olivePrimary/90 text-white">
             <PlusCircle className="ml-2 h-4 w-4" /> أضف خدمتك الأولى
           </Button>
         </motion.div>
@@ -84,7 +84,7 @@ const DashboardGigs = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
             >
-              <Card className="shadow-lg hover:shadow-xl transition-shadow flex flex-col h-full border-amber-100">
+              <Card className="shadow-lg hover:shadow-xl transition-shadow flex flex-col h-full border-lightBeige/50">
                 <div className="relative h-48">
                   <img 
                     src={gig.images && gig.images.length > 0 
@@ -93,7 +93,7 @@ const DashboardGigs = () => {
                     alt={gig.title} 
                     className="w-full h-full object-cover" 
                   />
-                  <Badge variant="secondary" className="absolute top-2 right-2 bg-amber-500 text-white">{gig.category}</Badge>
+                  <Badge variant="secondary" className="absolute top-2 right-2 bg-olivePrimary text-white">{gig.category}</Badge>
                 </div>
                 <CardHeader className="pb-2">
                   <CardTitle className="text-lg font-semibold text-gray-800 h-14 overflow-hidden">{gig.title}</CardTitle>
@@ -107,7 +107,7 @@ const DashboardGigs = () => {
                     <ShoppingBag className="ml-2 h-4 w-4 text-green-500" /> {Math.floor(Math.random() * 50)} طلب
                   </div>
                    <div className="flex items-center text-gray-600">
-                    <BarChart2 className="ml-2 h-4 w-4 text-orange-500" /> {gig.rating} تقييم ({gig.reviewCount})
+                    <BarChart2 className="ml-2 h-4 w-4 text-burntOrange" /> {gig.rating} تقييم ({gig.reviewCount})
                   </div>
                 </CardContent>
                 <CardFooter className="grid grid-cols-2 gap-2 pt-4 border-t">

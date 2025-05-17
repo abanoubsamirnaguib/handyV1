@@ -61,7 +61,7 @@ const DashboardOrders = () => {
             {user?.role === 'seller' ? 'لم تتلق أي طلبات جديدة بعد.' : 'لم تقم بأي طلبات بعد. ابدأ التصفح!'}
           </p>
           {user?.role === 'buyer' && (
-            <Button asChild className="mt-6 bg-orange-500 hover:bg-orange-600">
+            <Button asChild className="mt-6 bg-olivePrimary hover:bg-olivePrimary/90 text-white">
               <Link to="/explore">استكشف المنتجات</Link>
             </Button>
           )}
@@ -116,7 +116,7 @@ const DashboardOrders = () => {
                       <Eye className="ml-2 h-4 w-4" /> عرض المنتج
                     </Link>
                   </Button>
-                  <Button variant="default" size="sm" className="bg-orange-500 hover:bg-orange-600">
+                  <Button variant="default" size="sm" className="bg-burntOrange hover:bg-burntOrange/90 text-white">
                     <MessageSquare className="ml-2 h-4 w-4" /> تواصل مع {user?.role === 'seller' ? 'المشتري' : 'البائع'}
                   </Button>
                   {/* Add more actions based on order status and role */}

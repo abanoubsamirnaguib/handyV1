@@ -2,62 +2,103 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 25 95% 53%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 25 95% 53%;
-    --radius: 0.5rem;
-    --navbar-height: 66px;
-  }
- 
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 25 95% 53%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 25 95% 53%;
-  }
+:root {
+  /* Base colors */
+  --background: 55 10% 95%;  /* #EFEDE6 - light beige */
+  --foreground: 220 9% 24%;  /* #524F39 - dark olive (for text) */
+  
+  /* Card styling */
+  --card: 55 10% 95%;  /* #EFEDE6 - light beige */
+  --card-foreground: 220 9% 24%;  /* #524F39 - dark olive */
+  
+  /* Popup/dialog styling */
+  --popover: 55 10% 95%;  /* #EFEDE6 - light beige */
+  --popover-foreground: 220 9% 24%;  /* #524F39 - dark olive */
+  
+  /* Main theme colors */
+  --primary: 82 18% 50%;  /* #859569 - olive green (60%) */
+  --primary-foreground: 0 0% 100%;  /* White text on primary */
+  
+  /* Secondary elements */
+  --secondary: 55 25% 93%;  /* #EFEDE6 - very light beige (30%) */
+  --secondary-foreground: 220 9% 24%;  /* #524F39 - dark olive */
+  
+  /* Accent colors (10%) */
+  --accent: 14 59% 63%;  /* #E18562 - burnt orange */
+  --accent-foreground: 0 0% 100%;  /* White text on accent */
+  
+  /* Muted/subtle elements */
+  --muted: 70 25% 85%;  /* #D0E0BF - very light green */
+  --muted-foreground: 85 10% 40%;  /* Darker version of muted */
+  
+  /* Destructive/error colors */
+  --destructive: 7 84% 62%;  /* #F15A46 - bright orange */
+  --destructive-foreground: 0 0% 100%;  /* White text on destructive */
+  
+  /* UI element styling */
+  --border: 51 12% 65%;  /* #B2AD9A - light brown-gray */
+  --input: 55 10% 95%;  /* #EFEDE6 - light beige */
+  --ring: 14 59% 63%;  /* #E18562 - burnt orange */
+  
+  /* Other settings */
+  --radius: 0.5rem;
+  --navbar-height: 66px;
+  
+  /* Custom olive theme colors */
+  --olivePrimary: 82 18% 50%;  /* #859569 - olive green */
+  --lightBeige: 55 25% 93%;    /* #EFEDE6 - light beige */
+  --burntOrange: 14 59% 63%;   /* #E18562 - burnt orange */
+  --darkOlive: 220 9% 24%;     /* #524F39 - dark olive */
+  --lightGreen: 70 25% 85%;    /* #D0E0BF - light green */
 }
 
-@layer base {
-  * {
-    @apply border-border;
-  }
-  body {
-    @apply bg-background text-foreground;
-    font-family: 'Tajawal', sans-serif;
-  }
+.dark {
+  /* Dark mode base colors */
+  --background: 220 9% 24%;  /* #524F39 - dark olive */
+  --foreground: 55 10% 95%;  /* #EFEDE6 - light beige (for text) */
+  
+  /* Card styling */
+  --card: 38 17% 38%;  /* #6F5C4E - darker brown */
+  --card-foreground: 55 10% 95%;  /* #EFEDE6 - light beige */
+  
+  /* Popup/dialog styling */
+  --popover: 38 17% 38%;  /* #6F5C4E - darker brown */
+  --popover-foreground: 55 10% 95%;  /* #EFEDE6 - light beige */
+  
+  /* Main theme colors */
+  --primary: 82 18% 50%;  /* #859569 - olive green (stays the same) */
+  --primary-foreground: 0 0% 100%;  /* White text on primary */
+  
+  /* Secondary elements */
+  --secondary: 51 12% 65%;  /* #B2AD9A - light brown-gray */
+  --secondary-foreground: 0 0% 100%;  /* White text on secondary */
+  
+  /* Accent colors */
+  --accent: 14 59% 63%;  /* #E18562 - burnt orange (stays the same) */
+  --accent-foreground: 0 0% 100%;  /* White text on accent */
+  
+  /* Muted/subtle elements */
+  --muted: 38 17% 38%;  /* #6F5C4E - darker brown */
+  --muted-foreground: 51 12% 65%;  /* #B2AD9A - light brown-gray */
+  
+  /* Destructive/error colors */
+  --destructive: 7 84% 62%;  /* #F15A46 - bright orange */
+  --destructive-foreground: 0 0% 100%;  /* White text on destructive */
+  
+  /* UI element styling */
+  --border: 38 17% 38%;  /* #6F5C4E - darker brown */
+  --input: 38 17% 38%;  /* #6F5C4E - darker brown */
+  --ring: 14 59% 63%;  /* #E18562 - burnt orange */
+}
+
+* {
+  border-color: hsl(var(--border));
+}
+
+body {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: 'Tajawal', sans-serif;
 }
 
 /* Custom Scrollbar */
@@ -77,7 +118,7 @@
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--primary));
+  background: hsl(var(--accent));
 }
 
 /* Animation Classes */
@@ -110,15 +151,39 @@
 
 /* Custom Utilities */
 .glass-effect {
-  @apply bg-white/30 backdrop-blur-md border border-white/20 shadow-lg;
+  background-color: rgba(239, 237, 230, 0.3);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(133, 149, 105, 0.2);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.bounce-utility {
+  background-color: rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(133, 149, 105, 0.2);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.bounce-utility:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  transform: translateY(-4px);
 }
 
 .text-gradient {
-  @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-orange-600;
+  background-clip: text;
+  color: transparent;
+  background-image: linear-gradient(to right, #859569, #E18562);
 }
 
 .card-hover {
-  @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.card-hover:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  transform: translateY(-4px);
 }
 
 /* RTL Support */
@@ -140,6 +205,7 @@ html[dir="rtl"] .ltr-icon {
   background-color: rgba(0, 0, 0, 0.5);
   z-index: 10;
 }
+
 .sidebar-collapsed {
   width: 5rem;
   transition: width 0.3s ease;
@@ -150,19 +216,35 @@ html[dir="rtl"] .ltr-icon {
   transition: width 0.3s ease;
 }
 
-.sidebar-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  z-index: 10;
+.sidebar-item {
+  padding: 0.5rem;
+  border-radius: 0.375rem;
+}
+
+.sidebar-item:hover {
+  background-color: rgba(133, 149, 105, 0.1); /* Light olive green background */
+}
+
+.sidebar-item:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(133, 149, 105, 0.3); /* Olive green shadow */
 }
 
 /* Mobile Menu Trigger */
 .menu-trigger {
-  @apply p-2 rounded-md hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200;
+  padding: 0.5rem;
+  border-radius: 0.375rem;
+  transition: background-color 0.2s;
+  background-color: transparent;
+}
+
+.menu-trigger:hover {
+  background-color: rgba(133, 149, 105, 0.1);
+}
+
+.menu-trigger:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(133, 149, 105, 0.3);
 }
 
 /* Responsive Dashboard Content */
@@ -180,5 +262,9 @@ html[dir="rtl"] .ltr-icon {
   
   .dashboard-content-collapsed {
     padding-right: 5rem;
+  }
+  
+  .dashboard-content-expanded {
+    padding-right: 16rem;
   }
 }

@@ -31,7 +31,7 @@ const DashboardMessages = () => {
         animate={{ opacity: 1, y: 0 }}
       >
         <h1 className="text-3xl font-bold text-gray-800">الرسائل</h1>
-        <Button onClick={() => navigate('/chat')} className="bg-orange-500 hover:bg-orange-600">
+        <Button onClick={() => navigate('/chat')} className="bg-burntOrange hover:bg-burntOrange/90 text-white">
           <MessageSquare className="ml-2 h-5 w-5" /> عرض كل الرسائل
         </Button>
       </motion.div>
@@ -52,7 +52,7 @@ const DashboardMessages = () => {
           <Card className="border-t-4 border-orange-500 shadow-lg">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-gray-600">رسائل غير مقروءة</CardTitle>
-              <MessageSquare className="h-5 w-5 text-orange-500" />
+              <MessageSquare className="h-5 w-5 text-burntOrange" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-gray-800">{conversations.reduce((sum, conv) => sum + conv.unreadCount, 0)}</div>

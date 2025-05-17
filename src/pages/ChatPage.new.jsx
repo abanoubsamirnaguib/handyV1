@@ -241,7 +241,7 @@ const ChatPage = () => {
                       <p className="text-sm">{msg.text}</p>
                       <p className={cn(
                         "text-xs mt-1",
-                        msg.senderId === user.id ? "text-orange-200" : "text-gray-500"
+                        msg.senderId === user.id ? "text-lightBeige" : "text-gray-500"
                       )}>
                         {new Date(msg.timestamp).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}
                       </p>

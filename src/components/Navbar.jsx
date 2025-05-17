@@ -31,9 +31,8 @@ const Navbar = () => {
       navigate(`/explore?search=${searchTerm}`);
     }
   };
-
   return (
-    <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b">
+    <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-olivePrimary/20">
       <div className="container mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
           <Link to="/" className="flex items-center">
@@ -46,37 +45,35 @@ const Navbar = () => {
           </Link>
 
           <nav className="hidden md:flex items-center space-x-1 space-x-reverse">
-            <Link to="/" className="px-3 py-2 text-sm font-medium hover:text-primary">
+            <Link to="/" className="px-3 py-2 text-sm font-medium hover:text-olivePrimary">
               الرئيسية
             </Link>
-            <Link to="/explore" className="px-3 py-2 text-sm font-medium hover:text-primary">
+            <Link to="/explore" className="px-3 py-2 text-sm font-medium hover:text-olivePrimary">
               استكشاف
             </Link>
             {user && (
               <>
                 {user.role !== 'admin' && (
-                  <Link to="/dashboard" className="px-3 py-2 text-sm font-medium hover:text-primary">
+                  <Link to="/dashboard" className="px-3 py-2 text-sm font-medium hover:text-olivePrimary">
                     لوحة التحكم
                   </Link>
                 )}
                 {user.role === 'admin' && (
-                  <Link to="/admin/dashboard" className="px-3 py-2 text-sm font-medium hover:text-blue-600 flex items-center">
-                    <Shield className="ml-1 h-4 w-4 text-blue-600" />
+                  <Link to="/admin/dashboard" className="px-3 py-2 text-sm font-medium hover:text-burntOrange flex items-center">
+                    <Shield className="ml-1 h-4 w-4 text-burntOrange" />
                     لوحة المدير
                   </Link>
                 )}
               </>
             )}
-          </nav>
-
-          <form onSubmit={handleSearch} className="hidden md:flex relative mx-4 flex-1 max-w-md">
+          </nav>          <form onSubmit={handleSearch} className="hidden md:flex relative mx-4 flex-1 max-w-md">
             <Input
               type="search"
               name="search"
               placeholder="ابحث عن منتجات يدوية..."
-              className="w-full pr-10"
+              className="w-full pr-10 border-olivePrimary/30 focus:border-burntOrange"
             />
-            <Button type="submit" variant="ghost" size="icon" className="absolute left-0 top-0">
+            <Button type="submit" variant="ghost" size="icon" className="absolute left-0 top-0 text-olivePrimary hover:text-burntOrange">
               <Search className="h-4 w-4" />
             </Button>
           </form>
@@ -84,48 +81,47 @@ const Navbar = () => {
           <div className="hidden md:flex items-center space-x-2 space-x-reverse">
             {user ? (
               <>
-                <Button variant="ghost" size="icon" onClick={() => navigate('/cart')} className="relative">
+                <Button variant="ghost" size="icon" onClick={() => navigate('/cart')} className="relative text-olivePrimary hover:text-burntOrange hover:bg-lightGreen">
                   <ShoppingCart className="h-5 w-5" />
                   {cart.length > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-primary text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    <span className="absolute -top-1 -right-1 bg-burntOrange text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                       {cart.length}
                     </span>
                   )}
                 </Button>
-                <Button variant="ghost" size="icon">
+                <Button variant="ghost" size="icon" className="text-olivePrimary hover:text-burntOrange hover:bg-lightGreen">
                   <Bell className="h-5 w-5" />
                 </Button>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="p-0 rounded-full">
+                    <Button variant="ghost" className="p-0 rounded-full border-2 border-olivePrimary/50 hover:border-burntOrange">
                       <Avatar>
                         <AvatarImage src={user.avatar} />
-                        <AvatarFallback>{user.name?.charAt(0)}</AvatarFallback>
+                        <AvatarFallback className="bg-olivePrimary text-white">{user.name?.charAt(0)}</AvatarFallback>
                       </Avatar>
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-48">
-                    <DropdownMenuLabel>مرحباً, {user.name}</DropdownMenuLabel>
+                    <DropdownMenuLabel className="text-darkOlive">مرحباً, {user.name}</DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => navigate(`/profile/${user.id}`)}>
+                    <DropdownMenuItem onClick={() => navigate(`/profile/${user.id}`)} className="text-darkOlive hover:text-burntOrange">
                       الملف الشخصي
                     </DropdownMenuItem>
                     {user.role === 'admin' ? (
                       <>
-                        <DropdownMenuItem onClick={() => navigate('/admin/dashboard')}>
+                        <DropdownMenuItem onClick={() => navigate('/admin/dashboard')} className="text-darkOlive hover:text-burntOrange">
                           لوحة تحكم المدير
                         </DropdownMenuItem>
                       </>
                     ) : (
-                      <DropdownMenuItem onClick={() => navigate('/dashboard')}>
+                      <DropdownMenuItem onClick={() => navigate('/dashboard')} className="text-darkOlive hover:text-burntOrange">
                         لوحة التحكم
-                      </DropdownMenuItem>
-                    )}
-                    <DropdownMenuItem onClick={() => navigate('/chat')}>
+                      </DropdownMenuItem>                    )}
+                    <DropdownMenuItem onClick={() => navigate('/chat')} className="text-darkOlive hover:text-burntOrange">
                       الرسائل
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={logout} className="text-destructive focus:text-destructive focus:bg-destructive/10">
+                    <DropdownMenuItem onClick={logout} className="text-burntOrange focus:text-white focus:bg-burntOrange">
                       تسجيل الخروج
                     </DropdownMenuItem>
                   </DropdownMenuContent>
@@ -133,17 +129,17 @@ const Navbar = () => {
               </>
             ) : (
               <>
-                <Button variant="ghost" onClick={() => navigate('/login')}>
+                <Button variant="ghost" onClick={() => navigate('/login')} className="text-olivePrimary hover:text-burntOrange hover:bg-lightGreen">
                   تسجيل الدخول
                 </Button>
-                <Button onClick={() => navigate('/register')}>
+                <Button onClick={() => navigate('/register')} className="bg-olivePrimary hover:bg-olivePrimary/90 text-white">
                   إنشاء حساب
                 </Button>
               </>
             )}
           </div>
 
-          <Button variant="ghost" size="icon" className="md:hidden" onClick={toggleMenu}>
+          <Button variant="ghost" size="icon" className="md:hidden text-olivePrimary hover:text-burntOrange hover:bg-lightGreen" onClick={toggleMenu}>
             {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </Button>
         </div>
@@ -153,14 +149,14 @@ const Navbar = () => {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="md:hidden mt-3 py-3 border-t"
+            className="md:hidden mt-3 py-3 border-t border-olivePrimary/20"
           >
             <form onSubmit={handleSearch} className="relative mb-4">
               <Input
                 type="search"
                 name="search"
                 placeholder="ابحث عن منتجات يدوية..."
-                className="w-full pr-10"
+                className="w-full pr-10 border-olivePrimary/30"
               />
               <Button type="submit" variant="ghost" size="icon" className="absolute left-0 top-0">
                 <Search className="h-4 w-4" />

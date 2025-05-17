@@ -82,10 +82,9 @@ const ProfilePage = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-      >
-        {/* Profile Header */}
-        <Card className="mb-8 shadow-xl overflow-hidden border-orange-200 bg-gradient-to-br from-orange-50 via-amber-50 to-white">
-          <div className="relative h-48 bg-gradient-to-r from-orange-500 to-amber-400">
+      >        {/* Profile Header */}
+        <Card className="mb-8 shadow-xl overflow-hidden border-lightBeige bg-gradient-to-br from-lightBeige/50 via-lightGreen/30 to-white">
+          <div className="relative h-48 bg-gradient-to-r from-olivePrimary to-burntOrange">
             <img src="https://images.unsplash.com/photo-1692975716697-4abaff365786" alt="غلاف الملف الشخصي" className="w-full h-full object-cover opacity-30" />
           </div>
           <CardContent className="pt-0 -mt-16">
@@ -106,7 +105,7 @@ const ProfilePage = () => {
                     <Edit3 className="ml-2 h-4 w-4" /> {isEditing ? 'إلغاء التعديل' : 'تعديل الملف الشخصي'}
                   </Button>
                 ) : (
-                  <Button onClick={handleContactSeller} className="bg-orange-500 hover:bg-orange-600">
+                  <Button onClick={handleContactSeller} className="bg-burntOrange hover:bg-burntOrange/90 text-white">
                     <MessageSquare className="ml-2 h-4 w-4" /> تواصل
                   </Button>
                 )}
@@ -187,7 +186,7 @@ const ProfilePage = () => {
                     <h4 className="font-semibold text-gray-700 mb-2">المهارات:</h4>
                     <div className="flex flex-wrap gap-2">
                       {profileData.skills.map(skill => (
-                        <Badge key={skill} variant="secondary" className="bg-orange-100 text-orange-700">{skill}</Badge>
+                        <Badge key={skill} variant="secondary" className="bg-lightGreen/20 text-darkOlive">{skill}</Badge>
                       ))}
                     </div>
                   </>
@@ -243,7 +242,7 @@ const ProfilePage = () => {
             {userGigs.length > 0 ? (
               <div className="grid sm:grid-cols-2 gap-6">
                 {userGigs.map(gig => (
-                  <Card key={gig.id} className="overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 card-hover border-amber-100">
+                  <Card key={gig.id} className="overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 card-hover border-lightBeige/50">
                     <div className="relative h-48">
                       <img 
                         src={gig.images && gig.images.length > 0 
@@ -252,7 +251,7 @@ const ProfilePage = () => {
                         alt={gig.title} 
                         className="w-full h-full object-cover" 
                       />
-                      <Badge variant="secondary" className="absolute top-2 right-2 bg-amber-500 text-white">{gig.category}</Badge>
+                      <Badge variant="secondary" className="absolute top-2 right-2 bg-olivePrimary text-white">{gig.category}</Badge>
                     </div>
                     <CardHeader className="pb-1">
                       <CardTitle className="text-md font-semibold text-gray-700 h-12 overflow-hidden">{gig.title}</CardTitle>
@@ -265,7 +264,7 @@ const ProfilePage = () => {
                       <p className="text-lg font-bold text-primary">{gig.price} جنيه</p>
                     </CardContent>
                     <CardFooter className="flex gap-2">
-                      <Button asChild variant="outline" className="flex-1 border-orange-400 text-orange-500 hover:bg-orange-500 hover:text-white">
+                      <Button asChild variant="outline" className="flex-1 border-olivePrimary/30 text-darkOlive hover:bg-lightGreen/30 hover:text-olivePrimary hover:border-olivePrimary">
                         <Link to={`/gigs/${gig.id}`}>عرض</Link>
                       </Button>
                       {isOwnProfile && (
@@ -288,7 +287,7 @@ const ProfilePage = () => {
                     {profileData.role === 'seller' ? 'ابدأ بإضافة خدماتك ليراها العملاء!' : 'تصفح المنتجات وقم بطلبك الأول!'}
                   </p>
                   {profileData.role === 'buyer' && (
-                    <Button asChild className="mt-4 bg-orange-500 hover:bg-orange-600">
+                    <Button asChild className="mt-4 bg-burntOrange hover:bg-burntOrange/90 text-white">
                       <Link to="/explore">استكشف المنتجات</Link>
                     </Button>
                   )}

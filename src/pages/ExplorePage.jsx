@@ -90,7 +90,7 @@ const ExplorePage = () => {
   };
 
   const GigCard = ({ gig }) => (
-    <Card className="overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 flex flex-col h-full card-hover border-amber-200">
+    <Card className="overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 flex flex-col h-full card-hover border-olivePrimary/20">
       <div className="relative h-56">
         <img 
           src={gig.images && gig.images.length > 0 
@@ -99,20 +99,20 @@ const ExplorePage = () => {
           alt={gig.title} 
           className="w-full h-full object-cover" 
         />
-        <Badge variant="secondary" className="absolute top-2 right-2 bg-amber-500 text-white">{gig.category}</Badge>
+        <Badge variant="secondary" className="absolute top-2 right-2 bg-olivePrimary text-white">{gig.category}</Badge>
       </div>
       <CardHeader className="pb-2">
-        <CardTitle className="text-lg font-semibold text-gray-800 h-14 overflow-hidden">{gig.title}</CardTitle>
+        <CardTitle className="text-lg font-semibold text-darkOlive h-14 overflow-hidden">{gig.title}</CardTitle>
       </CardHeader>
       <CardContent className="flex-grow">
-        <div className="flex items-center text-sm text-gray-600 mb-2">
-          <Star className="h-4 w-4 text-yellow-500 mr-1" />
+        <div className="flex items-center text-sm text-darkOlive/70 mb-2">
+          <Star className="h-4 w-4 text-burntOrange mr-1" />
           {gig.rating} ({gig.reviewCount} تقييمات)
         </div>
-        <p className="text-xl font-bold text-primary mb-2">{gig.price} جنيه</p>
+        <p className="text-xl font-bold text-olivePrimary mb-2">{gig.price} جنيه</p>
       </CardContent>
       <CardFooter>
-        <Button asChild className="w-full bg-orange-500 hover:bg-orange-600">
+        <Button asChild className="w-full bg-burntOrange hover:bg-burntOrange/90 text-white">
           <Link to={`/gigs/${gig.id}`}>
             عرض التفاصيل
             <ArrowRight className="mr-2 h-4 w-4" />
@@ -123,7 +123,7 @@ const ExplorePage = () => {
   );
 
   const GigListItem = ({ gig }) => (
-    <Card className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col md:flex-row card-hover border-amber-200 w-full">
+    <Card className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col md:flex-row card-hover border-olivePrimary/20 w-full">
       <div className="relative md:w-1/3 h-56 md:h-auto">
         <img 
           src={gig.images && gig.images.length > 0 
@@ -132,22 +132,22 @@ const ExplorePage = () => {
           alt={gig.title} 
           className="w-full h-full object-cover" 
         />
-        <Badge variant="secondary" className="absolute top-2 right-2 bg-amber-500 text-white">{gig.category}</Badge>
+        <Badge variant="secondary" className="absolute top-2 right-2 bg-olivePrimary text-white">{gig.category}</Badge>
       </div>
       <div className="md:w-2/3 flex flex-col">
         <CardHeader className="pb-2">
-          <CardTitle className="text-lg font-semibold text-gray-800">{gig.title}</CardTitle>
+          <CardTitle className="text-lg font-semibold text-darkOlive">{gig.title}</CardTitle>
         </CardHeader>
         <CardContent className="flex-grow">
-          <p className="text-sm text-gray-600 mb-2 line-clamp-2">{gig.description}</p>
-          <div className="flex items-center text-sm text-gray-600 mb-2">
-            <Star className="h-4 w-4 text-yellow-500 mr-1" />
+          <p className="text-sm text-darkOlive/70 mb-2 line-clamp-2">{gig.description}</p>
+          <div className="flex items-center text-sm text-darkOlive/70 mb-2">
+            <Star className="h-4 w-4 text-burntOrange mr-1" />
             {gig.rating} ({gig.reviewCount} تقييمات)
           </div>
-          <p className="text-xl font-bold text-primary mb-2">{gig.price} جنيه</p>
+          <p className="text-xl font-bold text-olivePrimary mb-2">{gig.price} جنيه</p>
         </CardContent>
         <CardFooter>
-          <Button asChild className="w-full md:w-auto bg-orange-500 hover:bg-orange-600">
+          <Button asChild className="w-full md:w-auto bg-burntOrange hover:bg-burntOrange/90 text-white">
             <Link to={`/gigs/${gig.id}`}>
               عرض التفاصيل
               <ArrowRight className="mr-2 h-4 w-4" />
@@ -159,9 +159,9 @@ const ExplorePage = () => {
   );
 
   const SellerCard = ({ seller }) => (
-    <Card className="overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 flex flex-col h-full card-hover border-amber-200">
-      <div className="relative h-48 bg-gradient-to-r from-orange-400 to-amber-500 flex items-center justify-center">
-        <div className="h-24 w-24 rounded-full bg-white flex items-center justify-center text-3xl font-bold text-orange-500 shadow-md">
+    <Card className="overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 flex flex-col h-full card-hover border-lightBeige/50">
+      <div className="relative h-48 bg-gradient-to-r from-olivePrimary to-burntOrange flex items-center justify-center">
+        <div className="h-24 w-24 rounded-full bg-white flex items-center justify-center text-3xl font-bold text-burntOrange shadow-md">
           {seller.name.charAt(0)}
         </div>
       </div>
@@ -179,7 +179,7 @@ const ExplorePage = () => {
         </div>
         <div className="mt-2">
           {seller.skills.slice(0, 3).map((skill, index) => (
-            <Badge key={index} variant="outline" className="mr-1 mb-1 border-amber-200">
+            <Badge key={index} variant="outline" className="mr-1 mb-1 border-olivePrimary/30 bg-lightGreen/10">
               {skill}
             </Badge>
           ))}
@@ -187,7 +187,7 @@ const ExplorePage = () => {
         <p className="text-sm text-gray-600 mt-2 line-clamp-2">{seller.bio}</p>
       </CardContent>
       <CardFooter className="flex gap-2">
-        <Button asChild className="flex-1 bg-orange-500 hover:bg-orange-600">
+        <Button asChild className="flex-1 bg-burntOrange hover:bg-burntOrange/90 text-white">
           <Link to={`/sellers/${seller.id}`}>
             عرض الملف
             <ArrowRight className="mr-2 h-4 w-4" />
@@ -203,48 +203,48 @@ const ExplorePage = () => {
   );
 
   const SellerListItem = ({ seller }) => (
-    <Card className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col md:flex-row card-hover border-amber-200 w-full">
-      <div className="relative md:w-1/4 h-48 md:h-auto bg-gradient-to-r from-orange-400 to-amber-500 flex items-center justify-center">
-        <div className="h-24 w-24 rounded-full bg-white flex items-center justify-center text-3xl font-bold text-orange-500 shadow-md">
+    <Card className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col md:flex-row card-hover border-olivePrimary/20 w-full">
+      <div className="relative md:w-1/4 h-48 md:h-auto bg-gradient-to-r from-olivePrimary to-lightGreen flex items-center justify-center">
+        <div className="h-24 w-24 rounded-full bg-white flex items-center justify-center text-3xl font-bold text-olivePrimary shadow-md">
           {seller.name.charAt(0)}
         </div>
       </div>
       <div className="md:w-3/4 flex flex-col">
         <CardHeader className="pb-2">
-          <CardTitle className="text-lg font-semibold text-gray-800">{seller.name}</CardTitle>
+          <CardTitle className="text-lg font-semibold text-darkOlive">{seller.name}</CardTitle>
         </CardHeader>
         <CardContent className="flex-grow">
           <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-2">
-            <div className="flex items-center text-sm text-gray-600 mb-2 md:mb-0">
-              <MapPin className="h-4 w-4 text-gray-400 mr-1" />
+            <div className="flex items-center text-sm text-darkOlive/70 mb-2 md:mb-0">
+              <MapPin className="h-4 w-4 text-olivePrimary/60 mr-1" />
               <span>{seller.location}</span>
             </div>
-            <div className="flex items-center text-sm text-gray-600">
-              <Star className="h-4 w-4 text-yellow-500 mr-1" />
+            <div className="flex items-center text-sm text-darkOlive/70">
+              <Star className="h-4 w-4 text-burntOrange mr-1" />
               {seller.rating} ({seller.reviewCount} تقييمات)
             </div>
           </div>
-          <p className="text-sm text-gray-600 mb-2">{seller.bio}</p>
+          <p className="text-sm text-darkOlive/70 mb-2">{seller.bio}</p>
           <div className="mt-2">
             {seller.skills.map((skill, index) => (
-              <Badge key={index} variant="outline" className="mr-1 mb-1 border-amber-200">
+              <Badge key={index} variant="outline" className="mr-1 mb-1 border-olivePrimary/30 text-darkOlive">
                 {skill}
               </Badge>
             ))}
           </div>
-          <div className="text-sm text-gray-600 mt-2">
+          <div className="text-sm text-darkOlive/70 mt-2">
             <span className="font-semibold">عضو منذ:</span> {new Date(seller.memberSince).toLocaleDateString('ar-EG')} | 
             <span className="font-semibold mr-2">طلبات مكتملة:</span> {seller.completedOrders}
           </div>
         </CardContent>
         <CardFooter>
-          <Button asChild className="bg-orange-500 hover:bg-orange-600 mr-2">
+          <Button asChild className="bg-burntOrange hover:bg-burntOrange/90 text-white mr-2">
             <Link to={`/sellers/${seller.id}`}>
               عرض الملف
               <ArrowRight className="mr-2 h-4 w-4" />
             </Link>
           </Button>
-          <Button asChild variant="outline">
+          <Button asChild variant="outline" className="border-olivePrimary/50 text-olivePrimary hover:bg-olivePrimary hover:text-white">
             <Link to={`/message/${seller.id}`}>
               <Mail className="mr-2 h-4 w-4" />
               تواصل مع البائع
@@ -261,12 +261,12 @@ const ExplorePage = () => {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="mb-8 p-6 rounded-lg bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-xl"
+        className="mb-8 p-6 rounded-lg bg-gradient-to-r from-olivePrimary to-burntOrange text-white shadow-xl border border-lightBeige/20"
       >
         <h1 className="text-4xl font-bold mb-2">
           {activeTab === 'products' ? 'استكشف المنتجات اليدوية' : 'تعرف على أفضل الحرفيين'}
         </h1>
-        <p className="text-lg text-orange-100">
+        <p className="text-lg text-lightBeige">
           {activeTab === 'products' 
             ? 'ابحث عن إبداعات فريدة من أفضل الحرفيين.' 
             : 'تواصل مع حرفيين محترفين لطلب منتجات مخصصة.'}
@@ -274,9 +274,9 @@ const ExplorePage = () => {
       </motion.div>
 
       <Tabs defaultValue={activeTab} onValueChange={handleTabChange} className="w-full mb-6">
-        <TabsList className="w-full grid grid-cols-2 mb-6">
-          <TabsTrigger value="products" className="text-lg">المنتجات</TabsTrigger>
-          <TabsTrigger value="sellers" className="text-lg">الحرفيين</TabsTrigger>
+        <TabsList className="w-full grid grid-cols-2 mb-6 bg-lightBeige">
+          <TabsTrigger value="products" className="text-lg data-[state=active]:bg-olivePrimary data-[state=active]:text-white">المنتجات</TabsTrigger>
+          <TabsTrigger value="sellers" className="text-lg data-[state=active]:bg-olivePrimary data-[state=active]:text-white">الحرفيين</TabsTrigger>
         </TabsList>
         
         <TabsContent value="products" className="mt-0">
@@ -288,32 +288,32 @@ const ExplorePage = () => {
               animate={{ x: 0, opacity: 1 }}
               transition={{ duration: 0.5 }}
             >
-              <Card className="shadow-lg border-orange-200">
+              <Card className="shadow-lg border-olivePrimary/20">
                 <CardHeader className="flex flex-row items-center justify-between">
-                  <CardTitle className="text-xl text-primary">تصفية النتائج</CardTitle>
-                  <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setIsFiltersOpen(false)}>
+                  <CardTitle className="text-xl text-olivePrimary">تصفية النتائج</CardTitle>
+                  <Button variant="ghost" size="icon" className="md:hidden hover:bg-lightGreen/50 text-olivePrimary" onClick={() => setIsFiltersOpen(false)}>
                     <X className="h-5 w-5" />
                   </Button>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div>
-                    <Label htmlFor="search-filter" className="text-gray-700">بحث بالاسم</Label>
+                    <Label htmlFor="search-filter" className="text-darkOlive">بحث بالاسم</Label>
                     <Input 
                       id="search-filter" 
                       type="text" 
                       value={searchTerm} 
                       onChange={(e) => setSearchTerm(e.target.value)} 
                       placeholder="اسم المنتج، وصف..." 
-                      className="mt-1"
+                      className="mt-1 border-olivePrimary/30 focus:border-olivePrimary focus:ring-olivePrimary/20"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="category-filter" className="text-gray-700">التصنيف</Label>
+                    <Label htmlFor="category-filter" className="text-darkOlive">التصنيف</Label>
                     <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                      <SelectTrigger id="category-filter" className="mt-1">
+                      <SelectTrigger id="category-filter" className="mt-1 border-olivePrimary/30 focus:border-olivePrimary focus:ring-olivePrimary/20">
                         <SelectValue placeholder="اختر تصنيف" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="border-olivePrimary/30">
                         <SelectItem value="all">كل التصنيفات</SelectItem>
                         {categories.map(cat => (
                           <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
@@ -322,18 +322,18 @@ const ExplorePage = () => {
                     </Select>
                   </div>
                   <div>
-                    <Label className="text-gray-700">نطاق السعر: {priceRange[0]} - {priceRange[1]} جنيه</Label>
+                    <Label className="text-darkOlive">نطاق السعر: {priceRange[0]} - {priceRange[1]} جنيه</Label>
                     <Slider
                       defaultValue={priceRange}
                       min={0}
                       max={1000}
                       step={50}
                       onValueChange={setPriceRange}
-                      className="mt-2 [&>span:first-child]:h-1 [&>span:first-child]:bg-primary/20 [&_[role=slider]]:bg-primary [&_[role=slider]]:w-4 [&_[role=slider]]:h-4 [&_[role=slider]]:border-2 [&_[role=slider]]:border-primary-foreground"
+                      className="mt-2 [&>span:first-child]:h-1 [&>span:first-child]:bg-olivePrimary/20 [&_[role=slider]]:bg-olivePrimary [&_[role=slider]]:w-4 [&_[role=slider]]:h-4 [&_[role=slider]]:border-2 [&_[role=slider]]:border-lightBeige"
                     />
                   </div>
                   <div>
-                    <Label className="text-gray-700">التقييم الأدنى: {minRating} نجوم</Label>
+                    <Label className="text-darkOlive">التقييم الأدنى: {minRating} نجوم</Label>
                     <div className="flex space-x-1 space-x-reverse mt-1">
                       {[1, 2, 3, 4, 5].map(star => (
                         <Button 
@@ -341,18 +341,18 @@ const ExplorePage = () => {
                           variant={minRating >= star ? "default" : "outline"} 
                           size="icon" 
                           onClick={() => setMinRating(star === minRating ? 0 : star)}
-                          className={`p-2 ${minRating >= star ? 'bg-yellow-400 border-yellow-400 hover:bg-yellow-500' : 'border-gray-300'}`}
+                          className={`p-2 ${minRating >= star ? 'bg-burntOrange border-burntOrange hover:bg-burntOrange/90' : 'border-olivePrimary/30'}`}
                         >
-                          <Star className={`h-5 w-5 ${minRating >= star ? 'text-white' : 'text-yellow-400'}`} />
+                          <Star className={`h-5 w-5 ${minRating >= star ? 'text-white' : 'text-burntOrange'}`} />
                         </Button>
                       ))}
                     </div>
                   </div>
                   <Separator />
-                  <Button onClick={handleFilterChange} className="w-full bg-orange-500 hover:bg-orange-600">
+                  <Button onClick={handleFilterChange} className="w-full bg-burntOrange hover:bg-burntOrange/90 text-white">
                     <Filter className="mr-2 h-4 w-4" /> تطبيق الفلاتر
                   </Button>
-                  <Button onClick={resetFilters} variant="outline" className="w-full">
+                  <Button onClick={resetFilters} variant="outline" className="w-full border-olivePrimary/50 text-olivePrimary hover:bg-olivePrimary hover:text-white">
                     إعادة تعيين الفلاتر
                   </Button>
                 </CardContent>
@@ -362,16 +362,16 @@ const ExplorePage = () => {
             {/* Gigs List */}
             <main className="w-full md:w-3/4">
               <div className="flex items-center justify-between mb-6">
-                <p className="text-gray-600">تم العثور على {gigs.length} منتج</p>
+                <p className="text-darkOlive/70">تم العثور على {gigs.length} منتج</p>
                 <div className="flex items-center gap-2">
-                  <Button variant="outline" size="icon" className="md:hidden ml-2" onClick={() => setIsFiltersOpen(true)}>
+                  <Button variant="outline" size="icon" className="md:hidden ml-2 border-olivePrimary/50 text-olivePrimary hover:bg-olivePrimary hover:text-white" onClick={() => setIsFiltersOpen(true)}>
                     <Filter className="h-5 w-5" />
                   </Button>
                   <Select value={sortBy} onValueChange={(value) => {setSortBy(value); handleFilterChange();}}>
-                    <SelectTrigger className="w-[180px]">
+                    <SelectTrigger className="w-[180px] border-olivePrimary/30 focus:border-olivePrimary focus:ring-olivePrimary/20">
                       <SelectValue placeholder="الترتيب حسب" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="border-olivePrimary/30">
                       <SelectItem value="relevance">الأكثر صلة</SelectItem>
                       <SelectItem value="price_low">السعر: من الأقل للأعلى</SelectItem>
                       <SelectItem value="price_high">السعر: من الأعلى للأقل</SelectItem>
@@ -379,7 +379,7 @@ const ExplorePage = () => {
                       <SelectItem value="newest">الأحدث</SelectItem>
                     </SelectContent>
                   </Select>
-                  <Button variant="outline" size="icon" onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}>
+                  <Button variant="outline" size="icon" className="border-olivePrimary/50 text-olivePrimary hover:bg-olivePrimary hover:text-white" onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}>
                     {viewMode === 'grid' ? <ListFilter className="h-5 w-5" /> : <LayoutGrid className="h-5 w-5" />}
                   </Button>
                 </div>
@@ -406,8 +406,8 @@ const ExplorePage = () => {
               ) : (
                 <div className="text-center py-12">
                   <img src="https://images.unsplash.com/photo-1675023112817-52b789fd2ef0" alt="لا توجد نتائج" className="mx-auto mb-4 w-48 h-48 text-gray-400" />
-                  <h3 className="text-2xl font-semibold text-gray-700 mb-2">لا توجد منتجات تطابق بحثك</h3>
-                  <p className="text-gray-500">حاول تعديل الفلاتر أو البحث بكلمات أخرى.</p>
+                  <h3 className="text-2xl font-semibold text-darkOlive mb-2">لا توجد منتجات تطابق بحثك</h3>
+                  <p className="text-darkOlive/70">حاول تعديل الفلاتر أو البحث بكلمات أخرى.</p>
                 </div>
               )}
             </main>
@@ -423,32 +423,32 @@ const ExplorePage = () => {
               animate={{ x: 0, opacity: 1 }}
               transition={{ duration: 0.5 }}
             >
-              <Card className="shadow-lg border-orange-200">
+              <Card className="shadow-lg border-olivePrimary/20">
                 <CardHeader className="flex flex-row items-center justify-between">
-                  <CardTitle className="text-xl text-primary">تصفية النتائج</CardTitle>
-                  <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setIsFiltersOpen(false)}>
+                  <CardTitle className="text-xl text-olivePrimary">تصفية النتائج</CardTitle>
+                  <Button variant="ghost" size="icon" className="md:hidden hover:bg-lightGreen/50 text-olivePrimary" onClick={() => setIsFiltersOpen(false)}>
                     <X className="h-5 w-5" />
                   </Button>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div>
-                    <Label htmlFor="search-filter-sellers" className="text-gray-700">بحث بالاسم أو المهارات</Label>
+                    <Label htmlFor="search-filter-sellers" className="text-darkOlive">بحث بالاسم أو المهارات</Label>
                     <Input 
                       id="search-filter-sellers" 
                       type="text" 
                       value={searchTerm} 
                       onChange={(e) => setSearchTerm(e.target.value)} 
                       placeholder="اسم الحرفي، المهارات..." 
-                      className="mt-1"
+                      className="mt-1 border-olivePrimary/30 focus:border-olivePrimary focus:ring-olivePrimary/20"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="category-filter-sellers" className="text-gray-700">التخصص</Label>
+                    <Label htmlFor="category-filter-sellers" className="text-darkOlive">التخصص</Label>
                     <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                      <SelectTrigger id="category-filter-sellers" className="mt-1">
+                      <SelectTrigger id="category-filter-sellers" className="mt-1 border-olivePrimary/30 focus:border-olivePrimary focus:ring-olivePrimary/20">
                         <SelectValue placeholder="اختر تخصص" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="border-olivePrimary/30">
                         <SelectItem value="all">كل التخصصات</SelectItem>
                         {categories.map(cat => (
                           <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
@@ -473,10 +473,10 @@ const ExplorePage = () => {
                     </div>
                   </div>
                   <Separator />
-                  <Button onClick={handleFilterChange} className="w-full bg-orange-500 hover:bg-orange-600">
+                  <Button onClick={handleFilterChange} className="w-full bg-olivePrimary hover:bg-olivePrimary/90 text-white">
                     <Filter className="mr-2 h-4 w-4" /> تطبيق الفلاتر
                   </Button>
-                  <Button onClick={resetFilters} variant="outline" className="w-full">
+                  <Button onClick={resetFilters} variant="outline" className="w-full text-darkOlive border-olivePrimary/30 hover:bg-lightGreen/30">
                     إعادة تعيين الفلاتر
                   </Button>
                 </CardContent>

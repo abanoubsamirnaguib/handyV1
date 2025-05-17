@@ -44,19 +44,19 @@ const CartPage = () => {
         transition={{ duration: 0.5 }}
       >
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold text-gray-800">سلة التسوق</h1>
-          <Button variant="outline" onClick={() => navigate('/explore')} className="border-primary text-primary hover:bg-primary hover:text-white">
+          <h1 className="text-3xl font-bold text-darkOlive">سلة التسوق</h1>
+          <Button variant="outline" onClick={() => navigate('/explore')} className="border-olivePrimary text-olivePrimary hover:bg-olivePrimary hover:text-white">
             <ArrowLeft className="ml-2 h-4 w-4" /> متابعة التسوق
           </Button>
         </div>
 
         {cart.length === 0 ? (
-          <Card className="text-center py-12 shadow-lg border-orange-200">
+          <Card className="text-center py-12 shadow-lg border-olivePrimary/20">
             <CardContent>
-              <ShoppingBag className="h-24 w-24 text-gray-300 mx-auto mb-6" />
-              <h2 className="text-2xl font-semibold text-gray-700 mb-2">سلة التسوق فارغة</h2>
-              <p className="text-gray-500 mb-6">لم تقم بإضافة أي منتجات إلى السلة بعد.</p>
-              <Button asChild size="lg" className="bg-orange-500 hover:bg-orange-600">
+              <ShoppingBag className="h-24 w-24 text-lightGreen mx-auto mb-6" />
+              <h2 className="text-2xl font-semibold text-darkOlive mb-2">سلة التسوق فارغة</h2>
+              <p className="text-darkOlive/70 mb-6">لم تقم بإضافة أي منتجات إلى السلة بعد.</p>
+              <Button asChild size="lg" className="bg-burntOrange hover:bg-burntOrange/90 text-white">
                 <Link to="/explore">ابدأ التسوق الآن</Link>
               </Button>
             </CardContent>
@@ -72,26 +72,26 @@ const CartPage = () => {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.3, delay: index * 0.1 }}
                 >
-                  <Card className="flex flex-col sm:flex-row items-center p-4 shadow-md hover:shadow-lg transition-shadow duration-300 card-hover border-amber-100">
+                  <Card className="flex flex-col sm:flex-row items-center p-4 shadow-md hover:shadow-lg transition-shadow duration-300 card-hover border-olivePrimary/20">
                     <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-md overflow-hidden mb-4 sm:mb-0 sm:ml-4">
                       <img src="https://images.unsplash.com/photo-1688811363469-49a6f3bc2025" alt={item.title} className="w-full h-full object-cover" />
                     </div>
                     <div className="flex-1 text-center sm:text-right">
-                      <Link to={`/gigs/${item.id}`} className="text-lg font-semibold text-gray-800 hover:text-primary transition-colors">{item.title}</Link>
-                      <p className="text-sm text-gray-500">السعر: {item.price} جنيه</p>
+                      <Link to={`/gigs/${item.id}`} className="text-lg font-semibold text-darkOlive hover:text-olivePrimary transition-colors">{item.title}</Link>
+                      <p className="text-sm text-darkOlive/70">السعر: {item.price} جنيه</p>
                       <div className="flex items-center justify-center sm:justify-start my-2 space-x-2 space-x-reverse">
-                        <Button variant="outline" size="icon" onClick={() => updateQuantity(item.id, item.quantity - 1)} disabled={item.quantity <= 1}>
+                        <Button variant="outline" size="icon" onClick={() => updateQuantity(item.id, item.quantity - 1)} disabled={item.quantity <= 1} className="border-olivePrimary/50 text-olivePrimary">
                           <Minus className="h-4 w-4" />
                         </Button>
-                        <Input type="number" value={item.quantity} readOnly className="w-16 text-center" />
-                        <Button variant="outline" size="icon" onClick={() => updateQuantity(item.id, item.quantity + 1)}>
+                        <Input type="number" value={item.quantity} readOnly className="w-16 text-center border-olivePrimary/30" />
+                        <Button variant="outline" size="icon" onClick={() => updateQuantity(item.id, item.quantity + 1)} className="border-olivePrimary/50 text-olivePrimary">
                           <Plus className="h-4 w-4" />
                         </Button>
                       </div>
                     </div>
                     <div className="flex flex-col items-center sm:items-end mt-4 sm:mt-0 sm:mr-auto">
-                      <p className="text-lg font-bold text-primary mb-2">{item.price * item.quantity} جنيه</p>
-                      <Button variant="ghost" size="icon" onClick={() => removeFromCart(item.id)} className="text-destructive hover:bg-red-50">
+                      <p className="text-lg font-bold text-olivePrimary mb-2">{item.price * item.quantity} جنيه</p>
+                      <Button variant="ghost" size="icon" onClick={() => removeFromCart(item.id)} className="text-burntOrange hover:bg-burntOrange/10">
                         <Trash2 className="h-5 w-5" />
                       </Button>
                     </div>

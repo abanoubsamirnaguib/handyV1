@@ -68,7 +68,7 @@ const DashboardOverview = () => {
               <ul className="mt-4 space-y-2">
                 <li className="flex justify-between p-2 bg-gray-50 rounded-md"><span>طلب #1234</span> <span className="text-green-600">مكتمل</span></li>
                 <li className="flex justify-between p-2 bg-gray-50 rounded-md"><span>طلب #1235</span> <span className="text-blue-600">قيد التنفيذ</span></li>
-                <li className="flex justify-between p-2 bg-gray-50 rounded-md"><span>طلب #1236</span> <span className="text-orange-600">في انتظار الدفع</span></li>
+                <li className="flex justify-between p-2 bg-gray-50 rounded-md"><span>طلب #1236</span> <span className="text-burntOrange">في انتظار الدفع</span></li>
               </ul>
             </CardContent>
           </Card>

@@ -42,19 +42,10 @@ button:hover .sidebar-icon {
   transform: scale(1.1);
 }
 
-/* Text fade transitions */
-@media (min-width: 768px) {
-  .sidebar-expanded button span {
-    opacity: 1;
-    transform: translateX(0);
-    transition: opacity 0.2s ease 0.1s, transform 0.2s ease 0.1s;
-  }
-
-  .sidebar-collapsed button span {
-    opacity: 0;
-    transform: translateX(-10px);
-    transition: opacity 0.1s ease, transform 0.1s ease;
-  }
+/* Clean text transitions - no fade effects that could cause conflicts */
+.sidebar-text {
+  display: inline-block;
+  white-space: nowrap;
 }
 
 /* Responsive Dashboard Content */

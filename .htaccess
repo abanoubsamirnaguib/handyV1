@@ -6,13 +6,19 @@
   RewriteCond %{HTTP_HOST} ^(?:www\.)?([^.]+\.[^.]+)$ [NC]
   RewriteRule ^ - [E=PARENT_DOMAIN:%1]
   
+  # First check if the request is for an existing file or directory in "dist"
+  RewriteCond %{DOCUMENT_ROOT}/dist%{REQUEST_URI} -f [OR]
+  RewriteCond %{DOCUMENT_ROOT}/dist%{REQUEST_URI} -d
+  RewriteRule ^(.*)$ dist/$1 [L]
+  
+  # For all other requests, serve the index.html from dist
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteCond %{REQUEST_FILENAME} !-d
-  RewriteRule ^ index.html [L]
+  RewriteRule ^ dist/index.html [L]
 </IfModule>
 
 <IfModule mod_headers.c>
   Header set X-Powered-By "Hostinger Horizons"
   # Add the parent domain to response headers
   Header set X-Parent-Domain "%{PARENT_DOMAIN}e" env=PARENT_DOMAIN
-</IfModule>
+</IfModule></IfModule>

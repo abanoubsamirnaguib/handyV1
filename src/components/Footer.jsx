@@ -10,7 +10,7 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
           {/* About */}
           <div>
-            <h3 className="text-xl font-bold mb-4 text-lightBeige">حرفتي</h3>
+            <h3 className="text-xl font-bold mb-4 text-lightBeige">بازار</h3>
             <p className="text-lightBeige/80 mb-4">
               منصة تجمع الحرفيين والمبدعين في مكان واحد، لعرض منتجاتهم اليدوية الفريدة والتواصل مع العملاء مباشرة.
             </p>
@@ -126,7 +126,7 @@ const Footer = () => {
         </div>
 
         <div className="border-t border-lightBeige/20 mt-10 pt-6 text-center text-lightBeige/60">
-          <p>© {new Date().getFullYear()} حرفتي. جميع الحقوق محفوظة.</p>
+          <p>© {new Date().getFullYear()} بازار. جميع الحقوق محفوظة.</p>
         </div>
       </div>
     </footer>

@@ -63,7 +63,7 @@ const DashboardSidebar = ({ userRole }) => {
                   whileHover={{ scale: 1.05 }}
                   className={`text-xl font-bold text-olivePrimary ${!isSidebarOpen && !isMobile ? 'scale-0 w-0 opacity-0' : 'scale-100 opacity-100'} transition-all duration-300`}
                 >
-                  حرفتي
+                  بازار
                 </motion.div>
               </Link>
               {!isMobile && (

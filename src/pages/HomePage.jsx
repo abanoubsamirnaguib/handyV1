@@ -51,9 +51,9 @@ const HomePage = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-b from-lightBeige via-lightGreen/10 to-white">
+    <div className="flex flex-col min-h-screen bg-lightBeige">
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-olivePrimary via-olivePrimary/80 to-lightGreen text-white py-20 md:py-32 overflow-hidden">
+      <section className="relative bg-olivePrimary text-white py-20 md:py-32 overflow-hidden">
         <div className="absolute inset-0 bg-black/10"></div>
         <div className="container mx-auto px-4 relative z-10">
           <div className="flex flex-col md:flex-row items-center">
@@ -105,7 +105,7 @@ const HomePage = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            تصفح <span className="text-gradient">أبرز التصنيفات</span>
+            تصفح <span className="text-olivePrimary">أبرز التصنيفات</span>
           </motion.h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6">
             {topCategories.map((category, index) => (
@@ -138,7 +138,7 @@ const HomePage = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            منتجات <span className="text-gradient">مميزة</span>
+            منتجات <span className="text-olivePrimary">مميزة</span>
           </motion.h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {featuredGigs.map((gig, index) => (
@@ -197,7 +197,7 @@ const HomePage = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            كيف تعمل <span className="text-gradient">منصتنا؟</span>
+            كيف تعمل <span className="text-olivePrimary">منصتنا؟</span>
           </motion.h2>
           <div className="grid md:grid-cols-3 gap-8 text-center">
             {[
@@ -230,7 +230,7 @@ const HomePage = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            تعرف على <span className="text-gradient">أفضل الحرفيين</span>
+            تعرف على <span className="text-olivePrimary">أفضل الحرفيين</span>
           </motion.h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {topSellers.map((seller, index) => (
@@ -261,7 +261,7 @@ const HomePage = () => {
       </section>
 
       {/* Call to Action Section */}
-      <section className="py-20 bg-gradient-to-r from-burntOrange to-peachOrange text-white">
+      <section className="py-20 bg-burntOrange text-white">
         <div className="container mx-auto px-4 text-center">
           <motion.h2 
             className="text-3xl md:text-4xl font-bold mb-6"

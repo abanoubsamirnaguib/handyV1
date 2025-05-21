@@ -81,10 +81,9 @@ const ProfilePage = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >        {/* Profile Header */}
-        <Card className="mb-8 shadow-xl overflow-hidden border-lightBeige bg-gradient-to-br from-lightBeige/50 via-lightGreen/30 to-white">
-          <div className="relative h-48 bg-gradient-to-r from-olivePrimary to-burntOrange">
+        transition={{ duration: 0.5 }}      >        {/* Profile Header */}
+        <Card className="mb-8 shadow-xl overflow-hidden border-lightBeige bg-lightBeige">
+          <div className="relative h-48 bg-olivePrimary">
             <img src="https://images.unsplash.com/photo-1692975716697-4abaff365786" alt="غلاف الملف الشخصي" className="w-full h-full object-cover opacity-30" />
           </div>
           <CardContent className="pt-0 -mt-16">

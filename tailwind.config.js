@@ -15,8 +15,7 @@ module.exports = {
 				'2xl': '1400px',
 			},
 		},
-		extend: {
-			colors: {
+		extend: {			colors: {
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
 				ring: 'hsl(var(--ring))',
@@ -50,19 +49,24 @@ module.exports = {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))',
 				},
-				// Custom colors from the palette
-				olivePrimary: '#859569',  // Primary - olive green
-				lightBeige: '#EFEDE6',    // Secondary - very light beige
-				burntOrange: '#E18562',   // Accent - burnt orange
-				lightGreen: '#D0E0BF',    // Light green
-				creamyBeige: '#F7EAC8',   // Creamy beige
-				lightBrownGray: '#B2AD9A', // Light brown-gray
-				darkBrown: '#6F5C4E',     // Dark brown
-				paleGreen: '#E6F0DC',     // Pale green
-				darkOlive: '#524F39',     // Dark olive
-				palePink: '#F5DAC6',      // Pale pink
-				brightOrange: '#F15A46',  // Bright orange
-				peachOrange: '#F6906A',   // Peach orange
+				// Custom colors from the palette with 60-30-10 rule
+				// 60% - Primary colors
+				olivePrimary: '#859569',  // Primary olive green
+				lightBeige: '#EFEDE6',    // Primary very light beige
+				
+				// 30% - Secondary colors
+				burntOrange: '#E18562',   // Secondary burnt orange
+				lightGreen: '#D0E0BF',    // Secondary light green
+				
+				// 10% - Accent & Supporting colors
+				creamyBeige: '#F7EAC8',   // Supporting creamy beige
+				lightBrownGray: '#B2AD9A', // Supporting light brown-gray
+				darkBrown: '#6F5C4E',     // Supporting dark brown
+				paleGreen: '#E6F0DC',     // Supporting pale green
+				darkOlive: '#524F39',     // Supporting dark olive
+				palePink: '#F5DAC6',      // Supporting pale pink
+				brightOrange: '#F15A46',  // Accent bright orange
+				peachOrange: '#F6906A',   // Accent peach orange
 			},
 			borderRadius: {
 				lg: 'var(--radius)',

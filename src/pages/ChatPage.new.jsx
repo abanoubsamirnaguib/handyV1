@@ -104,12 +104,11 @@ const ChatPage = () => {
   }
   
   const navbarHeight = document.querySelector('header')?.offsetHeight || 70;
-
   return (
     <div className="flex border-t h-full" style={{ height: `calc(100vh - ${navbarHeight}px)`, overflow: 'hidden' }}>
       {/* Sidebar: Conversations List */}
       <aside 
-        className={`w-full md:w-1/3 lg:w-1/4 border-l bg-gradient-to-b from-orange-50 to-amber-50 p-4 flex flex-col ${activeConversation && 'hidden md:flex'}`}
+        className={`w-full md:w-1/3 lg:w-1/4 border-l bg-lightBeige p-4 flex flex-col ${activeConversation && 'hidden md:flex'}`}
         style={{ height: '100%', overflowY: 'auto' }}
       >
         <div className="flex items-center justify-between mb-4">
@@ -209,11 +208,9 @@ const ChatPage = () => {
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
-            </header>
-
-            {/* Messages Area */}
+            </header>            {/* Messages Area */}
             <div 
-              className="messages-container p-4 bg-gradient-to-br from-orange-50 via-amber-50 to-white"
+              className="messages-container p-4 bg-lightBeige"
               style={{ 
                 flex: 1, 
                 overflowY: 'auto', 

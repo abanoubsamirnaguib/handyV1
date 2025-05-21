@@ -3,35 +3,35 @@
 @tailwind utilities;
 
 :root {
-  /* Base colors */
-  --background: 55 10% 95%;  /* #EFEDE6 - light beige */
+  /* Base colors (60% - Primary) */
+  --background: 55 10% 95%;  /* #EFEDE6 - light beige (primary) */
   --foreground: 220 9% 24%;  /* #524F39 - dark olive (for text) */
   
-  /* Card styling */
+  /* Card styling (60% - Primary) */
   --card: 55 10% 95%;  /* #EFEDE6 - light beige */
-  --card-foreground: 220 9% 24%;  /* #524F39 - dark olive */
+  --card-foreground: 82 18% 50%;  /* #859569 - olive green */
   
-  /* Popup/dialog styling */
+  /* Popup/dialog styling (60% - Primary) */
   --popover: 55 10% 95%;  /* #EFEDE6 - light beige */
-  --popover-foreground: 220 9% 24%;  /* #524F39 - dark olive */
+  --popover-foreground: 82 18% 50%;  /* #859569 - olive green */
   
-  /* Main theme colors */
-  --primary: 82 18% 50%;  /* #859569 - olive green (60%) */
+  /* Main theme colors (60% - Primary) */
+  --primary: 82 18% 50%;  /* #859569 - olive green */
   --primary-foreground: 0 0% 100%;  /* White text on primary */
   
-  /* Secondary elements */
-  --secondary: 55 25% 93%;  /* #EFEDE6 - very light beige (30%) */
-  --secondary-foreground: 220 9% 24%;  /* #524F39 - dark olive */
+  /* Secondary elements (30% - Secondary) */
+  --secondary: 70 25% 85%;  /* #D0E0BF - very light green */
+  --secondary-foreground: 82 18% 50%;  /* #859569 - olive green */
   
-  /* Accent colors (10%) */
+  /* Accent colors (10% - Accent) */
   --accent: 14 59% 63%;  /* #E18562 - burnt orange */
   --accent-foreground: 0 0% 100%;  /* White text on accent */
   
-  /* Muted/subtle elements */
-  --muted: 70 25% 85%;  /* #D0E0BF - very light green */
-  --muted-foreground: 85 10% 40%;  /* Darker version of muted */
+  /* Muted/subtle elements (Secondary) */
+  --muted: 51 12% 65%;  /* #B2AD9A - light brown-gray */
+  --muted-foreground: 38 17% 38%;  /* #6F5C4E - dark brown */
   
-  /* Destructive/error colors */
+  /* Destructive/error colors (Accent) */
   --destructive: 7 84% 62%;  /* #F15A46 - bright orange */
   --destructive-foreground: 0 0% 100%;  /* White text on destructive */
   
@@ -44,50 +44,57 @@
   --radius: 0.5rem;
   --navbar-height: 66px;
   
-  /* Custom olive theme colors */
-  --olivePrimary: 82 18% 50%;  /* #859569 - olive green */
-  --lightBeige: 55 25% 93%;    /* #EFEDE6 - light beige */
-  --burntOrange: 14 59% 63%;   /* #E18562 - burnt orange */
-  --darkOlive: 220 9% 24%;     /* #524F39 - dark olive */
-  --lightGreen: 70 25% 85%;    /* #D0E0BF - light green */
+  /* Custom olive theme colors - All palette colors */
+  --olivePrimary: 82 18% 50%;    /* #859569 - olive green (primary) */
+  --lightBeige: 55 10% 95%;      /* #EFEDE6 - light beige (primary) */
+  --burntOrange: 14 59% 63%;     /* #E18562 - burnt orange (secondary) */
+  --lightGreen: 70 25% 85%;      /* #D0E0BF - very light green (secondary) */
+  --creamyBeige: 45 66% 88%;     /* #F7EAC8 - creamy beige */
+  --lightBrownGray: 51 12% 65%;  /* #B2AD9A - light brown-gray */
+  --darkBrown: 38 17% 38%;       /* #6F5C4E - dark brown */
+  --paleGreen: 87 41% 90%;       /* #E6F0DC - pale green */
+  --darkOlive: 220 9% 24%;       /* #524F39 - dark olive */
+  --palePink: 28 68% 87%;        /* #F5DAC6 - pale pink */
+  --brightOrange: 7 84% 62%;     /* #F15A46 - bright orange (accent) */
+  --peachOrange: 19 86% 69%;     /* #F6906A - peach orange (accent) */
 }
 
 .dark {
-  /* Dark mode base colors */
+  /* Dark mode base colors (60% - Primary) */
   --background: 220 9% 24%;  /* #524F39 - dark olive */
   --foreground: 55 10% 95%;  /* #EFEDE6 - light beige (for text) */
   
-  /* Card styling */
-  --card: 38 17% 38%;  /* #6F5C4E - darker brown */
+  /* Card styling (60% - Primary) */
+  --card: 38 17% 38%;  /* #6F5C4E - dark brown */
   --card-foreground: 55 10% 95%;  /* #EFEDE6 - light beige */
   
-  /* Popup/dialog styling */
-  --popover: 38 17% 38%;  /* #6F5C4E - darker brown */
+  /* Popup/dialog styling (60% - Primary) */
+  --popover: 38 17% 38%;  /* #6F5C4E - dark brown */
   --popover-foreground: 55 10% 95%;  /* #EFEDE6 - light beige */
   
-  /* Main theme colors */
+  /* Main theme colors (60% - Primary) */
   --primary: 82 18% 50%;  /* #859569 - olive green (stays the same) */
-  --primary-foreground: 0 0% 100%;  /* White text on primary */
+  --primary-foreground: 55 10% 95%;  /* #EFEDE6 - light beige */
   
-  /* Secondary elements */
-  --secondary: 51 12% 65%;  /* #B2AD9A - light brown-gray */
-  --secondary-foreground: 0 0% 100%;  /* White text on secondary */
+  /* Secondary elements (30% - Secondary) */
+  --secondary: 70 25% 85%;  /* #D0E0BF - very light green */
+  --secondary-foreground: 38 17% 38%;  /* #6F5C4E - dark brown */
   
-  /* Accent colors */
-  --accent: 14 59% 63%;  /* #E18562 - burnt orange (stays the same) */
+  /* Accent colors (10% - Accent) */
+  --accent: 14 59% 63%;  /* #E18562 - burnt orange */
   --accent-foreground: 0 0% 100%;  /* White text on accent */
   
-  /* Muted/subtle elements */
-  --muted: 38 17% 38%;  /* #6F5C4E - darker brown */
-  --muted-foreground: 51 12% 65%;  /* #B2AD9A - light brown-gray */
+  /* Muted/subtle elements (Secondary) */
+  --muted: 51 12% 65%;  /* #B2AD9A - light brown-gray */
+  --muted-foreground: 38 17% 38%;  /* #6F5C4E - dark brown */
   
-  /* Destructive/error colors */
+  /* Destructive/error colors (Accent) */
   --destructive: 7 84% 62%;  /* #F15A46 - bright orange */
   --destructive-foreground: 0 0% 100%;  /* White text on destructive */
   
   /* UI element styling */
-  --border: 38 17% 38%;  /* #6F5C4E - darker brown */
-  --input: 38 17% 38%;  /* #6F5C4E - darker brown */
+  --border: 51 12% 65%;  /* #B2AD9A - light brown-gray */
+  --input: 38 17% 38%;  /* #6F5C4E - dark brown */
   --ring: 14 59% 63%;  /* #E18562 - burnt orange */
 }
 
@@ -151,16 +158,16 @@ body {
 
 /* Custom Utilities */
 .glass-effect {
-  background-color: rgba(239, 237, 230, 0.3);
+  background-color: rgba(239, 237, 230, 0.3); /* #EFEDE6 - light beige with opacity (primary) */
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(133, 149, 105, 0.2);
+  border: 1px solid rgba(133, 149, 105, 0.2); /* #859569 - olive green with opacity (primary) */
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .bounce-utility {
-  background-color: rgba(255, 255, 255, 0.3);
+  background-color: rgba(239, 237, 230, 0.3); /* #EFEDE6 - light beige with opacity (primary) */
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(133, 149, 105, 0.2);
+  border: 1px solid rgba(133, 149, 105, 0.2); /* #859569 - olive green with opacity (primary) */
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
 }
@@ -173,7 +180,7 @@ body {
 .text-gradient {
   background-clip: text;
   color: transparent;
-  background-image: linear-gradient(to right, #859569, #E18562);
+  background-color: #859569; /* Replaced gradient with primary olive green */
 }
 
 .card-hover {
@@ -222,12 +229,12 @@ html[dir="rtl"] .ltr-icon {
 }
 
 .sidebar-item:hover {
-  background-color: rgba(133, 149, 105, 0.1); /* Light olive green background */
+  background-color: rgba(133, 149, 105, 0.1); /* Light olive green background - primary */
 }
 
 .sidebar-item:focus {
   outline: none;
-  box-shadow: 0 0 0 2px rgba(133, 149, 105, 0.3); /* Olive green shadow */
+  box-shadow: 0 0 0 2px rgba(133, 149, 105, 0.3); /* Olive green shadow - primary */
 }
 
 /* Mobile Menu Trigger */
@@ -239,7 +246,7 @@ html[dir="rtl"] .ltr-icon {
 }
 
 .menu-trigger:hover {
-  background-color: rgba(133, 149, 105, 0.1);
+  background-color: rgba(133, 149, 105, 0.1); /* Light olive green background - primary */
 }
 
 .menu-trigger:focus {

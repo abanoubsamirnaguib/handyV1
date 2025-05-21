@@ -80,9 +80,8 @@ const SellerProfilePage = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-      >
-        {/* Seller Profile Header */}        <Card className="mb-8 overflow-hidden border-lightBeige/50">
-          <div className="h-48 bg-gradient-to-r from-olivePrimary to-burntOrange relative">
+      >        {/* Seller Profile Header */}        <Card className="mb-8 overflow-hidden border-lightBeige/50">
+          <div className="h-48 bg-olivePrimary relative">
             <div className="absolute -bottom-16 right-8 h-32 w-32 rounded-full bg-white flex items-center justify-center text-5xl font-bold text-olivePrimary shadow-lg border-4 border-white">
               {seller.name.charAt(0)}
             </div>

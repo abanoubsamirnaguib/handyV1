@@ -8,15 +8,16 @@ const buttonVariants = cva(
 	{
 		variants: {
 			variant: {
-				default: 'bg-olivePrimary text-white hover:bg-olivePrimary/90',
-				destructive:
-          'bg-burntOrange text-white hover:bg-burntOrange/90',
+				default: 'bg-olivePrimary text-white hover:bg-olivePrimary/90', // Primary (60%)
+				destructive: 'bg-brightOrange text-white hover:bg-brightOrange/90', // Accent (10%)
 				outline:
           'border border-olivePrimary/30 bg-background text-darkOlive hover:bg-lightGreen/30 hover:text-olivePrimary hover:border-olivePrimary',
 				secondary:
-          'bg-lightBeige text-darkOlive hover:bg-lightBeige/80',
-				ghost: 'hover:bg-lightGreen hover:text-olivePrimary',
-				link: 'text-olivePrimary underline-offset-4 hover:underline',
+          'bg-lightGreen text-darkOlive hover:bg-lightGreen/80', // Secondary (30%)
+				ghost: 'hover:bg-lightGreen hover:text-olivePrimary', // Secondary (30%)
+				link: 'text-burntOrange underline-offset-4 hover:underline', // Secondary (30%)
+				accent: 'bg-burntOrange text-white hover:bg-burntOrange/90', // Secondary (30%)
+				neutral: 'bg-lightBrownGray text-white hover:bg-lightBrownGray/90', // Supporting color
 			},
 			size: {
 				default: 'h-10 px-4 py-2',

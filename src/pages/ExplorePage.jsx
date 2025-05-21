@@ -160,7 +160,7 @@ const ExplorePage = () => {
 
   const SellerCard = ({ seller }) => (
     <Card className="overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 flex flex-col h-full card-hover border-lightBeige/50">
-      <div className="relative h-48 bg-gradient-to-r from-olivePrimary to-burntOrange flex items-center justify-center">
+      <div className="relative h-48 bg-olivePrimary flex items-center justify-center">
         <div className="h-24 w-24 rounded-full bg-white flex items-center justify-center text-3xl font-bold text-burntOrange shadow-md">
           {seller.name.charAt(0)}
         </div>
@@ -204,7 +204,7 @@ const ExplorePage = () => {
 
   const SellerListItem = ({ seller }) => (
     <Card className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col md:flex-row card-hover border-olivePrimary/20 w-full">
-      <div className="relative md:w-1/4 h-48 md:h-auto bg-gradient-to-r from-olivePrimary to-lightGreen flex items-center justify-center">
+      <div className="relative md:w-1/4 h-48 md:h-auto bg-olivePrimary flex items-center justify-center">
         <div className="h-24 w-24 rounded-full bg-white flex items-center justify-center text-3xl font-bold text-olivePrimary shadow-md">
           {seller.name.charAt(0)}
         </div>
@@ -261,7 +261,7 @@ const ExplorePage = () => {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="mb-8 p-6 rounded-lg bg-gradient-to-r from-olivePrimary to-burntOrange text-white shadow-xl border border-lightBeige/20"
+        className="mb-8 p-6 rounded-lg bg-olivePrimary text-white shadow-xl border border-lightBeige/20"
       >
         <h1 className="text-4xl font-bold mb-2">
           {activeTab === 'products' ? 'استكشف المنتجات اليدوية' : 'تعرف على أفضل الحرفيين'}

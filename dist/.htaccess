@@ -1,11 +1,6 @@
 <IfModule mod_rewrite.c>
   RewriteEngine On
   RewriteBase /
-  
-  # Capture and store the parent domain
-  RewriteCond %{HTTP_HOST} ^(?:www\.)?([^.]+\.[^.]+)$ [NC]
-  RewriteRule ^ - [E=PARENT_DOMAIN:%1]
-  
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteCond %{REQUEST_FILENAME} !-d
   RewriteRule ^ index.html [L]
@@ -13,6 +8,4 @@
 
 <IfModule mod_headers.c>
   Header set X-Powered-By "Hostinger Horizons"
-  # Add the parent domain to response headers
-  Header set X-Parent-Domain "%{PARENT_DOMAIN}e" env=PARENT_DOMAIN
 </IfModule>

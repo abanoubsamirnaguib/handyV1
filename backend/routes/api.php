@@ -1,5 +1,11 @@
 <?php
 
+// Reminder: Ensure the 'api' rate limiter is defined in app/Providers/RouteServiceProvider.php like:
+// use Illuminate\Cache\RateLimiting\Limit;
+// use Illuminate\Support\Facades\RateLimiter;
+// RateLimiter::for('api', function (Request $request) {
+//     return Limit::perMinute(60)->by(optional($request->user())->id ?: $request->ip());
+// });
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -23,6 +29,7 @@ use App\Http\Controllers\Api\ActivityLogCrudController;
 use App\Http\Controllers\Api\OrderHistoryCrudController;
 use App\Http\Controllers\Api\FileUploadController;
 use App\Http\Controllers\Api\SiteSettingController;
+use App\Http\Controllers\Api\CsrfDebugController;
 
 Route::prefix('listsellers')->group(function () {
     Route::get('{id}', [SellerController::class, 'show']);
@@ -35,58 +42,74 @@ Route::prefix('Listpoducts')->group(function () {
 });
 
 Route::get('listcategories', [CategoryController::class, 'index']);
-
-// Public product and seller search/filter endpoints
 Route::get('products/search', [ProductController::class, 'search']);
 Route::get('sellers/search', [SellerController::class, 'search']);
-
-// Public order show endpoint
 Route::get('orders/{id}', [OrderCrudController::class, 'show']);
 
-// Authentication
+// Authentication - public routes
 Route::post('register', [AuthController::class, 'register']);
 Route::post('login', [AuthController::class, 'login']);
-Route::middleware('auth:sanctum')->group(function () {
+
+// Public routes
+Route::get('users/{id}', [UserCrudController::class, 'show']);  // Keep this one public for displaying profiles
+Route::get('csrf-debug', [CsrfDebugController::class, 'debug']); // Debug CSRF token issues
+
+// Protected Routes with middleware 
+Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('me', [AuthController::class, 'me']);
     Route::post('logout', [AuthController::class, 'logout']);
+    Route::get('check-token', [AuthController::class, 'checkToken']);
 
     // Product CRUD
     Route::apiResource('products', ProductCrudController::class)->except(['show']);
+    
     // Order CRUD
     Route::apiResource('orders', OrderCrudController::class)->except(['show']);
+    
     // Category CRUD
     Route::apiResource('categories', CategoryCrudController::class)->except(['show']);
-    // Review CRUD
+    
+    // Review CRUD    
     Route::apiResource('reviews', ReviewCrudController::class)->except(['show']);
+    
     // Seller CRUD
-    Route::apiResource('sellers', SellerCrudController::class)->except(['show']);
-    // User CRUD
-    Route::apiResource('users', UserCrudController::class)->except(['show']);
+    Route::apiResource('sellers', SellerCrudController::class)->except(['show']);    
+    
+    // User CRUD (remaining routes)
+    Route::delete('users/{id}', [UserCrudController::class, 'destroy']);
+    Route::get('users', [UserCrudController::class, 'index']);
+    Route::post('users', [UserCrudController::class, 'store']);
+    Route::put('users/{id}', [UserCrudController::class, 'update']);
+    Route::patch('users/{id}', [UserCrudController::class, 'update']);
+    
     // Cart Item CRUD
     Route::apiResource('cart-items', CartItemCrudController::class)->except(['show']);
+    
     // Wishlist Item CRUD
     Route::apiResource('wishlist-items', WishlistItemCrudController::class)->except(['show']);
+    
     // Message CRUD
     Route::apiResource('messages', MessageCrudController::class)->except(['show']);
+    
     // Conversation CRUD
     Route::apiResource('conversations', ConversationCrudController::class)->except(['show']);
+    
     // Notification CRUD
     Route::apiResource('notifications', NotificationCrudController::class)->except(['show']);
+    
     // Message Attachment CRUD
     Route::apiResource('message-attachments', MessageAttachmentCrudController::class)->except(['show']);
+    
     // Activity Log CRUD
     Route::apiResource('activity-logs', ActivityLogCrudController::class)->except(['show']);
+    
     // Order History CRUD
     Route::apiResource('order-history', OrderHistoryCrudController::class)->except(['show']);
-
+    
     // File Upload
     Route::post('upload', [FileUploadController::class, 'upload']);
 
     // Site Settings
     Route::get('settings', [SiteSettingController::class, 'index']);
     Route::post('settings', [SiteSettingController::class, 'update']);
-});
-
-Route::get('test', function () {
-    return 'API route works';
 });

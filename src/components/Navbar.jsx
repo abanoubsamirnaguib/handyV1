@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Menu, X, ShoppingCart, Bell, Search, User, Shield } from 'lucide-react';
@@ -31,6 +31,20 @@ const Navbar = () => {
       navigate(`/explore?search=${searchTerm}`);
     }
   };
+<<<<<<< HEAD
+=======
+
+  // Memoize the avatar to prevent unnecessary re-renders
+  const userAvatar = useMemo(() => {
+    return (
+      <Avatar>
+        <AvatarImage src={user?.avatar} />
+        <AvatarFallback>{user?.name ? user.name.charAt(0) : 'U'}</AvatarFallback>
+      </Avatar>
+    );
+  }, [user?.avatar, user?.name]);
+
+>>>>>>> 7d867ad382d5e5b4f9eb074a42c3618db3973b0c
   return (
     <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-olivePrimary/20">
       <div className="container mx-auto px-4 py-3">
@@ -93,17 +107,26 @@ const Navbar = () => {
                 </Button>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
+<<<<<<< HEAD
                     <Button variant="ghost" className="p-0 rounded-full border-2 border-olivePrimary/50 hover:border-burntOrange">
                       <Avatar>
                         <AvatarImage src={user.avatar} />
                         <AvatarFallback className="bg-olivePrimary text-white">{user.name?.charAt(0)}</AvatarFallback>
                       </Avatar>
+=======
+                    <Button variant="ghost" className="p-0 rounded-full">
+                      {userAvatar}
+>>>>>>> 7d867ad382d5e5b4f9eb074a42c3618db3973b0c
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-48">
                     <DropdownMenuLabel className="text-darkOlive">مرحباً, {user.name}</DropdownMenuLabel>
                     <DropdownMenuSeparator />
+<<<<<<< HEAD
                     <DropdownMenuItem onClick={() => navigate(`/profile/${user.id}`)} className="text-darkOlive hover:text-burntOrange">
+=======
+                    <DropdownMenuItem onClick={() => navigate('/profile/me')}>
+>>>>>>> 7d867ad382d5e5b4f9eb074a42c3618db3973b0c
                       الملف الشخصي
                     </DropdownMenuItem>
                     {user.role === 'admin' ? (
@@ -185,7 +208,7 @@ const Navbar = () => {
               )}
               {user ? (
                 <>
-                  <Link to={`/profile/${user.id}`} className="px-3 py-2 text-sm font-medium hover:text-primary" onClick={toggleMenu}>
+                  <Link to="/profile/me" className="px-3 py-2 text-sm font-medium hover:text-primary" onClick={toggleMenu}>
                     الملف الشخصي
                   </Link>
                   <Link to="/chat" className="px-3 py-2 text-sm font-medium hover:text-primary" onClick={toggleMenu}>
@@ -222,4 +245,5 @@ const Navbar = () => {
   );
 };
 
-export default Navbar;
+// Use React.memo to prevent unnecessary re-renders of the entire navbar
+export default React.memo(Navbar);

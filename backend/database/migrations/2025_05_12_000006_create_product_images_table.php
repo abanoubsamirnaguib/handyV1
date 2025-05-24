@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('product_images', function (Blueprint $table) {
             $table->id();
-            $table->uuid('product_id');
+            $table->unsignedBigInteger('product_id');
             $table->string('image_url', 255);
             $table->integer('display_order')->default(0);
             $table->dateTime('created_at')->default(DB::raw('CURRENT_TIMESTAMP'));

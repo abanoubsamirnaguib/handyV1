@@ -9,12 +9,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('products', function (Blueprint $table) {
-            $table->uuid('id')->primary();
-            $table->uuid('seller_id');
+            $table->bigIncrements('id');
+            $table->unsignedBigInteger('seller_id');
             $table->string('title', 255);
             $table->text('description');
             $table->decimal('price', 10, 2);
-            $table->uuid('category_id');
+            $table->unsignedBigInteger('category_id');
             $table->string('delivery_time', 50)->nullable();
             $table->decimal('rating', 3, 2)->default(0);
             $table->integer('review_count')->default(0);

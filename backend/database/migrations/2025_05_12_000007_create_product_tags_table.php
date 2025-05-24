@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('product_tags', function (Blueprint $table) {
             $table->id();
-            $table->uuid('product_id');
+            $table->unsignedBigInteger('product_id');
             $table->string('tag_name', 50);
             $table->dateTime('created_at')->default(DB::raw('CURRENT_TIMESTAMP'));
             $table->foreign('product_id')->references('id')->on('products')->onDelete('cascade');

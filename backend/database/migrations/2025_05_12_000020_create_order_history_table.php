@@ -9,9 +9,9 @@ return new class extends Migration
     {
         Schema::create('order_history', function (Blueprint $table) {
             $table->id();
-            $table->uuid('order_id');
+            $table->unsignedBigInteger('order_id');
             $table->enum('status', ['pending', 'paid', 'in_progress', 'completed', 'cancelled', 'refunded']);
-            $table->uuid('action_by')->nullable();
+            $table->unsignedBigInteger('action_by')->nullable();
             $table->string('action_type', 100)->nullable();
             $table->text('note')->nullable();
             $table->dateTime('created_at')->default(DB::raw('CURRENT_TIMESTAMP'));

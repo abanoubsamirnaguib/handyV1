@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('seller_skills', function (Blueprint $table) {
             $table->id();
-            $table->uuid('seller_id');
+            $table->unsignedBigInteger('seller_id');
             $table->string('skill_name', 100);
             $table->dateTime('created_at')->default(DB::raw('CURRENT_TIMESTAMP'));
             $table->foreign('seller_id')->references('id')->on('sellers')->onDelete('cascade');

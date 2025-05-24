@@ -16,13 +16,17 @@ class UserRequest extends FormRequest
                 'password' => 'required|string|min:6',
                 'role' => 'in:admin,seller,buyer',
             ];
-        }
-        // PATCH/PUT (update)
+        }        // PATCH/PUT (update)
         return [
             'name' => 'sometimes|required|string|max:100',
-            'email' => 'sometimes|required|email|unique:users,email',
+            'email' => 'sometimes|required|email|unique:users,email,' . $this->route('id'),
             'password' => 'sometimes|required|string|min:6',
-            'role' => 'in:admin,seller,buyer',
+            'role' => 'sometimes|in:admin,seller,buyer',
+            'bio' => 'nullable|string',
+            'location' => 'nullable|string',
+            'avatar' => 'nullable|string',
+            'skills' => 'nullable|array',
+            'skills.*' => 'nullable|string',
         ];
     }
 }

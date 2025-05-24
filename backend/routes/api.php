@@ -29,7 +29,6 @@ use App\Http\Controllers\Api\ActivityLogCrudController;
 use App\Http\Controllers\Api\OrderHistoryCrudController;
 use App\Http\Controllers\Api\FileUploadController;
 use App\Http\Controllers\Api\SiteSettingController;
-use App\Http\Controllers\Api\CsrfDebugController;
 
 Route::prefix('listsellers')->group(function () {
     Route::get('{id}', [SellerController::class, 'show']);
@@ -52,7 +51,6 @@ Route::post('login', [AuthController::class, 'login']);
 
 // Public routes
 Route::get('users/{id}', [UserCrudController::class, 'show']);  // Keep this one public for displaying profiles
-Route::get('csrf-debug', [CsrfDebugController::class, 'debug']); // Debug CSRF token issues
 
 // Protected Routes with middleware 
 Route::middleware(['auth:sanctum'])->group(function () {

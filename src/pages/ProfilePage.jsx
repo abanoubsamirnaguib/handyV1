@@ -45,6 +45,8 @@ const ProfilePage = () => {
           ? getApiUrl('/api/me')
           : getApiUrl(`/api/users/${id}`);
 
+        console.log('Fetching profile from:', url);
+        
         const token = localStorage.getItem('token');
         const res = await fetch(url, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
@@ -54,38 +56,80 @@ const ProfilePage = () => {
 
         if (!res.ok) throw new Error('Not found');
 
-        const data = await res.json();
-        setProfileData(data);
+        const data = (await res.json()).data;
+        console.log('Raw backend data received:', data);
+        
+        // Validate and structure the data properly
+        const validatedData = {
+          id: data.id,
+          name: data.name || '',
+          bio: data.bio || '',
+          location: data.location || '',
+          role: data.role || 'buyer',
+          skills: Array.isArray(data.skills) ? data.skills : [],
+          avatar: data.avatar || '',
+          rating: typeof data.rating === 'number' ? data.rating : 0,
+          completedOrders: typeof data.completedOrders === 'number' ? data.completedOrders : 0,
+          reviewCount: typeof data.reviewCount === 'number' ? data.reviewCount : 0,
+          memberSince: data.memberSince || data.createdAt || new Date().toISOString()
+        };
+        
+        console.log('Validated profile data being set:', validatedData);
+        setProfileData(validatedData);
 
         // Update form data if this is the user's own profile
         if (isOwnProfile) {
-          setEditFormData({
-            name: data.name || '',
-            bio: data.bio || '',
-            location: data.location || '',
-            skills: data.skills ? data.skills.join(', ') : '',
-          });
+          const formData = {
+            name: validatedData.name,
+            bio: validatedData.bio,
+            location: validatedData.location,
+            skills: validatedData.skills.join(', '),
+          };
+          console.log('Setting edit form data:', formData);
+          setEditFormData(formData);
 
           // Also update localStorage with the fresh data
           if (user) {
-            const updatedUser = { ...user, ...data };
+            const updatedUser = { ...user, ...validatedData };
             localStorage.setItem('user', JSON.stringify(updatedUser));
+            console.log('Updated localStorage with validated data:', updatedUser);
           }
         }
 
         // Fetch gigs if the user is a seller - only do this once
-        if (data.role === 'seller') {
-          const sellerID = data.id;
+        if (validatedData.role === 'seller') {
+          const sellerID = validatedData.id;
+          console.log('Fetching gigs for seller:', sellerID);
+          
           const gigsRes = await fetch(getApiUrl(`/api/sellers/${sellerID}`), {
             cache: 'force-cache'
           });
+          
           if (gigsRes.ok) {
             const sellerData = await gigsRes.json();
-            setUserGigs(sellerData.gigs || []);
+            console.log('Raw gigs data received:', sellerData);
+            
+            // Validate gigs data structure
+            const gigs = sellerData.gigs || [];
+            const validatedGigs = Array.isArray(gigs) ? gigs.map(gig => ({
+              id: gig.id,
+              title: gig.title || 'عنوان غير محدد',
+              price: typeof gig.price === 'number' ? gig.price : 0,
+              category: gig.category || 'غير محدد',
+              rating: typeof gig.rating === 'number' ? gig.rating : 0,
+              reviewCount: typeof gig.reviewCount === 'number' ? gig.reviewCount : 0,
+              images: Array.isArray(gig.images) ? gig.images : [],
+              description: gig.description || ''
+            })) : [];
+            
+            console.log('Validated gigs data being set:', validatedGigs);
+            setUserGigs(validatedGigs);
           } else {
+            console.warn('Failed to fetch gigs, setting empty array');
             setUserGigs([]);
           }
         } else {
+          console.log('User is not a seller, setting empty gigs array');
           setUserGigs([]);
         }
       } catch (error) {
@@ -117,9 +161,9 @@ const ProfilePage = () => {
     try {
       // Create an object with the data to update
       const dataToUpdate = {
-        name: editFormData.name,
-        bio: editFormData.bio,
-        location: editFormData.location,
+        name: editFormData.name.trim(),
+        bio: editFormData.bio.trim(),
+        location: editFormData.location.trim(),
         skills: updatedSkills
       };
       
@@ -128,11 +172,20 @@ const ProfilePage = () => {
       const success = await updateProfile(dataToUpdate);
       
       if (success) {
-        // Immediately update the profile data state to reflect changes
-        setProfileData(prev => ({
-          ...prev,
-          ...dataToUpdate
-        }));
+        console.log('Profile update successful, updating local state');
+        
+        // Immediately update the profile data state to reflect changes with proper validation
+        setProfileData(prev => {
+          const updated = {
+            ...prev,
+            name: dataToUpdate.name || prev.name,
+            bio: dataToUpdate.bio || prev.bio,
+            location: dataToUpdate.location || prev.location,
+            skills: Array.isArray(dataToUpdate.skills) ? dataToUpdate.skills : prev.skills
+          };
+          console.log('Updated profile data state:', updated);
+          return updated;
+        });
         
         setIsEditing(false);
         
@@ -159,7 +212,25 @@ const ProfilePage = () => {
             
             if (response.ok) {
               const freshData = await response.json();
-              setProfileData(freshData);
+              console.log('Fresh data received from API:', freshData);
+              
+              // Validate fresh data before setting
+              const validatedFreshData = {
+                id: freshData.id,
+                name: freshData.name || '',
+                bio: freshData.bio || '',
+                location: freshData.location || '',
+                role: freshData.role || 'buyer',
+                skills: Array.isArray(freshData.skills) ? freshData.skills : [],
+                avatar: freshData.avatar || '',
+                rating: typeof freshData.rating === 'number' ? freshData.rating : 0,
+                completedOrders: typeof freshData.completedOrders === 'number' ? freshData.completedOrders : 0,
+                reviewCount: typeof freshData.reviewCount === 'number' ? freshData.reviewCount : 0,
+                memberSince: freshData.memberSince || freshData.createdAt || new Date().toISOString()
+              };
+              
+              console.log('Setting validated fresh profile data:', validatedFreshData);
+              setProfileData(validatedFreshData);
             }
           } catch (e) {
             console.error('Error updating localStorage:', e);
@@ -196,16 +267,9 @@ const ProfilePage = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-<<<<<<< HEAD
         transition={{ duration: 0.5 }}      >        {/* Profile Header */}
         <Card className="mb-8 shadow-xl overflow-hidden border-lightBeige bg-lightBeige">
           <div className="relative h-48 bg-olivePrimary">
-=======
-        transition={{ duration: 0.5 }}
-      >
-        <Card className="mb-8 shadow-xl overflow-hidden border-orange-200 bg-gradient-to-br from-orange-50 via-amber-50 to-white">
-          <div className="relative h-48 bg-gradient-to-r from-orange-500 to-amber-400">
->>>>>>> 7d867ad382d5e5b4f9eb074a42c3618db3973b0c
             <img src="https://images.unsplash.com/photo-1692975716697-4abaff365786" alt="غلاف الملف الشخصي" className="w-full h-full object-cover opacity-30" />
           </div>
           <CardContent className="pt-0 -mt-16">
@@ -215,9 +279,13 @@ const ProfilePage = () => {
                 <AvatarFallback className="text-4xl">{profileData.name ? profileData.name.charAt(0) : 'U'}</AvatarFallback>
               </Avatar>
               <div className="md:mr-6 mt-4 md:mt-0 text-center md:text-right">
-                <h1 className="text-3xl font-bold text-gray-800">{profileData.name}</h1>
-                {profileData.role === 'seller' && (
-                  <p className="text-md text-primary">{profileData.skills ? profileData.skills.slice(0,2).join(' | ') : 'حرفي'}</p>
+                <h1 className="text-3xl font-bold text-gray-800">{profileData?.name || 'اسم غير محدد'}</h1>
+                {profileData?.role === 'seller' && (
+                  <p className="text-md text-primary">
+                    {profileData?.skills && profileData.skills.length > 0 
+                      ? profileData.skills.slice(0,2).join(' | ') 
+                      : 'حرفي'}
+                  </p>
                 )}
               </div>
               <div className="mt-4 md:mt-0 md:mr-auto flex space-x-2 space-x-reverse">
@@ -284,27 +352,30 @@ const ProfilePage = () => {
                 <CardTitle className="text-xl text-gray-700">نبذة عني</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-600 leading-relaxed">{profileData.bio || 'لا توجد نبذة تعريفية متاحة.'}</p>
+                <p className="text-gray-600 leading-relaxed">{profileData?.bio || 'لا توجد نبذة تعريفية متاحة.'}</p>
                 <Separator className="my-4" />
                 <div className="space-y-2 text-sm text-gray-600">
-                  {profileData.location && (
+                  {profileData?.location && (
                     <div className="flex items-center">
                       <MapPin className="h-4 w-4 ml-2 text-primary" /> {profileData.location}
                     </div>
                   )}
-                  {profileData.memberSince && (
+                  {profileData?.memberSince && (
                     <div className="flex items-center">
-                      <CalendarDays className="h-4 w-4 ml-2 text-primary" /> عضو منذ {new Date(profileData.memberSince).toLocaleDateString('ar-EG')}
+                      <CalendarDays className="h-4 w-4 ml-2 text-primary" /> 
+                      عضو منذ {new Date(profileData.memberSince).toLocaleDateString('ar-EG')}
                     </div>
                   )}
                 </div>
-                {profileData.role === 'seller' && profileData.skills && profileData.skills.length > 0 && (
+                {profileData?.role === 'seller' && profileData?.skills && profileData.skills.length > 0 && (
                   <>
                     <Separator className="my-4" />
                     <h4 className="font-semibold text-gray-700 mb-2">المهارات:</h4>
                     <div className="flex flex-wrap gap-2">
-                      {profileData.skills.map(skill => (
-                        <Badge key={skill} variant="secondary" className="bg-lightGreen/20 text-darkOlive">{skill}</Badge>
+                      {profileData.skills.map((skill, index) => (
+                        <Badge key={`${skill}-${index}`} variant="secondary" className="bg-lightGreen/20 text-darkOlive">
+                          {skill}
+                        </Badge>
                       ))}
                     </div>
                   </>
@@ -312,7 +383,7 @@ const ProfilePage = () => {
               </CardContent>
             </Card>
             
-            {profileData.role === 'seller' && (
+            {profileData?.role === 'seller' && (
               <Card className="shadow-lg border-orange-100">
                 <CardHeader>
                   <CardTitle className="text-xl text-gray-700">إحصائيات البائع</CardTitle>
@@ -320,19 +391,19 @@ const ProfilePage = () => {
                 <CardContent className="space-y-3 text-gray-700">
                   <div className="flex items-center justify-between">
                     <span className="flex items-center"><Star className="h-5 w-5 ml-2 text-yellow-400" /> متوسط التقييم</span>
-                    <span className="font-semibold">{profileData.rating?.toFixed(1) || 'N/A'}</span>
+                    <span className="font-semibold">{profileData?.rating?.toFixed(1) || 'غير متاح'}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="flex items-center"><Award className="h-5 w-5 ml-2 text-green-500" /> الطلبات المكتملة</span>
-                    <span className="font-semibold">{profileData.completedOrders || 0}</span>
+                    <span className="font-semibold">{profileData?.completedOrders || 0}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="flex items-center"><Users className="h-5 w-5 ml-2 text-blue-500" /> عدد التقييمات</span>
-                    <span className="font-semibold">{profileData.reviewCount || 0}</span>
+                    <span className="font-semibold">{profileData?.reviewCount || 0}</span>
                   </div>
                    <div className="flex items-center justify-between">
                     <span className="flex items-center"><Briefcase className="h-5 w-5 ml-2 text-purple-500" /> عدد الخدمات</span>
-                    <span className="font-semibold">{userGigs.length}</span>
+                    <span className="font-semibold">{userGigs?.length || 0}</span>
                   </div>
                 </CardContent>
               </Card>
@@ -347,16 +418,16 @@ const ProfilePage = () => {
           >
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-2xl font-bold text-gray-800">
-                {profileData.role === 'seller' ? 'خدماتي' : 'طلباتي'} ({userGigs.length})
+                {profileData?.role === 'seller' ? 'خدماتي' : 'طلباتي'} ({userGigs?.length || 0})
               </h2>
-              {isOwnProfile && profileData.role === 'seller' && (
+              {isOwnProfile && profileData?.role === 'seller' && (
                 <Button onClick={() => navigate('/dashboard/gigs/new')} className="bg-green-500 hover:bg-green-600">
                   <PlusCircle className="ml-2 h-4 w-4" /> أضف خدمة جديدة
                 </Button>
               )}
             </div>
 
-            {userGigs.length > 0 ? (
+            {userGigs && userGigs.length > 0 ? (
               <div className="grid sm:grid-cols-2 gap-6">
                 {userGigs.map(gig => (
                   <Card key={gig.id} className="overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 card-hover border-lightBeige/50">
@@ -368,17 +439,21 @@ const ProfilePage = () => {
                         alt={gig.title} 
                         className="w-full h-full object-cover" 
                       />
-                      <Badge variant="secondary" className="absolute top-2 right-2 bg-olivePrimary text-white">{gig.category}</Badge>
+                      <Badge variant="secondary" className="absolute top-2 right-2 bg-olivePrimary text-white">
+                        {gig.category || 'غير محدد'}
+                      </Badge>
                     </div>
                     <CardHeader className="pb-1">
-                      <CardTitle className="text-md font-semibold text-gray-700 h-12 overflow-hidden">{gig.title}</CardTitle>
+                      <CardTitle className="text-md font-semibold text-gray-700 h-12 overflow-hidden">
+                        {gig.title || 'عنوان غير محدد'}
+                      </CardTitle>
                     </CardHeader>
                     <CardContent className="pb-3">
                       <div className="flex items-center text-sm text-gray-500 mb-1">
                         <Star className="h-4 w-4 text-yellow-500 mr-1" />
-                        {gig.rating} ({gig.reviewCount} تقييمات)
+                        {gig.rating || 0} ({gig.reviewCount || 0} تقييمات)
                       </div>
-                      <p className="text-lg font-bold text-primary">{gig.price} جنيه</p>
+                      <p className="text-lg font-bold text-primary">{gig.price || 0} جنيه</p>
                     </CardContent>
                     <CardFooter className="flex gap-2">
                       <Button asChild variant="outline" className="flex-1 border-olivePrimary/30 text-darkOlive hover:bg-lightGreen/30 hover:text-olivePrimary hover:border-olivePrimary">
@@ -398,12 +473,12 @@ const ProfilePage = () => {
                 <CardContent>
                   <Briefcase className="h-16 w-16 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-xl font-semibold text-gray-700 mb-2">
-                    {profileData.role === 'seller' ? 'لا توجد خدمات معروضة حالياً' : 'لا توجد طلبات حالياً'}
+                    {profileData?.role === 'seller' ? 'لا توجد خدمات معروضة حالياً' : 'لا توجد طلبات حالياً'}
                   </h3>
                   <p className="text-gray-500">
-                    {profileData.role === 'seller' ? 'ابدأ بإضافة خدماتك ليراها العملاء!' : 'تصفح المنتجات وقم بطلبك الأول!'}
+                    {profileData?.role === 'seller' ? 'ابدأ بإضافة خدماتك ليراها العملاء!' : 'تصفح المنتجات وقم بطلبك الأول!'}
                   </p>
-                  {profileData.role === 'buyer' && (
+                  {profileData?.role === 'buyer' && (
                     <Button asChild className="mt-4 bg-burntOrange hover:bg-burntOrange/90 text-white">
                       <Link to="/explore">استكشف المنتجات</Link>
                     </Button>

@@ -211,7 +211,7 @@ const ProfilePage = () => {
             });
             
             if (response.ok) {
-              const freshData = await response.json();
+              const freshData = (await response.json()).data;
               console.log('Fresh data received from API:', freshData);
               
               // Validate fresh data before setting

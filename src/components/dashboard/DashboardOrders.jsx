@@ -23,15 +23,14 @@ const OrderStatusBadge = ({ status }) => {
 };
 
 const DashboardOrders = () => {
-  const { user } = useAuth();
-  // Filter orders based on user role (buyer or seller)
-  const userOrders = user?.role === 'seller' 
+  const { user } = useAuth();  // Filter orders based on user role (buyer or seller)
+  const userOrders = user?.active_role === 'seller' 
     ? mockOrders.filter(order => order.sellerId === user.id)
     : mockOrders.filter(order => order.userId === user.id);
 
   const getGigDetails = (gigId) => mockGigs.find(g => g.id === gigId);
   const getParticipantDetails = (participantId) => {
-    return user?.role === 'seller' 
+    return user?.active_role === 'seller'
       ? { name: `مشتري ${participantId.substring(0,4)}` } // Mock buyer name
       : mockSellers.find(s => s.id === participantId);
   }
@@ -42,9 +41,8 @@ const DashboardOrders = () => {
         className="flex items-center justify-between"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-      >
-        <h1 className="text-3xl font-bold text-gray-800">
-          {user?.role === 'seller' ? 'الطلبات الواردة' : 'طلباتي'}
+      >        <h1 className="text-3xl font-bold text-gray-800">
+          {user?.active_role === 'seller' ? 'الطلبات الواردة' : 'طلباتي'}
         </h1>
         <ShoppingBag className="h-8 w-8 text-primary" />
       </motion.div>
@@ -56,21 +54,19 @@ const DashboardOrders = () => {
           animate={{ opacity: 1, scale: 1 }}
         >
           <ShoppingBag className="h-24 w-24 text-gray-300 mx-auto mb-6" />
-          <h2 className="text-2xl font-semibold text-gray-700 mb-2">لا توجد طلبات حالياً</h2>
-          <p className="text-gray-500">
-            {user?.role === 'seller' ? 'لم تتلق أي طلبات جديدة بعد.' : 'لم تقم بأي طلبات بعد. ابدأ التصفح!'}
+          <h2 className="text-2xl font-semibold text-gray-700 mb-2">لا توجد طلبات حالياً</h2>          <p className="text-gray-500">
+            {user?.active_role === 'seller' ? 'لم تتلق أي طلبات جديدة بعد.' : 'لم تقم بأي طلبات بعد. ابدأ التصفح!'}
           </p>
-          {user?.role === 'buyer' && (
+          {user?.active_role === 'buyer' && (
             <Button asChild className="mt-6 bg-olivePrimary hover:bg-olivePrimary/90 text-white">
               <Link to="/explore">استكشف المنتجات</Link>
             </Button>
           )}
         </motion.div>
-      ) : (
-        <div className="space-y-6">
+      ) : (        <div className="space-y-6">
           {userOrders.map((order, index) => {
             const gig = getGigDetails(order.gigId);
-            const participant = getParticipantDetails(user?.role === 'seller' ? order.userId : order.sellerId);
+            const participant = getParticipantDetails(user?.active_role === 'seller' ? order.userId : order.sellerId);
             return (
             <motion.div
               key={order.id}
@@ -90,9 +86,8 @@ const DashboardOrders = () => {
                     تاريخ الطلب: {new Date(order.orderDate).toLocaleDateString('ar-EG')}
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-gray-600">{user?.role === 'seller' ? 'المشتري:' : 'البائع:'}</span>
+                <CardContent className="space-y-3">                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-gray-600">{user?.active_role === 'seller' ? 'المشتري:' : 'البائع:'}</span>
                     <span className="font-medium text-gray-800">{participant?.name || 'مستخدم غير معروف'}</span>
                   </div>
                   <div className="flex justify-between items-center text-sm">
@@ -115,9 +110,8 @@ const DashboardOrders = () => {
                     <Link to={`/gigs/${order.gigId}`}>
                       <Eye className="ml-2 h-4 w-4" /> عرض المنتج
                     </Link>
-                  </Button>
-                  <Button variant="default" size="sm" className="bg-burntOrange hover:bg-burntOrange/90 text-white">
-                    <MessageSquare className="ml-2 h-4 w-4" /> تواصل مع {user?.role === 'seller' ? 'المشتري' : 'البائع'}
+                  </Button>                  <Button variant="default" size="sm" className="bg-burntOrange hover:bg-burntOrange/90 text-white">
+                    <MessageSquare className="ml-2 h-4 w-4" /> تواصل مع {user?.active_role === 'seller' ? 'المشتري' : 'البائع'}
                   </Button>
                   {/* Add more actions based on order status and role */}
                 </CardFooter>

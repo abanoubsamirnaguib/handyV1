@@ -50,11 +50,10 @@ const CreateGigPage = () => {
     setGigData(prev => ({ ...prev, images: prev.images.filter((_, i) => i !== index) }));
     setImagePreviews(prev => prev.filter((_, i) => i !== index));
   };
-
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!user || user.role !== 'seller') {
-        toast({ variant: "destructive", title: "غير مصرح به", description: "يجب أن تكون بائعًا لإنشاء خدمة." });
+    if (!user || user.active_role !== 'seller') {
+        toast({ variant: "destructive", title: "غير مصرح به", description: "يجب أن تكون في وضع البائع لإنشاء خدمة." });
         return;
     }
     
@@ -81,8 +80,7 @@ const CreateGigPage = () => {
     toast({ title: "تم إنشاء الخدمة بنجاح!", description: `خدمة "${gigData.title}" أصبحت جاهزة.` });
     navigate('/dashboard/gigs'); 
   };
-  
-  if (user?.role !== 'seller') {
+    if (user?.active_role !== 'seller') {
     return (
       <div className="p-6 md:p-8 text-center">
         <h1 className="text-2xl font-bold text-gray-700">غير مصرح لك بالدخول</h1>

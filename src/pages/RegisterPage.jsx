@@ -1,33 +1,55 @@
 
-import React, { useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { UserPlus, Mail, Lock, User, Briefcase, Eye, EyeOff } from 'lucide-react';
+import { UserPlus, Mail, Lock, User, Briefcase, Eye, EyeOff, ShoppingBag, Store } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
 
 const RegisterPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
-  const { register } = useAuth();
+  const { register, user, loading } = useAuth();
   const { toast } = useToast();
-
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [role, setRole] = useState(searchParams.get('role') || 'buyer'); // 'buyer' or 'seller'
+  const [isBuyer, setIsBuyer] = useState(true);
+  const [isSeller, setIsSeller] = useState(searchParams.get('role') === 'seller');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Redirect authenticated users
+  useEffect(() => {
+    if (!loading && user) {
+      // Redirect to the intended page if available
+      const from = location.state?.from?.pathname;
+      
+      if (from) {
+        navigate(from, { replace: true });
+        return;
+      }
+      
+      // Redirect based on user role
+      if (user.role === 'admin') {
+        navigate('/admin/dashboard', { replace: true });
+      } else {
+        navigate('/dashboard', { replace: true });
+      }
+    }
+  }, [user, loading, navigate, location.state]);
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
     if (password !== confirmPassword) {
       toast({
         variant: "destructive",
@@ -36,13 +58,52 @@ const RegisterPage = () => {
       });
       return;
     }
+    
+    if (!isBuyer && !isSeller) {
+      toast({
+        variant: "destructive",
+        title: "يجب اختيار دور واحد على الأقل",
+        description: "يرجى اختيار ما إذا كنت تريد أن تكون مشترياً أو بائعاً أو كليهما.",
+      });
+      return;
+    }
+    
     setIsLoading(true);
-    const success = await register({ name, email, password, role });
-    setIsLoading(false);
+    
+    // Determine primary role and dual role flags
+    const primaryRole = isSeller ? 'seller' : 'buyer';
+    const registrationData = {
+      name,
+      email,
+      password,
+      role: primaryRole,
+      is_buyer: isBuyer,
+      is_seller: isSeller,
+    };
+    
+    const success = await register(registrationData);
+    setIsLoading(false);    
     if (success) {
-      navigate('/dashboard');
+      // The useEffect above will handle the redirect
     }
   };
+
+  // Show loading while checking auth status
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-lightBeige">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-olivePrimary mx-auto mb-4"></div>
+          <p className="text-darkOlive">جاري التحميل...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render the register form if user is already authenticated
+  if (user) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-lightBeige p-4 py-12">
@@ -95,25 +156,57 @@ const RegisterPage = () => {
                     {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                   </button>
                 </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="role" className="text-darkOlive">أرغب في التسجيل كـ:</Label>
-                <Select value={role} onValueChange={setRole}>
-                  <SelectTrigger id="role" className="w-full border-olivePrimary/30 focus:border-olivePrimary focus:ring-olivePrimary/20">
-                    <div className="flex items-center">
-                      {role === 'seller' ? <Briefcase className="ml-2 h-5 w-5 text-olivePrimary/60" /> : <User className="ml-2 h-5 w-5 text-olivePrimary/60" />}
-                      <SelectValue placeholder="اختر نوع الحساب" />
+              </div>              <div className="space-y-4">
+                <Label className="text-darkOlive text-base font-medium">أريد أن أكون:</Label>
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-3 p-4 border border-olivePrimary/20 rounded-lg hover:bg-olivePrimary/5 transition-colors">
+                    <Checkbox
+                      id="buyer"
+                      checked={isBuyer}
+                      onCheckedChange={setIsBuyer}
+                      className="data-[state=checked]:bg-olivePrimary data-[state=checked]:border-olivePrimary"
+                    />
+                    <div className="flex items-center flex-1">
+                      <ShoppingBag className="h-5 w-5 text-olivePrimary mr-3" />
+                      <div>
+                        <Label htmlFor="buyer" className="text-darkOlive font-medium cursor-pointer">
+                          مشتري
+                        </Label>
+                        <p className="text-sm text-darkOlive/70">
+                          أريد شراء المنتجات والحرف اليدوية
+                        </p>
+                      </div>
                     </div>
-                  </SelectTrigger>
-                  <SelectContent className="border-olivePrimary/30">
-                    <SelectItem value="buyer">
-                      <div className="flex items-center"><User className="ml-2 h-5 w-5 text-olivePrimary" /> مشتري</div>
-                    </SelectItem>
-                    <SelectItem value="seller">
-                      <div className="flex items-center"><Briefcase className="ml-2 h-5 w-5 text-olivePrimary" /> بائع (حرفي)</div>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
+                  </div>
+                  
+                  <div className="flex items-center space-x-3 p-4 border border-olivePrimary/20 rounded-lg hover:bg-olivePrimary/5 transition-colors">
+                    <Checkbox
+                      id="seller"
+                      checked={isSeller}
+                      onCheckedChange={setIsSeller}
+                      className="data-[state=checked]:bg-olivePrimary data-[state=checked]:border-olivePrimary"
+                    />
+                    <div className="flex items-center flex-1">
+                      <Store className="h-5 w-5 text-olivePrimary mr-3" />
+                      <div>
+                        <Label htmlFor="seller" className="text-darkOlive font-medium cursor-pointer">
+                          بائع (حرفي)
+                        </Label>
+                        <p className="text-sm text-darkOlive/70">
+                          أريد بيع منتجاتي وحرفي اليدوية
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                {(isBuyer && isSeller) && (
+                  <div className="p-3 bg-olivePrimary/10 rounded-lg border border-olivePrimary/20">
+                    <p className="text-sm text-olivePrimary">
+                      ✨ رائع! ستتمكن من التبديل بين دوري المشتري والبائع في أي وقت من لوحة التحكم.
+                    </p>
+                  </div>
+                )}
               </div>
               <Button type="submit" className="w-full bg-burntOrange hover:bg-burntOrange/90 text-white text-lg py-3" disabled={isLoading}>
                 {isLoading ? 'جاري إنشاء الحساب...' : 'إنشاء حساب'}

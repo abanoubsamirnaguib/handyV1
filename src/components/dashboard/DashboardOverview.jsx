@@ -28,7 +28,7 @@ const DashboardOverview = () => {
   const { user } = useAuth();
 
   
-  const stats = user?.role === 'seller' ? [
+  const stats = user?.active_role === 'seller' ? [
     { title: "إجمالي الأرباح", value: "12,500 جنيه", icon: DollarSign, color: "green", description: "+15% عن الشهر الماضي" },
     { title: "الطلبات الجديدة", value: "32", icon: ShoppingBag, color: "blue", description: "+5 طلبات اليوم" },
     { title: "إجمالي الخدمات", value: "15", icon: BarChart3, color: "orange", description: "2 خدمة غير نشطة" },
@@ -47,7 +47,7 @@ const DashboardOverview = () => {
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
       >
-        {user?.role === 'seller' ? 'نظرة عامة على أداء متجرك' : 'ملخص حسابك'}
+        {user?.active_role === 'seller' ? 'نظرة عامة على أداء متجرك' : 'ملخص حسابك'}
       </motion.h1>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
@@ -76,7 +76,7 @@ const DashboardOverview = () => {
         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.3, duration: 0.5 }}>
           <Card className="shadow-lg">
             <CardHeader>
-              <CardTitle className="text-xl text-gray-700">{user?.role === 'seller' ? 'الخدمات الأكثر مبيعاً' : 'المنتجات المفضلة'}</CardTitle>
+              <CardTitle className="text-xl text-gray-700">{user?.active_role === 'seller' ? 'الخدمات الأكثر مبيعاً' : 'المنتجات المفضلة'}</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-gray-600">هنا ستظهر قائمة بالخدمات أو المنتجات.</p>

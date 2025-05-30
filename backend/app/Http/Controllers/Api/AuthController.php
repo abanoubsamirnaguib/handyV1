@@ -22,15 +22,34 @@ class AuthController extends Controller
                 'email' => 'required|email|unique:users,email',
                 'password' => 'required|string|min:6',
                 'role' => 'in:admin,seller,buyer',
+                'is_seller' => 'boolean',
+                'is_buyer' => 'boolean',
             ]);
+            
+            // Set default dual role values
+            $isSeller = $validated['is_seller'] ?? ($validated['role'] === 'seller');
+            $isBuyer = $validated['is_buyer'] ?? ($validated['role'] === 'buyer' || $validated['role'] === null);
+            $activeRole = $validated['role'] === 'seller' ? 'seller' : 'buyer';
             
             $user = User::create([
                 'name' => $validated['name'],
                 'email' => $validated['email'],
                 'password' => Hash::make($validated['password']),
                 'role' => $validated['role'] ?? 'buyer',
+                'active_role' => $activeRole,
+                'is_seller' => $isSeller,
+                'is_buyer' => $isBuyer,
                 'status' => 'active',
             ]);
+            
+            // Create seller profile if user is or can be a seller
+            if ($isSeller) {
+                \App\Models\Seller::create([
+                    'user_id' => $user->id,
+                    'bio' => null,
+                    'location' => null,
+                ]);
+            }
             
             // Create a token immediately so the user doesn't have to log in separately
             $token = $user->createToken('api-token')->plainTextToken;
@@ -149,5 +168,78 @@ class AuthController extends Controller
             'valid' => true,
             'user' => new \App\Http\Resources\UserResource($request->user())
         ]);
+    }
+
+    public function switchRole(Request $request)
+    {
+        try {
+            $user = $request->user();
+            
+            $validated = $request->validate([
+                'role' => 'required|in:seller,buyer',
+            ]);
+            
+            $targetRole = $validated['role'];
+            
+            // Check if user can switch to the requested role
+            if ($targetRole === 'seller' && !$user->canActAsSeller()) {
+                return response()->json([
+                    'message' => 'You need to enable seller mode first',
+                ], 403);
+            }
+            
+            if ($targetRole === 'buyer' && !$user->canActAsBuyer()) {
+                return response()->json([
+                    'message' => 'You cannot act as a buyer',
+                ], 403);
+            }
+            
+            // Switch to the requested role
+            if ($targetRole === 'seller') {
+                $user->switchToSeller();
+            } else {
+                $user->switchToBuyer();
+            }
+            
+            return response()->json([
+                'message' => 'Role switched successfully',
+                'user' => new \App\Http\Resources\UserResource($user->fresh())
+            ]);
+            
+        } catch (Exception $e) {
+            Log::error('Role switch error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'user_id' => $request->user()->id ?? null
+            ]);
+            return response()->json([
+                'message' => 'Failed to switch role',
+                'error' => config('app.debug') ? $e->getMessage() : 'Internal server error'
+            ], 500);
+        }
+    }
+
+    public function enableSellerMode(Request $request)
+    {
+        try {
+            $user = $request->user();
+            
+            // Enable seller capabilities
+            $user->enableSellerMode();
+            
+            return response()->json([
+                'message' => 'Seller mode enabled successfully',
+                'user' => new \App\Http\Resources\UserResource($user->fresh())
+            ]);
+            
+        } catch (Exception $e) {
+            Log::error('Enable seller mode error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'user_id' => $request->user()->id ?? null
+            ]);
+            return response()->json([
+                'message' => 'Failed to enable seller mode',
+                'error' => config('app.debug') ? $e->getMessage() : 'Internal server error'
+            ], 500);
+        }
     }
 }

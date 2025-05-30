@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { LogIn, Mail, Lock, Eye, EyeOff, HelpCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -11,11 +11,32 @@ import { useAuth } from '@/contexts/AuthContext';
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const location = useLocation();
+  const { login, user, loading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Redirect authenticated users
+  useEffect(() => {
+    if (!loading && user) {
+      // Redirect to the intended page if available
+      const from = location.state?.from?.pathname;
+      
+      if (from) {
+        navigate(from, { replace: true });
+        return;
+      }
+      
+      // Redirect based on user role
+      if (user.role === 'admin') {
+        navigate('/admin/dashboard', { replace: true });
+      } else {
+        navigate('/dashboard', { replace: true });
+      }
+    }
+  }, [user, loading, navigate, location.state]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -23,9 +44,26 @@ const LoginPage = () => {
     const success = await login({ email, password });
     setIsLoading(false);
     if (success) {
-      navigate('/dashboard'); // Or to previous page
+      // The useEffect above will handle the redirect
     }
   };
+
+  // Show loading while checking auth status
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-lightBeige">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-olivePrimary mx-auto mb-4"></div>
+          <p className="text-darkOlive">جاري التحميل...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render the login form if user is already authenticated
+  if (user) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-lightBeige p-4">

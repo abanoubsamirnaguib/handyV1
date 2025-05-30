@@ -5,6 +5,7 @@ import { AuthProvider } from '@/contexts/AuthContext';
 import { CartProvider } from '@/contexts/CartContext';
 import { ChatProvider } from '@/contexts/ChatContext';
 import ScrollToTop from '@/components/ScrollToTop';
+import ProtectedRoute from '@/components/ProtectedRoute';
 
 import MainLayout from '@/layouts/MainLayout';
 import AdminLayout from '@/layouts/AdminLayout';
@@ -53,9 +54,23 @@ function App() {
               <Route path="explore" element={<ExplorePage />} />
               <Route path="gigs/:id" element={<GigDetailsPage />} />
               <Route path="sellers/:id" element={<SellerProfilePage />} />
-              <Route path="message/:id" element={<MessagePage />} />
-              <Route path="profile/:id" element={<ProfilePage />} />
-              <Route path="dashboard" element={<DashboardPage />}>
+              
+              {/* Protected routes that require authentication */}
+              <Route path="message/:id" element={
+                <ProtectedRoute>
+                  <MessagePage />
+                </ProtectedRoute>
+              } />
+              <Route path="profile/:id" element={
+                <ProtectedRoute>
+                  <ProfilePage />
+                </ProtectedRoute>
+              } />
+              <Route path="dashboard" element={
+                <ProtectedRoute allowedRoles={['buyer', 'seller']}>
+                  <DashboardPage />
+                </ProtectedRoute>
+              }>
                 <Route index element={<DashboardOverview />} />
                 <Route path="overview" element={<DashboardOverview />} />
                 <Route path="orders" element={<DashboardOrders />} />
@@ -66,15 +81,38 @@ function App() {
                 <Route path="messages" element={<DashboardMessages />} />
                 <Route path="settings" element={<DashboardSettings />} />
               </Route>
-              <Route path="chat" element={<ChatPage />} />
-              <Route path="cart" element={<CartPage />} />
-              <Route path="login" element={<LoginPage />} />
-              <Route path="register" element={<RegisterPage />} />
+              <Route path="chat" element={
+                <ProtectedRoute>
+                  <ChatPage />
+                </ProtectedRoute>
+              } />
+              <Route path="cart" element={
+                <ProtectedRoute>
+                  <CartPage />
+                </ProtectedRoute>
+              } />
+              
+              {/* Public routes that redirect authenticated users */}
+              <Route path="login" element={
+                <ProtectedRoute requireAuth={false}>
+                  <LoginPage />
+                </ProtectedRoute>
+              } />
+              <Route path="register" element={
+                <ProtectedRoute requireAuth={false}>
+                  <RegisterPage />
+                </ProtectedRoute>
+              } />
+              
               <Route path="*" element={<NotFoundPage />} />
             </Route>
             
             {/* Admin Dashboard Routes */}
-            <Route path="/admin" element={<AdminLayout />}>
+            <Route path="/admin" element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminLayout />
+              </ProtectedRoute>
+            }>
               <Route path="dashboard" element={<AdminDashboardPage />} />
               <Route path="categories" element={<AdminCategories />} />
               <Route path="products" element={<AdminProducts />} />

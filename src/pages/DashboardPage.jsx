@@ -9,14 +9,16 @@ import { Separator } from '@/components/ui/separator';
 import { SidebarProvider, useSidebar } from '@/contexts/SidebarContext';
 import { usePageNavigation } from '@/hooks/usePageNavigation';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
+import RoleSwitcher from '@/components/dashboard/RoleSwitcher';
 import '@/components/dashboard/sidebar.css';
 
-const DashboardSidebar = ({ userRole }) => {
+const DashboardSidebar = ({ user }) => {
   const navigate = useNavigate();
   const { logout } = useAuth();
   const { isSidebarOpen, toggleSidebar, isMobile, isMobileMenuOpen } = useSidebar();
   // Use our custom hook for navigation
   const location = usePageNavigation();
+  const isDashboardRoot = location.pathname === '/dashboard' || location.pathname === '/dashboard/';
 
   const buyerLinks = [
     { path: '/dashboard/orders', label: 'طلباتي', icon: ShoppingBag },
@@ -33,7 +35,7 @@ const DashboardSidebar = ({ userRole }) => {
     { path: '/dashboard/settings', label: 'إعدادات الحساب', icon: Settings },
   ];
 
-  const links = userRole === 'seller' ? sellerLinks : buyerLinks;
+  const links = user?.active_role === 'seller' ? sellerLinks : buyerLinks;
 
   return (
     <AnimatePresence mode="wait">
@@ -74,13 +76,44 @@ const DashboardSidebar = ({ userRole }) => {
                   <ChevronLeft size={20} className={`sidebar-icon ${!isSidebarOpen ? 'sidebar-icon-rotated' : ''}`} />
                 </button>
               )}
+            </div>            <div className={`py-2 ${!isSidebarOpen && !isMobile ? 'hidden' : 'block'}`}>
+              <Button
+                variant="ghost"
+                className={`w-full justify-start text-right px-3 py-2 transition-all duration-200 ${
+                  isDashboardRoot 
+                    ? 'bg-olivePrimary/10 text-olivePrimary font-medium' 
+                    : 'hover:bg-lightGreen/50 hover:text-olivePrimary'
+                }`}
+                onClick={() => {
+                  navigate('/dashboard');
+                  if (isMobile) toggleSidebar();
+                }}
+              >
+                <LayoutDashboard className="ml-2 h-5 w-5" />
+                <span className="text-lg font-semibold text-olivePrimary">
+                  لوحة التحكم
+                </span>
+              </Button>
             </div>
 
-            <div className={`py-2 ${!isSidebarOpen && !isMobile ? 'hidden' : 'block'}`}>
-              <h2 className="text-lg font-semibold text-olivePrimary px-3 pb-2">
-                لوحة التحكم
-              </h2>
-            </div>
+            {/* Dashboard icon for collapsed sidebar */}
+            {!isSidebarOpen && !isMobile && (
+              <div className="py-2 flex justify-center">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={`p-2 transition-all duration-200 ${
+                    isDashboardRoot 
+                      ? 'bg-olivePrimary/10 text-olivePrimary' 
+                      : 'hover:bg-lightGreen/50 hover:text-olivePrimary'
+                  }`}
+                  onClick={() => navigate('/dashboard')}
+                  title="لوحة التحكم"
+                >
+                  <LayoutDashboard className="h-5 w-5 text-olivePrimary" />
+                </Button>
+              </div>
+            )}
 
             <nav className="space-y-1">
               {links.map(link => (
@@ -148,13 +181,14 @@ const DashboardCard = ({ title, description, link, icon: Icon }) => (
 
 const DashboardHome = ({ user }) => (
   <div className="p-8">
+    <RoleSwitcher />
     <h1 className="text-3xl font-bold text-darkOlive mb-6">مرحباً بك في لوحة التحكم، {user.name}!</h1>
     <p className="text-darkOlive/70 mb-8">
-      هنا يمكنك إدارة {user.role === 'seller' ? 'خدماتك وطلباتك وأرباحك' : 'طلباتك ورسائلك وإعدادات حسابك'}.
+      هنا يمكنك إدارة {user.active_role === 'seller' ? 'خدماتك وطلباتك وأرباحك' : 'طلباتك ورسائلك وإعدادات حسابك'}.
       استخدم القائمة الجانبية للتنقل.
     </p>
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {user.role === 'seller' ? (
+      {user.active_role === 'seller' ? (
         <>
           <DashboardCard title="إدارة خدماتك" description="أضف خدمات جديدة أو قم بتعديل الخدمات الحالية." link="/dashboard/gigs" icon={ShoppingBag} />
           <DashboardCard title="الطلبات الواردة" description="تابع طلبات العملاء وقم بإدارتها." link="/dashboard/orders" icon={DollarSign} />
@@ -196,18 +230,31 @@ const DashboardContent = ({ user }) => {
     { path: '/dashboard/settings', label: 'إعدادات الحساب', icon: Settings },
   ];
 
-  const links = user?.role === 'seller' ? sellerLinks : buyerLinks;
+  const links = user?.active_role === 'seller' ? sellerLinks : buyerLinks;
 
   return (      <main 
         ref={scrollRef}
         className={`flex-1 bg-background overflow-y-auto ${
           !isMobile ? (isSidebarOpen ? 'dashboard-content-expanded' : 'dashboard-content-collapsed') : 'dashboard-content'
         }`}
-      >
-      {isMobile && (
+      >      {isMobile && (
         <div className="mobile-header p-4 flex justify-between items-center bg-background/95 backdrop-blur-md border-b border-olivePrimary/20">
           <div className="flex items-center">
-            <h1 className="text-lg font-semibold text-olivePrimary">لوحة التحكم</h1>
+            <Button
+              variant="ghost"
+              className={`px-2 py-1 transition-all duration-200 ${
+                isDashboardRoot 
+                  ? 'bg-olivePrimary/10 text-olivePrimary font-medium' 
+                  : 'hover:bg-lightGreen/50 hover:text-olivePrimary'
+              }`}
+              onClick={() => {
+                navigate('/dashboard');
+                if (isMobileMenuOpen) toggleSidebar();
+              }}
+            >
+              <LayoutDashboard className="ml-2 h-5 w-5" />
+              <span className="text-lg font-semibold text-olivePrimary">لوحة التحكم</span>
+            </Button>
           </div>
           <Button 
             variant="ghost" 
@@ -269,24 +316,14 @@ const DashboardPageContent = () => {
   const navigate = useNavigate();
   const { isMobileMenuOpen, closeMobileSidebar, isMobile } = useSidebar();
 
-  React.useEffect(() => {
-    if (!user) {
-      navigate('/login');
-    }
-  }, [user, navigate]);
-
   // Redirect admin users to the admin dashboard
   if (user?.role === 'admin') {
     return <Navigate to="/admin/dashboard" replace />;
   }
 
-  if (!user) {
-    return null; 
-  }
-
   return (
     <div className="flex min-h-[calc(100vh-var(--navbar-height,100px))]">
-      {!isMobile && <DashboardSidebar userRole={user.role} />}
+      {!isMobile && <DashboardSidebar user={user} />}
       <DashboardContent user={user} />
     </div>
   );

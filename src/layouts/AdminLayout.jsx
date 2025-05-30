@@ -140,17 +140,7 @@ const AdminLayout = () => {
     { path: '/admin/users', label: 'المستخدمين', icon: Users },
     { path: '/admin/messages', label: 'المحادثات', icon: MessageCircle },
     { path: '/admin/settings', label: 'إعدادات النظام', icon: Settings },
-  ];
-
-  React.useEffect(() => {
-    if (!user || user.role !== 'admin') {
-      navigate('/login');
-    }
-  }, [user, navigate]);
-
-  if (!user || user.role !== 'admin') {
-    return null;
-  }return (    <div className="flex min-h-[calc(100vh-var(--navbar-height,100px))]">
+  ];return (    <div className="flex min-h-[calc(100vh-var(--navbar-height,100px))]">
       {!isMobile && <AdminSidebar />}      <main 
         ref={scrollRef}
         className={`flex-1 bg-background overflow-y-auto ${

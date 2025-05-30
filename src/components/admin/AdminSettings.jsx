@@ -97,7 +97,6 @@ const AdminSettings = () => {
     lowStockNotifications: true,
     adminEmails: 'admin@example.com',
   });
-
   // إعدادات الأمان
   const [securitySettings, setSecuritySettings] = useState({
     requireEmailVerification: true,
@@ -108,16 +107,6 @@ const AdminSettings = () => {
     passwordRequiresSymbol: false,
     sessionTimeout: '120', // دقائق
   });
-
-  useEffect(() => {
-    if (user?.role !== 'admin') {
-      toast({
-        variant: "destructive",
-        title: "غير مصرح به",
-        description: "هذه الصفحة مخصصة للمشرفين فقط."
-      });
-    }
-  }, [user, toast]);
 
   const handleGeneralChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -174,17 +163,7 @@ const AdminSettings = () => {
     toast({
       title: "تم حفظ الإعدادات",
       description: message
-    });
-  };
-
-  if (user?.role !== 'admin') {
-    return (
-      <div className="p-6 md:p-8 text-center">
-        <h1 className="text-2xl font-bold text-gray-700">غير مصرح لك بالدخول</h1>
-        <p className="text-gray-500">هذه الصفحة مخصصة للمشرفين فقط.</p>
-      </div>
-    );
-  }
+    });  };
 
   return (
     <div className="p-6 md:p-8 space-y-8">

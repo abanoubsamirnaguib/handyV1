@@ -26,8 +26,7 @@ const earningsData = {
 const DashboardEarnings = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-
-  if (user?.role !== 'seller') {
+  if (user?.active_role !== 'seller') {
     return (
       <div className="p-6 md:p-8 text-center">
         <h1 className="text-2xl font-bold text-gray-700">غير مصرح لك بالدخول</h1>

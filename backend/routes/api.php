@@ -57,6 +57,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('me', [AuthController::class, 'me']);
     Route::post('logout', [AuthController::class, 'logout']);
     Route::get('check-token', [AuthController::class, 'checkToken']);
+    
+    // Role switching endpoints
+    Route::post('switch-role', [AuthController::class, 'switchRole']);
+    Route::post('enable-seller-mode', [AuthController::class, 'enableSellerMode']);
 
     // Product CRUD
     Route::apiResource('products', ProductCrudController::class)->except(['show']);

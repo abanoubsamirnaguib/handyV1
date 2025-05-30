@@ -158,9 +158,7 @@ const DashboardSettings = () => {
       <SettingsSection title="الإشعارات" description="إدارة تفضيلات الإشعارات الخاصة بك." icon={Bell}>
         <p className="text-gray-600">سيتم إضافة إعدادات الإشعارات قريباً.</p>
         {/* Example: Checkboxes for notification types */}
-      </SettingsSection>
-
-      {user?.role === 'seller' && (
+      </SettingsSection>      {user?.active_role === 'seller' && (
         <>
           <Separator />
           {/* Payment Settings (Placeholder for Sellers) */}

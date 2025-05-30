@@ -18,11 +18,11 @@ export const AuthProvider = ({ children }) => {
 
   // Helper to get token from localStorage
   const getToken = () => localStorage.getItem('token');
-
   // Fetch user info if token exists
   useEffect(() => {
     const token = getToken();
     if (token) {
+      setLoading(true);
       fetch(getApiUrl('/api/me'), {
         headers: { 
           'Authorization': `Bearer ${token}`,
@@ -35,19 +35,23 @@ export const AuthProvider = ({ children }) => {
             setUser(data);
             localStorage.setItem('user', JSON.stringify(data));
           } else {
+            // Token is invalid, clear it
             setUser(null);
             localStorage.removeItem('user');
             localStorage.removeItem('token');
           }
-          setLoading(false);
         })
         .catch((error) => {
+          // Network error or other issues, clear auth data
           setUser(null);
           localStorage.removeItem('user');
           localStorage.removeItem('token');
+        })
+        .finally(() => {
           setLoading(false);
         });
     } else {
+      // No token, user is not authenticated
       setUser(null);
       setLoading(false);
     }
@@ -212,6 +216,91 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const switchRole = async (targetRole) => {
+    try {
+      const token = getToken();
+      if (!token || !user) {
+        throw new Error('Not authenticated');
+      }
+      
+      const res = await fetch(getApiUrl('/api/switch-role'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ role: targetRole }),
+      });
+      
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to switch role');
+      }
+      
+      const data = (await res.json());
+      const updatedUser = data.user;
+      
+      setUser(updatedUser);
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      
+      toast({
+        title: 'تم تبديل الدور بنجاح',
+        description: `تم التبديل إلى دور ${targetRole === 'seller' ? 'البائع' : 'المشتري'}`,
+      });
+      return true;
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'خطأ',
+        description: error.message || 'حدث خطأ أثناء تبديل الدور',
+      });
+      return false;
+    }
+  };
+
+  const enableSellerMode = async () => {
+    try {
+      const token = getToken();
+      if (!token || !user) {
+        throw new Error('Not authenticated');
+      }
+      
+      const res = await fetch(getApiUrl('/api/enable-seller-mode'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to enable seller mode');
+      }
+      
+      const data = (await res.json());
+      const updatedUser = data.user;
+      
+      setUser(updatedUser);
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      
+      toast({
+        title: 'تم تفعيل وضع البائع',
+        description: 'يمكنك الآن إضافة منتجات وإدارة متجرك',
+      });
+      return true;
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'خطأ',
+        description: error.message || 'حدث خطأ أثناء تفعيل وضع البائع',
+      });
+      return false;
+    }
+  };
+
   const value = {
     user,
     loading,
@@ -219,6 +308,8 @@ export const AuthProvider = ({ children }) => {
     register,
     logout,
     updateProfile,
+    switchRole,
+    enableSellerMode,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

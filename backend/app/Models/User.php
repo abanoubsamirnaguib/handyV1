@@ -23,6 +23,9 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'active_role',
+        'is_seller',
+        'is_buyer',
         'status',
         'bio',
         'location',
@@ -51,6 +54,91 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'skills' => 'array',
+            'is_seller' => 'boolean',
+            'is_buyer' => 'boolean',
         ];
+    }
+
+    /**
+     * Get the seller profile associated with the user.
+     */
+    public function seller()
+    {
+        return $this->hasOne(Seller::class);
+    }
+
+    /**
+     * Check if user can act as seller
+     */
+    public function canActAsSeller()
+    {
+        return $this->is_seller || $this->role === 'seller';
+    }
+
+    /**
+     * Check if user can act as buyer
+     */
+    public function canActAsBuyer()
+    {
+        return $this->is_buyer || $this->role === 'buyer';
+    }
+
+    /**
+     * Switch to seller role
+     */
+    public function switchToSeller()
+    {
+        if (!$this->canActAsSeller()) {
+            throw new \Exception('User cannot act as seller');
+        }
+        
+        $this->active_role = 'seller';
+        $this->save();
+        
+        // Create seller profile if it doesn't exist
+        if (!$this->seller) {
+            Seller::create([
+                'user_id' => $this->id,
+                'bio' => $this->bio,
+                'location' => $this->location,
+            ]);
+        }
+        
+        return $this;
+    }
+
+    /**
+     * Switch to buyer role
+     */
+    public function switchToBuyer()
+    {
+        if (!$this->canActAsBuyer()) {
+            throw new \Exception('User cannot act as buyer');
+        }
+        
+        $this->active_role = 'buyer';
+        $this->save();
+        
+        return $this;
+    }
+
+    /**
+     * Enable seller capabilities
+     */
+    public function enableSellerMode()
+    {
+        $this->is_seller = true;
+        $this->save();
+        
+        // Create seller profile if it doesn't exist
+        if (!$this->seller) {
+            Seller::create([
+                'user_id' => $this->id,
+                'bio' => $this->bio,
+                'location' => $this->location,
+            ]);
+        }
+        
+        return $this;
     }
 }

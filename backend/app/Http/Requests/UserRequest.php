@@ -15,6 +15,7 @@ class UserRequest extends FormRequest
                 'email' => 'required|email|unique:users,email',
                 'password' => 'required|string|min:6',
                 'role' => 'in:admin,seller,buyer',
+                'phone' => 'nullable|string|max:20',
             ];
         }        // PATCH/PUT (update)
         return [
@@ -25,6 +26,7 @@ class UserRequest extends FormRequest
             'bio' => 'nullable|string',
             'location' => 'nullable|string',
             'avatar' => 'nullable|string',
+            'phone' => 'nullable|string|max:20',
             'skills' => 'nullable|array',
             'skills.*' => 'nullable|string',
         ];

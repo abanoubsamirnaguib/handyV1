@@ -173,6 +173,8 @@ export const AuthProvider = ({ children }) => {
         name: updatedData.name || user.name,
         bio: updatedData.bio || user.bio || '',
         location: updatedData.location || user.location || '',
+        avatar: typeof updatedData.avatar === 'string' ? updatedData.avatar : (user.avatar || ''),
+        phone: typeof updatedData.phone === 'string' ? updatedData.phone : (user.phone || ''),
         skills: Array.isArray(updatedData.skills) ? updatedData.skills : (user.skills || [])
       };
       
@@ -301,6 +303,47 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const changePassword = async ({ currentPassword, newPassword, confirmPassword }) => {
+    try {
+      const token = getToken();
+      if (!token || !user) throw new Error('Not authenticated');
+      const res = await fetch(getApiUrl('/api/change-password'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          current_password: currentPassword,
+          new_password: newPassword,
+          new_password_confirmation: confirmPassword,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast({
+          variant: 'destructive',
+          title: 'خطأ',
+          description: data.message || 'حدث خطأ أثناء تغيير كلمة المرور',
+        });
+        return false;
+      }
+      toast({
+        title: 'تم تغيير كلمة المرور',
+        description: data.message || 'تم تغيير كلمة المرور بنجاح.',
+      });
+      return true;
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'خطأ',
+        description: error.message || 'حدث خطأ أثناء تغيير كلمة المرور',
+      });
+      return false;
+    }
+  };
+
   const value = {
     user,
     loading,
@@ -310,6 +353,7 @@ export const AuthProvider = ({ children }) => {
     updateProfile,
     switchRole,
     enableSellerMode,
+    changePassword,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -32,7 +32,7 @@ const SettingsSection = ({ title, description, icon, children }) => (
 );
 
 const DashboardSettings = () => {
-  const { user, updateProfile } = useAuth();
+  const { user, updateProfile, changePassword } = useAuth();
   const { toast } = useToast();
 
   const [profileData, setProfileData] = useState({
@@ -40,6 +40,7 @@ const DashboardSettings = () => {
     email: user?.email || '',
     bio: user?.bio || '',
     avatarUrl: user?.avatar || '', // Assuming avatar is a URL
+    phone: user?.phone || '',
   });
 
   const [passwordData, setPasswordData] = useState({
@@ -66,14 +67,15 @@ const DashboardSettings = () => {
       name: profileData.name,
       email: profileData.email,
       bio: profileData.bio,
-      avatar: profileData.avatarUrl
+      avatar: profileData.avatarUrl,
+      phone: profileData.phone,
     });
     if (success) {
       toast({ title: "تم تحديث الملف الشخصي", description: "تم حفظ تغييرات ملفك الشخصي بنجاح." });
     }
   };
 
-  const handlePasswordSubmit = (e) => {
+  const handlePasswordSubmit = async (e) => {
     e.preventDefault();
     if (passwordData.newPassword !== passwordData.confirmPassword) {
       toast({ variant: "destructive", title: "خطأ", description: "كلمتا المرور الجديدتان غير متطابقتين." });
@@ -83,10 +85,15 @@ const DashboardSettings = () => {
       toast({ variant: "destructive", title: "خطأ", description: "يجب أن تتكون كلمة المرور الجديدة من 6 أحرف على الأقل." });
       return;
     }
-    // Placeholder for password change logic
-    console.log("Password change submitted:", passwordData);
-    toast({ title: "تم تحديث كلمة المرور", description: "تم تغيير كلمة المرور بنجاح." });
-    setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    const success = await changePassword({
+      currentPassword: passwordData.currentPassword,
+      newPassword: passwordData.newPassword,
+      confirmPassword: passwordData.confirmPassword,
+    });
+    if (success) {
+      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      toast({ title: "تم تحديث كلمة المرور", description: "تم تغيير كلمة المرور بنجاح." });
+    }
   };
 
 
@@ -120,6 +127,10 @@ const DashboardSettings = () => {
           <div>
             <Label htmlFor="avatarUrl">رابط صورة الملف الشخصي</Label>
             <Input id="avatarUrl" name="avatarUrl" value={profileData.avatarUrl} onChange={handleProfileChange} placeholder="https://example.com/avatar.jpg" />
+          </div>
+          <div>
+            <Label htmlFor="phone">رقم الهاتف</Label>
+            <Input id="phone" name="phone" value={profileData.phone} onChange={handleProfileChange} placeholder="مثال: +201234567890" />
           </div>
           <Button type="submit" className="bg-burntOrange hover:bg-burntOrange/90 text-white">
             <Save className="ml-2 h-4 w-4" /> حفظ تغييرات الملف الشخصي

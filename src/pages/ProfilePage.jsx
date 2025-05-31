@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Star, MapPin, CalendarDays, Edit3, PlusCircle, MessageSquare, Briefcase, Award, Users } from 'lucide-react';
+import { Star, MapPin, CalendarDays, Edit3, PlusCircle, MessageSquare, Briefcase, Award, Users, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -23,7 +23,7 @@ const ProfilePage = () => {
   const [profileData, setProfileData] = useState(null);
   const [userGigs, setUserGigs] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
-  const [editFormData, setEditFormData] = useState({ name: '', bio: '', location: '', skills: '' });
+  const [editFormData, setEditFormData] = useState({ name: '', bio: '', location: '', skills: '', avatar: '', phone: '' });
   const [loading, setLoading] = useState(true);
 
   const isOwnProfile = !id || id === 'me' || (user && user.id === id);
@@ -68,6 +68,7 @@ const ProfilePage = () => {
           role: data.role || 'buyer',
           skills: Array.isArray(data.skills) ? data.skills : [],
           avatar: data.avatar || '',
+          phone: data.phone || '',
           rating: typeof data.rating === 'number' ? data.rating : 0,
           completedOrders: typeof data.completedOrders === 'number' ? data.completedOrders : 0,
           reviewCount: typeof data.reviewCount === 'number' ? data.reviewCount : 0,
@@ -84,6 +85,8 @@ const ProfilePage = () => {
             bio: validatedData.bio,
             location: validatedData.location,
             skills: validatedData.skills.join(', '),
+            avatar: validatedData.avatar || '',
+            phone: validatedData.phone || '',
           };
           console.log('Setting edit form data:', formData);
           setEditFormData(formData);
@@ -157,14 +160,15 @@ const ProfilePage = () => {
     const updatedSkills = editFormData.skills
       ? editFormData.skills.split(',').map(skill => skill.trim()).filter(skill => skill)
       : [];
-    
     try {
       // Create an object with the data to update
       const dataToUpdate = {
         name: editFormData.name.trim(),
         bio: editFormData.bio.trim(),
         location: editFormData.location.trim(),
-        skills: updatedSkills
+        skills: updatedSkills,
+        avatar: editFormData.avatar,
+        phone: editFormData.phone,
       };
       
       console.log('Sending profile update:', dataToUpdate);
@@ -331,6 +335,14 @@ const ProfilePage = () => {
                   <label htmlFor="skills" className="block text-sm font-medium text-gray-700">المهارات (مفصولة بفاصلة)</label>
                   <Input type="text" name="skills" id="skills" value={editFormData.skills} onChange={handleEditFormChange} className="mt-1" />
                 </div>
+                <div>
+                  <label htmlFor="avatar" className="block text-sm font-medium text-gray-700">رابط صورة الملف الشخصي</label>
+                  <Input type="text" name="avatar" id="avatar" value={editFormData.avatar} onChange={handleEditFormChange} className="mt-1" placeholder="https://example.com/avatar.jpg" />
+                </div>
+                <div>
+                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700">رقم الهاتف</label>
+                  <Input type="text" name="phone" id="phone" value={editFormData.phone} onChange={handleEditFormChange} className="mt-1" placeholder="مثال: +201234567890" />
+                </div>
               </CardContent>
               <CardFooter>
                 <Button onClick={handleSaveChanges} className="bg-green-500 hover:bg-green-600">حفظ التغييرات</Button>
@@ -358,6 +370,11 @@ const ProfilePage = () => {
                   {profileData?.location && (
                     <div className="flex items-center">
                       <MapPin className="h-4 w-4 ml-2 text-primary" /> {profileData.location}
+                    </div>
+                  )}
+                  {profileData?.phone && (
+                    <div className="flex items-center">
+                      <Phone className="h-4 w-4 ml-2 text-primary" /> {profileData.phone}
                     </div>
                   )}
                   {profileData?.memberSince && (

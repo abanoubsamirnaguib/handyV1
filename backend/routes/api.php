@@ -114,4 +114,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // Site Settings
     Route::get('settings', [SiteSettingController::class, 'index']);
     Route::post('settings', [SiteSettingController::class, 'update']);
+    
+    // Change Password
+    Route::post('change-password', [AuthController::class, 'changePassword']);
 });

@@ -82,16 +82,11 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         try {
-            Log::info('Login attempt started', ['email' => $request->input('email')]);
-            
             // Validate request without CSRF
             $credentials = $request->validate([
                 'email' => 'required|email',
                 'password' => 'required|string',
-            ]);
-            
-            Log::info('Login credentials validated');
-            
+            ]);            
             // Check if user exists
             $user = User::where('email', $credentials['email'])->first();
             if (!$user) {
@@ -105,15 +100,11 @@ class AuthController extends Controller
             if (!Hash::check($credentials['password'], $user->password)) {
                 Log::info('Password verification failed', ['email' => $credentials['email']]);
                 return response()->json([
-                    'message' => 'The provided credentials are incorrect.',
+                    'message' => 'البيانات التي قمت بإدخالها غير صحيحة'
                 ], 401);
             }
-            
-            Log::info('Authentication successful');
-            
+            // If user is inactive, return error            
             $token = $user->createToken('api-token')->plainTextToken;
-            
-            Log::info('Token created successfully');
             
             return response()->json([
                 'token' => $token, 
@@ -121,16 +112,11 @@ class AuthController extends Controller
             ]);
             
         } catch (ValidationException $e) {
-            Log::error('Login validation error', ['errors' => $e->errors()]);
             return response()->json([
                 'message' => 'Validation failed',
                 'errors' => $e->errors()
             ], 422);
         } catch (Exception $e) {
-            Log::error('Login error: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString(),
-                'request' => $request->all()
-            ]);
             return response()->json([
                 'message' => 'Login failed',
                 'error' => config('app.debug') ? $e->getMessage() : 'Internal server error'
@@ -232,14 +218,34 @@ class AuthController extends Controller
             ]);
             
         } catch (Exception $e) {
-            Log::error('Enable seller mode error: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString(),
-                'user_id' => $request->user()->id ?? null
-            ]);
             return response()->json([
                 'message' => 'Failed to enable seller mode',
                 'error' => config('app.debug') ? $e->getMessage() : 'Internal server error'
             ], 500);
         }
+    }
+
+    public function changePassword(Request $request)
+    {
+        $user = $request->user();
+        $validated = $request->validate([
+            'current_password' => 'required|string',
+            'new_password' => 'required|string|min:6|confirmed',
+        ]);
+
+        // Check current password
+        if (!Hash::check($validated['current_password'], $user->password)) {
+            return response()->json([
+                'message' => 'كلمة المرور الحالية غير صحيحة.'
+            ], 422);
+        }
+
+        // Update password
+        $user->password = Hash::make($validated['new_password']);
+        $user->save();
+
+        return response()->json([
+            'message' => 'تم تغيير كلمة المرور بنجاح.'
+        ]);
     }
 }

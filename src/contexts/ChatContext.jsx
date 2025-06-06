@@ -230,6 +230,127 @@ export const ChatProvider = ({ children }) => {
       description: 'تم حذف المحادثة بنجاح',
     });
   };
+  // New: Add product to chat
+  const addProductToChat = (conversationId, product) => {
+    if (!conversationId || !product) return;
+    
+    const productMessage = {
+      id: uuidv4(),
+      productId: product.id,
+      product: product,
+      isProduct: true,
+      timestamp: new Date().toISOString(),
+      senderId: user?.id, // sent by current user
+    };
+    
+    // Update messages
+    setMessages(prevMessages => {
+      const currentConvoMessages = [...(prevMessages[conversationId] || [])];
+      return {
+        ...prevMessages,
+        [conversationId]: [...currentConvoMessages, productMessage],
+      };
+    });
+    
+    // Update conversation with last message indication (product shared)
+    setConversations(prevConversations => 
+      prevConversations.map((conv) =>
+        conv.id === conversationId
+          ? {
+              ...conv,
+              lastMessage: {
+                text: `تم مشاركة منتج: ${product.name}`,
+                timestamp: new Date().toISOString(),
+                senderId: user?.id,
+              },
+            }
+          : conv
+      )
+    );
+    
+    return productMessage;
+  };
+  
+  // New: Handle deposit payment in chat
+  const handleDepositPayment = (conversationId, paymentDetails) => {
+    if (!conversationId || !paymentDetails) return;
+    
+    const paymentMessage = {
+      id: uuidv4(),
+      isPayment: true,
+      paymentType: 'deposit',
+      paymentDetails,
+      timestamp: new Date().toISOString(),
+      senderId: user?.id,
+    };
+    
+    // Update messages
+    setMessages(prevMessages => {
+      const currentConvoMessages = [...(prevMessages[conversationId] || [])];
+      return {
+        ...prevMessages,
+        [conversationId]: [...currentConvoMessages, paymentMessage],
+      };
+    });
+    
+    // Update conversation with last message
+    setConversations(prevConversations => 
+      prevConversations.map((conv) =>
+        conv.id === conversationId
+          ? {
+              ...conv,
+              lastMessage: {
+                text: `تم دفع عربون بقيمة ${paymentDetails.amount} ريال`,
+                timestamp: new Date().toISOString(),
+                senderId: user?.id,
+              },
+            }
+          : conv
+      )
+    );
+    
+    // Simulate seller response after payment
+    setTimeout(() => {
+      const sellerResponse = {
+        id: uuidv4(),
+        text: `شكراً لدفع العربون. سأبدأ العمل على طلبك فوراً! يمكنك متابعة حالة الطلب من صفحة الطلبات.`,
+        timestamp: new Date(Date.now() + 2000).toISOString(),
+        senderId: paymentDetails.sellerId || conversations.find(c => c.id === conversationId)?.participant?.id,
+      };
+      
+      // Update messages with seller response
+      setMessages(prevMessages => {
+        const currentConvoMessages = [...(prevMessages[conversationId] || [])];
+        return {
+          ...prevMessages,
+          [conversationId]: [...currentConvoMessages, sellerResponse],
+        };
+      });
+      
+      // Update conversation with last message
+      setConversations(prevConversations => 
+        prevConversations.map((conv) =>
+          conv.id === conversationId
+            ? {
+                ...conv,
+                lastMessage: sellerResponse,
+                unreadCount: activeConversation === conversationId ? 0 : conv.unreadCount + 1,
+              }
+            : conv
+        )
+      );
+      
+      // Show notification
+      if (activeConversation !== conversationId) {
+        toast({
+          title: `رسالة جديدة من ${conversations.find(c => c.id === conversationId)?.participant?.name}`,
+          description: sellerResponse.text.substring(0, 30) + '...',
+        });
+      }
+    }, 3000);
+    
+    return paymentMessage;
+  };
 
   const value = {
     conversations,
@@ -240,6 +361,9 @@ export const ChatProvider = ({ children }) => {
     sendMessage,
     markConversationAsRead,
     deleteConversation,
+    // New functions
+    addProductToChat,
+    handleDepositPayment,
     startNewChat: (sellerId, initialMessage) => {
       // Try to find seller in existing conversations
       const existingSellerData = conversations.find(conv => 

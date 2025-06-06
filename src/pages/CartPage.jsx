@@ -14,8 +14,7 @@ const CartPage = () => {
   const { cart, removeFromCart, updateQuantity, getCartTotal, clearCart } = useCart();
   const { toast } = useToast();
   const navigate = useNavigate();
-
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     if (cart.length === 0) {
       toast({
         variant: "destructive",
@@ -24,16 +23,60 @@ const CartPage = () => {
       });
       return;
     }
-    // Placeholder for checkout logic
-    // In a real app, this would redirect to a checkout page or integrate with a payment gateway
-    toast({
-      title: "جاري توجيهك للدفع",
-      description: "سيتم توجيهك لصفحة الدفع لإكمال طلبك.",
-    });
-    // For now, let's clear the cart and navigate to a success page (or home)
-    // clearCart();
-    // navigate('/checkout-success'); // Example, create this page if needed
-    navigate('/'); // Or navigate home
+
+    try {
+      // إنشاء الطلب
+      const newOrder = {
+        id: `ord_${Date.now()}`, // في التطبيق الحقيقي، سيتم الحصول على ID من الخادم
+        items: cart.map(item => ({
+          product_id: item.id,
+          product_name: item.title,
+          product_image: item.image,
+          quantity: item.quantity,
+          price: item.price,
+          total: item.price * item.quantity
+        })),
+        total_price: getCartTotal(),
+        payment_method: 'cash_on_delivery', // الدفع عند الاستلام كإعداد افتراضي
+        payment_status: 'pending',
+        status: 'pending',
+        order_date: new Date().toISOString(),
+        customer: {
+          name: '', // سيتم ملؤها لاحقاً
+          phone: '',
+          address: ''
+        },
+        requires_deposit: false,
+        deposit_status: 'not_required'
+      };
+
+      // في التطبيق الحقيقي، نرسل البيانات للخادم
+      /* const response = await api.post('/orders', newOrder); */
+      
+      // مؤقتاً، نحفظ الطلب في التخزين المحلي
+      const existingOrders = JSON.parse(localStorage.getItem('user_orders') || '[]');
+      existingOrders.push(newOrder);
+      localStorage.setItem('user_orders', JSON.stringify(existingOrders));
+
+      // تفريغ السلة
+      clearCart();
+
+      toast({
+        title: "تم إنشاء الطلب بنجاح!",
+        description: "يمكنك الآن متابعة تفاصيل الطلب وإدخال معلومات التوصيل.",
+      });
+
+      // الانتقال لصفحة تفاصيل الطلب
+      navigate(`/orders/${newOrder.id}`);
+      
+    } catch (error) {
+      console.error('Error creating order:', error);
+      toast({
+        variant: "destructive",
+        title: "خطأ في إنشاء الطلب",
+        description: "حدث خطأ أثناء إنشاء الطلب. يرجى المحاولة مرة أخرى.",
+      });
+    }
   };
 
   return (

@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Send, Paperclip, Smile, UserCircle, ArrowLeft, Trash2, Search, MessageCircle } from 'lucide-react';
+import { Send, Paperclip, Smile, UserCircle, ArrowLeft, Trash2, Search, MessageCircle, Link2, BadgeDollarSign } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -11,6 +11,8 @@ import { Badge } from '@/components/ui/badge';
 import { useChat } from '@/contexts/ChatContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
+import ProductChatCard from '@/components/chat/ProductChatCard';
+import PaymentMessage from '@/components/chat/PaymentMessage';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,11 +35,14 @@ const ChatPage = () => {
     setActiveConversation, 
     sendMessage, 
     markConversationAsRead,
-    deleteConversation 
+    deleteConversation,
+    addProductToChat,
+    handleDepositPayment
   } = useChat();
   
   const [newMessage, setNewMessage] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [showProductPicker, setShowProductPicker] = useState(false);
   const messagesEndRef = useRef(null);
   const chatContainerRef = useRef(null);
 
@@ -220,48 +225,156 @@ const ChatPage = () => {
                 overflowY: 'auto', 
                 height: 'calc(100% - 120px)',
               }}
-            >
-              <div className="space-y-4">
-                {currentMessages.map(msg => (
-                  <motion.div
-                    key={msg.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className={cn(
-                      "flex",
-                      msg.senderId === user.id ? "justify-end" : "justify-start"
-                    )}
-                  >
-                    <div className={cn(
-                      "max-w-xs lg:max-w-md px-4 py-2 rounded-xl shadow",
-                      msg.senderId === user.id 
-                        ? "bg-primary text-primary-foreground rounded-br-none" 
-                        : "bg-gray-200 text-gray-800 rounded-bl-none"
-                    )}>
-                      <p className="text-sm">{msg.text}</p>
-                      <p className={cn(
-                        "text-xs mt-1",
-                        msg.senderId === user.id ? "text-lightBeige" : "text-gray-500"
+            >              <div className="space-y-4">
+                {currentMessages.map(msg => {
+                  // Para mensajes de producto
+                  if (msg.isProduct && msg.product) {
+                    return (
+                      <div key={msg.id} className={cn(
+                        "flex w-full",
+                        msg.senderId === user.id ? "justify-end" : "justify-start"
                       )}>
-                        {new Date(msg.timestamp).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}
-                      </p>
-                    </div>
-                  </motion.div>
-                ))}
+                        <ProductChatCard 
+                          product={msg.product}
+                          sellerId={currentConversationDetails.participant.id}
+                          conversationId={activeConversation}
+                          onPaymentSuccess={(paymentDetails) => handleDepositPayment(activeConversation, {
+                            ...paymentDetails,
+                            sellerId: currentConversationDetails.participant.id
+                          })}
+                        />
+                      </div>
+                    );
+                  }
+                  
+                  // Para mensajes de pago
+                  if (msg.isPayment) {
+                    return (
+                      <PaymentMessage 
+                        key={msg.id}
+                        message={msg}
+                        isUserMessage={msg.senderId === user.id}
+                      />
+                    );
+                  }
+                  
+                  // Para mensajes de texto normales
+                  return (
+                    <motion.div
+                      key={msg.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className={cn(
+                        "flex",
+                        msg.senderId === user.id ? "justify-end" : "justify-start"
+                      )}
+                    >
+                      <div className={cn(
+                        "max-w-xs lg:max-w-md px-4 py-2 rounded-xl shadow",
+                        msg.senderId === user.id 
+                          ? "bg-primary text-primary-foreground rounded-br-none" 
+                          : "bg-gray-200 text-gray-800 rounded-bl-none"
+                      )}>
+                        <p className="text-sm">{msg.text}</p>
+                        <p className={cn(
+                          "text-xs mt-1",
+                          msg.senderId === user.id ? "text-lightBeige" : "text-gray-500"
+                        )}>
+                          {new Date(msg.timestamp).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                      </div>
+                    </motion.div>
+                  );
+                })}
               </div>
               <div ref={messagesEndRef} style={{ height: '20px', marginTop: '20px' }} />
             </div>
 
-            {/* Message Input Area */}
-            <footer className="p-3 border-t bg-gray-50 shrink-0" style={{ height: '60px' }}>
+            {/* Message Input Area */}            <footer className="p-3 border-t bg-gray-50 shrink-0" style={{ height: '60px' }}>
               <form onSubmit={handleSendMessage} className="flex items-center space-x-2 space-x-reverse">
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="ghost" size="icon" type="button">
+                      <Link2 className="h-5 w-5 text-gray-500" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent className="sm:max-w-lg">
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>مشاركة منتج في المحادثة</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        يمكنك مشاركة منتج مع المشتري لمناقشة التفاصيل وإتاحة دفع العربون.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    
+                    <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto">
+                      {/* Aquí se mostraría una lista de productos del vendedor */}
+                      {/* Como ejemplo, mostraremos un producto simulado */}
+                      <Card className="hover:bg-gray-50 cursor-pointer" onClick={() => {
+                        // Simulación de un producto
+                        const mockProduct = {
+                          id: 'p1',
+                          name: 'كرسي خشبي مزخرف',
+                          description: 'كرسي تقليدي مصنوع من خشب الجميز المزخرف يدوياً',
+                          price: 350,
+                          category: 'أثاث منزلي',
+                          image: 'https://via.placeholder.com/150',
+                          quantity: 5
+                        };
+                        
+                        addProductToChat(activeConversation, mockProduct);
+                      }}>
+                        <CardHeader className="p-3 pb-0">
+                          <CardTitle className="text-base">كرسي خشبي مزخرف</CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-3">
+                          <div className="flex items-center justify-between">
+                            <span className="font-semibold">350 ريال</span>
+                            <Badge>أثاث منزلي</Badge>
+                          </div>
+                        </CardContent>
+                      </Card>
+                      
+                      <Card className="hover:bg-gray-50 cursor-pointer" onClick={() => {
+                        // Otro producto simulado
+                        const mockProduct2 = {
+                          id: 'p2',
+                          name: 'مزهرية فخارية تقليدية',
+                          description: 'مزهرية مصنوعة يدوياً من الفخار المحلي بنقوش تراثية',
+                          price: 120,
+                          category: 'إكسسوارات منزلية',
+                          image: 'https://via.placeholder.com/150',
+                          quantity: 8
+                        };
+                        
+                        addProductToChat(activeConversation, mockProduct2);
+                      }}>
+                        <CardHeader className="p-3 pb-0">
+                          <CardTitle className="text-base">مزهرية فخارية تقليدية</CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-3">
+                          <div className="flex items-center justify-between">
+                            <span className="font-semibold">120 ريال</span>
+                            <Badge>إكسسوارات منزلية</Badge>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+                    
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>إلغاء</AlertDialogCancel>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+                
                 <Button variant="ghost" size="icon" type="button">
-                  <Paperclip className="h-5 w-5 text-gray-500" />
+                  <BadgeDollarSign className="h-5 w-5 text-green-600" />
                 </Button>
+                
                 <Button variant="ghost" size="icon" type="button">
                   <Smile className="h-5 w-5 text-gray-500" />
                 </Button>
+                
                 <Input 
                   type="text" 
                   value={newMessage}
@@ -270,6 +383,7 @@ const ChatPage = () => {
                   className="flex-1" 
                   autoFocus
                 />
+                
                 <Button type="submit" size="icon" className="bg-primary hover:bg-primary/90">
                   <Send className="h-5 w-5" />
                 </Button>

@@ -1,15 +1,12 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useToast } from '@/components/ui/use-toast';
+import { apiUrl } from '@/lib/api';
 
 const AuthContext = createContext();
 
 export const useAuth = () => useContext(AuthContext);
 
-// Helper to get API base URL from env
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '') || 'http://127.0.0.1:8000';
-const getApiUrl = (path) => {
-  return `${API_BASE_URL}${path.startsWith('/') ? path : '/' + path}`;
-};
+// Replace all getApiUrl and API_BASE_URL usage with apiUrl
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -23,7 +20,7 @@ export const AuthProvider = ({ children }) => {
     const token = getToken();
     if (token) {
       setLoading(true);
-      fetch(getApiUrl('/api/me'), {
+      fetch(apiUrl('me'), {
         headers: { 
           'Authorization': `Bearer ${token}`,
           'Accept': 'application/json',
@@ -59,7 +56,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (credentials) => {
     try {
-      const res = await fetch(getApiUrl('/api/login'), {
+      const res = await fetch(apiUrl('login'), {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -96,19 +93,17 @@ export const AuthProvider = ({ children }) => {
       });
       return false;
     }
-  };
-
+  };  
   const register = async (userData) => {
     try {
-      const res = await fetch(getApiUrl('/api/register'), {
+      const res = await fetch(apiUrl('register'), {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
           'Accept': 'application/json',
         },
         body: JSON.stringify(userData),
-      });
-      
+      });      
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
         
@@ -120,9 +115,9 @@ export const AuthProvider = ({ children }) => {
         return false;
       }
       
-      const data = (await res.json()).data;
+      const data = await res.json();
       
-      // Since registration returns a token, we can directly set the user
+      // Automatically set user and token after successful registration
       localStorage.setItem('token', data.token);
       setUser(data.user);
       localStorage.setItem('user', JSON.stringify(data.user));
@@ -146,7 +141,7 @@ export const AuthProvider = ({ children }) => {
     const token = getToken();
     if (token) {
       try {
-        await fetch(getApiUrl('/api/logout'), {
+        await fetch(apiUrl('logout'), {
           method: 'POST',
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -167,18 +162,20 @@ export const AuthProvider = ({ children }) => {
       if (!token || !user) {
         throw new Error('Not authenticated');
       }
-      
-      // Ensure we're sending the correct data structure
+        // Ensure we're sending the correct data structure
       const dataToSend = {
         name: updatedData.name || user.name,
         bio: updatedData.bio || user.bio || '',
         location: updatedData.location || user.location || '',
         avatar: typeof updatedData.avatar === 'string' ? updatedData.avatar : (user.avatar || ''),
-        phone: typeof updatedData.phone === 'string' ? updatedData.phone : (user.phone || ''),
-        skills: Array.isArray(updatedData.skills) ? updatedData.skills : (user.skills || [])
+        phone: typeof updatedData.phone === 'string' ? updatedData.phone : (user.phone || '')
       };
+        // If skills are provided and user's active_role is seller, include them in the request
+      if (Array.isArray(updatedData.skills) && (user.active_role === 'seller')) {
+        dataToSend.skills = updatedData.skills;
+      }
       
-      const res = await fetch(getApiUrl(`/api/users/${user.id}`), {
+      const res = await fetch(apiUrl(`users/${user.id}`), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -192,13 +189,7 @@ export const AuthProvider = ({ children }) => {
         const errorText = await res.text();
         throw new Error(`Update failed: ${res.status} ${errorText}`);
       }
-      
-      const updatedUser = (await res.json()).data;
-      
-      // Make sure skills array is present and properly formatted
-      if (updatedData.skills && Array.isArray(updatedData.skills)) {
-        updatedUser.skills = updatedData.skills;
-      }
+        const updatedUser = (await res.json()).data;
       
       setUser(updatedUser);
       localStorage.setItem('user', JSON.stringify(updatedUser));
@@ -225,7 +216,7 @@ export const AuthProvider = ({ children }) => {
         throw new Error('Not authenticated');
       }
       
-      const res = await fetch(getApiUrl('/api/switch-role'), {
+      const res = await fetch(apiUrl('switch-role'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -268,7 +259,7 @@ export const AuthProvider = ({ children }) => {
         throw new Error('Not authenticated');
       }
       
-      const res = await fetch(getApiUrl('/api/enable-seller-mode'), {
+      const res = await fetch(apiUrl('enable-seller-mode'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -307,7 +298,7 @@ export const AuthProvider = ({ children }) => {
     try {
       const token = getToken();
       if (!token || !user) throw new Error('Not authenticated');
-      const res = await fetch(getApiUrl('/api/change-password'), {
+      const res = await fetch(apiUrl('change-password'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

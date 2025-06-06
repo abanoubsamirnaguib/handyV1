@@ -44,11 +44,21 @@ class AuthController extends Controller
             
             // Create seller profile if user is or can be a seller
             if ($isSeller) {
-                \App\Models\Seller::create([
+                $seller = \App\Models\Seller::create([
                     'user_id' => $user->id,
-                    'bio' => null,
-                    'location' => null,
+                    'member_since' => now(),
                 ]);
+                
+                // Create seller skills if provided in the request
+                if ($request->has('skills') && is_array($request->skills)) {
+                    foreach ($request->skills as $skill) {
+                        \App\Models\SellerSkill::create([
+                            'seller_id' => $seller->id,
+                            'skill_name' => $skill,
+                            'created_at' => now(),
+                        ]);
+                    }
+                }
             }
             
             // Create a token immediately so the user doesn't have to log in separately

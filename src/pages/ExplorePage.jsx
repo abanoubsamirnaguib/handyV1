@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Star, Filter, ArrowRight, ListFilter, LayoutGrid, X, Mail, MapPin } from 'lucide-react';
@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { categories, searchGigs, searchSellers } from '@/lib/data';
+import { apiFetch } from '@/lib/api';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -25,6 +26,13 @@ const ExplorePage = () => {
   const [sortBy, setSortBy] = useState('relevance');
   const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+  // const [categories, setCategories] = useState([]);
+
+  // useEffect(() => {
+  //   apiFetch('listcategories')
+  //     .then(data => setCategories(data.data || data))
+  //     .catch(() => setCategories([]));
+  // }, []);
 
   useEffect(() => {
     const tab = searchParams.get('tab') || 'products';
@@ -387,7 +395,7 @@ const ExplorePage = () => {
 
               {gigs.length > 0 ? (
                 <motion.div 
-                  className={viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8" : "space-y-6"}
+                  className={viewMode === 'grid' ? "grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-4" : "space-y-6"}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ duration: 0.5 }}
@@ -510,7 +518,7 @@ const ExplorePage = () => {
 
               {sellers.length > 0 ? (
                 <motion.div 
-                  className={viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8" : "space-y-6"}
+                  className={viewMode === 'grid' ? "grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-4" : "space-y-6"}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ duration: 0.5 }}

@@ -8,6 +8,14 @@ class SellerSkillSeeder extends Seeder
 {
     public function run(): void
     {
+        // Skills are now stored in the users table as JSON, not in seller_skills table
+        // This seeder is kept for backward compatibility but does nothing
+        // Skills are populated by SellerSeeder
+        
+        // If you still want to use the seller_skills table for additional functionality,
+        // you can uncomment and modify the code below
+        
+        /*
         // Assign skills to sellers by seller_id (1-based, sequential)
         $sellerSkills = [
             // seller_id => [skills]
@@ -31,5 +39,6 @@ class SellerSkillSeeder extends Seeder
                 ]);
             }
         }
+        */
     }
 }

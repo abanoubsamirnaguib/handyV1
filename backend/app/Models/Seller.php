@@ -10,8 +10,6 @@ class Seller extends Model
     protected $table = 'sellers';
     protected $fillable = [
         'user_id',
-        'bio',
-        'location',
         'member_since',
         'rating',
         'review_count',
@@ -26,8 +24,14 @@ class Seller extends Model
     {
         return $this->belongsTo(User::class);
     }
+    
     public function skills()
     {
         return $this->hasMany(SellerSkill::class);
+    }
+    
+    public function products()
+    {
+        return $this->hasMany(Product::class);
     }
 }

@@ -30,7 +30,6 @@ class User extends Authenticatable
         'bio',
         'location',
         'avatar',
-        'skills',
         'phone'
     ];
 
@@ -54,7 +53,6 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
-            'skills' => 'array',
             'is_seller' => 'boolean',
             'is_buyer' => 'boolean',
         ];
@@ -100,8 +98,7 @@ class User extends Authenticatable
         if (!$this->seller) {
             Seller::create([
                 'user_id' => $this->id,
-                'bio' => $this->bio,
-                'location' => $this->location,
+                'member_since' => now(),
             ]);
         }
         
@@ -135,11 +132,17 @@ class User extends Authenticatable
         if (!$this->seller) {
             Seller::create([
                 'user_id' => $this->id,
-                'bio' => $this->bio,
-                'location' => $this->location,
+                'member_since' => now(),
             ]);
         }
         
         return $this;
+    }
+    public function getSkillsAttribute()
+    {
+        if ($this->seller) {
+            return $this->seller->skills->pluck('skill_name')->toArray();
+        }
+        return [];
     }
 }

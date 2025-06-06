@@ -3,13 +3,15 @@ import { motion } from 'framer-motion';
 import { 
   Package, 
   PlusCircle, 
-  Edit, 
   Trash2, 
   Eye, 
   Bookmark,
   Search,
   Filter,
-  Star
+  Star,
+  Loader2,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { 
   Card, 
@@ -31,7 +33,6 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { categories, gigs as products } from '@/lib/data';
 import { useNavigate } from 'react-router-dom';
 import {
   AlertDialog,
@@ -44,6 +45,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { adminApi, api } from '@/lib/api';
 
 const AdminProducts = () => {
   const { user } = useAuth();
@@ -52,43 +54,124 @@ const AdminProducts = () => {
   
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
-  const [allProducts, setAllProducts] = useState([...products]);
-  const [filteredProducts, setFilteredProducts] = useState([...products]);
-
-  useEffect(() => {
+  const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);  const [updating, setUpdating] = useState(false);
+    // Pagination state for traditional pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [itemsPerPage, setItemsPerPage] = useState(5);useEffect(() => {
     if (user?.role !== 'admin') {
       toast({
         variant: "destructive",
         title: "غير مصرح به",
         description: "هذه الصفحة مخصصة للمشرفين فقط."
       });
-    }
-  }, [user, toast]);
-
+      return;    }
+    fetchProducts(); // Fetch first page
+    fetchCategories();
+  }, [user]);// Fetch products when search, filter, or page changes
   useEffect(() => {
-    // تطبيق الفلاتر
-    let result = [...allProducts];
-    
-    if (searchTerm) {
-      result = result.filter(product => 
-        product.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.description.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+    if (user?.role === 'admin') {
+      fetchProducts();
     }
-    
-    if (categoryFilter) {
-      result = result.filter(product => product.category === categoryFilter);
+  }, [searchTerm, categoryFilter, currentPage, user]);  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      const params = {
+        page: currentPage
+      };
+      if (searchTerm) params.search = searchTerm;
+      if (categoryFilter) params.category = categoryFilter;
+      
+      const response = await adminApi.getProducts(params);
+      
+      // Debug: Log the actual response structure
+      console.log('Full API Response:', response);
+        // Handle Laravel pagination response with ProductResource::collection
+      if (response.data && Array.isArray(response.data)) {
+        // Direct data array (ProductResource::collection structure)
+        setProducts(response.data || []);
+        setCurrentPage(response.meta.current_page || 1);
+        setTotalPages(response.meta.last_page || 1);
+        setTotalItems(response.meta.total || 0);
+        setItemsPerPage(response.meta.per_page || 5);
+      } 
+      
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      toast({
+        variant: "destructive",
+        title: "خطأ",
+        description: "حدث خطأ أثناء جلب بيانات المنتجات"
+      });
+    } finally {
+      setLoading(false);
     }
-    
-    setFilteredProducts(result);
-  }, [searchTerm, categoryFilter, allProducts]);
+  };
+  const fetchCategories = async () => {
+    try {
+      const response = await api.getCategories();
+      setCategories(response.data || []);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      toast({
+        variant: "destructive",
+        title: "خطأ",
+        description: "حدث خطأ أثناء جلب التصنيفات"
+      });
+    }
+  };  // Handle search and filter changes
+  const handleSearchChange = (value) => {
+    setSearchTerm(value);
+    setCurrentPage(1); // Reset to first page when searching
+  };
 
-  const handleDeleteProduct = (productId) => {
-    setAllProducts(prev => prev.filter(product => product.id !== productId));
-    toast({
-      title: "تم حذف المنتج",
-      description: "تم حذف المنتج بنجاح."
-    });
+  const handleCategoryChange = (value) => {
+    setCategoryFilter(value);
+    setCurrentPage(1); // Reset to first page when filtering
+  };
+
+  // Pagination handlers
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= totalPages && newPage !== currentPage) {
+      setCurrentPage(newPage);
+    }
+  };
+
+  const handlePrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const handleDeleteProduct = async (productId) => {
+    try {
+      setUpdating(true);
+      await adminApi.deleteProduct(productId);
+      // Refresh the current page after deletion
+      await fetchProducts();
+      toast({
+        title: "تم حذف المنتج",
+        description: "تم حذف المنتج بنجاح."
+      });
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      toast({
+        variant: "destructive",
+        title: "خطأ",
+        description: "حدث خطأ أثناء حذف المنتج"
+      });
+    } finally {
+      setUpdating(false);
+    }
   };
 
   const handleAddProduct = () => {
@@ -100,46 +183,56 @@ const AdminProducts = () => {
     // navigate('/admin/products/new');
   };
 
-  const handleEditProduct = (productId) => {
-    toast({
-      title: "تعديل المنتج",
-      description: `سيتم تحويلك إلى صفحة تعديل المنتج ${productId}.`
-    });
-    // في تطبيق حقيقي، هنا سيتم التحويل إلى صفحة تعديل المنتج
-    // navigate(`/admin/products/edit/${productId}`);
-  };
-
   const handleViewProduct = (productId) => {
-    toast({
-      title: "عرض المنتج",
-      description: `سيتم تحويلك إلى صفحة عرض المنتج ${productId}.`
-    });
     navigate(`/gigs/${productId}`);
   };
-
-  const handleToggleFeatured = (productId) => {
-    setAllProducts(prev => prev.map(product => {
-      if (product.id === productId) {
-        return { ...product, featured: !product.featured };
-      }
-      return product;
-    }));
-    
-    const product = allProducts.find(p => p.id === productId);
-    
-    toast({
-      title: product?.featured ? "إلغاء تمييز المنتج" : "تمييز المنتج",
-      description: product?.featured 
-        ? "تم إلغاء تمييز المنتج بنجاح."
-        : "تم تمييز المنتج بنجاح."
-    });
+  const handleToggleFeatured = async (productId) => {
+    try {
+      setUpdating(true);
+      const product = products.find(p => p.id === productId);
+      const newFeaturedStatus = !product?.featured;
+      
+      await adminApi.toggleProductFeatured(productId, newFeaturedStatus);
+      
+      // Update the product in the current page
+      setProducts(prev => prev.map(product => {
+        if (product.id === productId) {
+          return { ...product, featured: newFeaturedStatus };
+        }
+        return product;
+      }));
+      
+      toast({
+        title: newFeaturedStatus ? "تمييز المنتج" : "إلغاء تمييز المنتج",
+        description: newFeaturedStatus 
+          ? "تم تمييز المنتج بنجاح."
+          : "تم إلغاء تمييز المنتج بنجاح."
+      });
+    } catch (error) {
+      console.error('Error toggling product featured status:', error);
+      toast({
+        variant: "destructive",
+        title: "خطأ",
+        description: "حدث خطأ أثناء تغيير حالة تمييز المنتج"
+      });
+    } finally {
+      setUpdating(false);
+    }
   };
-
   if (user?.role !== 'admin') {
     return (
       <div className="p-6 md:p-8 text-center">
         <h1 className="text-2xl font-bold text-gray-700">غير مصرح لك بالدخول</h1>
         <p className="text-gray-500">هذه الصفحة مخصصة للمشرفين فقط.</p>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="p-6 md:p-8 text-center">
+        <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+        <h2 className="text-lg font-semibold text-gray-700">جاري تحميل المنتجات...</h2>
       </div>
     );
   }
@@ -167,18 +260,17 @@ const AdminProducts = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="flex flex-col md:flex-row gap-4"
-      >
-        <div className="relative flex-grow">
+      >        <div className="relative flex-grow">
           <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input
             placeholder="البحث عن منتج..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
             className="pr-10"
           />
         </div>
         <div className="w-full md:w-1/3">
-          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+          <Select value={categoryFilter} onValueChange={handleCategoryChange}>
             <SelectTrigger className="w-full">
               <Filter className="h-4 w-4 ml-2" />
               <SelectValue placeholder="تصفية حسب التصنيف" />
@@ -193,18 +285,23 @@ const AdminProducts = () => {
             </SelectContent>
           </Select>
         </div>
-      </motion.div>
-
-      {filteredProducts.length === 0 ? (
+      </motion.div>      {products.length === 0 ? (
         <div className="text-center py-12">
           <Package className="h-16 w-16 text-gray-300 mx-auto mb-4" />
           <h2 className="text-2xl font-semibold text-gray-700 mb-2">لا توجد منتجات</h2>
           <p className="text-gray-500">لم يتم العثور على منتجات تطابق معايير البحث.</p>
         </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredProducts.map((product, index) => {
-            const category = categories.find(c => c.id === product.category);
+      ) : (        <>          {/* Products info header */}
+          <div className="flex justify-between items-center mb-4">
+            <p className="text-sm text-gray-600">
+              عرض {((currentPage - 1) * itemsPerPage) + 1} إلى {Math.min(currentPage * itemsPerPage, totalItems)} من {totalItems} منتج
+            </p>
+            <p className="text-sm text-gray-600">
+              الصفحة {currentPage} من {totalPages}
+            </p>
+          </div><div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {products.map((product, index) => {
+            const category = categories.find(c => c.id === product.category_id);
             return (
               <motion.div
                 key={product.id}
@@ -233,7 +330,7 @@ const AdminProducts = () => {
                       <div className="flex justify-between">
                         <span className="text-gray-600">التصنيف:</span>
                         <Badge variant="outline" className="border-blue-200 text-blue-600">
-                          {category?.name || product.category}
+                          {category?.name || 'غير محدد'}
                         </Badge>
                       </div>
                       <div className="flex justify-between">
@@ -273,14 +370,6 @@ const AdminProducts = () => {
                       <Bookmark className="ml-1 h-4 w-4" />
                       {product.featured ? "إلغاء التمييز" : "تمييز"}
                     </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      className="border-green-200 text-green-600" 
-                      onClick={() => handleEditProduct(product.id)}
-                    >
-                      <Edit className="ml-1 h-4 w-4" /> تعديل
-                    </Button>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button variant="destructive" size="sm">
@@ -307,11 +396,95 @@ const AdminProducts = () => {
                       </AlertDialogContent>
                     </AlertDialog>
                   </CardFooter>
-                </Card>
-              </motion.div>
+                </Card>              </motion.div>
             );
-          })}
-        </div>
+          })}          </div>
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex justify-center items-center gap-2 mt-8"
+            >
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handlePrevPage}
+                disabled={currentPage === 1}
+                className="flex items-center gap-1"
+              >
+                <ChevronRight className="h-4 w-4" />
+                السابق
+              </Button>
+
+              <div className="flex items-center gap-1">
+                {/* Show first page */}
+                {currentPage > 3 && (
+                  <>
+                    <Button
+                      variant={1 === currentPage ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => handlePageChange(1)}
+                      className={1 === currentPage ? "bg-blue-600 hover:bg-blue-700" : ""}
+                    >
+                      1
+                    </Button>
+                    {currentPage > 4 && <span className="px-2 text-gray-500">...</span>}
+                  </>
+                )}
+
+                {/* Show pages around current page */}
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  const startPage = Math.max(1, Math.min(currentPage - 2, totalPages - 4));
+                  const pageNum = startPage + i;
+                  
+                  if (pageNum > totalPages || pageNum < 1) return null;
+                  if (currentPage <= 3 || pageNum !== 1) {
+                    return (
+                      <Button
+                        key={pageNum}
+                        variant={pageNum === currentPage ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => handlePageChange(pageNum)}
+                        className={pageNum === currentPage ? "bg-blue-600 hover:bg-blue-700" : ""}
+                      >
+                        {pageNum}
+                      </Button>
+                    );
+                  }
+                  return null;
+                })}
+
+                {/* Show last page */}
+                {currentPage < totalPages - 2 && (
+                  <>
+                    {currentPage < totalPages - 3 && <span className="px-2 text-gray-500">...</span>}
+                    <Button
+                      variant={totalPages === currentPage ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => handlePageChange(totalPages)}
+                      className={totalPages === currentPage ? "bg-blue-600 hover:bg-blue-700" : ""}
+                    >
+                      {totalPages}
+                    </Button>
+                  </>
+                )}
+              </div>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleNextPage}
+                disabled={currentPage === totalPages}
+                className="flex items-center gap-1"
+              >
+                التالي
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+            </motion.div>
+          )}
+        </>
       )}
     </div>
   );

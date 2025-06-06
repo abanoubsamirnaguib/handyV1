@@ -29,6 +29,8 @@ use App\Http\Controllers\Api\ActivityLogCrudController;
 use App\Http\Controllers\Api\OrderHistoryCrudController;
 use App\Http\Controllers\Api\FileUploadController;
 use App\Http\Controllers\Api\SiteSettingController;
+use App\Http\Controllers\Api\AdminController;
+use App\Http\Controllers\PaymentController;
 
 Route::prefix('listsellers')->group(function () {
     Route::get('{id}', [SellerController::class, 'show']);
@@ -43,6 +45,7 @@ Route::prefix('Listpoducts')->group(function () {
 Route::get('listcategories', [CategoryController::class, 'index']);
 Route::get('products/search', [ProductController::class, 'search']);
 Route::get('sellers/search', [SellerController::class, 'search']);
+Route::get('sellers/top', [SellerController::class, 'topSellers']);
 Route::get('orders/{id}', [OrderCrudController::class, 'show']);
 
 // Authentication - public routes
@@ -75,7 +78,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::apiResource('reviews', ReviewCrudController::class)->except(['show']);
     
     // Seller CRUD
-    Route::apiResource('sellers', SellerCrudController::class)->except(['show']);    
+    Route::apiResource('sellers', SellerCrudController::class);    
     
     // User CRUD (remaining routes)
     Route::delete('users/{id}', [UserCrudController::class, 'destroy']);
@@ -117,4 +120,25 @@ Route::middleware(['auth:sanctum'])->group(function () {
     
     // Change Password
     Route::post('change-password', [AuthController::class, 'changePassword']);
+    
+    // Payment routes
+    Route::post('payments/deposit', [PaymentController::class, 'processDeposit']);
+    Route::post('payments/remaining', [PaymentController::class, 'processRemainingPayment']);
+    Route::get('payments/order/{orderId}', [PaymentController::class, 'getOrderPayments']);
+    
+    // Admin routes
+    Route::prefix('admin')->group(function () {
+        Route::get('dashboard', [AdminController::class, 'dashboard']);
+        Route::get('users', [AdminController::class, 'users']);
+        Route::get('sellers', [AdminController::class, 'sellers']);
+        Route::get('products', [AdminController::class, 'products']);
+        Route::get('recent-activity', [AdminController::class, 'recentActivity']);
+        
+        Route::patch('users/{id}/status', [AdminController::class, 'updateUserStatus']);
+        Route::patch('sellers/{id}/status', [AdminController::class, 'updateSellerStatus']);
+        Route::patch('products/{id}/featured', [AdminController::class, 'toggleProductFeatured']);
+        
+        Route::delete('users/{id}', [AdminController::class, 'deleteUser']);
+        Route::delete('products/{id}', [AdminController::class, 'deleteProduct']);
+    });
 });

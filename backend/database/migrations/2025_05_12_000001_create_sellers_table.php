@@ -12,8 +12,6 @@ return new class extends Migration
             $table->bigIncrements('id');
             $table->unsignedBigInteger('user_id');
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
-            $table->text('bio')->nullable();
-            $table->string('location', 100)->nullable();
             $table->dateTime('member_since')->default(DB::raw('CURRENT_TIMESTAMP'));
             $table->decimal('rating', 3, 2)->default(0);
             $table->integer('review_count')->default(0);
@@ -22,7 +20,6 @@ return new class extends Migration
             $table->dateTime('created_at')->default(DB::raw('CURRENT_TIMESTAMP'));
             $table->dateTime('updated_at')->default(DB::raw('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'));
             $table->index('rating', 'idx_seller_rating');
-            $table->index('location', 'idx_seller_location');
         });
     }
 

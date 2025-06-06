@@ -86,8 +86,8 @@ const LoginPage = () => {
               <HelpCircle className="h-5 w-5 text-olivePrimary ml-2 mt-0.5" />
               <div>
                 <p className="font-semibold text-darkOlive mb-1">أمثلة للاختبار:</p>
-                <p className="text-darkOlive/80 mb-1"><strong>مشتري:</strong> user@example.com / password</p>
-                <p className="text-darkOlive/80 mb-1"><strong>بائع:</strong> seller@example.com / password</p>
+                <p className="text-darkOlive/80 mb-1"><strong>مشتري:</strong> nora@example.com/ password123</p>
+                <p className="text-darkOlive/80 mb-1"><strong>بائع:</strong> sara@example.com / password123</p>
                 <p className="text-darkOlive/80"><strong>مسؤول:</strong> admin@example.com / admin123</p>
               </div>
             </div>

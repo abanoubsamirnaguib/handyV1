@@ -1,8 +1,8 @@
-
 import React from 'react';
 import { Outlet } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import MobileBottomNav from '@/components/MobileBottomNav';
 import { motion } from 'framer-motion';
 
 const MainLayout = () => {
@@ -19,6 +19,7 @@ const MainLayout = () => {
         <Outlet />
       </motion.main>
       <Footer />
+      <MobileBottomNav />
     </div>
   );
 };

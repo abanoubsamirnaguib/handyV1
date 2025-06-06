@@ -12,7 +12,9 @@ import {
   CheckCircle,
   X,
   Eye,
-  Mail
+  Mail,
+  Loader2,
+  MessageSquare
 } from 'lucide-react';
 import { 
   Card, 
@@ -28,6 +30,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { useChat } from '@/contexts/ChatContext';
 import { useNavigate } from 'react-router-dom';
 import {
   AlertDialog,
@@ -47,17 +50,21 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select";
+import { adminApi } from '@/lib/api';
 
 const AdminUsers = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { startConversation, setActiveConversation } = useChat();
   
   const [users, setUsers] = useState([]);
+  const [filteredUsers, setFilteredUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-  const [filteredUsers, setFilteredUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
     if (user?.role !== 'admin') {
@@ -66,30 +73,32 @@ const AdminUsers = () => {
         title: "غير مصرح به",
         description: "هذه الصفحة مخصصة للمشرفين فقط."
       });
-    }
-  }, [user, toast]);
+      return;
+    }    fetchUsers();
+  }, [user]);
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/users`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        });
-        if (!res.ok) throw new Error('Failed to fetch users');
-        const data = await res.json();
-        setUsers(data.data || []);
-        setFilteredUsers(data.data || []);
-      } catch {
-        toast({
-          variant: 'destructive',
-          title: 'خطأ',
-          description: 'تعذر تحميل المستخدمين من الخادم.'
-        });
-      }
-    };
-    fetchUsers();
-  }, []);
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      const params = {};
+      if (searchTerm) params.search = searchTerm;
+      if (roleFilter) params.role = roleFilter;
+      if (statusFilter) params.status = statusFilter;
+      
+      const response = await adminApi.getUsers(params);
+      setUsers(response.data || []);
+      setFilteredUsers(response.data || []);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      toast({
+        variant: "destructive",
+        title: "خطأ",
+        description: "حدث خطأ أثناء جلب بيانات المستخدمين"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     // تطبيق الفلاتر
@@ -99,7 +108,7 @@ const AdminUsers = () => {
       result = result.filter(user => 
         user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.id.toLowerCase().includes(searchTerm.toLowerCase())
+        user.id.toString().includes(searchTerm.toLowerCase())
       );
     }
     
@@ -114,32 +123,56 @@ const AdminUsers = () => {
     setFilteredUsers(result);
   }, [searchTerm, roleFilter, statusFilter, users]);
 
-  const handleSuspendUser = (userId) => {
-    setUsers(prev => prev.map(u => {
-      if (u.id === userId) {
-        return { ...u, status: 'suspended' };
-      }
-      return u;
-    }));
-    
-    toast({
-      title: "تم تعليق المستخدم",
-      description: "تم تعليق حساب المستخدم بنجاح."
-    });
+  const handleSuspendUser = async (userId) => {
+    try {
+      setUpdating(true);
+      await adminApi.updateUserStatus(userId, 'suspended');
+      setUsers(prev => prev.map(u => {
+        if (u.id === userId) {
+          return { ...u, status: 'suspended' };
+        }
+        return u;
+      }));
+      toast({
+        title: "تم تعليق المستخدم",
+        description: "تم تعليق حساب المستخدم بنجاح."
+      });
+    } catch (error) {
+      console.error('Error suspending user:', error);
+      toast({
+        variant: "destructive",
+        title: "خطأ",
+        description: "حدث خطأ أثناء تعليق المستخدم"
+      });
+    } finally {
+      setUpdating(false);
+    }
   };
 
-  const handleActivateUser = (userId) => {
-    setUsers(prev => prev.map(u => {
-      if (u.id === userId) {
-        return { ...u, status: 'active' };
-      }
-      return u;
-    }));
-    
-    toast({
-      title: "تم تفعيل المستخدم",
-      description: "تم تفعيل حساب المستخدم بنجاح."
-    });
+  const handleActivateUser = async (userId) => {
+    try {
+      setUpdating(true);
+      await adminApi.updateUserStatus(userId, 'active');
+      setUsers(prev => prev.map(u => {
+        if (u.id === userId) {
+          return { ...u, status: 'active' };
+        }
+        return u;
+      }));
+      toast({
+        title: "تم تفعيل المستخدم",
+        description: "تم تفعيل حساب المستخدم بنجاح."
+      });
+    } catch (error) {
+      console.error('Error activating user:', error);
+      toast({
+        variant: "destructive",
+        title: "خطأ",
+        description: "حدث خطأ أثناء تفعيل المستخدم"
+      });
+    } finally {
+      setUpdating(false);
+    }
   };
 
   const handleViewUserProfile = (userId) => {
@@ -153,11 +186,28 @@ const AdminUsers = () => {
     });
   };
 
-  const handleEmailUser = (userEmail) => {
-    toast({
-      title: "إرسال بريد إلكتروني",
-      description: `سيتم فتح نافذة إرسال بريد إلكتروني إلى ${userEmail}.`
-    });
+  const handleChatWithUser = (userData) => {
+    if (userData.id === user.id) {
+      toast({ 
+        variant: "destructive", 
+        title: "لا يمكن مراسلة نفسك", 
+        description: "لا يمكنك بدء محادثة مع نفسك." 
+      });
+      return;
+    }
+    
+    // Format user data for chat context
+    const chatParticipant = {
+      id: userData.id,
+      name: userData.name,
+      avatar: userData.avatar || '',
+      lastSeen: userData.last_login || new Date().toISOString()
+    };
+    
+    // Start a conversation with the user
+    const conversationId = startConversation(chatParticipant);
+    setActiveConversation(conversationId);
+    navigate('/chat');
   };
 
   const getStatusBadge = (status) => {
@@ -191,6 +241,15 @@ const AdminUsers = () => {
       <div className="p-6 md:p-8 text-center">
         <h1 className="text-2xl font-bold text-gray-700">غير مصرح لك بالدخول</h1>
         <p className="text-gray-500">هذه الصفحة مخصصة للمشرفين فقط.</p>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="p-6 md:p-8 text-center">
+        <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+        <h2 className="text-lg font-semibold text-gray-700">جاري تحميل المستخدمين...</h2>
       </div>
     );
   }
@@ -284,7 +343,7 @@ const AdminUsers = () => {
                     <div className="flex items-center">
                       <Avatar className="h-12 w-12 ml-3">
                         <AvatarImage src={userData.avatar} />
-                        <AvatarFallback>{userData.name.charAt(0)}</AvatarFallback>
+                        <AvatarFallback>{userData.name?.charAt(0) || 'U'}</AvatarFallback>
                       </Avatar>
                       <div>
                         <CardTitle className="text-lg text-gray-800">{userData.name}</CardTitle>
@@ -303,37 +362,38 @@ const AdminUsers = () => {
                     
                     <div className="flex justify-between">
                       <span className="text-gray-600">تاريخ التسجيل:</span>
-                      <span>{userData.registrationDate}</span>
+                      <span>{userData.created_at ? new Date(userData.created_at).toLocaleDateString('ar-SA') : 'غير محدد'}</span>
                     </div>
                     
                     <div className="flex justify-between">
                       <span className="text-gray-600">آخر تسجيل دخول:</span>
-                      <span>{userData.lastLogin}</span>
+                      <span>{userData.last_login ? new Date(userData.last_login).toLocaleDateString('ar-SA') : 'لم يسجل دخول'}</span>
                     </div>
                     
                     <div className="flex justify-between">
                       <span className="text-gray-600">{userData.role === 'buyer' ? 'عدد الطلبات:' : 'عدد المنتجات:'}</span>
-                      <span>{userData.role === 'buyer' ? userData.ordersCount : (userData.productsCount || 0)}</span>
+                      <span>{userData.role === 'buyer' ? (userData.orders_count || 0) : (userData.products_count || 0)}</span>
                     </div>
                   </div>
                 </CardContent>
-                <CardFooter className="grid grid-cols-2 gap-2 pt-4 border-t">
+                <CardFooter className="grid grid-cols-1 gap-2 pt-4 border-t">
                   <Button 
                     variant="outline" 
                     size="sm"
                     className="border-blue-200 text-blue-600"
                     onClick={() => handleViewUserProfile(userData.id)}
                   >
-                    <Eye className="ml-1 h-4 w-4" /> عرض الملف
+                    <Eye className="ml-1 h-4 w-4" />  عرض الملف الشخصي
                   </Button>
                   <Button 
                     variant="outline" 
                     size="sm"
                     className="border-blue-200 text-blue-600"
-                    onClick={() => handleEmailUser(userData.email)}
+                    onClick={() => handleChatWithUser(userData)}
                   >
-                    <Mail className="ml-1 h-4 w-4" /> مراسلة
+                    <MessageSquare className="ml-1 h-4 w-4" /> محادثة
                   </Button>
+
                   
                   {userData.status === 'active' ? (
                     <AlertDialog>
@@ -342,8 +402,10 @@ const AdminUsers = () => {
                           variant="destructive" 
                           size="sm"
                           className="col-span-2"
+                          disabled={updating}
                         >
-                          <Ban className="ml-1 h-4 w-4" /> تعليق الحساب
+                          {updating ? <Loader2 className="ml-1 h-4 w-4 animate-spin" /> : <Ban className="ml-1 h-4 w-4" />}
+                          تعليق الحساب
                         </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
@@ -371,8 +433,10 @@ const AdminUsers = () => {
                       size="sm"
                       className="bg-green-500 hover:bg-green-600 col-span-2"
                       onClick={() => handleActivateUser(userData.id)}
+                      disabled={updating}
                     >
-                      <CheckCircle className="ml-1 h-4 w-4" /> تفعيل الحساب
+                      {updating ? <Loader2 className="ml-1 h-4 w-4 animate-spin" /> : <CheckCircle className="ml-1 h-4 w-4" />}
+                      تفعيل الحساب
                     </Button>
                   )}
                 </CardFooter>

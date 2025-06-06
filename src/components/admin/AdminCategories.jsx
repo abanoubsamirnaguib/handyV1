@@ -1,6 +1,34 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Tag, PlusCircle, Edit, Trash2, Save, X } from 'lucide-react';
+import { 
+  Tag, 
+  PlusCircle, 
+  Edit, 
+  Trash2, 
+  Save, 
+  X, 
+  Gem, 
+  Star, 
+  Heart, 
+  ShoppingBag, 
+  Book, 
+  Camera, 
+  Music, 
+  Coffee, 
+  Gift, 
+  Scissors, 
+  Axe, 
+  Palette, 
+  Briefcase, 
+  Droplet, 
+  Flame, 
+  Shirt, 
+  Image, 
+  Watch, 
+  Hammer, 
+  Utensils,
+  Loader2
+} from 'lucide-react';
 import { 
   Card, 
   CardContent, 
@@ -12,7 +40,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { categories } from '@/lib/data';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,16 +51,47 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { adminApi } from '@/lib/api';
+
+// Define your icon options
+const ICON_OPTIONS = [
+  { value: 'gem', label: 'جوهرة', icon: <Gem className="w-5 h-5" /> },
+  { value: 'star', label: 'نجمة', icon: <Star className="w-5 h-5" /> },
+  { value: 'heart', label: 'قلب', icon: <Heart className="w-5 h-5" /> },
+  { value: 'shopping-bag', label: 'تسوق', icon: <ShoppingBag className="w-5 h-5" /> },
+  { value: 'book', label: 'كتاب', icon: <Book className="w-5 h-5" /> },
+  { value: 'camera', label: 'كاميرا', icon: <Camera className="w-5 h-5" /> },
+  { value: 'music', label: 'موسيقى', icon: <Music className="w-5 h-5" /> },
+  { value: 'coffee', label: 'قهوة', icon: <Coffee className="w-5 h-5" /> },
+  { value: 'gift', label: 'هدية', icon: <Gift className="w-5 h-5" /> },
+  { value: 'scissors', label: 'مقص', icon: <Scissors className="w-5 h-5" /> },
+  { value: 'axe', label: 'فأس', icon: <Axe className="w-5 h-5" /> },
+  { value: 'palette', label: 'لوحة ألوان', icon: <Palette className="w-5 h-5" /> },
+  { value: 'briefcase', label: 'حقيبة', icon: <Briefcase className="w-5 h-5" /> },
+  { value: 'droplet', label: 'قطرة', icon: <Droplet className="w-5 h-5" /> },
+  { value: 'fire', label: 'نار', icon: <Flame className="w-5 h-5" /> },
+  { value: 'shirt', label: 'قميص', icon: <Shirt className="w-5 h-5" /> },
+  { value: 'image', label: 'صورة', icon: <Image className="w-5 h-5" /> },
+  { value: 'watch', label: 'ساعة', icon: <Watch className="w-5 h-5" /> },
+  { value: 'hammer', label: 'مطرقة', icon: <Hammer className="w-5 h-5" /> },
+  { value: 'utensils', label: 'أدوات مائدة', icon: <Utensils className="w-5 h-5" /> }
+];
+
+// Helper to get icon component by value
+const getIconComponent = (value) => {
+  const found = ICON_OPTIONS.find(opt => opt.value === value);
+  return found ? found.icon : null;
+};
 
 const AdminCategories = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [allCategories, setAllCategories] = useState([...categories]);
+  const [allCategories, setAllCategories] = useState([]);
   const [editingCategory, setEditingCategory] = useState(null);
-  const [newCategory, setNewCategory] = useState({ id: '', name: '', icon: '' });
+  const [newCategory, setNewCategory] = useState({ id: '', name: '', icon: '', description: '' });
   const [isAddingCategory, setIsAddingCategory] = useState(false);
-
-  // تأكد من أن المستخدم هو مشرف
+  const [loading, setLoading] = useState(true);
+  const [updating, setUpdating] = useState(false);
   useEffect(() => {
     if (user?.role !== 'admin') {
       toast({
@@ -41,80 +99,129 @@ const AdminCategories = () => {
         title: "غير مصرح به",
         description: "هذه الصفحة مخصصة للمشرفين فقط."
       });
+      return;
     }
-  }, [user, toast]);
+    
+    fetchCategories();
+  }, [user]);
 
-  const handleDeleteCategory = (categoryId) => {
-    setAllCategories(prev => prev.filter(category => category.id !== categoryId));
-    toast({
-      title: "تم حذف التصنيف",
-      description: "تم حذف التصنيف بنجاح"
-    });
+  const fetchCategories = async () => {
+    try {
+      setLoading(true);
+      const response = await adminApi.getCategories();
+      setAllCategories(response.data || []);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      toast({
+        variant: 'destructive',
+        title: 'خطأ في تحميل التصنيفات',
+        description: 'تعذر تحميل التصنيفات من الخادم'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+  const handleDeleteCategory = async (categoryId) => {
+    try {
+      setUpdating(true);
+      await adminApi.deleteCategory(categoryId);
+      setAllCategories(prev => prev.filter(category => category.id !== categoryId));
+      toast({
+        title: "تم حذف التصنيف",
+        description: "تم حذف التصنيف بنجاح"
+      });
+    } catch (error) {
+      console.error('Error deleting category:', error);
+      toast({
+        variant: 'destructive',
+        title: 'خطأ في الحذف',
+        description: 'تعذر حذف التصنيف من الخادم'
+      });
+    } finally {
+      setUpdating(false);
+    }
   };
 
   const handleEditCategory = (category) => {
     setEditingCategory({ ...category });
   };
-
-  const handleSaveEdit = () => {
-    if (!editingCategory.id || !editingCategory.name) {
+  const handleSaveEdit = async () => {
+    if (!editingCategory.name) {
       toast({
         variant: "destructive",
         title: "خطأ في البيانات",
-        description: "جميع الحقول مطلوبة"
+        description: "اسم التصنيف مطلوب"
       });
       return;
     }
     
-    setAllCategories(prev => prev.map(cat => 
-      cat.id === editingCategory.id ? editingCategory : cat
-    ));
-    
-    toast({
-      title: "تم تحديث التصنيف",
-      description: `تم تحديث التصنيف "${editingCategory.name}" بنجاح`
-    });
-    
-    setEditingCategory(null);
+    try {
+      setUpdating(true);
+      const updated = await adminApi.updateCategory(editingCategory.id, {
+        name: editingCategory.name,
+        icon: editingCategory.icon,
+        description: editingCategory.description
+      });
+      
+      setAllCategories(prev => prev.map(cat => cat.id === editingCategory.id ? updated.data : cat));
+      toast({
+        title: "تم تحديث التصنيف",
+        description: `تم تحديث التصنيف "${editingCategory.name}" بنجاح`
+      });
+      setEditingCategory(null);
+    } catch (error) {
+      console.error('Error updating category:', error);
+      toast({
+        variant: 'destructive',
+        title: 'خطأ في التحديث',
+        description: 'تعذر تحديث التصنيف في الخادم'
+      });
+    } finally {
+      setUpdating(false);
+    }
   };
 
   const handleCancelEdit = () => {
     setEditingCategory(null);
   };
-
-  const handleAddCategory = () => {
-    if (!newCategory.id || !newCategory.name) {
+  const handleAddCategory = async () => {
+    if (!newCategory.name) {
       toast({
         variant: "destructive",
         title: "خطأ في البيانات",
-        description: "جميع الحقول مطلوبة"
+        description: "اسم التصنيف مطلوب"
       });
       return;
     }
     
-    // تحقق من وجود التصنيف
-    if (allCategories.some(cat => cat.id === newCategory.id)) {
+    try {
+      setUpdating(true);
+      const created = await adminApi.createCategory({
+        name: newCategory.name,
+        icon: newCategory.icon,
+        description: newCategory.description
+      });
+      
+      setAllCategories(prev => [...prev, created.data]);
       toast({
-        variant: "destructive",
-        title: "تصنيف موجود",
-        description: "معرف التصنيف موجود بالفعل"
+        title: "تم إضافة التصنيف",
+        description: `تم إضافة التصنيف "${newCategory.name}" بنجاح`
       });
-      return;
+      setNewCategory({ id: '', name: '', icon: '', description: '' });
+      setIsAddingCategory(false);
+    } catch (error) {
+      console.error('Error creating category:', error);
+      toast({
+        variant: 'destructive',
+        title: 'خطأ في الإضافة',
+        description: 'تعذر إضافة التصنيف إلى الخادم'
+      });
+    } finally {
+      setUpdating(false);
     }
-    
-    setAllCategories(prev => [...prev, newCategory]);
-    
-    toast({
-      title: "تم إضافة التصنيف",
-      description: `تم إضافة التصنيف "${newCategory.name}" بنجاح`
-    });
-    
-    setNewCategory({ id: '', name: '', icon: '' });
-    setIsAddingCategory(false);
   };
-
   const handleCancelAdd = () => {
-    setNewCategory({ id: '', name: '', icon: '' });
+    setNewCategory({ id: '', name: '', icon: '', description: '' });
     setIsAddingCategory(false);
   };
 
@@ -123,6 +230,15 @@ const AdminCategories = () => {
       <div className="p-6 md:p-8 text-center">
         <h1 className="text-2xl font-bold text-gray-700">غير مصرح لك بالدخول</h1>
         <p className="text-gray-500">هذه الصفحة مخصصة للمشرفين فقط.</p>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="p-6 md:p-8 text-center">
+        <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+        <h2 className="text-lg font-semibold text-gray-700">جاري تحميل التصنيفات...</h2>
       </div>
     );
   }
@@ -137,13 +253,13 @@ const AdminCategories = () => {
         <div>
           <h1 className="text-3xl font-bold text-gray-800">إدارة التصنيفات</h1>
           <p className="text-gray-500 mt-1">إضافة وتعديل وحذف تصنيفات المنتجات</p>
-        </div>
-        <Button 
+        </div>        <Button 
           onClick={() => setIsAddingCategory(true)} 
           className="bg-blue-600 hover:bg-blue-700" 
-          disabled={isAddingCategory}
+          disabled={isAddingCategory || updating}
         >
-          <PlusCircle className="ml-2 h-5 w-5" /> إضافة تصنيف جديد
+          {updating ? <Loader2 className="ml-2 h-5 w-5 animate-spin" /> : <PlusCircle className="ml-2 h-5 w-5" />}
+          إضافة تصنيف جديد
         </Button>
       </motion.div>
 
@@ -155,18 +271,8 @@ const AdminCategories = () => {
           <Card className="border-blue-200 shadow-md">
             <CardHeader>
               <CardTitle className="text-xl text-gray-800">إضافة تصنيف جديد</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">معرف التصنيف</label>
-                  <Input
-                    value={newCategory.id}
-                    onChange={(e) => setNewCategory({ ...newCategory, id: e.target.value })}
-                    placeholder="مثال: jewelry"
-                    className="w-full"
-                  />
-                </div>
+            </CardHeader>            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">اسم التصنيف</label>
                   <Input
@@ -174,25 +280,50 @@ const AdminCategories = () => {
                     onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })}
                     placeholder="مثال: المجوهرات"
                     className="w-full"
+                    disabled={updating}
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">الأيقونة</label>
-                  <Input
-                    value={newCategory.icon}
-                    onChange={(e) => setNewCategory({ ...newCategory, icon: e.target.value })}
-                    placeholder="مثال: gem"
-                    className="w-full"
-                  />
+                  <div className="relative">
+                    <select
+                      value={newCategory.icon}
+                      onChange={e => setNewCategory({ ...newCategory, icon: e.target.value })}
+                      className="w-full border rounded px-3 py-2 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-200"
+                      disabled={updating}
+                    >
+                      <option value="">اختر أيقونة</option>
+                      {ICON_OPTIONS.map(opt => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                    <span className="absolute left-3 top-2.5 pointer-events-none">
+                      {getIconComponent(newCategory.icon)}
+                    </span>
+                  </div>
                 </div>
               </div>
 
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">الوصف</label>
+                <Input
+                  value={newCategory.description || ""}
+                  onChange={(e) => setNewCategory({ ...newCategory, description: e.target.value })}
+                  className="w-full"
+                  placeholder="اكتب وصف التصنيف هنا"
+                  disabled={updating}
+                />
+              </div>
+
               <div className="flex justify-end mt-4 space-x-2 space-x-reverse">
-                <Button onClick={handleCancelAdd} variant="outline" className="border-gray-300">
+                <Button onClick={handleCancelAdd} variant="outline" className="border-gray-300" disabled={updating}>
                   <X className="ml-2 h-4 w-4" /> إلغاء
                 </Button>
-                <Button onClick={handleAddCategory} className="bg-blue-600 hover:bg-blue-700">
-                  <Save className="ml-2 h-4 w-4" /> حفظ
+                <Button onClick={handleAddCategory} className="bg-blue-600 hover:bg-blue-700" disabled={updating}>
+                  {updating ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : <Save className="ml-2 h-4 w-4" />}
+                  حفظ
                 </Button>
               </div>
             </CardContent>
@@ -212,42 +343,59 @@ const AdminCategories = () => {
               <Card className="border-blue-200 shadow-md">
                 <CardHeader>
                   <CardTitle className="text-xl text-gray-800">تعديل التصنيف</CardTitle>
-                </CardHeader>
-                <CardContent>
+                  <CardDescription className="text-gray-500 mt-1">
+                    يمكنك تعديل اسم التصنيف أو الأيقونة أو الوصف ثم الضغط على "حفظ" لتحديث البيانات.
+                  </CardDescription>
+                </CardHeader>                <CardContent>
                   <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">معرف التصنيف</label>
-                      <Input
-                        value={editingCategory.id}
-                        onChange={(e) => setEditingCategory({ ...editingCategory, id: e.target.value })}
-                        className="w-full"
-                        disabled // لا يمكن تعديل المعرف
-                      />
-                    </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">اسم التصنيف</label>
                       <Input
                         value={editingCategory.name}
                         onChange={(e) => setEditingCategory({ ...editingCategory, name: e.target.value })}
                         className="w-full"
+                        disabled={updating}
                       />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">الأيقونة</label>
+                      <div className="relative">
+                        <select
+                          value={editingCategory.icon}
+                          onChange={e => setEditingCategory({ ...editingCategory, icon: e.target.value })}
+                          className="w-full border rounded px-3 py-2 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-200"
+                          disabled={updating}
+                        >
+                          <option value="">اختر أيقونة</option>
+                          {ICON_OPTIONS.map(opt => (
+                            <option key={opt.value} value={opt.value}>
+                              {opt.label}
+                            </option>
+                          ))}
+                        </select>
+                        <span className="absolute left-3 top-2.5 pointer-events-none">
+                          {getIconComponent(editingCategory.icon)}
+                        </span>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">الوصف</label>
                       <Input
-                        value={editingCategory.icon}
-                        onChange={(e) => setEditingCategory({ ...editingCategory, icon: e.target.value })}
+                        value={editingCategory.description || ""}
+                        onChange={(e) => setEditingCategory({ ...editingCategory, description: e.target.value })}
                         className="w-full"
+                        placeholder="اكتب وصف التصنيف هنا"
+                        disabled={updating}
                       />
                     </div>
                   </div>
-
                   <div className="flex justify-end mt-4 space-x-2 space-x-reverse">
-                    <Button onClick={handleCancelEdit} variant="outline" className="border-gray-300">
+                    <Button onClick={handleCancelEdit} variant="outline" className="border-gray-300" disabled={updating}>
                       <X className="ml-2 h-4 w-4" /> إلغاء
                     </Button>
-                    <Button onClick={handleSaveEdit} className="bg-blue-600 hover:bg-blue-700">
-                      <Save className="ml-2 h-4 w-4" /> حفظ
+                    <Button onClick={handleSaveEdit} className="bg-blue-600 hover:bg-blue-700" disabled={updating}>
+                      {updating ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : <Save className="ml-2 h-4 w-4" />}
+                      حفظ
                     </Button>
                   </div>
                 </CardContent>
@@ -259,27 +407,31 @@ const AdminCategories = () => {
                     <div className="p-2 bg-blue-100 rounded-full mr-3">
                       <Tag className="h-5 w-5 text-blue-600" />
                     </div>
-                    <CardTitle className="text-lg text-gray-800">{category.name}</CardTitle>
-                  </div>
-                </CardHeader>
+                    <div>
+                      <CardTitle className="text-lg text-gray-800">{category.name}</CardTitle>
+                      <CardDescription className="text-xs text-blue-500 mt-1">
+                        {category.description || "لا يوجد وصف لهذا التصنيف."}
+                      </CardDescription>
+                    </div>
+                  </div>                </CardHeader>
                 <CardContent>
                   <div className="flex justify-between items-center text-sm text-gray-500">
-                    <span>معرف التصنيف: {category.id}</span>
-                    <span>الأيقونة: {category.icon}</span>
+                    <span>الأيقونة: {getIconComponent(category.icon) || category.icon}</span>
                   </div>
-                  <div className="flex justify-end mt-4 space-x-2 space-x-reverse">
-                    <Button 
+                  <div className="flex justify-end mt-4 space-x-2 space-x-reverse"><Button 
                       onClick={() => handleEditCategory(category)} 
                       variant="outline" 
                       size="sm" 
                       className="border-blue-200 text-blue-600"
+                      disabled={updating}
                     >
                       <Edit className="ml-1 h-4 w-4" /> تعديل
                     </Button>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button variant="destructive" size="sm">
-                          <Trash2 className="ml-1 h-4 w-4" /> حذف
+                        <Button variant="destructive" size="sm" disabled={updating}>
+                          {updating ? <Loader2 className="ml-1 h-4 w-4 animate-spin" /> : <Trash2 className="ml-1 h-4 w-4" />}
+                          حذف
                         </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>

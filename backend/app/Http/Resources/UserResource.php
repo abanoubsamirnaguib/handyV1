@@ -6,7 +6,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 class UserResource extends JsonResource
 {    public function toArray($request)
     {
-        return [
+        $data = [
             'id' => $this->id,
             'name' => $this->name,
             'email' => $this->email,
@@ -18,8 +18,12 @@ class UserResource extends JsonResource
             'status' => $this->status,
             'bio' => $this->bio,
             'location' => $this->location,
-            'skills' => $this->skills,
             'phone' => $this->phone,
         ];
+        if ($this->active_role === 'seller') {
+            $data['skills'] = $this->skills;
+        }
+        
+        return $data;
     }
 }

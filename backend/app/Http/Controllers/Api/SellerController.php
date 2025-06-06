@@ -29,16 +29,44 @@ class SellerController extends Controller
             $q = $request->search;
             $query->whereHas('user', function($u) use ($q) {
                 $u->where('name', 'like', "%$q%")
-                  ->orWhere('email', 'like', "%$q%") ;
-            })->orWhere('bio', 'like', "%$q%") ;
+                  ->orWhere('email', 'like', "%$q%")
+                  ->orWhere('bio', 'like', "%$q%");
+            });
         }
         if ($request->filled('location')) {
-            $query->where('location', 'like', "%{$request->location}%");
+            $query->whereHas('user', function($u) use ($request) {
+                $u->where('location', 'like', "%{$request->location}%");
+            });
         }
         if ($request->filled('sort')) {
             if ($request->sort === 'rating') $query->orderByDesc('rating');
             if ($request->sort === 'experience') $query->orderByDesc('completed_orders');
         }
         return SellerResource::collection($query->paginate(20));
+    }
+
+    public function topSellers(Request $request)
+    {
+        // Get top 3 sellers by rating, only active users
+        $sellers = Seller::with(['skills', 'user'])
+            ->whereHas('user', function($q) {
+                $q->where('status', 'active');
+            })
+            ->orderByDesc('rating')
+            ->limit(3)
+            ->get();
+
+        // Return only the fields needed for the home page
+        $result = $sellers->map(function($seller) {
+            return [
+                'id' => $seller->id,
+                'name' => $seller->user->name ?? '',
+                'avatar' => $seller->user->avatar ?? '',
+                'skills' => $seller->skills->pluck('name')->toArray(),
+                'rating' => $seller->rating ?? 0,
+                'reviewCount' => $seller->review_count ?? 0,
+            ];
+        });
+        return response()->json(['data' => $result]);
     }
 }

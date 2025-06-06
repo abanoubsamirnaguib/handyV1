@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -14,14 +15,19 @@ return new class extends Migration
             $table->string('password', 255);
             $table->string('name', 100);
             $table->enum('role', ['admin', 'seller', 'buyer'])->default('buyer');
-            $table->enum('status', ['active', 'inactive', 'suspended', 'pending'])->default('active');
+            $table->enum('active_role', ['seller', 'buyer'])->default('buyer');
+            $table->boolean('is_seller')->default(false);
+            $table->boolean('is_buyer')->default(true);
+            $table->enum('status', ['active', 'rejected', 'suspended', 'pending'])->default('active');
             $table->string('avatar', 255)->nullable();
             $table->string('phone', 20)->nullable();
+            $table->text('bio')->nullable();
+            $table->string('location', 255)->nullable();
+            $table->index('location', 'idx_seller_location');
             $table->dateTime('registration_date')->default(DB::raw('CURRENT_TIMESTAMP'));
             $table->dateTime('last_login')->nullable();
             $table->dateTime('created_at')->default(DB::raw('CURRENT_TIMESTAMP'));
             $table->dateTime('updated_at')->default(DB::raw('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'));
-            $table->string('location', 255)->nullable();
             $table->index('email', 'idx_user_email');
             $table->index('role', 'idx_user_role');
             $table->index('status', 'idx_user_status');

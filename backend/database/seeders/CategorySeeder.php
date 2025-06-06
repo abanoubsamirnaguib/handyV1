@@ -21,7 +21,7 @@ class CategorySeeder extends Seeder
             ['name' => 'عطور', 'icon' => 'spray-can'],
             ['name' => 'ملابس', 'icon' => 'shirt'],
             ['name' => 'طابلوهات', 'icon' => 'image'],
-            ['name' => 'تطويز', 'icon' => 'needle'],
+            ['name' => 'تطريز', 'icon' => 'needle'],
             ['name' => 'كورشية', 'icon' => 'thread'],
             ['name' => 'كونكريت', 'icon' => 'hammer'],
             ['name' => 'اكسسوارات', 'icon' => 'watch'],

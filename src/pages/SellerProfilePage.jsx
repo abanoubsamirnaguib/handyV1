@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
   Star, 
@@ -9,14 +9,19 @@ import {
   Clock, 
   Award, 
   Package,
-  ArrowRight 
+  ArrowRight, 
+  Loader2, 
+  MessageSquare 
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { getSellerById, getGigsBySellerId } from '@/lib/data';
+import { api } from '@/lib/api';
+import { useChat } from '@/contexts/ChatContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/components/ui/use-toast';
 
 const SellerProfilePage = () => {
   const { id } = useParams();
@@ -24,48 +29,99 @@ const SellerProfilePage = () => {
   const [sellerGigs, setSellerGigs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { startConversation, setActiveConversation } = useChat();
+  const { toast } = useToast();
 
   useEffect(() => {
-    // Fetch seller data
-    try {
-      const sellerData = getSellerById(id);
-      if (!sellerData) {
-        setError('لم يتم العثور على الحرفي');
+    // Fetch seller data from backend API
+    const fetchSellerData = async () => {
+      try {
+        setLoading(true);
+          // Fetch seller profile from API
+        const sellerResponse = (await api.getSeller(id)).data;
+        
+        if (!sellerResponse) {
+          setError('لم يتم العثور على الحرفي');
+          setLoading(false);
+          return;
+        }
+        
+        // Transform API response to match component's expected structure
+        const sellerData = {
+          id: sellerResponse.id,
+          name: sellerResponse.user?.name || 'بدون اسم',
+          email: sellerResponse.user?.email || '',
+          bio: sellerResponse.bio || 'لا يوجد وصف',
+          location: sellerResponse.location || 'غير محدد',
+          rating: sellerResponse.rating || 0,
+          reviewCount: sellerResponse.review_count || 0,
+          memberSince: sellerResponse.member_since || new Date().toISOString(),
+          skills: Array.isArray(sellerResponse.skills) ? sellerResponse.skills : [],
+          completedOrders: sellerResponse.completed_orders || 0,
+          responseTime: sellerResponse.response_time || 'غير محدد',
+          avatar: sellerResponse.user?.avatar || ''
+        };
+        
+        setSeller(sellerData);
+        
+        // Fetch seller's products/gigs
+        const productsResponse = await api.getSellerProducts(id);
+        
+        if (productsResponse && Array.isArray(productsResponse.data)) {
+          // Transform API response to match component's expected structure for gigs
+          const gigsData = productsResponse.data.map(product => ({
+            id: product.id,
+            title: product.title || 'عنوان غير محدد',
+            price: product.price || 0,
+            category: product.category?.name || 'غير مصنف',
+            rating: product.rating || 0,
+            reviewCount: product.review_count || 0,
+            images: Array.isArray(product.images) ? product.images.map(img => img.url) : [],
+            description: product.description || ''
+          }));
+          
+          setSellerGigs(gigsData);
+        } else {
+          setSellerGigs([]);
+        }
+        
+        setLoading(false);      } catch (err) {
+        console.error('Error fetching seller data:', err);
+        if (err.message && err.message.includes('404')) {
+          setError('لم يتم العثور على الحرفي');
+        } else {
+          setError('حدث خطأ أثناء تحميل البيانات، الرجاء المحاولة مرة أخرى');
+        }
         setLoading(false);
-        return;
       }
-      
-      setSeller(sellerData);
-      
-      // Fetch seller's gigs
-      const gigs = getGigsBySellerId(id);
-      setSellerGigs(gigs);
-      
-      setLoading(false);
-    } catch (err) {
-      setError('حدث خطأ أثناء تحميل البيانات');
-      setLoading(false);
-    }
-  }, [id]);
-
+    };
+    
+    fetchSellerData();
+  }, [id, navigate]);
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-16 text-center">
-        <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
-        <p className="mt-4 text-lg">جاري التحميل...</p>
+        <Loader2 className="h-16 w-16 animate-spin text-primary mx-auto" />
+        <p className="mt-4 text-lg">جاري تحميل بيانات الحرفي...</p>
       </div>
     );
   }
-
   if (error) {
     return (
       <div className="container mx-auto px-4 py-16 text-center">
         <div className="text-4xl mb-4">😕</div>
         <h1 className="text-2xl font-bold mb-4">{error}</h1>
         <p className="mb-8">لم نتمكن من العثور على الحرفي المطلوب</p>
-        <Button asChild>
-          <Link to="/explore?tab=sellers">العودة إلى قائمة الحرفيين</Link>
-        </Button>
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <Button asChild>
+            <Link to="/explore?tab=sellers">العودة إلى قائمة الحرفيين</Link>
+          </Button>
+          <Button variant="outline" onClick={() => navigate(-1)}>
+            العودة إلى الصفحة السابقة
+          </Button>
+        </div>
       </div>
     );
   }
@@ -73,6 +129,32 @@ const SellerProfilePage = () => {
   if (!seller) {
     return null;
   }
+  
+  const handleContactSeller = () => {
+    if (!user) {
+      toast({ 
+        variant: "destructive", 
+        title: "يرجى تسجيل الدخول", 
+        description: "يجب عليك تسجيل الدخول أولاً للتواصل مع الحرفي." 
+      });
+      navigate('/login', { state: { from: `/sellers/${id}` } });
+      return;
+    }
+    
+    if (user.id === seller.id) {
+      toast({ 
+        variant: "destructive", 
+        title: "لا يمكن مراسلة نفسك", 
+        description: "لا يمكنك بدء محادثة مع نفسك." 
+      });
+      return;
+    }
+    
+    // Start a conversation with the seller
+    const conversationId = startConversation(seller);
+    setActiveConversation(conversationId);
+    navigate('/chat');
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -105,13 +187,13 @@ const SellerProfilePage = () => {
                     </Badge>
                   ))}
                 </div>
-              </div>
-              <div className="mt-6 md:mt-0 flex md:flex-col gap-3">
-                <Button asChild className="bg-burntOrange hover:bg-burntOrange/90 text-white">
-                  <Link to={`/message/${seller.id}`}>
-                    <Mail className="ml-2 h-4 w-4" />
-                    تواصل مع الحرفي
-                  </Link>
+              </div>              <div className="mt-6 md:mt-0 flex md:flex-col gap-3">
+                <Button 
+                  onClick={handleContactSeller} 
+                  className="bg-burntOrange hover:bg-burntOrange/90 text-white"
+                >
+                  <MessageSquare className="ml-2 h-4 w-4" />
+                  تواصل مع الحرفي
                 </Button>
               </div>
             </div>

@@ -40,7 +40,26 @@ class UserCrudController extends Controller
         
         $data = $request->validated();
         if(isset($data['password'])) $data['password'] = bcrypt($data['password']);
+        
+        // Update the user
         $user->update($data);
+        
+        // If skills were updated and the user is a seller (based on active_role), sync the seller skills
+        if (isset($data['skills']) && $user->active_role === 'seller' && $user->seller) {
+            // Clear existing skills
+            \App\Models\SellerSkill::where('seller_id', $user->seller->id)->delete();
+            
+            // Create new seller skills from the provided skills array
+            if (is_array($data['skills']) && !empty($data['skills'])) {
+                foreach ($data['skills'] as $skill) {
+                    \App\Models\SellerSkill::create([
+                        'seller_id' => $user->seller->id,
+                        'skill_name' => $skill,
+                        'created_at' => now(),
+                    ]);
+                }
+            }
+        }
         
         return new UserResource($user);
     }

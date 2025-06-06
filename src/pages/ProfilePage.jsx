@@ -11,9 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/AuthContext';
 import { useChat } from '@/contexts/ChatContext';
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '');
-const getApiUrl = (path) => `${API_BASE_URL}${path.startsWith('/') ? path : '/' + path}`;
+import { apiFetch, apiUrl } from '@/lib/api';
 
 const ProfilePage = () => {
   const { id } = useParams();
@@ -42,11 +40,10 @@ const ProfilePage = () => {
       try {
         // Set URL based on whether this is the user's own profile
         const url = isOwnProfile 
-          ? getApiUrl('/api/me')
-          : getApiUrl(`/api/users/${id}`);
+          ? apiUrl('me')
+          : apiUrl(`users/${id}`);
 
         console.log('Fetching profile from:', url);
-        
         const token = localStorage.getItem('token');
         const res = await fetch(url, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
@@ -65,7 +62,7 @@ const ProfilePage = () => {
           name: data.name || '',
           bio: data.bio || '',
           location: data.location || '',
-          role: data.role || 'buyer',
+          active_role: data.active_role || 'buyer',
           skills: Array.isArray(data.skills) ? data.skills : [],
           avatar: data.avatar || '',
           phone: data.phone || '',
@@ -97,14 +94,12 @@ const ProfilePage = () => {
             localStorage.setItem('user', JSON.stringify(updatedUser));
             console.log('Updated localStorage with validated data:', updatedUser);
           }
-        }
-
-        // Fetch gigs if the user is a seller - only do this once
-        if (validatedData.role === 'seller') {
+        }        // Fetch gigs if the user is a seller - only do this once
+        if (validatedData.active_role === 'seller') {
           const sellerID = validatedData.id;
           console.log('Fetching gigs for seller:', sellerID);
           
-          const gigsRes = await fetch(getApiUrl(`/api/sellers/${sellerID}`), {
+          const gigsRes = await fetch(apiUrl(`/listsellers/${sellerID}`), {
             cache: 'force-cache'
           });
           
@@ -155,9 +150,9 @@ const ProfilePage = () => {
   const handleEditFormChange = (e) => {
     setEditFormData({ ...editFormData, [e.target.name]: e.target.value });
   };
-
   const handleSaveChanges = async () => {
-    const updatedSkills = editFormData.skills
+    // Only process skills if the user is a seller
+    const updatedSkills = profileData?.active_role === 'seller' && editFormData.skills
       ? editFormData.skills.split(',').map(skill => skill.trim()).filter(skill => skill)
       : [];
     try {
@@ -166,10 +161,14 @@ const ProfilePage = () => {
         name: editFormData.name.trim(),
         bio: editFormData.bio.trim(),
         location: editFormData.location.trim(),
-        skills: updatedSkills,
         avatar: editFormData.avatar,
         phone: editFormData.phone,
       };
+      
+      // Only add skills to the update data if the user is a seller
+      if (profileData?.active_role === 'seller') {
+        dataToUpdate.skills = updatedSkills;
+      }
       
       console.log('Sending profile update:', dataToUpdate);
       
@@ -209,7 +208,7 @@ const ProfilePage = () => {
             
             // Force a re-fetch of profile data from API to ensure everything is in sync
             const token = localStorage.getItem('token');
-            const url = getApiUrl('/api/me');
+            const url = apiUrl('me');
             const response = await fetch(url, {
               headers: token ? { Authorization: `Bearer ${token}` } : {},
             });
@@ -217,14 +216,13 @@ const ProfilePage = () => {
             if (response.ok) {
               const freshData = (await response.json()).data;
               console.log('Fresh data received from API:', freshData);
-              
-              // Validate fresh data before setting
+                // Validate fresh data before setting
               const validatedFreshData = {
                 id: freshData.id,
                 name: freshData.name || '',
                 bio: freshData.bio || '',
                 location: freshData.location || '',
-                role: freshData.role || 'buyer',
+                active_role: freshData.active_role || 'buyer',
                 skills: Array.isArray(freshData.skills) ? freshData.skills : [],
                 avatar: freshData.avatar || '',
                 rating: typeof freshData.rating === 'number' ? freshData.rating : 0,
@@ -283,8 +281,7 @@ const ProfilePage = () => {
                 <AvatarFallback className="text-4xl">{profileData.name ? profileData.name.charAt(0) : 'U'}</AvatarFallback>
               </Avatar>
               <div className="md:mr-6 mt-4 md:mt-0 text-center md:text-right">
-                <h1 className="text-3xl font-bold text-gray-800">{profileData?.name || 'اسم غير محدد'}</h1>
-                {profileData?.role === 'seller' && (
+                <h1 className="text-3xl font-bold text-gray-800">{profileData?.name || 'اسم غير محدد'}</h1>                {profileData?.active_role === 'seller' && (
                   <p className="text-md text-primary">
                     {profileData?.skills && profileData.skills.length > 0 
                       ? profileData.skills.slice(0,2).join(' | ') 
@@ -326,15 +323,16 @@ const ProfilePage = () => {
                 <div>
                   <label htmlFor="bio" className="block text-sm font-medium text-gray-700">نبذة تعريفية</label>
                   <Textarea name="bio" id="bio" value={editFormData.bio} onChange={handleEditFormChange} rows={3} className="mt-1" />
-                </div>
-                <div>
+                </div>                <div>
                   <label htmlFor="location" className="block text-sm font-medium text-gray-700">الموقع</label>
                   <Input type="text" name="location" id="location" value={editFormData.location} onChange={handleEditFormChange} className="mt-1" />
                 </div>
-                <div>
-                  <label htmlFor="skills" className="block text-sm font-medium text-gray-700">المهارات (مفصولة بفاصلة)</label>
-                  <Input type="text" name="skills" id="skills" value={editFormData.skills} onChange={handleEditFormChange} className="mt-1" />
-                </div>
+                {profileData?.active_role === 'seller' && (
+                  <div>
+                    <label htmlFor="skills" className="block text-sm font-medium text-gray-700">المهارات (مفصولة بفاصلة)</label>
+                    <Input type="text" name="skills" id="skills" value={editFormData.skills} onChange={handleEditFormChange} className="mt-1" />
+                  </div>
+                )}
                 <div>
                   <label htmlFor="avatar" className="block text-sm font-medium text-gray-700">رابط صورة الملف الشخصي</label>
                   <Input type="text" name="avatar" id="avatar" value={editFormData.avatar} onChange={handleEditFormChange} className="mt-1" placeholder="https://example.com/avatar.jpg" />
@@ -384,7 +382,7 @@ const ProfilePage = () => {
                     </div>
                   )}
                 </div>
-                {profileData?.role === 'seller' && profileData?.skills && profileData.skills.length > 0 && (
+                {profileData?.active_role === 'seller' && profileData?.skills && profileData.skills.length > 0 && (
                   <>
                     <Separator className="my-4" />
                     <h4 className="font-semibold text-gray-700 mb-2">المهارات:</h4>
@@ -400,7 +398,7 @@ const ProfilePage = () => {
               </CardContent>
             </Card>
             
-            {profileData?.role === 'seller' && (
+            {profileData?.active_role === 'seller' && (
               <Card className="shadow-lg border-orange-100">
                 <CardHeader>
                   <CardTitle className="text-xl text-gray-700">إحصائيات البائع</CardTitle>
@@ -435,9 +433,9 @@ const ProfilePage = () => {
           >
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-2xl font-bold text-gray-800">
-                {profileData?.role === 'seller' ? 'خدماتي' : 'طلباتي'} ({userGigs?.length || 0})
+                {profileData?.active_role === 'seller' ? 'خدماتي' : 'طلباتي'} ({userGigs?.length || 0})
               </h2>
-              {isOwnProfile && profileData?.role === 'seller' && (
+              {isOwnProfile && profileData?.active_role === 'seller' && (
                 <Button onClick={() => navigate('/dashboard/gigs/new')} className="bg-green-500 hover:bg-green-600">
                   <PlusCircle className="ml-2 h-4 w-4" /> أضف خدمة جديدة
                 </Button>
@@ -490,12 +488,12 @@ const ProfilePage = () => {
                 <CardContent>
                   <Briefcase className="h-16 w-16 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-xl font-semibold text-gray-700 mb-2">
-                    {profileData?.role === 'seller' ? 'لا توجد خدمات معروضة حالياً' : 'لا توجد طلبات حالياً'}
+                    {profileData?.active_role === 'seller' ? 'لا توجد خدمات معروضة حالياً' : 'لا توجد طلبات حالياً'}
                   </h3>
                   <p className="text-gray-500">
-                    {profileData?.role === 'seller' ? 'ابدأ بإضافة خدماتك ليراها العملاء!' : 'تصفح المنتجات وقم بطلبك الأول!'}
+                    {profileData?.active_role === 'seller' ? 'ابدأ بإضافة خدماتك ليراها العملاء!' : 'تصفح المنتجات وقم بطلبك الأول!'}
                   </p>
-                  {profileData?.role === 'buyer' && (
+                  {profileData?.active_role === 'buyer' && (
                     <Button asChild className="mt-4 bg-burntOrange hover:bg-burntOrange/90 text-white">
                       <Link to="/explore">استكشف المنتجات</Link>
                     </Button>

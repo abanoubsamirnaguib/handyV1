@@ -19,6 +19,8 @@ import MessagePage from '@/pages/MessagePage.jsx';
 import DashboardPage from '@/pages/DashboardPage.jsx';
 import ChatPage from '@/pages/ChatPage.jsx';
 import CartPage from '@/pages/CartPage.jsx';
+import OrdersPage from '@/pages/OrdersPage.jsx';
+import OrderDetailPage from '@/pages/OrderDetailPage.jsx';
 import LoginPage from '@/pages/LoginPage.jsx';
 import RegisterPage from '@/pages/RegisterPage.jsx';
 import NotFoundPage from '@/pages/NotFoundPage.jsx';
@@ -85,10 +87,18 @@ function App() {
                 <ProtectedRoute>
                   <ChatPage />
                 </ProtectedRoute>
-              } />
-              <Route path="cart" element={
+              } />              <Route path="cart" element={
                 <ProtectedRoute>
                   <CartPage />
+                </ProtectedRoute>
+              } />              <Route path="orders" element={
+                <ProtectedRoute>
+                  <OrdersPage />
+                </ProtectedRoute>
+              } />
+              <Route path="orders/:id" element={
+                <ProtectedRoute>
+                  <OrderDetailPage />
                 </ProtectedRoute>
               } />
               

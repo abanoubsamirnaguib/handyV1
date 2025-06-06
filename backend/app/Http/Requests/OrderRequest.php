@@ -18,6 +18,16 @@ class OrderRequest extends FormRequest
                 'order_date' => 'required|date',
                 'delivery_date' => 'nullable|date',
                 'requirements' => 'nullable|string',
+                'customer_name' => 'required|string|max:100',
+                'customer_phone' => 'required|string|max:20',
+                'delivery_address' => 'required|string',
+                'payment_method' => 'in:cash_on_delivery,bank_transfer,credit_card',
+                'payment_status' => 'in:pending,partial,paid,refunded',
+                'requires_deposit' => 'boolean',
+                'deposit_amount' => 'nullable|numeric',
+                'deposit_status' => 'in:not_paid,paid,refunded',
+                'deposit_notes' => 'nullable|string',
+                'chat_conversation_id' => 'nullable|exists:conversations,id',
             ];
         }
         // PATCH/PUT (update)
@@ -27,6 +37,16 @@ class OrderRequest extends FormRequest
             'order_date' => 'sometimes|required|date',
             'delivery_date' => 'nullable|date',
             'requirements' => 'nullable|string',
+            'customer_name' => 'sometimes|required|string|max:100',
+            'customer_phone' => 'sometimes|required|string|max:20',
+            'delivery_address' => 'sometimes|required|string',
+            'payment_method' => 'in:cash_on_delivery,bank_transfer,credit_card',
+            'payment_status' => 'in:pending,partial,paid,refunded',
+            'requires_deposit' => 'boolean',
+            'deposit_amount' => 'nullable|numeric',
+            'deposit_status' => 'in:not_paid,paid,refunded',
+            'deposit_notes' => 'nullable|string',
+            'chat_conversation_id' => 'nullable|exists:conversations,id',
         ];
     }
 }

@@ -1,11 +1,19 @@
-
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Facebook, Instagram, Twitter, Youtube, Mail, Phone, MapPin } from 'lucide-react';
+import { apiFetch } from '@/lib/api';
 
 const Footer = () => {
+  const [categories, setCategories] = useState([]);
+
+  useEffect(() => {
+    apiFetch('listcategories')
+      .then(data => setCategories(data.data || data))
+      .catch(() => setCategories([]));
+  }, []);
+
   return (
-    <footer className="bg-olivePrimary text-white">
+    <footer className="bg-olivePrimary text-white md:block hidden">
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
           {/* About */}
@@ -52,60 +60,30 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Categories */}
-          <div>
-            <h3 className="text-xl font-bold mb-4 text-lightBeige">التصنيفات</h3>
-            <ul className="space-y-2">
-              <li>
-                <Link to="/explore?category=jewelry" className="text-lightBeige/70 hover:text-burntOrange transition-colors">المجوهرات</Link>
-              </li>
-              <li>
-                <Link to="/explore?category=pottery" className="text-lightBeige/70 hover:text-burntOrange transition-colors">الفخار</Link>
-              </li>
-              <li>
-                <Link to="/explore?category=textiles" className="text-lightBeige/70 hover:text-burntOrange transition-colors">المنسوجات</Link>
-              </li>
-              <li>
-                <Link to="/explore?category=woodwork" className="text-lightBeige/70 hover:text-burntOrange transition-colors">أعمال الخشب</Link>
-              </li>
-              <li>
-                <Link to="/explore?category=perfumes" className="text-lightBeige/70 hover:text-burntOrange transition-colors">عطور</Link>
-              </li>
-              <li>
-                <Link to="/explore?category=clothes" className="text-lightBeige/70 hover:text-burntOrange transition-colors">ملابس</Link>
-              </li>
-              <li>
-                <Link to="/explore?category=tableaux" className="text-lightBeige/70 hover:text-burntOrange transition-colors">طابلوهات</Link>
-              </li>
-              <li>
-                <Link to="/explore?category=food" className="text-lightBeige/70 hover:text-burntOrange transition-colors">الاكل</Link>
-              </li>
-            </ul>
-          </div>
+                <div>
+                <h3 className="text-xl font-bold mb-4 text-lightBeige">التصنيفات</h3>
+                <ul className="space-y-2">
+                  {categories.slice(0, Math.ceil(categories.length / 2)).map(cat => (
+                  <li key={cat.id}>
+                    <Link to={`/explore?category=${cat.id}`} className="text-lightBeige/70 hover:text-burntOrange transition-colors">{cat.name}</Link>
+                  </li>
+                  ))}
+                </ul>
+                </div>
 
-          {/* More Categories */}
-          <div>
-            <h3 className="text-xl font-bold mb-4 text-lightBeige">المزيد من التصنيفات</h3>
-            <ul className="space-y-2">
-              <li>
-                <Link to="/explore?category=tatreez" className="text-lightBeige/70 hover:text-burntOrange transition-colors">تطويز</Link>
-              </li>
-              <li>
-                <Link to="/explore?category=crochet" className="text-lightBeige/70 hover:text-burntOrange transition-colors">كورشية</Link>
-              </li>
-              <li>
-                <Link to="/explore?category=concrete" className="text-lightBeige/70 hover:text-burntOrange transition-colors">كونكريت</Link>
-              </li>
-              <li>
-                <Link to="/explore?category=accessories" className="text-lightBeige/70 hover:text-burntOrange transition-colors">اكسسوارات</Link>
-              </li>
-              <li>
-                <Link to="/explore?category=resin" className="text-lightBeige/70 hover:text-burntOrange transition-colors">ريزن</Link>
-              </li>
-            </ul>
-          </div>
+                {/* More Categories */}
+                <div>
+                <h3 className="text-xl font-bold mb-4 text-lightBeige">المزيد من التصنيفات</h3>
+                <ul className="space-y-2">
+                  {categories.slice(Math.ceil(categories.length / 2)).map(cat => (
+                  <li key={cat.id}>
+                    <Link to={`/explore?category=${cat.id}`} className="text-lightBeige/70 hover:text-burntOrange transition-colors">{cat.name}</Link>
+                  </li>
+                  ))}
+                </ul>
+                </div>
 
-          {/* Contact */}
+                {/* Contact */}
           <div>
             <h3 className="text-xl font-bold mb-4 text-lightBeige">اتصل بنا</h3>
             <ul className="space-y-3">

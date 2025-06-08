@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Star, ShoppingCart, MessageSquare, Heart, Share2, ChevronLeft, ChevronRight, CheckCircle, ShieldCheck, Truck } from 'lucide-react';
+import { Star, ShoppingCart, MessageSquare, Heart, ChevronLeft, ChevronRight, CheckCircle, ShieldCheck, Truck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -80,7 +80,24 @@ const GigDetailsPage = () => {
             completedOrders: sellerData.completed_orders || sellerData.completedOrders || 0,
           });
         }
-        // Optionally: fetch reviews and related gigs if backend supports
+        // Fetch related gigs from backend
+        apiFetch(`Listpoducts/${id}/related`).then(relatedData => {
+          if (relatedData && Array.isArray(relatedData.data)) {
+            setRelatedGigs(relatedData.data.map(prod => ({
+              id: prod.id,
+              title: prod.title,
+              price: prod.price,
+              images: Array.isArray(prod.images) && prod.images.length > 0
+                ? prod.images.map(img => img.image_url || img.url || img)
+                : [],
+              category: prod.category,
+              rating: prod.rating || 0,
+              reviewCount: prod.reviewCount || prod.review_count || 0,
+            })));
+          } else {
+            setRelatedGigs([]);
+          }
+        }).catch(() => setRelatedGigs([]));
         setLoading(false);
       })
       .catch(() => {
@@ -313,58 +330,58 @@ const GigDetailsPage = () => {
           <Separator className="my-8" />
 
           {/* Reviews Section */}
-          <section className="mb-10">
-            <h2 className="text-2xl font-bold text-darkOlive mb-6">تقييمات العملاء ({reviews.length})</h2>
-            {user && (
-              <form onSubmit={handleSubmitReview} className="mb-8 p-4 border rounded-lg bg-lightGreen/20 border-olivePrimary/20">
-                <h3 className="text-lg font-semibold mb-2 text-darkOlive">أضف تقييمك</h3>
-                <div className="flex items-center mb-2">
-                  {[1, 2, 3, 4, 5].map(star => (
-                    <button type="button" key={star} onClick={() => setNewRating(star)}>
-                      <Star className={`h-6 w-6 cursor-pointer ${newRating >= star ? 'text-burntOrange fill-current' : 'text-lightGreen'}`} />
-                    </button>
-                  ))}
+  <section className="mb-10">
+    <h2 className="text-2xl font-bold text-darkOlive mb-6">تقييمات العملاء ({reviews.length})</h2>
+    {user && (
+      <form onSubmit={handleSubmitReview} className="mb-8 p-4 border rounded-lg bg-lightGreen/20 border-olivePrimary/20">
+        <h3 className="text-lg font-semibold mb-2 text-darkOlive">أضف تقييمك</h3>
+        <div className="flex items-center mb-2">
+          {[1, 2, 3, 4, 5].map(star => (
+            <button type="button" key={star} onClick={() => setNewRating(star)}>
+              <Star className={`h-6 w-6 cursor-pointer ${newRating >= star ? 'text-burntOrange fill-current' : 'text-lightGreen'}`} />
+            </button>
+          ))}
+        </div>
+        <Textarea 
+          value={newReview} 
+          onChange={(e) => setNewReview(e.target.value)} 
+          placeholder="اكتب تقييمك هنا..." 
+          rows={3}
+          className="mb-2 border-olivePrimary/30 focus:border-olivePrimary focus:ring-olivePrimary/20"
+        />
+        <Button type="submit" className="bg-burntOrange hover:bg-burntOrange/90 text-white">إرسال التقييم</Button>
+      </form>
+    )}
+    {reviews.length > 0 ? (
+      <div className="space-y-6">
+        {reviews.map(review => (
+          <Card key={review.id} className="shadow-sm border-olivePrimary/20">
+            <CardContent className="pt-6">
+              <div className="flex items-start space-x-3 space-x-reverse">
+                <Avatar className="h-10 w-10">
+                  <AvatarFallback className="bg-olivePrimary text-white">{review.userName.charAt(0)}</AvatarFallback>
+                </Avatar>
+                <div>
+                  <div className="flex items-center space-x-2 space-x-reverse mb-1">
+                    <p className="font-semibold text-darkOlive">{review.userName}</p>
+                    <div className="flex text-burntOrange">
+                      {[...Array(5)].map((_, i) => (
+                        <Star key={i} className={`h-4 w-4 ${i < review.rating ? 'fill-current' : ''}`} />
+                      ))}
+                    </div>
+                  </div>
+                  <p className="text-sm text-darkOlive/60 mb-2">{new Date(review.date).toLocaleDateString('ar-EG')}</p>
+                  <p className="text-darkOlive/80">{review.comment}</p>
                 </div>
-                <Textarea 
-                  value={newReview} 
-                  onChange={(e) => setNewReview(e.target.value)} 
-                  placeholder="اكتب تقييمك هنا..." 
-                  rows={3}
-                  className="mb-2 border-olivePrimary/30 focus:border-olivePrimary focus:ring-olivePrimary/20"
-                />
-                <Button type="submit" className="bg-burntOrange hover:bg-burntOrange/90 text-white">إرسال التقييم</Button>
-              </form>
-            )}
-            {reviews.length > 0 ? (
-              <div className="space-y-6">
-                {reviews.map(review => (
-                  <Card key={review.id} className="shadow-sm border-olivePrimary/20">
-                    <CardContent className="pt-6">
-                      <div className="flex items-start space-x-3 space-x-reverse">
-                        <Avatar className="h-10 w-10">
-                          <AvatarFallback className="bg-olivePrimary text-white">{review.userName.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <div className="flex items-center space-x-2 space-x-reverse mb-1">
-                            <p className="font-semibold text-darkOlive">{review.userName}</p>
-                            <div className="flex text-burntOrange">
-                              {[...Array(5)].map((_, i) => (
-                                <Star key={i} className={`h-4 w-4 ${i < review.rating ? 'fill-current' : ''}`} />
-                              ))}
-                            </div>
-                          </div>
-                          <p className="text-sm text-darkOlive/60 mb-2">{new Date(review.date).toLocaleDateString('ar-EG')}</p>
-                          <p className="text-darkOlive/80">{review.comment}</p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
               </div>
-            ) : (
-              <p className="text-darkOlive/70">لا توجد تقييمات لهذا المنتج حتى الآن.</p>
-            )}
-          </section>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    ) : (
+      <p className="text-darkOlive/70">لا توجد تقييمات لهذا المنتج حتى الآن.</p>
+    )}
+  </section>
 
           <Separator className="my-8" />
 
@@ -383,6 +400,7 @@ const GigDetailsPage = () => {
                         alt={relatedGig.title} 
                         className="w-full h-full object-cover" 
                       />
+                      <Badge variant="secondary" className="absolute top-2 right-2 bg-olivePrimary text-white">{relatedGig.category?.name}</Badge>
                     </div>
                     <CardHeader className="pb-1">
                       <CardTitle className="text-md font-semibold text-darkOlive h-12 overflow-hidden">{relatedGig.title}</CardTitle>

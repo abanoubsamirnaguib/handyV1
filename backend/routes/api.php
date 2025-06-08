@@ -41,6 +41,7 @@ Route::prefix('listsellers')->group(function () {
 Route::prefix('Listpoducts')->group(function () {
     Route::get('{id}', [ProductController::class, 'show']);
     Route::get('{id}/reviews', [ProductController::class, 'reviews']);
+    Route::get('{id}/related', [ProductController::class, 'relatedProducts']); // Related gigs endpoint
 });
 
 Route::get('listcategories', [CategoryController::class, 'index']);

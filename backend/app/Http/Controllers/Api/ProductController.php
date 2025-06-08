@@ -39,4 +39,21 @@ class ProductController extends Controller
         }
         return ProductResource::collection($query->paginate($request->limit ?? 10));
     }
+
+    public function relatedProducts($id)
+    {
+        $product = Product::with(['category', 'seller'])->findOrFail($id);
+        $query = Product::with(['images', 'tags', 'category'])
+            ->where('id', '!=', $id)
+            ->where(function($q) use ($product) {
+                $q->where('seller_id', $product->seller_id)
+                  ->where('category_id', $product->category_id);
+                // Optionally, also include products from the same category
+                // $q->orWhere('category_id', $product->category_id);
+            })
+            ->where('status', 'active')
+            ->limit(6);
+        $related = $query->get();
+        return ProductResource::collection($related);
+    }
 }

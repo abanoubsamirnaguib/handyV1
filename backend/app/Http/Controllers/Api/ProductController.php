@@ -11,7 +11,7 @@ class ProductController extends Controller
 {
     public function show($id)
     {
-        $product = Product::with(['images', 'tags', 'category', 'seller'])->findOrFail($id);
+        $product = Product::with(['images', 'tags', 'category', 'seller.user'])->findOrFail($id);
         return new ProductResource($product);
     }
 
@@ -22,27 +22,21 @@ class ProductController extends Controller
         return ReviewResource::collection($reviews);
     }
 
-    public function search(Request $request)
+    public function TopProducts(Request $request)
     {
         $query = Product::with(['images', 'tags', 'category', 'seller']);
-        if ($request->filled('category')) {
-            $query->where('category_id', $request->category);
+
+        if ($request->filled('featured')) {
+            $query->where('featured', (bool)$request->featured);
         }
-        if ($request->filled('search')) {
-            $q = $request->search;
-            $query->where(function($sub) use ($q) {
-                $sub->where('title', 'like', "%$q%")
-                    ->orWhere('description', 'like', "%$q%")
-                    ->orWhereHas('tags', function($t) use ($q) {
-                        $t->where('tag_name', 'like', "%$q%") ;
-                    });
-            });
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
         }
         if ($request->filled('sort')) {
             if ($request->sort === 'price_asc') $query->orderBy('price');
             if ($request->sort === 'price_desc') $query->orderByDesc('price');
             if ($request->sort === 'rating') $query->orderByDesc('rating');
         }
-        return ProductResource::collection($query->paginate(20));
+        return ProductResource::collection($query->paginate($request->limit ?? 10));
     }
 }

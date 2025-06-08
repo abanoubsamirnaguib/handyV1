@@ -39,15 +39,13 @@ const SellerProfilePage = () => {
     const fetchSellerData = async () => {
       try {
         setLoading(true);
-          // Fetch seller profile from API
+        // Fetch seller profile from API
         const sellerResponse = (await api.getSeller(id)).data;
-        
         if (!sellerResponse) {
           setError('لم يتم العثور على الحرفي');
           setLoading(false);
           return;
         }
-        
         // Transform API response to match component's expected structure
         const sellerData = {
           id: sellerResponse.id,
@@ -61,33 +59,30 @@ const SellerProfilePage = () => {
           skills: Array.isArray(sellerResponse.skills) ? sellerResponse.skills : [],
           completedOrders: sellerResponse.completed_orders || 0,
           responseTime: sellerResponse.response_time || 'غير محدد',
-          avatar: sellerResponse.user?.avatar || ''
+          avatar: sellerResponse.user?.avatar || '',
+          products: sellerResponse.products || []
         };
-        
         setSeller(sellerData);
-        
         // Fetch seller's products/gigs
-        const productsResponse = await api.getSellerProducts(id);
-        
-        if (productsResponse && Array.isArray(productsResponse.data)) {
+        const productsResponse = sellerData.products;
+        if (productsResponse && Array.isArray(productsResponse)) {
           // Transform API response to match component's expected structure for gigs
-          const gigsData = productsResponse.data.map(product => ({
+          const gigsData = productsResponse.map(product => ({
             id: product.id,
             title: product.title || 'عنوان غير محدد',
             price: product.price || 0,
             category: product.category?.name || 'غير مصنف',
             rating: product.rating || 0,
             reviewCount: product.review_count || 0,
-            images: Array.isArray(product.images) ? product.images.map(img => img.url) : [],
+            images: Array.isArray(product.images) ? product.images.map(img => img.url || img.image_url || img) : [],
             description: product.description || ''
           }));
-          
           setSellerGigs(gigsData);
         } else {
           setSellerGigs([]);
         }
-        
-        setLoading(false);      } catch (err) {
+        setLoading(false);
+      } catch (err) {
         console.error('Error fetching seller data:', err);
         if (err.message && err.message.includes('404')) {
           setError('لم يتم العثور على الحرفي');
@@ -97,7 +92,6 @@ const SellerProfilePage = () => {
         setLoading(false);
       }
     };
-    
     fetchSellerData();
   }, [id, navigate]);
   if (loading) {
@@ -201,15 +195,19 @@ const SellerProfilePage = () => {
         </Card>
 
         {/* Seller Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">          <Card className="border-lightBeige/50 bg-lightBeige/10">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+          <Card className="border-lightBeige/50 bg-lightBeige/10">
             <CardContent className="p-6 flex items-center">
               <Star className="h-10 w-10 text-yellow-500 ml-4" />
               <div>
                 <p className="text-sm text-gray-500">التقييم</p>
-                <p className="text-2xl font-bold">{seller.rating} <span className="text-sm text-gray-500">({seller.reviewCount})</span></p>
+                <p className="text-2xl font-bold">
+                  {seller.rating} <span className="text-sm text-gray-500">({seller.reviewCount})</span>
+                </p>
               </div>
             </CardContent>
-          </Card>          <Card className="border-lightBeige/50 bg-lightBeige/10">
+          </Card>
+          <Card className="border-lightBeige/50 bg-lightBeige/10">
             <CardContent className="p-6 flex items-center">
               <Package className="h-10 w-10 text-blue-500 ml-4" />
               <div>
@@ -217,7 +215,8 @@ const SellerProfilePage = () => {
                 <p className="text-2xl font-bold">{seller.completedOrders}</p>
               </div>
             </CardContent>
-          </Card>          <Card className="border-lightBeige/50 bg-lightBeige/10">
+          </Card>
+          <Card className="border-lightBeige/50 bg-lightBeige/10">
             <CardContent className="p-6 flex items-center">
               <Clock className="h-10 w-10 text-green-500 ml-4" />
               <div>
@@ -225,18 +224,36 @@ const SellerProfilePage = () => {
                 <p className="text-2xl font-bold">{seller.responseTime}</p>
               </div>
             </CardContent>
-          </Card>          <Card className="border-lightBeige/50 bg-lightBeige/10">
+          </Card>
+          <Card className="border-lightBeige/50 bg-lightBeige/10">
             <CardContent className="p-6 flex items-center">
               <Award className="h-10 w-10 text-purple-500 ml-4" />
               <div>
                 <p className="text-sm text-gray-500">الخبرة</p>
-                <p className="text-2xl font-bold">{Math.floor((new Date() - new Date(seller.memberSince)) / (1000 * 60 * 60 * 24 * 30))} شهر</p>
+                <p className="text-2xl font-bold">
+                  {(() => {
+                    const now = new Date();
+                    const joined = new Date(seller.memberSince);
+                    let years = now.getFullYear() - joined.getFullYear();
+                    let months = now.getMonth() - joined.getMonth();
+                    if (months < 0) {
+                      years -= 1;
+                      months += 12;
+                    }
+                    return (
+                      <>
+                        {years > 0 && <span>{years} سنة{years > 1 ? '' : ''}</span>}
+                        {years > 0 && months > 0 && ' و '}
+                        {months > 0 && <span>{months} شهر{months > 1 ? '' : ''}</span>}
+                        {years === 0 && months === 0 && <span>أقل من شهر</span>}
+                      </>
+                    );
+                  })()}
+                </p>
               </div>
             </CardContent>
           </Card>
         </div>
-
-        {/* Tabs: Products, Reviews, etc. */}
         <Tabs defaultValue="products" className="w-full">
           <TabsList className="w-full max-w-md mx-auto grid grid-cols-2 mb-8">
             <TabsTrigger value="products" className="text-lg">المنتجات</TabsTrigger>

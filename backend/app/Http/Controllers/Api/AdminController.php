@@ -162,4 +162,13 @@ class AdminController extends Controller
             'recent_orders' => $recentOrders,
         ]);
     }
+    public function updateProductStatus(Request $request, $id)
+    {
+        $product = Product::findOrFail($id);
+        $validated = $request->validate([
+            'status' => 'required|in:active,inactive,pending_review,rejected'
+        ]);
+        $product->update(['status' => $validated['status']]);
+        return new ProductResource($product);
+    }
 }

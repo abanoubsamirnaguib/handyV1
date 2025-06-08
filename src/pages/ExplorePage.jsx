@@ -9,7 +9,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
-import { categories, searchGigs, searchSellers } from '@/lib/data';
 import { apiFetch } from '@/lib/api';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -26,15 +25,20 @@ const ExplorePage = () => {
   const [sortBy, setSortBy] = useState('relevance');
   const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
-  // const [categories, setCategories] = useState([]);
-
-  // useEffect(() => {
-  //   apiFetch('listcategories')
-  //     .then(data => setCategories(data.data || data))
-  //     .catch(() => setCategories([]));
-  // }, []);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [categories, setCategories] = useState([]);
 
   useEffect(() => {
+    apiFetch('listcategories')
+      .then(data => setCategories(data.data || data))
+      .catch(() => setCategories([]));
+  }, []);
+
+  // Ensure selectedCategory is always a string (id) and matches the dropdown after searchParams change
+  useEffect(() => {
+    if (categories.length === 0) return; // Wait for categories
+
     const tab = searchParams.get('tab') || 'products';
     const query = searchParams.get('search') || '';
     const category = searchParams.get('category') || 'all';
@@ -45,32 +49,123 @@ const ExplorePage = () => {
 
     setActiveTab(tab);
     setSearchTerm(query);
-    setSelectedCategory(category);
+    // If the category param is a name, convert to id; otherwise use as is
+    let selectedCat = category;
+    if (category !== 'all' && categories.length > 0) {
+      const found = categories.find(cat => String(cat.id) === String(category) || cat.name === category);
+      if (found) selectedCat = String(found.id);
+      else selectedCat = 'all'; // fallback if not found
+    }
+    setSelectedCategory(selectedCat);
     setPriceRange([minPrice, maxPrice]);
     setMinRating(rating);
     setSortBy(sort);
 
-    const filters = {
-      category: category === 'all' ? null : category,
-      minPrice,
-      maxPrice,
-      minRating: rating,
-      sort,
+    setLoading(true);
+    setError(null);
+
+    // Helper to normalize product data
+    const normalizeProduct = (prod) => {
+      // Try to get category id from product
+      let categoryId = prod.category_id || prod.category?.id || prod.category;
+      // Find the category object from categories array
+      let categoryObj = categories.find(cat => cat.id === categoryId);
+      // If backend sent a category object, prefer it
+      if (prod.category && typeof prod.category === 'object' && prod.category.name) {
+        categoryObj = prod.category;
+      }
+      return {
+        id: prod.id,
+        title: prod.title,
+        description: prod.description,
+        price: prod.price,
+        images: Array.isArray(prod.images) && prod.images.length > 0
+          ? prod.images.map(img => img.url || img.image_url)
+          : [],
+        category: categoryObj ? { id: categoryObj.id, name: categoryObj.name } : { id: categoryId, name: categoryId },
+        rating: prod.rating || 0,
+        reviewCount: prod.reviewCount || prod.review_count || 0,
+        sellerId: prod.sellerId || prod.seller_id || prod.seller?.id,
+      };
     };
-    
+
+    // Helper to normalize seller data
+    const normalizeSeller = (seller) => ({
+      id: seller.id,
+      name: seller.name || '',
+      avatar: seller.avatar || '',
+      skills: seller.skills || [],
+      rating: seller.rating || 0,
+      reviewCount: seller.reviewCount || seller.review_count || 0,
+      bio: seller.bio || '',
+      location: seller.location || '',
+      memberSince: seller.memberSince || '',
+      completedOrders: seller.completedOrders || 0,
+    });
+
     if (tab === 'products') {
-      setGigs(searchGigs(query, filters));
+      // Build query params for products
+      let params = [];
+      if (query) params.push(`search=${encodeURIComponent(query)}`);
+      // Always send the category id (not name) if a category is selected
+      if (category !== 'all') {
+        let categoryId = category;
+        // If category is a name, convert to id
+        const found = categories.find(cat => cat.id === category || cat.name === category);
+        if (found) categoryId = found.id;
+        params.push(`category=${encodeURIComponent(categoryId)}`);
+      }
+      if (minPrice > 0) params.push(`min_price=${minPrice}`);
+      if (maxPrice < 1000) params.push(`max_price=${maxPrice}`);
+      if (rating > 0) params.push(`min_rating=${rating}`);
+      if (sort && sort !== 'relevance') params.push(`sort=${sort}`);
+      const url = `explore/products?${params.join('&')}`;
+      apiFetch(url)
+        .then(data => {
+          setGigs(Array.isArray(data.data) ? data.data.map(normalizeProduct) : []);
+          setLoading(false);
+        })
+        .catch(() => {
+          setGigs([]);
+          setError('تعذر تحميل المنتجات');
+          setLoading(false);
+        });
     } else if (tab === 'sellers') {
-      setSellers(searchSellers(query, filters));
+      // Build query params for sellers
+      let params = [];
+      if (query) params.push(`search=${encodeURIComponent(query)}`);
+      if (category !== 'all') {
+        let categoryId = category;
+        const found = categories.find(cat => cat.id === category || cat.name === category);
+        if (found) categoryId = found.id;
+        params.push(`category=${encodeURIComponent(categoryId)}`);
+      }
+      if (rating > 0) params.push(`min_rating=${rating}`);
+      if (sort && sort !== 'relevance') params.push(`sort=${sort}`);
+      const url = `explore/sellers?${params.join('&')}`;
+      apiFetch(url)
+        .then(data => {
+          setSellers(Array.isArray(data.data) ? data.data.map(normalizeSeller) : []);
+          setLoading(false);
+        })
+        .catch(() => {
+          setSellers([]);
+          setError('تعذر تحميل الحرفيين');
+          setLoading(false);
+        });
     }
-  }, [searchParams]);
+  }, [searchParams, categories]);
 
   const handleFilterChange = () => {
     const params = new URLSearchParams();
     params.set('tab', activeTab);
     if (searchTerm) params.set('search', searchTerm);
-    if (selectedCategory !== 'all') params.set('category', selectedCategory);
-    
+    // Always send the category id (not name or object)
+    if (selectedCategory !== 'all') {
+      // If selectedCategory is an object, extract id, else use as is
+      const categoryId = typeof selectedCategory === 'object' ? selectedCategory.id : selectedCategory;
+      params.set('category', categoryId);
+    }
     if (activeTab === 'products') {
       params.set('minPrice', priceRange[0]);
       params.set('maxPrice', priceRange[1]);
@@ -97,57 +192,30 @@ const ExplorePage = () => {
     setSearchParams(params);
   };
 
-  const GigCard = ({ gig }) => (
-    <Card className="overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 flex flex-col h-full card-hover border-olivePrimary/20">
-      <div className="relative h-56">
-        <img 
-          src={gig.images && gig.images.length > 0 
-            ? gig.images[0] 
-            : "https://images.unsplash.com/photo-1680188700662-5b03bdcf3017"} 
-          alt={gig.title} 
-          className="w-full h-full object-cover" 
-        />
-        <Badge variant="secondary" className="absolute top-2 right-2 bg-olivePrimary text-white">{gig.category}</Badge>
-      </div>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-lg font-semibold text-darkOlive h-14 overflow-hidden">{gig.title}</CardTitle>
-      </CardHeader>
-      <CardContent className="flex-grow">
-        <div className="flex items-center text-sm text-darkOlive/70 mb-2">
-          <Star className="h-4 w-4 text-burntOrange mr-1" />
-          {gig.rating} ({gig.reviewCount} تقييمات)
-        </div>
-        <p className="text-xl font-bold text-olivePrimary mb-2">{gig.price} جنيه</p>
-      </CardContent>
-      <CardFooter>
-        <Button asChild className="w-full bg-burntOrange hover:bg-burntOrange/90 text-white">
-          <Link to={`/gigs/${gig.id}`}>
-            عرض التفاصيل
-            <ArrowRight className="mr-2 h-4 w-4" />
-          </Link>
-        </Button>
-      </CardFooter>
-    </Card>
-  );
+  const GigCard = ({ gig }) => {
+    // Find category name from gig.category object if present
+    let categoryName = gig.category && gig.category.name ? gig.category.name : null;
+    if (!categoryName) {
+      const categoryObj = categories.find(cat => cat.id === (gig.category_id || gig.category?.id || gig.category));
+      categoryName = categoryObj ? categoryObj.name : (gig.category_id || gig.category?.id || gig.category);
+    }
 
-  const GigListItem = ({ gig }) => (
-    <Card className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col md:flex-row card-hover border-olivePrimary/20 w-full">
-      <div className="relative md:w-1/3 h-56 md:h-auto">
-        <img 
-          src={gig.images && gig.images.length > 0 
-            ? gig.images[0] 
-            : "https://images.unsplash.com/photo-1680188700662-5b03bdcf3017"} 
-          alt={gig.title} 
-          className="w-full h-full object-cover" 
-        />
-        <Badge variant="secondary" className="absolute top-2 right-2 bg-olivePrimary text-white">{gig.category}</Badge>
-      </div>
-      <div className="md:w-2/3 flex flex-col">
+    return (
+      <Card className="overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 flex flex-col h-full card-hover border-olivePrimary/20">
+        <div className="relative h-56">
+          <img 
+            src={gig.images && gig.images.length > 0 
+              ? gig.images[0] 
+              : "https://images.unsplash.com/photo-1680188700662-5b03bdcf3017"} 
+            alt={gig.title} 
+            className="w-full h-full object-cover" 
+          />
+          <Badge variant="secondary" className="absolute top-2 right-2 bg-olivePrimary text-white">{categoryName}</Badge>
+        </div>
         <CardHeader className="pb-2">
-          <CardTitle className="text-lg font-semibold text-darkOlive">{gig.title}</CardTitle>
+          <CardTitle className="text-lg font-semibold text-darkOlive h-14 overflow-hidden">{gig.title}</CardTitle>
         </CardHeader>
         <CardContent className="flex-grow">
-          <p className="text-sm text-darkOlive/70 mb-2 line-clamp-2">{gig.description}</p>
           <div className="flex items-center text-sm text-darkOlive/70 mb-2">
             <Star className="h-4 w-4 text-burntOrange mr-1" />
             {gig.rating} ({gig.reviewCount} تقييمات)
@@ -155,16 +223,63 @@ const ExplorePage = () => {
           <p className="text-xl font-bold text-olivePrimary mb-2">{gig.price} جنيه</p>
         </CardContent>
         <CardFooter>
-          <Button asChild className="w-full md:w-auto bg-burntOrange hover:bg-burntOrange/90 text-white">
+          <Button asChild className="w-full bg-burntOrange hover:bg-burntOrange/90 text-white">
             <Link to={`/gigs/${gig.id}`}>
               عرض التفاصيل
               <ArrowRight className="mr-2 h-4 w-4" />
             </Link>
           </Button>
         </CardFooter>
-      </div>
-    </Card>
-  );
+      </Card>
+    );
+  };
+
+  const GigListItem = ({ gig }) => {
+    // Find category name from gig.category object if present
+    let categoryName = gig.category && gig.category.name ? gig.category.name : null;
+    if (!categoryName) {
+      const categoryObj = categories.find(cat => cat.id === (gig.category_id || gig.category?.id || gig.category));
+      categoryName = categoryObj ? categoryObj.name : (gig.category_id || gig.category?.id || gig.category);
+    }
+    
+    return (
+      <Card className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col md:flex-row card-hover border-olivePrimary/20 w-full">
+        <div className="relative md:w-1/3 h-56 md:h-auto">
+          <img 
+            src={gig.images && gig.images.length > 0 
+              ? gig.images[0] 
+              : "https://images.unsplash.com/photo-1680188700662-5b03bdcf3017"} 
+            alt={gig.title} 
+            className="w-full h-full object-cover" 
+          />
+          <Badge variant="secondary" className="absolute top-2 right-2 bg-olivePrimary text-white">
+            {categoryName}
+          </Badge>
+        </div>
+        <div className="md:w-2/3 flex flex-col">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg font-semibold text-darkOlive">{gig.title}</CardTitle>
+          </CardHeader>
+          <CardContent className="flex-grow">
+            <p className="text-sm text-darkOlive/70 mb-2 line-clamp-2">{gig.description}</p>
+            <div className="flex items-center text-sm text-darkOlive/70 mb-2">
+              <Star className="h-4 w-4 text-burntOrange mr-1" />
+              {gig.rating} ({gig.reviewCount} تقييمات)
+            </div>
+            <p className="text-xl font-bold text-olivePrimary mb-2">{gig.price} جنيه</p>
+          </CardContent>
+          <CardFooter>
+            <Button asChild className="w-full md:w-auto bg-burntOrange hover:bg-burntOrange/90 text-white">
+              <Link to={`/gigs/${gig.id}`}>
+                عرض التفاصيل
+                <ArrowRight className="mr-2 h-4 w-4" />
+              </Link>
+            </Button>
+          </CardFooter>
+        </div>
+      </Card>
+    );
+  };
 
   const SellerCard = ({ seller }) => (
     <Card className="overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 flex flex-col h-full card-hover border-lightBeige/50">
@@ -317,14 +432,14 @@ const ExplorePage = () => {
                   </div>
                   <div>
                     <Label htmlFor="category-filter" className="text-darkOlive">التصنيف</Label>
-                    <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                    <Select value={selectedCategory} onValueChange={value => setSelectedCategory(String(value))}>
                       <SelectTrigger id="category-filter" className="mt-1 border-olivePrimary/30 focus:border-olivePrimary focus:ring-olivePrimary/20">
                         <SelectValue placeholder="اختر تصنيف" />
                       </SelectTrigger>
                       <SelectContent className="border-olivePrimary/30">
                         <SelectItem value="all">كل التصنيفات</SelectItem>
                         {categories.map(cat => (
-                          <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                          <SelectItem key={cat.id} value={String(cat.id)}>{cat.name}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -393,7 +508,15 @@ const ExplorePage = () => {
                 </div>
               </div>
 
-              {gigs.length > 0 ? (
+              {loading ? (
+                <div className="text-center py-12">
+                  <p className="text-lg text-darkOlive">جاري تحميل المنتجات...</p>
+                </div>
+              ) : error ? (
+                <div className="text-center py-12">
+                  <p className="text-lg text-red-500">{error}</p>
+                </div>
+              ) : gigs.length > 0 ? (
                 <motion.div 
                   className={viewMode === 'grid' ? "grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-4" : "space-y-6"}
                   initial={{ opacity: 0 }}
@@ -452,14 +575,14 @@ const ExplorePage = () => {
                   </div>
                   <div>
                     <Label htmlFor="category-filter-sellers" className="text-darkOlive">التخصص</Label>
-                    <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                    <Select value={selectedCategory} onValueChange={value => setSelectedCategory(String(value))}>
                       <SelectTrigger id="category-filter-sellers" className="mt-1 border-olivePrimary/30 focus:border-olivePrimary focus:ring-olivePrimary/20">
                         <SelectValue placeholder="اختر تخصص" />
                       </SelectTrigger>
                       <SelectContent className="border-olivePrimary/30">
                         <SelectItem value="all">كل التخصصات</SelectItem>
                         {categories.map(cat => (
-                          <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                          <SelectItem key={cat.id} value={String(cat.id)}>{cat.name}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -516,7 +639,15 @@ const ExplorePage = () => {
                 </div>
               </div>
 
-              {sellers.length > 0 ? (
+              {loading ? (
+                <div className="text-center py-12">
+                  <p className="text-lg text-darkOlive">جاري تحميل الحرفيين...</p>
+                </div>
+              ) : error ? (
+                <div className="text-center py-12">
+                  <p className="text-lg text-red-500">{error}</p>
+                </div>
+              ) : sellers.length > 0 ? (
                 <motion.div 
                   className={viewMode === 'grid' ? "grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-4" : "space-y-6"}
                   initial={{ opacity: 0 }}

@@ -24,6 +24,11 @@ class SellerResource extends JsonResource
             'completed_orders' => $this->completed_orders,
             'response_time' => $this->response_time,
             'skills' => $skills,
+            'products' => $this->relationLoaded('products')
+                ? ProductResource::collection($this->products->map(function ($product) {
+                    return $product->load(['images', 'category']);
+                }))
+                : [],
         ];
     }
 }

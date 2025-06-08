@@ -313,13 +313,24 @@ const AdminProducts = () => {
                   <CardHeader className="pb-2 relative">
                     <div className="flex justify-between items-start">
                       <CardTitle className="text-lg text-gray-800 line-clamp-2">{product.title}</CardTitle>
-                      <Badge
-                        className={product.featured 
-                          ? "bg-yellow-500 hover:bg-yellow-600" 
-                          : "bg-gray-400 hover:bg-gray-500"}
-                      >
-                        {product.featured ? "مميز" : "غير مميز"}
-                      </Badge>
+                      <div className="flex gap-2 items-center">
+                        <Badge
+                          className={
+                            product.status === 'active'
+                              ? 'bg-green-500 hover:bg-green-600'
+                              : 'bg-gray-400 hover:bg-gray-500'
+                          }
+                        >
+                          {product.status === 'active' ? 'نشط' : 'غير نشط'}
+                        </Badge>
+                        <Badge
+                          className={product.featured 
+                            ? "bg-yellow-500 hover:bg-yellow-600" 
+                            : "bg-gray-400 hover:bg-gray-500"}
+                        >
+                          {product.featured ? "مميز" : "غير مميز"}
+                        </Badge>
+                      </div>
                     </div>
                     <CardDescription className="text-gray-500 line-clamp-2">
                       {product.description.substring(0, 100)}...
@@ -369,6 +380,34 @@ const AdminProducts = () => {
                     >
                       <Bookmark className="ml-1 h-4 w-4" />
                       {product.featured ? "إلغاء التمييز" : "تمييز"}
+                    </Button>
+                    <Button
+                      variant={product.status === 'active' ? 'destructive' : 'default'}
+                      size="sm"
+                      className={product.status === 'active' ? 'bg-gray-400 hover:bg-gray-500' : 'bg-green-500 hover:bg-green-600'}
+                      disabled={updating}
+                      onClick={async () => {
+                        setUpdating(true);
+                        try {
+                          const newStatus = product.status === 'active' ? 'inactive' : 'active';
+                          await adminApi.updateProductStatus(product.id, newStatus);
+                          setProducts(prev => prev.map(p => p.id === product.id ? { ...p, status: newStatus } : p));
+                          toast({
+                            title: newStatus === 'active' ? 'تم تفعيل المنتج' : 'تم إلغاء تفعيل المنتج',
+                            description: newStatus === 'active' ? 'تم تفعيل المنتج بنجاح.' : 'تم إلغاء تفعيل المنتج بنجاح.'
+                          });
+                        } catch (error) {
+                          toast({
+                            variant: 'destructive',
+                            title: 'خطأ',
+                            description: 'حدث خطأ أثناء تغيير حالة المنتج'
+                          });
+                        } finally {
+                          setUpdating(false);
+                        }
+                      }}
+                    >
+                      {product.status === 'active' ? 'تعطيل' : 'تفعيل'}
                     </Button>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>

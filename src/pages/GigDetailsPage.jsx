@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -15,7 +14,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useChat } from '@/contexts/ChatContext';
-import { getGigById, getSellerById, getReviewsByGigId, getGigsBySellerId } from '@/lib/data';
+import { api, apiFetch } from '@/lib/api';
 
 const GigDetailsPage = () => {
   const { id } = useParams();
@@ -33,24 +32,68 @@ const GigDetailsPage = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [newReview, setNewReview] = useState('');
   const [newRating, setNewRating] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const currentGig = getGigById(id);
-    if (currentGig) {
-      setGig(currentGig);
-      const currentSeller = getSellerById(currentGig.sellerId);
-      setSeller(currentSeller);
-      setReviews(getReviewsByGigId(id));
-      if (currentSeller) {
-        setRelatedGigs(getGigsBySellerId(currentSeller.id).filter(g => g.id !== id).slice(0, 3));
-      }
-    } else {
-      navigate('/404');
-    }
+    setLoading(true);
+    setError(null);
+    // Fetch product details from backend
+    apiFetch(`Listpoducts/${id}`)
+      .then(async (data) => {
+        if (!data || !data.data) {
+          setError('لم يتم العثور على المنتج');
+          setLoading(false);
+          return;
+        }
+        const prod = data.data;
+        const normalizedGig = {
+          id: prod.id,
+          title: prod.title,
+          description: prod.description,
+          price: prod.price,
+          images: Array.isArray(prod.images) && prod.images.length > 0
+            ? prod.images.map(img => img.image_url || img.url || img)
+            : [],
+          category: prod.category,
+          rating: prod.rating || 0,
+          reviewCount: prod.reviewCount || prod.review_count || 0,
+          sellerId: prod.sellerId || prod.seller_id || prod.seller?.id,
+          deliveryTime: prod.delivery_time || prod.deliveryTime || 'غير محدد',
+          tags: Array.isArray(prod.tags) ? prod.tags : (prod.tags ? [prod.tags] : []),
+        };
+        setGig(normalizedGig);
+        // Fetch seller
+        if (normalizedGig.sellerId) {
+          const sellerRes = await api.getSeller(normalizedGig.sellerId);
+          const sellerData = sellerRes.data;
+          setSeller({
+            id: sellerData.id,
+            name: sellerData.user?.name || '',
+            avatar: sellerData.avatar || sellerData.profile_image || '',
+            skills: sellerData.skills || sellerData.categories || [],
+            rating: sellerData.rating || 0,
+            reviewCount: sellerData.reviewCount || sellerData.review_count || 0,
+            bio: sellerData.bio || '',
+            location: sellerData.location || '',
+            memberSince: sellerData.member_since || sellerData.memberSince || '',
+            completedOrders: sellerData.completed_orders || sellerData.completedOrders || 0,
+          });
+        }
+        // Optionally: fetch reviews and related gigs if backend supports
+        setLoading(false);
+      })
+      .catch(() => {
+        setError('تعذر تحميل تفاصيل المنتج');
+        setLoading(false);
+      });
   }, [id, navigate]);
 
-  if (!gig || !seller) {
+  if (loading) {
     return <div className="container mx-auto px-4 py-8 text-center">جاري تحميل تفاصيل المنتج...</div>;
+  }
+  if (error || !gig || !seller) {
+    return <div className="container mx-auto px-4 py-8 text-center">{error || 'تعذر تحميل تفاصيل المنتج'}</div>;
   }
 
   const handleAddToCart = () => {
@@ -186,11 +229,11 @@ const GigDetailsPage = () => {
             <div className="flex items-center space-x-4 space-x-reverse">
               <div className="flex items-center text-burntOrange">
                 {[...Array(5)].map((_, i) => (
-                  <Star key={i} className={`h-5 w-5 ${i < Math.round(gig.rating) ? 'fill-current' : ''}`} />
+                  <Star key={i} className={`h-5 w-5 ${i < Math.round(Number(gig.rating) || 0) ? 'fill-current' : ''}`} />
                 ))}
-                <span className="ml-2 text-darkOlive/70">({gig.rating.toFixed(1)} / {reviews.length} تقييمات)</span>
+                <span className="ml-2 text-darkOlive/70">({typeof gig.rating === 'number' ? gig.rating.toFixed(1) : Number(gig.rating || 0).toFixed(1)} / {reviews.length} تقييمات)</span>
               </div>
-              <Badge variant="secondary" className="bg-lightGreen/50 text-olivePrimary">{gig.category}</Badge>
+              <Badge variant="secondary" className="bg-lightGreen/50 text-olivePrimary">{gig.category.name}</Badge>
             </div>
 
             <p className="text-darkOlive/80 leading-relaxed">{gig.description}</p>
@@ -238,7 +281,7 @@ const GigDetailsPage = () => {
                   <AvatarFallback className="bg-olivePrimary text-white">{seller.name.charAt(0)}</AvatarFallback>
                 </Avatar>
                 <div>
-                  <Link to={`/profile/${seller.id}`} className="text-lg font-semibold text-olivePrimary hover:underline">{seller.name}</Link>
+                  <Link to={`/sellers/${seller.id}`} className="text-lg font-semibold text-olivePrimary hover:underline">{seller.name}</Link>
                   <p className="text-sm text-darkOlive/70">{seller.location}</p>
                   <div className="flex items-center text-sm text-burntOrange">
                     <Star className="h-4 w-4 mr-1" /> {seller.rating} ({seller.reviewCount} تقييمات)
@@ -256,10 +299,13 @@ const GigDetailsPage = () => {
         <div className="mt-12">
           {/* For simplicity, we'll just stack them. shadcn/ui Tabs can be used for a tabbed interface */}
           <section className="mb-10">
+
             <h2 className="text-2xl font-bold text-darkOlive mb-4">تفاصيل إضافية</h2>
             <div className="prose max-w-none text-darkOlive/80">
-              <p>وقت التسليم المتوقع: {gig.deliveryTime}</p>
-              <p>الوسوم: {gig.tags.join(', ')}</p>
+              <p>وقت التسليم المتوقع: {gig.deliveryTime || 'غير محدد'}</p>
+              <p>الوسوم: {Array.isArray(gig.tags) && gig.tags.length > 0
+                ? gig.tags.map(tag => tag.tag_name).join(', ')
+                : 'لا توجد وسوم'}</p>
               {/* Add more detailed description if available */}
             </div>
           </section>

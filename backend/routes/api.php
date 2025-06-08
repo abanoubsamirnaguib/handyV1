@@ -31,6 +31,7 @@ use App\Http\Controllers\Api\FileUploadController;
 use App\Http\Controllers\Api\SiteSettingController;
 use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\Api\ExploreController;
 
 Route::prefix('listsellers')->group(function () {
     Route::get('{id}', [SellerController::class, 'show']);
@@ -43,7 +44,7 @@ Route::prefix('Listpoducts')->group(function () {
 });
 
 Route::get('listcategories', [CategoryController::class, 'index']);
-Route::get('products/search', [ProductController::class, 'search']);
+Route::get('TopProducts', [ProductController::class, 'TopProducts']);
 Route::get('sellers/search', [SellerController::class, 'search']);
 Route::get('sellers/top', [SellerController::class, 'topSellers']);
 Route::get('orders/{id}', [OrderCrudController::class, 'show']);
@@ -54,6 +55,10 @@ Route::post('login', [AuthController::class, 'login']);
 
 // Public routes
 Route::get('users/{id}', [UserCrudController::class, 'show']);  // Keep this one public for displaying profiles
+
+// Add explore routes for minimal product/seller data
+Route::get('explore/products', [ExploreController::class, 'products']);
+Route::get('explore/sellers', [ExploreController::class, 'sellers']);
 
 // Protected Routes with middleware 
 Route::middleware(['auth:sanctum'])->group(function () {
@@ -137,6 +142,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::patch('users/{id}/status', [AdminController::class, 'updateUserStatus']);
         Route::patch('sellers/{id}/status', [AdminController::class, 'updateSellerStatus']);
         Route::patch('products/{id}/featured', [AdminController::class, 'toggleProductFeatured']);
+        Route::patch('products/{id}/status', [AdminController::class, 'updateProductStatus']);
         
         Route::delete('users/{id}', [AdminController::class, 'deleteUser']);
         Route::delete('products/{id}', [AdminController::class, 'deleteProduct']);

@@ -192,46 +192,50 @@ const HomePage = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-lightBeige">
-      {/* Hero Section */}
-      <section className="relative bg-olivePrimary text-white py-20 md:py-32 overflow-hidden flex items-center justify-center min-h-[70vh]">
-        {/* Background Video or Fallback Image */}
-        <video
-          className="absolute inset-0 w-full h-full object-cover z-0"
-          autoPlay
-          loop
-          muted
-          playsInline
-          poster="https://images.unsplash.com/photo-1686825374490-663137bad061"
-          onError={e => {
-            e.target.style.display = 'none';
-            const img = document.createElement('img');
-            img.src = "https://images.unsplash.com/photo-1686825374490-663137bad061";
-            img.alt = "خلفية";
-            img.className = "absolute inset-0 w-full h-full object-cover z-0";
-            e.target.parentNode.appendChild(img);
-          }}
-        >
-          <source src="/hero-bg.mp4" type="video/mp4" />
-        </video>
-        <div className="absolute inset-0 bg-black/30 z-10"></div>
-        <div className="container mx-auto px-4 relative z-20 flex flex-col items-center justify-center">
-          <div className="flex flex-col items-center justify-center w-full">
-            <motion.div 
-              className="text-center flex flex-col items-center justify-center"
-              initial={{ opacity: 0, x: -50 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8 }}
-            >
-              <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
-                اكتشف <span className="text-creamyBeige">إبداعات</span> الحرفيين
-              </h1>
-              <p className="text-lg md:text-xl mb-8 text-lightBeige">
-                منصتك الأولى للعثور على منتجات يدوية فريدة ومصنوعة بحب وشغف.
-              </p>
-              <Button
-                size="lg"
-                className="bg-burntOrange hover:bg-burntOrange/90 text-white px-8 py-3 text-lg"
-                onClick={() => {
+        <section className="relative bg-olivePrimary text-white py-20 md:py-32 overflow-hidden flex items-center justify-center min-h-[90vh]">
+          <video
+            className="absolute inset-0 w-screen h-screen object-cover z-0"
+            style={{
+          objectPosition: window.innerWidth < 640 ? '-950px' : undefined
+            }}
+            autoPlay
+            loop
+            muted
+            playsInline
+            poster="https://images.unsplash.com/photo-1686825374490-663137bad061"
+            onError={e => {
+          e.target.style.display = 'none';
+          const img = document.createElement('img');
+          img.src = "https://images.unsplash.com/photo-1686825374490-663137bad061";
+          img.alt = "خلفية";
+          img.className = "absolute inset-0 w-screen h-screen object-cover z-0";
+          if (window.innerWidth < 640) {
+            img.style.objectPosition = '-950px';
+          }
+          e.target.parentNode.appendChild(img);
+            }}
+          >
+            <source src="/hero-bg2.mp4" type="video/mp4" />
+          </video>
+          <div className="absolute inset-0 bg-black/30 z-10"></div>
+          <div className="container mx-auto px-4 relative z-20 flex flex-col items-center justify-center">
+            <div className="flex flex-col items-center justify-center w-full">
+          <motion.div 
+            className="text-center flex flex-col items-center justify-center"
+            initial={{ opacity: 0, x: -50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8 }}
+          >
+            <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
+              اكتشف <span className="text-creamyBeige">إبداعات</span> الحرفيين
+            </h1>
+            <p className="text-lg md:text-xl mb-8 text-lightBeige">
+              منصتك الأولى للعثور على منتجات يدوية فريدة ومصنوعة بحب وشغف.
+            </p>
+            <Button
+              size="lg"
+              className="bg-burntOrange hover:bg-burntOrange/90 text-white px-8 py-3 text-lg"
+              onClick={() => {
                   const isLoggedIn = !!localStorage.getItem('token');
                   if (isLoggedIn) {
                     navigate('/dashboard');

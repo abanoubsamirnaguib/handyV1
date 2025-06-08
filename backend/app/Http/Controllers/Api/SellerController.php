@@ -11,7 +11,7 @@ class SellerController extends Controller
 {
     public function show($id)
     {
-        $seller = Seller::with(['skills', 'user'])->findOrFail($id);
+        $seller = Seller::with(['skills', 'user' , 'products'])->findOrFail($id);
         return new SellerResource($seller);
     }
 

@@ -1,7 +1,7 @@
 // src/lib/api.js
 
 // Use import.meta.env for Vite env variables
-const BASE_URL = import.meta.env.VITE_API_BASE_URL + '/api/' || 'http://localhost:3000/api/';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL + '/api/' || 'http://localhost:8000/api/';
 
 export function apiUrl(path) {
   // Ensure no double slashes
@@ -38,7 +38,7 @@ export const api = {
   getTopSellers: () => apiFetch('sellers/top'),
 
   // Products
-  getFeaturedProducts: () => apiFetch('products/search?featured=1&status=active'),
+  getFeaturedProducts: () => apiFetch('TopProducts?featured=1&status=active&limit=10'),
 };
 
 // Admin API functions
@@ -79,6 +79,11 @@ export const adminApi = {
     apiFetch(`admin/products/${productId}/featured`, { method: 'PATCH' }),
   deleteProduct: (productId) => 
     apiFetch(`admin/products/${productId}`, { method: 'DELETE' }),
+  updateProductStatus: (productId, status) => 
+    apiFetch(`admin/products/${productId}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    }),
   // Recent activity
   getRecentActivity: () => apiFetch('admin/recent-activity'),
 

@@ -212,7 +212,7 @@ const HomePage = () => {
           e.target.parentNode.appendChild(img);
             }}
           >
-            <source src="/hero-bg2.mp4" type="video/mp4" />
+          <source src="/hero-bg2.webm" type="video/webm" />
           </video>
           <div className="absolute inset-0 bg-black/30 z-10"></div>
           <div className="container mx-auto px-4 relative z-20 flex flex-col items-center justify-center">

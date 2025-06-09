@@ -1,6 +1,7 @@
 import path from 'node:path';
 import react from '@vitejs/plugin-react';
 import { createLogger, defineConfig } from 'vite';
+import { VitePWA } from 'vite-plugin-pwa';
 
 const configHorizonsViteErrorHandler = `
 const observer = new MutationObserver((mutations) => {
@@ -183,7 +184,18 @@ logger.error = (msg, options) => {
 
 export default defineConfig({
 	customLogger: logger,
-	plugins: [react(), addTransformIndexHtml],
+	plugins: [react(), addTransformIndexHtml, VitePWA({
+    registerType: 'autoUpdate',
+    manifest: require('./public/manifest.json'),
+    workbox: {
+      cleanupOutdatedCaches: true,
+      globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,mp4}'],
+      maximumFileSizeToCacheInBytes: 2 * 1024 * 1024
+    },
+    devOptions: {
+      enabled: true,
+    },
+  })],
 	server: {
 		cors: true,
 		headers: {

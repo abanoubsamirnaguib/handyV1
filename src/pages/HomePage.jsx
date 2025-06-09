@@ -196,7 +196,7 @@ const HomePage = () => {
           <video
             className="absolute inset-0 w-screen h-screen object-cover z-0"
             style={{
-          objectPosition: window.innerWidth < 640 ? '-950px' : undefined
+          objectPosition: window.innerWidth < 640 ? '-900px' : undefined
             }}
             autoPlay
             loop
@@ -209,9 +209,6 @@ const HomePage = () => {
           img.src = "https://images.unsplash.com/photo-1686825374490-663137bad061";
           img.alt = "خلفية";
           img.className = "absolute inset-0 w-screen h-screen object-cover z-0";
-          if (window.innerWidth < 640) {
-            img.style.objectPosition = '-950px';
-          }
           e.target.parentNode.appendChild(img);
             }}
           >

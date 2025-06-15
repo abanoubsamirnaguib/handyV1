@@ -148,4 +148,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::delete('users/{id}', [AdminController::class, 'deleteUser']);
         Route::delete('products/{id}', [AdminController::class, 'deleteProduct']);
     });
+    
+    // Product CRUD for sellers (gigs/products)
+    Route::get('seller/products', [ProductController::class, 'index']);
+    Route::post('seller/products', [ProductController::class, 'store']);
+    Route::get('seller/products/{id}', [ProductController::class, 'show']);
+    Route::put('seller/products/{id}', [ProductController::class, 'update']);
+    Route::delete('seller/products/{id}', [ProductController::class, 'destroy']);
 });

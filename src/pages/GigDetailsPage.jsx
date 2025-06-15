@@ -47,14 +47,25 @@ const GigDetailsPage = () => {
           return;
         }
         const prod = data.data;
+        // Normalize images array and handle backend image_url format
+        let images = [];
+        if (Array.isArray(prod.images) && prod.images.length > 0) {
+          images = prod.images.map(img => {
+            if (typeof img === 'object' && img.image_url) {
+              return img.image_url.startsWith('http')
+          ? img.image_url
+          : `${import.meta.env.VITE_API_BASE_URL}/storage/${img.image_url}`;
+            }
+            return img.url || img;
+          });
+        }
+
         const normalizedGig = {
           id: prod.id,
           title: prod.title,
           description: prod.description,
           price: prod.price,
-          images: Array.isArray(prod.images) && prod.images.length > 0
-            ? prod.images.map(img => img.image_url || img.url || img)
-            : [],
+          images,
           category: prod.category,
           rating: prod.rating || 0,
           reviewCount: prod.reviewCount || prod.review_count || 0,
@@ -178,7 +189,7 @@ const GigDetailsPage = () => {
 
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8" dir="rtl">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -200,22 +211,21 @@ const GigDetailsPage = () => {
                 className="w-full h-full object-cover" />
             </motion.div>
             {gigImages.length > 1 && (
-              <>
-                <Button 
+              <>                <Button 
                   variant="outline" 
                   size="icon" 
-                  className="absolute top-1/2 left-2 transform -translate-y-1/2 bg-white/70 hover:bg-white border-olivePrimary/30"
+                  className="absolute top-1/2 right-2 transform -translate-y-1/2 bg-white/70 hover:bg-white border-olivePrimary/30"
                   onClick={() => handleImageNavigation('prev')}
                 >
-                  <ChevronLeft className="h-6 w-6 text-olivePrimary" />
+                  <ChevronRight className="h-6 w-6 text-olivePrimary" />
                 </Button>
                 <Button 
                   variant="outline" 
                   size="icon" 
-                  className="absolute top-1/2 right-2 transform -translate-y-1/2 bg-white/70 hover:bg-white border-olivePrimary/30"
+                  className="absolute top-1/2 left-2 transform -translate-y-1/2 bg-white/70 hover:bg-white border-olivePrimary/30"
                   onClick={() => handleImageNavigation('next')}
                 >
-                  <ChevronRight className="h-6 w-6 text-olivePrimary" />
+                  <ChevronLeft className="h-6 w-6 text-olivePrimary" />
                 </Button>
               </>
             )}
@@ -233,10 +243,9 @@ const GigDetailsPage = () => {
           </div>
 
           {/* Gig Details */}
-          <div className="space-y-6">
-            <motion.h1 
-              className="text-3xl lg:text-4xl font-bold text-darkOlive"
-              initial={{ opacity: 0, x: 20 }}
+          <div className="space-y-6">            <motion.h1 
+              className="text-3xl lg:text-4xl font-bold text-darkOlive text-right"
+              initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.1 }}
             >
@@ -248,12 +257,12 @@ const GigDetailsPage = () => {
                 {[...Array(5)].map((_, i) => (
                   <Star key={i} className={`h-5 w-5 ${i < Math.round(Number(gig.rating) || 0) ? 'fill-current' : ''}`} />
                 ))}
-                <span className="ml-2 text-darkOlive/70">({typeof gig.rating === 'number' ? gig.rating.toFixed(1) : Number(gig.rating || 0).toFixed(1)} / {reviews.length} تقييمات)</span>
+                <span className="mr-2 text-darkOlive/70">({typeof gig.rating === 'number' ? gig.rating.toFixed(1) : Number(gig.rating || 0).toFixed(1)} / {reviews.length} تقييمات)</span>
               </div>
               <Badge variant="secondary" className="bg-lightGreen/50 text-olivePrimary">{gig.category.name}</Badge>
             </div>
 
-            <p className="text-darkOlive/80 leading-relaxed">{gig.description}</p>
+            <p className="text-darkOlive/80 leading-relaxed text-right">{gig.description}</p>
             
             <div className="text-3xl font-bold text-olivePrimary">{gig.price} جنيه</div>
 
@@ -269,16 +278,13 @@ const GigDetailsPage = () => {
               />
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Button size="lg" onClick={handleAddToCart} className="bg-burntOrange hover:bg-burntOrange/90 text-white flex-1">
+            <div className="flex flex-col sm:flex-row gap-3">              <Button size="lg" onClick={handleAddToCart} className="bg-burntOrange hover:bg-burntOrange/90 text-white flex-1">
                 <ShoppingCart className="ml-2 h-5 w-5" /> أضف إلى السلة
               </Button>
               <Button size="lg" variant="outline" className="border-olivePrimary/50 text-olivePrimary hover:bg-olivePrimary hover:text-white flex-1">
                 <Heart className="ml-2 h-5 w-5" /> أضف إلى المفضلة
               </Button>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4 text-sm text-darkOlive/80">
+            </div>            <div className="grid grid-cols-2 gap-4 text-sm text-darkOlive/80">
                 <div className="flex items-center"><ShieldCheck className="h-5 w-5 text-olivePrimary ml-2" /> دفع آمن ومضمون</div>
                 <div className="flex items-center"><Truck className="h-5 w-5 text-olivePrimary ml-2" /> شحن لجميع المحافظات</div>
                 <div className="flex items-center"><CheckCircle className="h-5 w-5 text-burntOrange ml-2" /> منتج يدوي أصلي</div>
@@ -303,8 +309,7 @@ const GigDetailsPage = () => {
                   <div className="flex items-center text-sm text-burntOrange">
                     <Star className="h-4 w-4 mr-1" /> {seller.rating} ({seller.reviewCount} تقييمات)
                   </div>
-                </div>
-                <Button variant="outline" onClick={handleContactSeller} className="mr-auto border-olivePrimary/50 text-olivePrimary hover:bg-olivePrimary hover:text-white">
+                </div>                <Button variant="outline" onClick={handleContactSeller} className="mr-auto border-olivePrimary/50 text-olivePrimary hover:bg-olivePrimary hover:text-white">
                   <MessageSquare className="ml-2 h-4 w-4" /> تواصل مع البائع
                 </Button>
               </CardContent>
@@ -317,8 +322,7 @@ const GigDetailsPage = () => {
           {/* For simplicity, we'll just stack them. shadcn/ui Tabs can be used for a tabbed interface */}
           <section className="mb-10">
 
-            <h2 className="text-2xl font-bold text-darkOlive mb-4">تفاصيل إضافية</h2>
-            <div className="prose max-w-none text-darkOlive/80">
+            <h2 className="text-2xl font-bold text-darkOlive mb-4 text-right">تفاصيل إضافية</h2>            <div className="prose max-w-none text-darkOlive/80 text-right">
               <p>وقت التسليم المتوقع: {gig.deliveryTime || 'غير محدد'}</p>
               <p>الوسوم: {Array.isArray(gig.tags) && gig.tags.length > 0
                 ? gig.tags.map(tag => tag.tag_name).join(', ')
@@ -331,12 +335,11 @@ const GigDetailsPage = () => {
 
           {/* Reviews Section */}
   <section className="mb-10">
-    <h2 className="text-2xl font-bold text-darkOlive mb-6">تقييمات العملاء ({reviews.length})</h2>
+    <h2 className="text-2xl font-bold text-darkOlive mb-6 text-right">تقييمات العملاء ({reviews.length})</h2>
     {user && (
       <form onSubmit={handleSubmitReview} className="mb-8 p-4 border rounded-lg bg-lightGreen/20 border-olivePrimary/20">
-        <h3 className="text-lg font-semibold mb-2 text-darkOlive">أضف تقييمك</h3>
-        <div className="flex items-center mb-2">
-          {[1, 2, 3, 4, 5].map(star => (
+        <h3 className="text-lg font-semibold mb-2 text-darkOlive text-right">أضف تقييمك</h3>        <div className="flex items-center mb-2">
+          {[5, 4, 3, 2, 1].map(star => (
             <button type="button" key={star} onClick={() => setNewRating(star)}>
               <Star className={`h-6 w-6 cursor-pointer ${newRating >= star ? 'text-burntOrange fill-current' : 'text-lightGreen'}`} />
             </button>
@@ -363,8 +366,7 @@ const GigDetailsPage = () => {
                 </Avatar>
                 <div>
                   <div className="flex items-center space-x-2 space-x-reverse mb-1">
-                    <p className="font-semibold text-darkOlive">{review.userName}</p>
-                    <div className="flex text-burntOrange">
+                    <p className="font-semibold text-darkOlive">{review.userName}</p>                    <div className="flex text-burntOrange">
                       {[...Array(5)].map((_, i) => (
                         <Star key={i} className={`h-4 w-4 ${i < review.rating ? 'fill-current' : ''}`} />
                       ))}
@@ -388,7 +390,7 @@ const GigDetailsPage = () => {
           {/* Related Gigs Section */}
           {relatedGigs.length > 0 && (
             <section>
-              <h2 className="text-2xl font-bold text-darkOlive mb-6">منتجات مشابهة من نفس البائع</h2>
+              <h2 className="text-2xl font-bold text-darkOlive mb-6 text-right">منتجات مشابهة من نفس البائع</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {relatedGigs.map(relatedGig => (
                   <Card key={relatedGig.id} className="overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 card-hover border-olivePrimary/20">
@@ -403,10 +405,10 @@ const GigDetailsPage = () => {
                       <Badge variant="secondary" className="absolute top-2 right-2 bg-olivePrimary text-white">{relatedGig.category?.name}</Badge>
                     </div>
                     <CardHeader className="pb-1">
-                      <CardTitle className="text-md font-semibold text-darkOlive h-12 overflow-hidden">{relatedGig.title}</CardTitle>
+                      <CardTitle className="text-md font-semibold text-darkOlive h-12 overflow-hidden text-right">{relatedGig.title}</CardTitle>
                     </CardHeader>
                     <CardContent className="pb-3">
-                      <p className="text-lg font-bold text-olivePrimary">{relatedGig.price} جنيه</p>
+                      <p className="text-lg font-bold text-olivePrimary text-right">{relatedGig.price} جنيه</p>
                     </CardContent>
                     <CardFooter>
                       <Button asChild variant="outline" className="w-full border-olivePrimary/50 text-olivePrimary hover:bg-olivePrimary hover:text-white">

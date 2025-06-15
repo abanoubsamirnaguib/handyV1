@@ -26,6 +26,25 @@ export async function apiFetch(path, options = {}) {
   return res.json();
 }
 
+// Dedicated FormData fetch for file uploads (no Content-Type header, only Authorization)
+export async function apiFormFetch(path, options = {}) {
+  const token = localStorage.getItem('token');
+  const headers = {
+    Accept: 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    // Do NOT set Content-Type for FormData
+  };
+  const res = await fetch(apiUrl(path), {
+    ...options,
+    headers,
+  });
+  if (!res.ok) {
+    const error = await res.text();
+    throw new Error(`API error: ${res.status} - ${error}`);
+  }
+  return res.json();
+}
+
 // General API functions
 export const api = {
   // Categories
@@ -39,6 +58,7 @@ export const api = {
 
   // Products
   getFeaturedProducts: () => apiFetch('TopProducts?featured=1&status=active&limit=10'),
+  getProductById: (productId) => apiFetch(`Listpoducts/${productId}`),
 };
 
 // Admin API functions
@@ -104,4 +124,81 @@ export const adminApi = {
     }),
   deleteCategory: (categoryId) => 
     apiFetch(`categories/${categoryId}`, { method: 'DELETE' }),
+};
+
+// Seller API for product/gig CRUD
+export const sellerApi = {
+  // Get seller's own products/gigs
+  getSellerProducts: async () => {
+    return apiFetch('seller/products');
+  },
+  
+  getProductById: async (id) => {
+    return apiFetch(`seller/products/${id}`);
+  },
+  
+  createProduct: async (data) => {
+    const formData = new FormData();
+    Object.entries(data).forEach(([key, value]) => {
+      if (Array.isArray(value)) {
+        if (key === 'images') {
+          value.forEach((file) => formData.append('images[]', file));
+        } else if (key === 'tags') {
+          value.forEach((tag) => formData.append('tags[]', tag));
+        }
+      } else {
+        formData.append(key, value);
+      }
+    });
+    return apiFormFetch('seller/products', {
+      method: 'POST',
+      body: formData,
+    });
+  },  updateProduct: async (id, data) => {
+    const formData = new FormData();
+    
+    // Process form data
+    Object.entries(data).forEach(([key, value]) => {
+      if (Array.isArray(value)) {
+        if (key === 'images') {
+          // Only append files, not string URLs
+          value.forEach((file) => {
+            if (file instanceof File) {
+              formData.append('images[]', file);
+            }
+          });
+        } else if (key === 'tags') {
+          value.forEach((tag) => formData.append('tags[]', tag));
+        } else if (key === 'existing_images') {
+          // For existing images we want to keep
+          value.forEach((imgUrl, index) => {
+            formData.append(`existing_images[${index}]`, imgUrl);
+          });
+        } else {
+          // Generic array handling
+          value.forEach((item) => formData.append(`${key}[]`, item));
+        }
+      } else if (value !== null && value !== undefined) {
+        formData.append(key, value);
+      }
+    });
+      // Add _method=PUT for Laravel to handle it as PUT request
+    formData.append('_method', 'PUT');
+    
+    // Debug FormData contents (can't directly console log FormData)
+    console.log('FormData keys:');
+    for (let pair of formData.entries()) {
+      console.log(`${pair[0]}: ${pair[1] instanceof File ? 'File object' : pair[1]}`);
+    }
+    
+    return apiFormFetch(`seller/products/${id}`, {
+      method: 'POST', // Using POST but Laravel will treat it as PUT due to _method
+      body: formData,
+    });
+  },
+  deleteProduct: async (id) => {
+    return apiFetch(`seller/products/${id}`, {
+      method: 'DELETE',
+    });
+  },
 };

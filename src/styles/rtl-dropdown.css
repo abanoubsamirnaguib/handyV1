@@ -1,0 +1,41 @@
+/* RTL Dropdown Styles */
+[dir="rtl"] .select-trigger {
+  text-align: right;
+}
+
+[dir="rtl"] .select-content {
+  direction: rtl;
+}
+
+[dir="rtl"] .select-item {
+  text-align: right;
+}
+
+.rtl-select-content {
+  direction: rtl;
+  text-align: right;
+}
+
+.rtl-select-content .select-item {
+  justify-content: flex-start;
+  padding-right: 8px;
+  padding-left: 24px;
+}
+
+/* Position dropdown from right instead of left */
+[dir="rtl"] .select-content {
+  left: auto;
+  right: 0;
+}
+
+/* Reposition the selection arrow on dropdown items */
+[dir="rtl"] .select-item[data-selected="true"]::after {
+  right: auto !important;
+  left: 8px;
+}
+
+/* Fix any icon alignment */
+[dir="rtl"] .select-item .select-item-icon {
+  margin-left: 8px;
+  margin-right: 0;
+}

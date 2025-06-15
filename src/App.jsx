@@ -44,6 +44,8 @@ import AdminUsers from '@/components/admin/AdminUsers';
 import AdminMessages from '@/components/admin/AdminMessages';
 import AdminSettings from '@/components/admin/AdminSettings';
 
+import './styles/rtl-dropdown.css'; // Import our RTL dropdown styles
+
 function App() {
   return (
     <AuthProvider>

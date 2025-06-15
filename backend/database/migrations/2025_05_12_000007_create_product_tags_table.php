@@ -14,7 +14,7 @@ return new class extends Migration
             $table->string('tag_name', 50);
             $table->dateTime('created_at')->default(DB::raw('CURRENT_TIMESTAMP'));
             $table->foreign('product_id')->references('id')->on('products')->onDelete('cascade');
-            $table->unique(['product_id', 'tag_name'], 'unique_product_tag');
+            // $table->unique(['product_id', 'tag_name'], 'unique_product_tag');
             $table->index('tag_name', 'idx_product_tags');
         });
     }

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Star, Filter, ArrowRight, ListFilter, LayoutGrid, X, Mail, MapPin } from 'lucide-react';
+import { Star, Filter, ArrowRight, ArrowLeft, ListFilter, LayoutGrid, X, Mail, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -28,6 +28,16 @@ const ExplorePage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [categories, setCategories] = useState([]);
+
+  // Add dir="rtl" to root element once component mounts
+  useEffect(() => {
+    document.documentElement.setAttribute('dir', 'rtl');
+    
+    // Cleanup when component unmounts
+    return () => {
+      document.documentElement.removeAttribute('dir');
+    };
+  }, []);
 
   useEffect(() => {
     apiFetch('listcategories')
@@ -191,7 +201,6 @@ const ExplorePage = () => {
     params.set('tab', value);
     setSearchParams(params);
   };
-
   const GigCard = ({ gig }) => {
     // Find category name from gig.category object if present
     let categoryName = gig.category && gig.category.name ? gig.category.name : null;
@@ -201,7 +210,7 @@ const ExplorePage = () => {
     }
 
     return (
-      <Card className="overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 flex flex-col h-full card-hover border-olivePrimary/20">
+      <Card className="overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 flex flex-col h-full card-hover border-olivePrimary/20" dir="rtl">
         <div className="relative h-56">
           <img 
             src={gig.images && gig.images.length > 0 
@@ -212,28 +221,27 @@ const ExplorePage = () => {
           />
           <Badge variant="secondary" className="absolute top-2 right-2 bg-olivePrimary text-white">{categoryName}</Badge>
         </div>
-        <CardHeader className="pb-2">
+        <CardHeader className="pb-2 text-right">
           <CardTitle className="text-lg font-semibold text-darkOlive h-14 overflow-hidden">{gig.title}</CardTitle>
         </CardHeader>
-        <CardContent className="flex-grow">
+        <CardContent className="flex-grow text-right">
           <div className="flex items-center text-sm text-darkOlive/70 mb-2">
-            <Star className="h-4 w-4 text-burntOrange mr-1" />
+            <Star className="h-4 w-4 text-burntOrange ml-1" />
             {gig.rating} ({gig.reviewCount} تقييمات)
           </div>
           <p className="text-xl font-bold text-olivePrimary mb-2">{gig.price} جنيه</p>
         </CardContent>
-        <CardFooter>
+        <CardFooter className="flex justify-start">
           <Button asChild className="w-full bg-burntOrange hover:bg-burntOrange/90 text-white">
             <Link to={`/gigs/${gig.id}`}>
               عرض التفاصيل
-              <ArrowRight className="mr-2 h-4 w-4" />
+              <ArrowLeft className="ml-2 h-4 w-4" />
             </Link>
           </Button>
         </CardFooter>
       </Card>
     );
   };
-
   const GigListItem = ({ gig }) => {
     // Find category name from gig.category object if present
     let categoryName = gig.category && gig.category.name ? gig.category.name : null;
@@ -242,8 +250,7 @@ const ExplorePage = () => {
       categoryName = categoryObj ? categoryObj.name : (gig.category_id || gig.category?.id || gig.category);
     }
     
-    return (
-      <Card className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col md:flex-row card-hover border-olivePrimary/20 w-full">
+    return (      <Card className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col md:flex-row card-hover border-olivePrimary/20 w-full" dir="rtl">
         <div className="relative md:w-1/3 h-56 md:h-auto">
           <img 
             src={gig.images && gig.images.length > 0 
@@ -257,22 +264,22 @@ const ExplorePage = () => {
           </Badge>
         </div>
         <div className="md:w-2/3 flex flex-col">
-          <CardHeader className="pb-2">
+          <CardHeader className="pb-2 text-right">
             <CardTitle className="text-lg font-semibold text-darkOlive">{gig.title}</CardTitle>
           </CardHeader>
-          <CardContent className="flex-grow">
+          <CardContent className="flex-grow text-right">
             <p className="text-sm text-darkOlive/70 mb-2 line-clamp-2">{gig.description}</p>
             <div className="flex items-center text-sm text-darkOlive/70 mb-2">
-              <Star className="h-4 w-4 text-burntOrange mr-1" />
+              <Star className="h-4 w-4 text-burntOrange ml-1" />
               {gig.rating} ({gig.reviewCount} تقييمات)
             </div>
             <p className="text-xl font-bold text-olivePrimary mb-2">{gig.price} جنيه</p>
           </CardContent>
-          <CardFooter>
+          <CardFooter className="flex">
             <Button asChild className="w-full md:w-auto bg-burntOrange hover:bg-burntOrange/90 text-white">
               <Link to={`/gigs/${gig.id}`}>
                 عرض التفاصيل
-                <ArrowRight className="mr-2 h-4 w-4" />
+                <ArrowLeft className="ml-2 h-4 w-4" />
               </Link>
             </Button>
           </CardFooter>
@@ -280,40 +287,39 @@ const ExplorePage = () => {
       </Card>
     );
   };
-
   const SellerCard = ({ seller }) => (
-    <Card className="overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 flex flex-col h-full card-hover border-lightBeige/50">
+    <Card className="overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 flex flex-col h-full card-hover border-lightBeige/50" dir="rtl">
       <div className="relative h-48 bg-olivePrimary flex items-center justify-center">
         <div className="h-24 w-24 rounded-full bg-white flex items-center justify-center text-3xl font-bold text-burntOrange shadow-md">
           {seller.name.charAt(0)}
         </div>
       </div>
-      <CardHeader className="pb-2">
+      <CardHeader className="pb-2 text-right">
         <CardTitle className="text-lg font-semibold text-gray-800">{seller.name}</CardTitle>
       </CardHeader>
-      <CardContent className="flex-grow">
+      <CardContent className="flex-grow text-right">
         <div className="flex items-center text-sm text-gray-600 mb-2">
-          <MapPin className="h-4 w-4 text-gray-400 mr-1" />
+          <MapPin className="h-4 w-4 text-gray-400 ml-1" />
           <span>{seller.location}</span>
         </div>
         <div className="flex items-center text-sm text-gray-600 mb-2">
-          <Star className="h-4 w-4 text-yellow-500 mr-1" />
+          <Star className="h-4 w-4 text-yellow-500 ml-1" />
           {seller.rating} ({seller.reviewCount} تقييمات)
         </div>
-        <div className="mt-2">
+        <div className="mt-2 text-right">
           {seller.skills.slice(0, 3).map((skill, index) => (
-            <Badge key={index} variant="outline" className="mr-1 mb-1 border-olivePrimary/30 bg-lightGreen/10">
+            <Badge key={index} variant="outline" className="ml-1 mb-1 border-olivePrimary/30 bg-lightGreen/10">
               {skill}
             </Badge>
           ))}
         </div>
         <p className="text-sm text-gray-600 mt-2 line-clamp-2">{seller.bio}</p>
       </CardContent>
-      <CardFooter className="flex gap-2">
+      <CardFooter className="flex gap-2 flex-row-reverse">
         <Button asChild className="flex-1 bg-burntOrange hover:bg-burntOrange/90 text-white">
           <Link to={`/sellers/${seller.id}`}>
             عرض الملف
-            <ArrowRight className="mr-2 h-4 w-4" />
+            <ArrowLeft className="ml-2 h-4 w-4" />
           </Link>
         </Button>
         <Button asChild variant="outline" className="w-10 p-0 flex-none">
@@ -324,52 +330,49 @@ const ExplorePage = () => {
       </CardFooter>
     </Card>
   );
-
-  const SellerListItem = ({ seller }) => (
-    <Card className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col md:flex-row card-hover border-olivePrimary/20 w-full">
+  const SellerListItem = ({ seller }) => (    <Card className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col md:flex-row card-hover border-olivePrimary/20 w-full" dir="rtl">
       <div className="relative md:w-1/4 h-48 md:h-auto bg-olivePrimary flex items-center justify-center">
         <div className="h-24 w-24 rounded-full bg-white flex items-center justify-center text-3xl font-bold text-olivePrimary shadow-md">
           {seller.name.charAt(0)}
         </div>
       </div>
       <div className="md:w-3/4 flex flex-col">
-        <CardHeader className="pb-2">
+        <CardHeader className="pb-2 text-right">
           <CardTitle className="text-lg font-semibold text-darkOlive">{seller.name}</CardTitle>
         </CardHeader>
-        <CardContent className="flex-grow">
+        <CardContent className="flex-grow text-right">
           <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-2">
             <div className="flex items-center text-sm text-darkOlive/70 mb-2 md:mb-0">
-              <MapPin className="h-4 w-4 text-olivePrimary/60 mr-1" />
+              <MapPin className="h-4 w-4 text-olivePrimary/60 ml-1" />
               <span>{seller.location}</span>
             </div>
             <div className="flex items-center text-sm text-darkOlive/70">
-              <Star className="h-4 w-4 text-burntOrange mr-1" />
+              <Star className="h-4 w-4 text-burntOrange ml-1" />
               {seller.rating} ({seller.reviewCount} تقييمات)
             </div>
           </div>
           <p className="text-sm text-darkOlive/70 mb-2">{seller.bio}</p>
           <div className="mt-2">
             {seller.skills.map((skill, index) => (
-              <Badge key={index} variant="outline" className="mr-1 mb-1 border-olivePrimary/30 text-darkOlive">
+              <Badge key={index} variant="outline" className="ml-1 mb-1 border-olivePrimary/30 text-darkOlive">
                 {skill}
               </Badge>
             ))}
-          </div>
-          <div className="text-sm text-darkOlive/70 mt-2">
-            <span className="font-semibold">عضو منذ:</span> {new Date(seller.memberSince).toLocaleDateString('ar-EG')} | 
-            <span className="font-semibold mr-2">طلبات مكتملة:</span> {seller.completedOrders}
+          </div>          <div className="text-sm text-darkOlive/70 mt-2 text-right">
+            <span className="font-semibold">عضو منذ:</span> {new Date(seller.memberSince).toLocaleDateString('ar-EG')} <span className="mx-2">|</span> 
+            <span className="font-semibold">طلبات مكتملة:</span> {seller.completedOrders}
           </div>
         </CardContent>
-        <CardFooter>
-          <Button asChild className="bg-burntOrange hover:bg-burntOrange/90 text-white mr-2">
+        <CardFooter className="flex flex-row-reverse">
+          <Button asChild className="bg-burntOrange hover:bg-burntOrange/90 text-white ml-2">
             <Link to={`/sellers/${seller.id}`}>
               عرض الملف
-              <ArrowRight className="mr-2 h-4 w-4" />
+              <ArrowLeft className="ml-2 h-4 w-4" />
             </Link>
           </Button>
           <Button asChild variant="outline" className="border-olivePrimary/50 text-olivePrimary hover:bg-olivePrimary hover:text-white">
             <Link to={`/message/${seller.id}`}>
-              <Mail className="mr-2 h-4 w-4" />
+              <Mail className="ml-2 h-4 w-4" />
               تواصل مع البائع
             </Link>
           </Button>
@@ -377,9 +380,8 @@ const ExplorePage = () => {
       </div>
     </Card>
   );
-
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8" dir="rtl">
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -401,42 +403,39 @@ const ExplorePage = () => {
           <TabsTrigger value="products" className="text-lg data-[state=active]:bg-olivePrimary data-[state=active]:text-white">المنتجات</TabsTrigger>
           <TabsTrigger value="sellers" className="text-lg data-[state=active]:bg-olivePrimary data-[state=active]:text-white">الحرفيين</TabsTrigger>
         </TabsList>
-        
-        <TabsContent value="products" className="mt-0">
-          <div className="flex flex-col md:flex-row-reverse gap-8">
+          <TabsContent value="products" className="mt-0">          <div className="flex flex-col md:flex-row-reverse gap-8">
             {/* Filters Sidebar */}
             <motion.aside 
-              className={`md:w-1/4 ${isFiltersOpen ? 'block' : 'hidden'} md:block fixed inset-0 z-40 bg-white p-6 md:relative md:bg-transparent md:p-0 md:z-auto transition-transform duration-300 ease-in-out transform ${isFiltersOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}
+              className={`md:w-1/4 ${isFiltersOpen ? 'block' : 'hidden'} md:block fixed inset-0 z-40 bg-white p-6 md:relative md:bg-transparent md:p-0 md:z-auto transition-transform duration-300 ease-in-out transform ${isFiltersOpen ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}`}
               initial={{ x: -200, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               transition={{ duration: 0.5 }}
             >
               <Card className="shadow-lg border-olivePrimary/20">
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <CardTitle className="text-xl text-olivePrimary">تصفية النتائج</CardTitle>
+                <CardHeader className="flex flex-row-reverse items-center justify-between">
+                  <CardTitle className="text-xl text-olivePrimary text-right">تصفية النتائج</CardTitle>
                   <Button variant="ghost" size="icon" className="md:hidden hover:bg-lightGreen/50 text-olivePrimary" onClick={() => setIsFiltersOpen(false)}>
                     <X className="h-5 w-5" />
                   </Button>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div>
-                    <Label htmlFor="search-filter" className="text-darkOlive">بحث بالاسم</Label>
-                    <Input 
+                    <Label htmlFor="search-filter" className="text-darkOlive block text-right">بحث بالاسم</Label>                    <Input 
                       id="search-filter" 
                       type="text" 
                       value={searchTerm} 
                       onChange={(e) => setSearchTerm(e.target.value)} 
                       placeholder="اسم المنتج، وصف..." 
-                      className="mt-1 border-olivePrimary/30 focus:border-olivePrimary focus:ring-olivePrimary/20"
+                      className="mt-1 border-olivePrimary/30 focus:border-olivePrimary focus:ring-olivePrimary/20 text-right"
+                      dir="rtl"
                     />
-                  </div>
-                  <div>
-                    <Label htmlFor="category-filter" className="text-darkOlive">التصنيف</Label>
-                    <Select value={selectedCategory} onValueChange={value => setSelectedCategory(String(value))}>
-                      <SelectTrigger id="category-filter" className="mt-1 border-olivePrimary/30 focus:border-olivePrimary focus:ring-olivePrimary/20">
+                  </div>                  <div>
+                    <Label htmlFor="category-filter" className="text-darkOlive block text-right">التصنيف</Label>
+                    <Select value={selectedCategory} onValueChange={value => setSelectedCategory(String(value))} dir="rtl">
+                      <SelectTrigger id="category-filter" className="mt-1 border-olivePrimary/30 focus:border-olivePrimary focus:ring-olivePrimary/20 text-right">
                         <SelectValue placeholder="اختر تصنيف" />
                       </SelectTrigger>
-                      <SelectContent className="border-olivePrimary/30">
+                      <SelectContent className="border-olivePrimary/30 text-right" dir="rtl">
                         <SelectItem value="all">كل التصنيفات</SelectItem>
                         {categories.map(cat => (
                           <SelectItem key={cat.id} value={String(cat.id)}>{cat.name}</SelectItem>
@@ -445,7 +444,7 @@ const ExplorePage = () => {
                     </Select>
                   </div>
                   <div>
-                    <Label className="text-darkOlive">نطاق السعر: {priceRange[0]} - {priceRange[1]} جنيه</Label>
+                    <Label className="text-darkOlive block text-right">نطاق السعر: {priceRange[0]} - {priceRange[1]} جنيه</Label>
                     <Slider
                       defaultValue={priceRange}
                       min={0}
@@ -456,7 +455,7 @@ const ExplorePage = () => {
                     />
                   </div>
                   <div>
-                    <Label className="text-darkOlive">التقييم الأدنى: {minRating} نجوم</Label>
+                    <Label className="text-darkOlive block text-right">التقييم الأدنى: {minRating} نجوم</Label>
                     <div className="flex space-x-1 space-x-reverse mt-1">
                       {[1, 2, 3, 4, 5].map(star => (
                         <Button 
@@ -471,9 +470,8 @@ const ExplorePage = () => {
                       ))}
                     </div>
                   </div>
-                  <Separator />
-                  <Button onClick={handleFilterChange} className="w-full bg-burntOrange hover:bg-burntOrange/90 text-white">
-                    <Filter className="mr-2 h-4 w-4" /> تطبيق الفلاتر
+                  <Separator />                  <Button onClick={handleFilterChange} className="w-full bg-burntOrange hover:bg-burntOrange/90 text-white">
+                    <Filter className="ml-2 h-4 w-4" /> تطبيق الفلاتر
                   </Button>
                   <Button onClick={resetFilters} variant="outline" className="w-full border-olivePrimary/50 text-olivePrimary hover:bg-olivePrimary hover:text-white">
                     إعادة تعيين الفلاتر
@@ -485,16 +483,13 @@ const ExplorePage = () => {
             {/* Gigs List */}
             <main className="w-full md:w-3/4">
               <div className="flex items-center justify-between mb-6">
-                <p className="text-darkOlive/70">تم العثور على {gigs.length} منتج</p>
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="icon" className="md:hidden ml-2 border-olivePrimary/50 text-olivePrimary hover:bg-olivePrimary hover:text-white" onClick={() => setIsFiltersOpen(true)}>
+                <p className="text-darkOlive/70">تم العثور على {gigs.length} منتج</p>                <div className="flex items-center gap-2">                  <Button variant="outline" size="icon" className="md:hidden ml-2 border-olivePrimary/50 text-olivePrimary hover:bg-olivePrimary hover:text-white" onClick={() => setIsFiltersOpen(true)}>
                     <Filter className="h-5 w-5" />
-                  </Button>
-                  <Select value={sortBy} onValueChange={(value) => {setSortBy(value); handleFilterChange();}}>
-                    <SelectTrigger className="w-[180px] border-olivePrimary/30 focus:border-olivePrimary focus:ring-olivePrimary/20">
+                  </Button><Select value={sortBy} onValueChange={(value) => {setSortBy(value); handleFilterChange();}} dir="rtl">
+                    <SelectTrigger className="w-[180px] border-olivePrimary/30 focus:border-olivePrimary focus:ring-olivePrimary/20 text-right">
                       <SelectValue placeholder="الترتيب حسب" />
                     </SelectTrigger>
-                    <SelectContent className="border-olivePrimary/30">
+                    <SelectContent className="border-olivePrimary/30 text-right" dir="rtl">
                       <SelectItem value="relevance">الأكثر صلة</SelectItem>
                       <SelectItem value="price_low">السعر: من الأقل للأعلى</SelectItem>
                       <SelectItem value="price_high">السعر: من الأعلى للأقل</SelectItem>
@@ -515,13 +510,13 @@ const ExplorePage = () => {
               ) : error ? (
                 <div className="text-center py-12">
                   <p className="text-lg text-red-500">{error}</p>
-                </div>
-              ) : gigs.length > 0 ? (
+                </div>              ) : gigs.length > 0 ? (
                 <motion.div 
-                  className={viewMode === 'grid' ? "grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-4" : "space-y-6"}
+                  className={viewMode === 'grid' ? "grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-4 rtl" : "space-y-6"}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ duration: 0.5 }}
+                  dir="rtl"
                 >
                   {gigs.map((gig, index) => (
                     <motion.div
@@ -544,42 +539,39 @@ const ExplorePage = () => {
             </main>
           </div>
         </TabsContent>
-        
-        <TabsContent value="sellers" className="mt-0">
-          <div className="flex flex-col md:flex-row-reverse gap-8">
+          <TabsContent value="sellers" className="mt-0">          <div className="flex flex-col md:flex-row-reverse gap-8">
             {/* Sellers Filters Sidebar */}
             <motion.aside 
-              className={`md:w-1/4 ${isFiltersOpen ? 'block' : 'hidden'} md:block fixed inset-0 z-40 bg-white p-6 md:relative md:bg-transparent md:p-0 md:z-auto transition-transform duration-300 ease-in-out transform ${isFiltersOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}
+              className={`md:w-1/4 ${isFiltersOpen ? 'block' : 'hidden'} md:block fixed inset-0 z-40 bg-white p-6 md:relative md:bg-transparent md:p-0 md:z-auto transition-transform duration-300 ease-in-out transform ${isFiltersOpen ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}`}
               initial={{ x: -200, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               transition={{ duration: 0.5 }}
             >
               <Card className="shadow-lg border-olivePrimary/20">
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <CardTitle className="text-xl text-olivePrimary">تصفية النتائج</CardTitle>
+                <CardHeader className="flex flex-row-reverse items-center justify-between">
+                  <CardTitle className="text-xl text-olivePrimary text-right">تصفية النتائج</CardTitle>
                   <Button variant="ghost" size="icon" className="md:hidden hover:bg-lightGreen/50 text-olivePrimary" onClick={() => setIsFiltersOpen(false)}>
                     <X className="h-5 w-5" />
                   </Button>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div>
-                    <Label htmlFor="search-filter-sellers" className="text-darkOlive">بحث بالاسم أو المهارات</Label>
-                    <Input 
+                    <Label htmlFor="search-filter-sellers" className="text-darkOlive block text-right">بحث بالاسم أو المهارات</Label>                    <Input 
                       id="search-filter-sellers" 
                       type="text" 
                       value={searchTerm} 
                       onChange={(e) => setSearchTerm(e.target.value)} 
                       placeholder="اسم الحرفي، المهارات..." 
-                      className="mt-1 border-olivePrimary/30 focus:border-olivePrimary focus:ring-olivePrimary/20"
+                      className="mt-1 border-olivePrimary/30 focus:border-olivePrimary focus:ring-olivePrimary/20 text-right"
+                      dir="rtl"
                     />
-                  </div>
-                  <div>
-                    <Label htmlFor="category-filter-sellers" className="text-darkOlive">التخصص</Label>
-                    <Select value={selectedCategory} onValueChange={value => setSelectedCategory(String(value))}>
-                      <SelectTrigger id="category-filter-sellers" className="mt-1 border-olivePrimary/30 focus:border-olivePrimary focus:ring-olivePrimary/20">
+                  </div>                  <div>
+                    <Label htmlFor="category-filter-sellers" className="text-darkOlive block text-right">التخصص</Label>
+                    <Select value={selectedCategory} onValueChange={value => setSelectedCategory(String(value))} dir="rtl">
+                      <SelectTrigger id="category-filter-sellers" className="mt-1 border-olivePrimary/30 focus:border-olivePrimary focus:ring-olivePrimary/20 text-right">
                         <SelectValue placeholder="اختر تخصص" />
                       </SelectTrigger>
-                      <SelectContent className="border-olivePrimary/30">
+                      <SelectContent className="border-olivePrimary/30 text-right" dir="rtl">
                         <SelectItem value="all">كل التخصصات</SelectItem>
                         {categories.map(cat => (
                           <SelectItem key={cat.id} value={String(cat.id)}>{cat.name}</SelectItem>
@@ -588,7 +580,7 @@ const ExplorePage = () => {
                     </Select>
                   </div>
                   <div>
-                    <Label className="text-gray-700">التقييم الأدنى: {minRating} نجوم</Label>
+                    <Label className="text-gray-700 block text-right">التقييم الأدنى: {minRating} نجوم</Label>
                     <div className="flex space-x-1 space-x-reverse mt-1">
                       {[1, 2, 3, 4, 5].map(star => (
                         <Button 
@@ -603,9 +595,8 @@ const ExplorePage = () => {
                       ))}
                     </div>
                   </div>
-                  <Separator />
-                  <Button onClick={handleFilterChange} className="w-full bg-olivePrimary hover:bg-olivePrimary/90 text-white">
-                    <Filter className="mr-2 h-4 w-4" /> تطبيق الفلاتر
+                  <Separator />                  <Button onClick={handleFilterChange} className="w-full bg-olivePrimary hover:bg-olivePrimary/90 text-white">
+                    <Filter className="ml-2 h-4 w-4" /> تطبيق الفلاتر
                   </Button>
                   <Button onClick={resetFilters} variant="outline" className="w-full text-darkOlive border-olivePrimary/30 hover:bg-lightGreen/30">
                     إعادة تعيين الفلاتر
@@ -621,12 +612,11 @@ const ExplorePage = () => {
                 <div className="flex items-center gap-2">
                   <Button variant="outline" size="icon" className="md:hidden ml-2" onClick={() => setIsFiltersOpen(true)}>
                     <Filter className="h-5 w-5" />
-                  </Button>
-                  <Select value={sortBy} onValueChange={(value) => {setSortBy(value); handleFilterChange();}}>
-                    <SelectTrigger className="w-[180px]">
+                  </Button>                  <Select value={sortBy} onValueChange={(value) => {setSortBy(value); handleFilterChange();}} dir="rtl">
+                    <SelectTrigger className="w-[180px] text-right">
                       <SelectValue placeholder="الترتيب حسب" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="text-right" dir="rtl">
                       <SelectItem value="relevance">الأكثر صلة</SelectItem>
                       <SelectItem value="rating">الأعلى تقييماً</SelectItem>
                       <SelectItem value="experience">الأكثر خبرة</SelectItem>
@@ -646,13 +636,13 @@ const ExplorePage = () => {
               ) : error ? (
                 <div className="text-center py-12">
                   <p className="text-lg text-red-500">{error}</p>
-                </div>
-              ) : sellers.length > 0 ? (
+                </div>              ) : sellers.length > 0 ? (
                 <motion.div 
-                  className={viewMode === 'grid' ? "grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-4" : "space-y-6"}
+                  className={viewMode === 'grid' ? "grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-4 rtl" : "space-y-6"}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ duration: 0.5 }}
+                  dir="rtl"
                 >
                   {sellers.map((seller, index) => (
                     <motion.div

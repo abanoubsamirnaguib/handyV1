@@ -7,7 +7,7 @@ import { motion } from 'framer-motion';
 
 const MainLayout = () => {
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen" dir="rtl">
       <Navbar />
       <motion.main 
         className="flex-grow"

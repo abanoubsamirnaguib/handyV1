@@ -20,6 +20,7 @@ return new class extends Migration
             $table->integer('review_count')->default(0);
             $table->boolean('featured')->default(false);
             $table->enum('status', ['active', 'inactive', 'pending_review', 'rejected'])->default('active');
+            $table->enum('type', ['gig', 'product'])->default('gig');
             $table->dateTime('created_at')->default(DB::raw('CURRENT_TIMESTAMP'));
             $table->dateTime('updated_at')->default(DB::raw('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'));
             $table->foreign('seller_id')->references('id')->on('sellers')->onDelete('cascade');

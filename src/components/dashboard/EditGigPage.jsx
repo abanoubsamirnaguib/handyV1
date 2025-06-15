@@ -1,8 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Edit, Image as ImageIcon, DollarSign, Tag, Clock, Save, ArrowRight, Trash2 } from 'lucide-react';
+import { Edit, Image as ImageIcon, DollarSign, Tag, Clock, Save, ArrowRight, Trash2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,37 +9,147 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
-import { categories, getGigById } from '@/lib/data';
 import { useAuth } from '@/contexts/AuthContext';
+import { sellerApi, apiFetch } from '@/lib/api';
 
-const EditGigPage = () => {
-  const { gigId } = useParams();
+// Custom RTL-friendly Select wrapper components
+const RTLSelect = ({ children, value, onValueChange, ...props }) => {
+  return (
+    <Select dir="rtl" value={value} onValueChange={onValueChange} {...props}>
+      {children}
+    </Select>
+  );
+};
+
+const RTLSelectTrigger = ({ children, ...props }) => {
+  return (
+    <SelectTrigger className="text-right" {...props}>
+      {children}
+    </SelectTrigger>
+  );
+};
+
+const RTLSelectContent = ({ children, ...props }) => {
+  return (
+    <SelectContent align="end" className="rtl-select-content" {...props}>
+      {children}
+    </SelectContent>
+  );
+};
+
+const RTLSelectItem = ({ children, ...props }) => {
+  return (
+    <SelectItem className="text-right" {...props}>
+      {children}
+    </SelectItem>
+  );
+};
+
+const EditGigPage = () => {  const { gigId } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
 
   const [gigData, setGigData] = useState(null);
   const [imagePreviews, setImagePreviews] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [categories, setCategories] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Load categories
   useEffect(() => {
-    const existingGig = getGigById(gigId);
-    if (existingGig) {
-      if (user && existingGig.sellerId === user.id) {
-        setGigData({
-          ...existingGig,
-          tags: existingGig.tags.join(', '), // Convert array to comma-separated string
-          price: existingGig.price.toString(), // Convert number to string for input
+    const loadCategories = async () => {
+      try {
+        const data = await apiFetch('listcategories');
+        if (Array.isArray(data)) {
+          setCategories(data);
+        } else if (data && Array.isArray(data.data)) {
+          setCategories(data.data);
+        } else if (data && data.success && Array.isArray(data.data)) {
+          setCategories(data.data);
+        } else {
+          console.error('Invalid categories response structure:', data);
+          setCategories([]);
+        }
+      } catch (error) {
+        console.error('Error loading categories:', error);
+        toast({
+          variant: "destructive",
+          title: "خطأ في تحميل التصنيفات",
+          description: error.message || "فشل في تحميل التصنيفات"
         });
-        // Assuming existingGig.images are URLs. If they are File objects, handle accordingly.
-        setImagePreviews(existingGig.images || []); 
-      } else {
-        toast({ variant: "destructive", title: "غير مصرح به", description: "لا يمكنك تعديل هذه الخدمة." });
-        navigate('/dashboard/gigs');
+        setCategories([]);
       }
-    } else {
-      toast({ variant: "destructive", title: "الخدمة غير موجودة", description: "لم يتم العثور على الخدمة المطلوبة." });
-      navigate('/dashboard/gigs');
-    }
+    };
+    
+    loadCategories();
+  }, [toast]);
+
+  // Fetch gig data
+  useEffect(() => {
+    const fetchGigData = async () => {
+      if (!user || user.active_role !== 'seller') {
+        return;
+      }
+      
+      setLoading(true);
+      
+      try {        // Fetch gig details from API
+        const response = await sellerApi.getProductById(gigId);
+        
+        if (response && (response.data || response)) {
+          const gigDetails = response.data || response;
+          
+          // Format tags for the input field (comma-separated string)
+          const formattedTags = Array.isArray(gigDetails.tags) 
+            ? gigDetails.tags.map(tag => typeof tag === 'object' && tag.tag_name ? tag.tag_name : tag).join(', ')
+            : '';
+          
+          // Process images to ensure we have proper URLs for previews
+          const imageUrls = Array.isArray(gigDetails.images)
+            ? gigDetails.images.map(img => {
+                if (typeof img === 'string') return img;
+                if (img && img.image_url) {
+                  return img.image_url.startsWith('http') 
+                    ? img.image_url 
+                    : `${import.meta.env.VITE_API_BASE_URL}/storage/${img.image_url}`;
+                }
+                return null;
+              }).filter(Boolean)
+            : [];
+          
+          setGigData({
+            ...gigDetails,
+            category: gigDetails.category_id || (gigDetails.category && gigDetails.category.id),
+            price: gigDetails.price ? gigDetails.price.toString() : '0',
+            tags: formattedTags,
+            deliveryTime: gigDetails.delivery_time || '',
+            type: gigDetails.type || 'gig', // Default to gig if no type is specified
+          });
+          
+          setImagePreviews(imageUrls);
+        } else {
+          toast({ 
+            variant: "destructive",
+            title: "خطأ في تحميل البيانات",
+            description: "لم يتم العثور على الخدمة المطلوبة."
+          });
+          navigate('/dashboard/gigs');
+        }
+      } catch (error) {
+        console.error('Error fetching gig details:', error);
+        toast({
+          variant: "destructive", 
+          title: "خطأ في تحميل البيانات",
+          description: error.message || "فشل في تحميل تفاصيل الخدمة."
+        });
+        navigate('/dashboard/gigs');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchGigData();
   }, [gigId, user, navigate, toast]);
 
   const handleChange = (e) => {
@@ -51,59 +160,205 @@ const EditGigPage = () => {
   const handleCategoryChange = (value) => {
     setGigData(prev => ({ ...prev, category: value }));
   };
-
-  const handleImageChange = (e) => {
+  
+  const handleTypeChange = (value) => {
+    setGigData(prev => ({ ...prev, type: value }));
+  };  const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
-    // For edit, we might replace all images or append. This example appends and slices.
-    const newImageFiles = [...(gigData.images || []), ...files].slice(0, 5);
-    setGigData(prev => ({ ...prev, images: newImageFiles }));
-
-    const newPreviews = files.map(file => URL.createObjectURL(file));
-    // This logic needs refinement if mixing URLs and new File previews
-    setImagePreviews(prev => [...prev.filter(p => typeof p === 'string'), ...newPreviews].slice(0,5));
-  };
-
-  const removeImage = (index) => {
-    setImagePreviews(prev => prev.filter((_, i) => i !== index));
-    setGigData(prev => ({ ...prev, images: prev.images.filter((_, i) => i !== index) }));
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!gigData) return;
-
-    // Basic validation
-    if (!gigData.title || !gigData.description || !gigData.price || !gigData.category) {
-        toast({ variant: "destructive", title: "حقول ناقصة", description: "يرجى ملء جميع الحقول الإلزامية." });
-        return;
+    if (!files.length) return;
+    
+    // Check if we're going to exceed the 5 image limit
+    if (imagePreviews.length + files.length > 5) {
+      toast({
+        variant: "destructive",
+        title: "الحد الأقصى للصور",
+        description: "يمكنك إضافة 5 صور كحد أقصى. يرجى حذف بعض الصور أولاً."
+      });
+      return;
     }
     
-    // Process and save updated gigData
-    const updatedGig = {
-      ...gigData,
-      price: parseFloat(gigData.price),
-      tags: gigData.tags.split(',').map(tag => tag.trim()).filter(tag => tag),
-      // Image handling needs to be robust: differentiate between existing URLs and new files for upload
-      images: imagePreviews, // This is simplified; real app needs to handle file uploads vs existing URLs
-    };
-    console.log("Updating gig:", updatedGig);
-    // Update in local storage or context
-    // const existingGigs = JSON.parse(localStorage.getItem('gigs') || '[]');
-    // const gigIndex = existingGigs.findIndex(g => g.id === gigId);
-    // if (gigIndex > -1) {
-    //   existingGigs[gigIndex] = updatedGig;
-    //   localStorage.setItem('gigs', JSON.stringify(existingGigs));
-    // }
+    // Store actual File objects in the gigData state
+    setGigData(prev => {
+      // Initialize images array if it doesn't exist
+      const currentImages = Array.isArray(prev.images) ? [...prev.images] : [];
+      return { 
+        ...prev, 
+        // Append new file objects to existing array
+        images: [...currentImages, ...files].slice(0, 5),
+        // Flag to indicate there are new images that need to be uploaded
+        hasNewImages: true
+      };
+    });
 
-
-    toast({ title: "تم تحديث الخدمة بنجاح!", description: `تم حفظ التغييرات على خدمة "${gigData.title}".` });
-    navigate('/dashboard/gigs');
+    // Create object URLs for new files to show as previews
+    const newPreviewUrls = files.map(file => {
+      const preview = URL.createObjectURL(file);
+      return preview;
+    });
+    
+    // Add new previews
+    setImagePreviews(prev => {
+      return [...prev, ...newPreviewUrls].slice(0, 5);
+    });
   };
+  const removeImage = (index) => {
+    // Remove from previews
+    setImagePreviews(prev => {
+      const updated = [...prev];
+      updated.splice(index, 1);
+      return updated;
+    });
+    
+    // Remove from actual images array in gigData
+    setGigData(prev => {
+      const updatedImages = Array.isArray(prev.images) ? [...prev.images] : [];
+      
+      // Only if we have images at this index
+      if (index < updatedImages.length) {
+        updatedImages.splice(index, 1);
+      }
+      
+      return { ...prev, images: updatedImages };
+    });
+    
+    // If the removed image was a File object created with URL.createObjectURL,
+    // we should revoke the object URL to avoid memory leaks
+    const removed = imagePreviews[index];
+    if (removed && typeof removed === 'string' && removed.startsWith('blob:')) {
+      URL.revokeObjectURL(removed);
+    }
+  };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!gigData) return;    // Basic validation
+    if (!gigData.title || !gigData.title.trim()) {
+      toast({ variant: "destructive", title: "حقل العنوان مطلوب", description: "يرجى إدخال عنوان للخدمة." });
+      return;
+    }
+    
+    if (!gigData.description || !gigData.description.trim()) {
+      toast({ variant: "destructive", title: "حقل الوصف مطلوب", description: "يرجى إدخال وصف للخدمة." });
+      return;
+    }
+    
+    if (!gigData.price || parseFloat(gigData.price) <= 0) {
+      toast({ variant: "destructive", title: "السعر غير صحيح", description: "يرجى إدخال سعر صحيح للخدمة." });
+      return;
+    }
+    
+    if (!gigData.category) {
+      toast({ variant: "destructive", title: "التصنيف مطلوب", description: "يرجى اختيار تصنيف للخدمة." });
+      return;
+    }
+    
+    // Check if we have at least one image
+    if (imagePreviews.length === 0) {
+      toast({ 
+        variant: "destructive", 
+        title: "الصور مطلوبة", 
+        description: "يرجى إضافة صورة واحدة على الأقل للخدمة."
+      });
+      return;
+    }
+    
+    setIsSubmitting(true);
+    
+    try {
+      // Process updated data for the API
+      const updatedData = {
+        title: gigData.title,
+        description: gigData.description,
+        price: parseFloat(gigData.price),
+        category_id: gigData.category,
+        tags: gigData.tags.split(',').map(tag => tag.trim()).filter(tag => tag),
+        delivery_time: gigData.deliveryTime,
+        type: gigData.type || 'gig',
+      };
+        // Add only new images that are File objects
+      const newImageFiles = [];
+      const existingImageUrls = [];      // Process images based on our updated ProductController
+      // Now the backend properly handles both existing_images and new images
 
-  if (!gigData) {
-    return <div className="p-6 md:p-8 text-center">جاري تحميل الخدمة...</div>;
+      // First collect all File objects from gigData
+      if (gigData.images && Array.isArray(gigData.images)) {
+        gigData.images.forEach(img => {
+          if (img instanceof File) {
+            newImageFiles.push(img);
+          }
+        });
+      }
+
+      // Then collect all existing image URLs that aren't blob URLs
+      imagePreviews.forEach(img => {
+        if (typeof img === 'string' && !img.startsWith('blob:')) {
+          // Extract just the path part if it's a full URL
+          let path = img;
+          
+          // If URL contains the storage path, extract just the relative path
+          if (img.includes('/storage/')) {
+            path = img.substring(img.indexOf('/storage/') + 9);
+          }
+          
+          existingImageUrls.push(path);
+        }
+      });
+      
+      // Add files to the form data, if any
+      if (newImageFiles.length > 0) {
+        updatedData.images = newImageFiles;
+        console.log('New image files to upload:', newImageFiles.length);
+      }
+      
+      // Always include existing images we want to keep
+      if (existingImageUrls.length > 0) {
+        updatedData.existing_images = existingImageUrls;
+        console.log('Existing images to keep:', existingImageUrls);
+      }
+      
+      // Make API call to update the gig
+      console.log('Sending update for gig:', gigId, updatedData);
+      await sellerApi.updateProduct(gigId, updatedData);
+      
+      toast({ 
+        title: "تم تحديث الخدمة بنجاح!", 
+        description: `تم حفظ التغييرات على خدمة "${gigData.title}".`
+      });
+      
+      navigate('/dashboard/gigs');
+    } catch (error) {
+      console.error('Error updating gig:', error);
+      toast({
+        variant: "destructive",
+        title: "خطأ في تحديث الخدمة",
+        description: error.message || "فشل في تحديث الخدمة. يرجى المحاولة مرة أخرى."
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  // Loading state
+  if (loading) {
+    return (
+      <div className="p-6 md:p-8 text-center">
+        <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
+        <p className="mt-4 text-lg">جاري تحميل الخدمة...</p>
+      </div>
+    );
   }
-    if (user?.active_role !== 'seller') {
+  
+  // Not seller or gig not found
+  if (!gigData) {
+    return (
+      <div className="p-6 md:p-8 text-center">
+        <h1 className="text-2xl font-bold text-gray-700">لا يمكن تحميل الخدمة</h1>
+        <p className="text-gray-500">لم يتم العثور على الخدمة المطلوبة أو تم حذفها.</p>
+        <Button onClick={() => navigate('/dashboard/gigs')} className="mt-4">العودة للوحة التحكم</Button>
+      </div>
+    );
+  }
+  
+  // Not a seller
+  if (user?.active_role !== 'seller') {
     return (
       <div className="p-6 md:p-8 text-center">
         <h1 className="text-2xl font-bold text-gray-700">غير مصرح لك بالدخول</h1>
@@ -145,16 +400,28 @@ const EditGigPage = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="category" className="flex items-center"><Tag className="ml-2 h-4 w-4 text-gray-500" />التصنيف</Label>
-                    <Select onValueChange={handleCategoryChange} value={gigData.category} required>
-                      <SelectTrigger id="category">
+                    <RTLSelect
+                      onValueChange={handleCategoryChange}
+                      value={gigData.category ? String(gigData.category) : ""}
+                      required
+                    >
+                      <RTLSelectTrigger id="category">
                         <SelectValue placeholder="اختر تصنيف الخدمة" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {categories.map(cat => (
-                          <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      </RTLSelectTrigger>
+                      <RTLSelectContent>
+                        {categories.length > 0 ? (
+                          categories.map(cat => (
+                            <RTLSelectItem key={cat.id || cat._id} value={String(cat.id || cat._id)}>
+                              {cat.name || cat.title || 'تصنيف غير محدد'}
+                            </RTLSelectItem>
+                          ))
+                        ) : (
+                          <RTLSelectItem value="no-categories" disabled>
+                            لا توجد تصنيفات متاحة
+                          </RTLSelectItem>
+                        )}
+                      </RTLSelectContent>
+                    </RTLSelect>
                   </div>
                   <div>
                     <Label htmlFor="price" className="flex items-center"><DollarSign className="ml-2 h-4 w-4 text-gray-500" />السعر (بالجنيه)</Label>
@@ -169,10 +436,21 @@ const EditGigPage = () => {
                   <Label htmlFor="deliveryTime" className="flex items-center"><Clock className="ml-2 h-4 w-4 text-gray-500" />مدة التسليم المتوقعة</Label>
                   <Input id="deliveryTime" name="deliveryTime" value={gigData.deliveryTime} onChange={handleChange} />
                 </div>
+                <div>
+                  <Label htmlFor="type" className="flex items-center"><ArrowRight className="ml-2 h-4 w-4 text-gray-500" />نوع الخدمة</Label>
+                  <RTLSelect id="type" value={gigData.type} onValueChange={handleTypeChange}>
+                    <RTLSelectTrigger>
+                      <SelectValue placeholder="اختر نوع الخدمة" />
+                    </RTLSelectTrigger>
+                    <RTLSelectContent>
+                      <RTLSelectItem value="gig">خدمة/حرفة</RTLSelectItem>
+                      <RTLSelectItem value="product">منتج قابل للبيع</RTLSelectItem>
+                    </RTLSelectContent>
+                  </RTLSelect>
+                </div>
               </div>
             </motion.div>
 
-            {/* Image Upload */}
             <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}>
               <CardHeader className="px-0 pt-6 pb-4">
                 <CardTitle className="text-xl text-gray-700">صور الخدمة</CardTitle>
@@ -185,11 +463,10 @@ const EditGigPage = () => {
                 </Label>
                 <Input id="images" type="file" multiple accept="image/*" onChange={handleImageChange} className="hidden" />
                 {imagePreviews.length > 0 && (
-                  <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-                    {imagePreviews.map((preview, index) => (
+                  <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">                    {imagePreviews.map((preview, index) => (
                       <div key={index} className="relative group aspect-square">
                         <img 
-                          src={preview || "https://images.unsplash.com/photo-1690721606848-ac5bdcde45ea"} 
+                          src={typeof preview === 'string' ? preview : "https://images.unsplash.com/photo-1690721606848-ac5bdcde45ea"} 
                           alt={`معاينة ${index + 1}`} 
                           className="w-full h-full object-cover rounded-md shadow" 
                         />
@@ -208,10 +485,17 @@ const EditGigPage = () => {
                 )}
               </div>
             </motion.div>
-            
-            <motion.div className="pt-6 flex justify-end" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>
-              <Button type="submit" size="lg" className="bg-green-500 hover:bg-green-600">
-                <Save className="ml-2 h-5 w-5" /> حفظ التعديلات
+              <motion.div className="pt-6 flex justify-end" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>
+              <Button type="submit" size="lg" className="bg-green-500 hover:bg-green-600" disabled={isSubmitting}>
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="ml-2 h-5 w-5 animate-spin" /> جاري الحفظ...
+                  </>
+                ) : (
+                  <>
+                    <Save className="ml-2 h-5 w-5" /> حفظ التعديلات
+                  </>
+                )}
               </Button>
             </motion.div>
           </CardContent>

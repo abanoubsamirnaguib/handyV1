@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useToast } from '@/components/ui/use-toast';
-import { apiUrl } from '@/lib/api';
+import { apiUrl, api } from '@/lib/api';
 
 const AuthContext = createContext();
 
@@ -335,6 +335,139 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // OTP-related functions
+  const sendEmailVerificationOTP = async (email) => {
+    try {
+      await api.sendEmailVerificationOTP(email);
+      toast({
+        title: 'تم الإرسال بنجاح',
+        description: 'تم إرسال رمز التحقق إلى بريدك الإلكتروني',
+      });
+      return true;
+    } catch (error) {
+      const errorMessage = error.message.includes('Email is already verified') 
+        ? 'البريد الإلكتروني مُفعل بالفعل'
+        : 'حدث خطأ أثناء إرسال رمز التحقق';
+      
+      toast({
+        variant: 'destructive',
+        title: 'خطأ في الإرسال',
+        description: errorMessage,
+      });
+      return false;
+    }
+  };
+
+  const verifyEmail = async (email, otpCode) => {
+    try {
+      await api.verifyEmail(email, otpCode);
+      toast({
+        title: 'تم التحقق بنجاح',
+        description: 'تم تأكيد بريدك الإلكتروني بنجاح',
+      });
+      return true;
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'خطأ في التحقق',
+        description: 'رمز التحقق غير صحيح أو منتهي الصلاحية',
+      });
+      return false;
+    }
+  };
+
+  const registerWithEmailVerification = async (userData) => {
+    try {
+      const data = await api.registerWithVerification(userData);
+      
+      // Set user and token after successful registration
+      localStorage.setItem('token', data.token);
+      setUser(data.user);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      
+      toast({
+        title: 'تم إنشاء الحساب بنجاح',
+        description: `مرحباً بك ${userData.name}`,
+      });
+      return true;
+    } catch (error) {
+      const errorMessage = error.message.includes('Invalid or expired verification code')
+        ? 'رمز التحقق غير صحيح أو منتهي الصلاحية'
+        : 'حدث خطأ أثناء إنشاء الحساب';
+      
+      toast({
+        variant: 'destructive',
+        title: 'فشل إنشاء الحساب',
+        description: errorMessage,
+      });
+      return false;
+    }
+  };
+
+  const sendPasswordResetOTP = async (email) => {
+    try {
+      await api.sendPasswordResetOTP(email);
+      toast({
+        title: 'تم الإرسال بنجاح',
+        description: 'تم إرسال رمز إعادة تعيين كلمة المرور إلى بريدك الإلكتروني',
+      });
+      return true;
+    } catch (error) {
+      const errorMessage = error.message.includes('No user found')
+        ? 'لا يوجد مستخدم بهذا البريد الإلكتروني'
+        : 'حدث خطأ أثناء إرسال رمز إعادة التعيين';
+      
+      toast({
+        variant: 'destructive',
+        title: 'خطأ في الإرسال',
+        description: errorMessage,
+      });
+      return false;
+    }
+  };
+
+  const verifyPasswordResetOTP = async (email, otpCode) => {
+    try {
+      await api.verifyPasswordResetOTP(email, otpCode);
+      toast({
+        title: 'تم التحقق بنجاح',
+        description: 'رمز التحقق صحيح، يمكنك الآن تغيير كلمة المرور',
+      });
+      return true;
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'رمز غير صحيح',
+        description: 'رمز التحقق غير صحيح أو منتهي الصلاحية',
+      });
+      return false;
+    }
+  };
+
+  const resetPassword = async (email, otpCode, password, passwordConfirmation) => {
+    try {
+      await api.resetPassword(email, otpCode, password, passwordConfirmation);
+      toast({
+        title: 'تم تغيير كلمة المرور بنجاح',
+        description: 'يمكنك الآن تسجيل الدخول بكلمة المرور الجديدة',
+      });
+      return true;
+    } catch (error) {
+      const errorMessage = error.message.includes('Invalid or expired reset code')
+        ? 'رمز التحقق غير صحيح أو منتهي الصلاحية'
+        : error.message.includes('password')
+        ? 'كلمتا المرور غير متطابقتين أو ضعيفتان'
+        : 'حدث خطأ أثناء تغيير كلمة المرور';
+      
+      toast({
+        variant: 'destructive',
+        title: 'خطأ في تغيير كلمة المرور',
+        description: errorMessage,
+      });
+      return false;
+    }
+  };
+
   const value = {
     user,
     loading,
@@ -345,6 +478,13 @@ export const AuthProvider = ({ children }) => {
     switchRole,
     enableSellerMode,
     changePassword,
+    // OTP functions
+    sendEmailVerificationOTP,
+    verifyEmail,
+    registerWithEmailVerification,
+    sendPasswordResetOTP,
+    verifyPasswordResetOTP,
+    resetPassword,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -25,6 +25,12 @@ class UserCrudController extends Controller
     public function show($id) 
     {
         $user = User::findOrFail($id);
+        
+        // Load seller relationship with skills if user is a seller
+        if ($user->active_role === 'seller' || $user->is_seller) {
+            $user->load('seller.skills');
+        }
+        
         return new UserResource($user);
     }
     
@@ -59,6 +65,12 @@ class UserCrudController extends Controller
                     ]);
                 }
             }
+        }
+        
+        // Refresh user data and load seller relationship if needed
+        $user = $user->fresh();
+        if ($user->active_role === 'seller' || $user->is_seller) {
+            $user->load('seller.skills');
         }
         
         return new UserResource($user);

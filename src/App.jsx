@@ -23,6 +23,9 @@ import OrdersPage from '@/pages/OrdersPage.jsx';
 import OrderDetailPage from '@/pages/OrderDetailPage.jsx';
 import LoginPage from '@/pages/LoginPage.jsx';
 import RegisterPage from '@/pages/RegisterPage.jsx';
+import ForgotPasswordPage from '@/pages/ForgotPasswordPage.jsx';
+import ResetPasswordPage from '@/pages/ResetPasswordPage.jsx';
+import EmailVerificationPage from '@/pages/EmailVerificationPage.jsx';
 import NotFoundPage from '@/pages/NotFoundPage.jsx';
 import AdminDashboardPage from '@/pages/AdminDashboardPage.jsx';
 
@@ -63,6 +66,11 @@ function App() {
               <Route path="message/:id" element={
                 <ProtectedRoute>
                   <MessagePage />
+                </ProtectedRoute>
+              } />
+              <Route path="profile/me" element={
+                <ProtectedRoute>
+                  <ProfilePage />
                 </ProtectedRoute>
               } />
               <Route path="profile/:id" element={
@@ -113,6 +121,21 @@ function App() {
               <Route path="register" element={
                 <ProtectedRoute requireAuth={false}>
                   <RegisterPage />
+                </ProtectedRoute>
+              } />
+              <Route path="forgot-password" element={
+                <ProtectedRoute requireAuth={false}>
+                  <ForgotPasswordPage />
+                </ProtectedRoute>
+              } />
+              <Route path="reset-password" element={
+                <ProtectedRoute requireAuth={false}>
+                  <ResetPasswordPage />
+                </ProtectedRoute>
+              } />
+              <Route path="verify-email" element={
+                <ProtectedRoute requireAuth={false}>
+                  <EmailVerificationPage />
                 </ProtectedRoute>
               } />
               

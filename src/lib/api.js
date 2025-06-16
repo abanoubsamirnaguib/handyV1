@@ -59,6 +59,48 @@ export const api = {
   // Products
   getFeaturedProducts: () => apiFetch('TopProducts?featured=1&status=active&limit=10'),
   getProductById: (productId) => apiFetch(`Listpoducts/${productId}`),
+  
+  // Authentication with OTP
+  sendEmailVerificationOTP: (email) => 
+    apiFetch('send-email-verification-otp', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    }),
+  
+  verifyEmail: (email, otpCode) => 
+    apiFetch('verify-email', {
+      method: 'POST',
+      body: JSON.stringify({ email, otp_code: otpCode }),
+    }),
+  
+  registerWithVerification: (userData) => 
+    apiFetch('register-with-verification', {
+      method: 'POST',
+      body: JSON.stringify(userData),
+    }),
+  
+  sendPasswordResetOTP: (email) => 
+    apiFetch('send-password-reset-otp', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    }),
+  
+  verifyPasswordResetOTP: (email, otpCode) => 
+    apiFetch('verify-password-reset-otp', {
+      method: 'POST',
+      body: JSON.stringify({ email, otp_code: otpCode }),
+    }),
+  
+  resetPassword: (email, otpCode, password, passwordConfirmation) => 
+    apiFetch('reset-password', {
+      method: 'POST',
+      body: JSON.stringify({ 
+        email, 
+        otp_code: otpCode, 
+        password, 
+        password_confirmation: passwordConfirmation 
+      }),
+    }),
 };
 
 // Admin API functions

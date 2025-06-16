@@ -179,14 +179,15 @@ const HomePage = () => {
   };
 
   const getCategoryIcon = (iconName) => {
+    const iconSize = window.innerWidth < 640 ? 20 : window.innerWidth < 1024 ? 24 : 28;
     switch (iconName) {
-      case 'gem': return <Gift size={32} className="text-olivePrimary" />;
-      case 'coffee': return <HandMetal size={32} className="text-olivePrimary" />;
-      case 'scissors': return <Palette size={32} className="text-olivePrimary" />;
-      case 'shirt': return <Shirt size={32} className="text-olivePrimary" />;
-      case 'image': return <Image size={32} className="text-olivePrimary" />;
-      case 'utensils': return <Utensils size={32} className="text-olivePrimary" />;
-      default: return <Star size={32} className="text-olivePrimary" />;
+      case 'gem': return <Gift size={iconSize} />;
+      case 'coffee': return <HandMetal size={iconSize} />;
+      case 'scissors': return <Palette size={iconSize} />;
+      case 'shirt': return <Shirt size={iconSize} />;
+      case 'image': return <Image size={iconSize} />;
+      case 'utensils': return <Utensils size={iconSize} />;
+      default: return <Star size={iconSize} />;
     }
   };
 
@@ -250,59 +251,84 @@ const HomePage = () => {
       </section>
 
       {/* Categories Section */}
-      <section className="py-16 bg-lightBeige">
+      <section className="py-12 md:py-16 bg-lightBeige">
         <div className="container mx-auto px-4">
           <motion.h2 
-            className="text-3xl font-bold text-center mb-12 text-darkOlive"
+            className="text-2xl md:text-3xl font-bold text-center mb-8 md:mb-12 text-darkOlive"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
             تصفح <span className="text-olivePrimary">أبرز التصنيفات</span>
           </motion.h2>
-          <div className="relative flex flex-col items-center">
-            <div
-              className="w-full flex justify-center items-center"
-              style={{ minHeight: 210 }}
-            >
-              {loadingCategories ? (
-                <div className="w-full text-center text-darkOlive/60 py-8">جاري التحميل...</div>
-              ) : categoriesError ? (
-                <div className="w-full text-center text-red-600 py-8">{categoriesError}</div>
-              ) : categories.length === 0 ? (
-                <div className="w-full text-center text-darkOlive/60 py-8">لا توجد تصنيفات متاحة</div>
-              ) : (
-                <div
-                  ref={categoriesRowRef}
-                  className="flex gap-6 overflow-x-auto scrollbar-hide px-1 py-2 cursor-grab active:cursor-grabbing select-none"
-                  style={{ scrollBehavior: 'smooth', WebkitOverflowScrolling: 'touch' }}
-                  onMouseDown={handleDragStart}
-                  onMouseMove={handleDragMove}
-                  onMouseUp={handleDragEnd}
-                  onMouseLeave={handleDragEnd}
-                  onTouchStart={handleDragStart}
-                  onTouchMove={handleDragMove}
-                  onTouchEnd={handleDragEnd}
-                >
-                  {categories.map(category => (
+          <div className="relative">
+            {loadingCategories ? (
+              <div className="w-full text-center text-darkOlive/60 py-8">
+                <div className="animate-pulse">جاري التحميل...</div>
+              </div>
+            ) : categoriesError ? (
+              <div className="w-full text-center text-red-600 py-8 bg-red-50 rounded-lg border border-red-200">
+                {categoriesError}
+              </div>
+            ) : categories.length === 0 ? (
+              <div className="w-full text-center text-darkOlive/60 py-8">لا توجد تصنيفات متاحة</div>
+            ) : (
+              <div
+                ref={categoriesRowRef}
+                className="flex gap-4 md:gap-6 lg:gap-8 overflow-x-auto scrollbar-hide px-2 py-4 cursor-grab active:cursor-grabbing select-none"
+                style={{ scrollBehavior: 'smooth', WebkitOverflowScrolling: 'touch' }}
+                onMouseDown={handleDragStart}
+                onMouseMove={handleDragMove}
+                onMouseUp={handleDragEnd}
+                onMouseLeave={handleDragEnd}
+                onTouchStart={handleDragStart}
+                onTouchMove={handleDragMove}
+                onTouchEnd={handleDragEnd}
+              >
+                {categories.map((category, index) => (
+                  <motion.div
+                    key={category.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: index * 0.1 }}
+                  >
                     <Link
-                      key={category.id}
                       to={`/explore?category=${category.id}`}
                       onClick={handleCategoryClick}
                       tabIndex={0}
+                      className="block group"
                     >
-                      <Card className="text-center p-6 hover:shadow-xl transition-shadow duration-300 glass-effect card-hover border-olivePrimary/20 min-w-[170px] max-w-[180px] mx-auto">
-                        <div className="flex justify-center mb-3">
-                          {getCategoryIcon(category.icon)}
+                      <div className="flex flex-col items-center min-w-[120px] max-w-[140px] md:min-w-[140px] md:max-w-[160px] lg:min-w-[160px] lg:max-w-[180px]">
+                        {/* Modern circular icon container */}
+                        <div className="relative mb-3 md:mb-4">
+                          <div className="w-16 h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 rounded-full bg-gradient-to-br from-olivePrimary/10 to-olivePrimary/20 flex items-center justify-center border-2 border-olivePrimary/30 group-hover:border-olivePrimary/60 transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg backdrop-blur-sm">
+                            <div className="w-8 h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 flex items-center justify-center text-olivePrimary group-hover:text-olivePrimary/80 transition-colors duration-300">
+                              {getCategoryIcon(category.icon)}
+                            </div>
+                            {/* Decorative ring */}
+                            <div className="absolute inset-0 rounded-full border border-olivePrimary/20 animate-pulse"></div>
+                          </div>
+                          {/* Glow effect */}
+                          <div className="absolute inset-0 rounded-full bg-olivePrimary/10 blur-xl opacity-0 group-hover:opacity-30 transition-opacity duration-300"></div>
                         </div>
-                        <h3 className="font-semibold text-darkOlive">{category.name}</h3>
-                      </Card>
+                        
+                        {/* Category name */}
+                        <h3 className="font-semibold text-center text-sm md:text-base text-darkOlive group-hover:text-olivePrimary transition-colors duration-300 leading-tight px-2">
+                          {category.name}
+                        </h3>
+                        
+                        {/* Hover indicator */}
+                        <div className="w-0 group-hover:w-8 h-0.5 bg-olivePrimary mt-2 transition-all duration-300 rounded-full"></div>
+                      </div>
                     </Link>
-                  ))}
-                </div>
-              )}
-            </div>
+                  </motion.div>
+                ))}
+                
+              </div>
+            )}
           </div>
+          
+
         </div>
       </section>
 

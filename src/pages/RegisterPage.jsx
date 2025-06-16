@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -15,7 +14,7 @@ const RegisterPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
-  const { register, user, loading } = useAuth();
+  const { user, loading, sendEmailVerificationOTP } = useAuth();
   const { toast } = useToast();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -70,22 +69,31 @@ const RegisterPage = () => {
     
     setIsLoading(true);
     
-    // Determine primary role and dual role flags
-    const primaryRole = isSeller ? 'seller' : 'buyer';
-    const registrationData = {
-      name,
-      email,
-      password,
-      role: primaryRole,
-      is_buyer: isBuyer,
-      is_seller: isSeller,
-    };
-    
-    const success = await register(registrationData);
-    setIsLoading(false);    
+    // Send OTP for email verification first
+    const success = await sendEmailVerificationOTP(email);
+
     if (success) {
-      // The useEffect above will handle the redirect
+      // Prepare registration data
+      const primaryRole = isSeller ? 'seller' : 'buyer';
+      const registrationData = {
+        name,
+        email,
+        password,
+        role: primaryRole,
+        is_buyer: isBuyer,
+        is_seller: isSeller,
+      };
+
+      // Navigate to email verification page with registration data
+      navigate('/verify-email', { 
+        state: { 
+          email, 
+          registrationData 
+        } 
+      });
     }
+    
+    setIsLoading(false);
   };
 
   // Show loading while checking auth status

@@ -20,6 +20,7 @@ const ExplorePage = () => {
   const [sellers, setSellers] = useState([]);
   const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
   const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || 'all');
+  const [selectedType, setSelectedType] = useState(searchParams.get('type') || 'all');
   const [priceRange, setPriceRange] = useState([0, 1000]);
   const [minRating, setMinRating] = useState(0);
   const [sortBy, setSortBy] = useState('relevance');
@@ -52,6 +53,7 @@ const ExplorePage = () => {
     const tab = searchParams.get('tab') || 'products';
     const query = searchParams.get('search') || '';
     const category = searchParams.get('category') || 'all';
+    const type = searchParams.get('type') || 'all';
     const minPrice = parseInt(searchParams.get('minPrice')) || 0;
     const maxPrice = parseInt(searchParams.get('maxPrice')) || 1000;
     const rating = parseInt(searchParams.get('rating')) || 0;
@@ -67,6 +69,7 @@ const ExplorePage = () => {
       else selectedCat = 'all'; // fallback if not found
     }
     setSelectedCategory(selectedCat);
+    setSelectedType(type);
     setPriceRange([minPrice, maxPrice]);
     setMinRating(rating);
     setSortBy(sort);
@@ -96,6 +99,7 @@ const ExplorePage = () => {
         rating: prod.rating || 0,
         reviewCount: prod.reviewCount || prod.review_count || 0,
         sellerId: prod.sellerId || prod.seller_id || prod.seller?.id,
+        type: prod.type || 'product',
       };
     };
 
@@ -125,6 +129,7 @@ const ExplorePage = () => {
         if (found) categoryId = found.id;
         params.push(`category=${encodeURIComponent(categoryId)}`);
       }
+      if (type !== 'all') params.push(`type=${encodeURIComponent(type)}`);
       if (minPrice > 0) params.push(`min_price=${minPrice}`);
       if (maxPrice < 1000) params.push(`max_price=${maxPrice}`);
       if (rating > 0) params.push(`min_rating=${rating}`);
@@ -176,6 +181,7 @@ const ExplorePage = () => {
       const categoryId = typeof selectedCategory === 'object' ? selectedCategory.id : selectedCategory;
       params.set('category', categoryId);
     }
+    if (selectedType !== 'all') params.set('type', selectedType);
     if (activeTab === 'products') {
       params.set('minPrice', priceRange[0]);
       params.set('maxPrice', priceRange[1]);
@@ -184,15 +190,45 @@ const ExplorePage = () => {
     if (minRating > 0) params.set('rating', minRating);
     if (sortBy !== 'relevance') params.set('sort', sortBy);
     setSearchParams(params);
+    
+    // Auto-close mobile filter after applying
+    setIsFiltersOpen(false);
+  };
+
+  const handleSortChange = (value) => {
+    setSortBy(value);
+    
+    // Immediately update URL params with new sort value
+    const params = new URLSearchParams(searchParams);
+    params.set('tab', activeTab);
+    if (searchTerm) params.set('search', searchTerm);
+    if (selectedCategory !== 'all') {
+      const categoryId = typeof selectedCategory === 'object' ? selectedCategory.id : selectedCategory;
+      params.set('category', categoryId);
+    }
+    if (selectedType !== 'all') params.set('type', selectedType);
+    if (activeTab === 'products') {
+      params.set('minPrice', priceRange[0]);
+      params.set('maxPrice', priceRange[1]);
+    }
+    if (minRating > 0) params.set('rating', minRating);
+    if (value !== 'relevance') params.set('sort', value);
+    else params.delete('sort');
+    
+    setSearchParams(params);
   };
   
   const resetFilters = () => {
     setSearchTerm('');
     setSelectedCategory('all');
+    setSelectedType('all');
     setPriceRange([0, 1000]);
     setMinRating(0);
     setSortBy('relevance');
     setSearchParams({ tab: activeTab });
+    
+    // Auto-close mobile filter after resetting
+    setIsFiltersOpen(false);
   };
 
   const handleTabChange = (value) => {
@@ -219,7 +255,14 @@ const ExplorePage = () => {
             alt={gig.title} 
             className="w-full h-full object-cover" 
           />
-          <Badge variant="secondary" className="absolute top-2 right-2 bg-olivePrimary text-white">{categoryName}</Badge>
+          <div className="absolute top-2 right-2 flex flex-col gap-1">
+            <Badge variant="secondary" className="bg-olivePrimary text-white">{categoryName}</Badge>
+          </div>
+          <div className="absolute bottom-2 right-2 flex flex-col gap-1">
+            <Badge variant="outline" className={`text-xs ${gig.type === 'gig' ? 'bg-burntOrange/50 text-white border-burntOrange' : 'bg-blue-100 text-blue-600 border-blue-300'}`}>
+              {gig.type === 'gig' ? 'خدمة مخصصة' : 'منتج جاهز'}
+            </Badge>
+          </div>
         </div>
         <CardHeader className="pb-2 text-right">
           <CardTitle className="text-lg font-semibold text-darkOlive h-14 overflow-hidden">{gig.title}</CardTitle>
@@ -259,9 +302,14 @@ const ExplorePage = () => {
             alt={gig.title} 
             className="w-full h-full object-cover" 
           />
-          <Badge variant="secondary" className="absolute top-2 right-2 bg-olivePrimary text-white">
-            {categoryName}
-          </Badge>
+          <div className="absolute top-2 right-2 flex flex-col gap-1">
+            <Badge variant="secondary" className="bg-olivePrimary text-white">{categoryName}</Badge>
+          </div>
+          <div className="absolute bottom-2 right-2 flex flex-col gap-1">
+          <Badge variant="outline" className={`text-xs ${gig.type === 'gig' ? 'bg-burntOrange/50 text-burntOrange border-burntOrange' : 'bg-blue-10 text-blue-600 border-blue-300'}`}>
+              {gig.type === 'gig' ? 'خدمة مخصصة' : 'منتج جاهز'}
+            </Badge>
+          </div>
         </div>
         <div className="md:w-2/3 flex flex-col">
           <CardHeader className="pb-2 text-right">
@@ -444,6 +492,19 @@ const ExplorePage = () => {
                     </Select>
                   </div>
                   <div>
+                    <Label htmlFor="type-filter" className="text-darkOlive block text-right">نوع المنتج</Label>
+                    <Select value={selectedType} onValueChange={value => setSelectedType(String(value))} dir="rtl">
+                      <SelectTrigger id="type-filter" className="mt-1 border-olivePrimary/30 focus:border-olivePrimary focus:ring-olivePrimary/20 text-right">
+                        <SelectValue placeholder="اختر نوع المنتج" />
+                      </SelectTrigger>
+                      <SelectContent className="border-olivePrimary/30 text-right" dir="rtl">
+                        <SelectItem value="all">كل الأنواع</SelectItem>
+                        <SelectItem value="product">منتجات جاهزة</SelectItem>
+                        <SelectItem value="gig">خدمات مخصصة</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
                     <Label className="text-darkOlive block text-right">نطاق السعر: {priceRange[0]} - {priceRange[1]} جنيه</Label>
                     <Slider
                       defaultValue={priceRange}
@@ -485,7 +546,7 @@ const ExplorePage = () => {
               <div className="flex items-center justify-between mb-6">
                 <p className="text-darkOlive/70">تم العثور على {gigs.length} منتج</p>                <div className="flex items-center gap-2">                  <Button variant="outline" size="icon" className="md:hidden ml-2 border-olivePrimary/50 text-olivePrimary hover:bg-olivePrimary hover:text-white" onClick={() => setIsFiltersOpen(true)}>
                     <Filter className="h-5 w-5" />
-                  </Button><Select value={sortBy} onValueChange={(value) => {setSortBy(value); handleFilterChange();}} dir="rtl">
+                  </Button>                  <Select value={sortBy} onValueChange={handleSortChange} dir="rtl">
                     <SelectTrigger className="w-[180px] border-olivePrimary/30 focus:border-olivePrimary focus:ring-olivePrimary/20 text-right">
                       <SelectValue placeholder="الترتيب حسب" />
                     </SelectTrigger>
@@ -612,7 +673,7 @@ const ExplorePage = () => {
                 <div className="flex items-center gap-2">
                   <Button variant="outline" size="icon" className="md:hidden ml-2" onClick={() => setIsFiltersOpen(true)}>
                     <Filter className="h-5 w-5" />
-                  </Button>                  <Select value={sortBy} onValueChange={(value) => {setSortBy(value); handleFilterChange();}} dir="rtl">
+                  </Button>                  <Select value={sortBy} onValueChange={handleSortChange} dir="rtl">
                     <SelectTrigger className="w-[180px] text-right">
                       <SelectValue placeholder="الترتيب حسب" />
                     </SelectTrigger>

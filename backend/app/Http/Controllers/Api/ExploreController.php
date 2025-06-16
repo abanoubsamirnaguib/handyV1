@@ -17,6 +17,9 @@ class ExploreController extends Controller
         if ($request->filled('category')) {
             $query->where('category_id', $request->category);
         }
+        if ($request->filled('type')) {
+            $query->where('type', $request->type);
+        }
         if ($request->filled('search')) {
             $q = $request->search;
             $query->where(function($sub) use ($q) {
@@ -40,9 +43,9 @@ class ExploreController extends Controller
             if ($request->sort === 'newest') $query->orderByDesc('created_at');
         }
         $query->where('status', 'active'); // Only active products
-        $products = $query->select(['id','title','description','price','category_id','seller_id','rating','review_count','featured','status','created_at'])
+        $products = $query->select(['id','title','description','price','category_id','seller_id','rating','review_count','featured','status','type','created_at'])
             ->with(['images:id,product_id,image_url', 'category:id,name', 'seller:id'])
-            ->limit(20)
+            ->limit(40)
             ->get();
         return response()->json([
             'data' => $products->map(function($p) {
@@ -58,7 +61,8 @@ class ExploreController extends Controller
                     'rating' => $p->rating,
                     'reviewCount' => $p->review_count,
                     'featured' => $p->featured,
-                    'status' => $p->status,                    
+                    'status' => $p->status,
+                    'type' => $p->type ?? 'product', // Default to 'product' if type is null
                 ];
             })
         ]);

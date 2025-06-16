@@ -30,7 +30,8 @@ class User extends Authenticatable
         'bio',
         'location',
         'avatar',
-        'phone'
+        'phone',
+        'email_verified'
     ];
 
     /**
@@ -55,6 +56,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'is_seller' => 'boolean',
             'is_buyer' => 'boolean',
+            'email_verified' => 'boolean',
         ];
     }
 

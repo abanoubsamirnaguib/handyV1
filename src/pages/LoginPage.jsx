@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -136,7 +135,7 @@ const LoginPage = () => {
                   <Checkbox id="remember-me" />
                   <Label htmlFor="remember-me" className="mr-2 text-sm text-gray-600">تذكرني</Label>
                 </div> */}
-                <Link to="#" className="text-sm text-burntOrange hover:underline">
+                <Link to="/forgot-password" className="text-sm text-burntOrange hover:underline">
                   هل نسيت كلمة المرور؟
                 </Link>
               </div>

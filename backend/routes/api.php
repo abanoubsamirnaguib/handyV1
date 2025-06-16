@@ -52,7 +52,15 @@ Route::get('orders/{id}', [OrderCrudController::class, 'show']);
 
 // Authentication - public routes
 Route::post('register', [AuthController::class, 'register']);
+Route::post('register-with-verification', [AuthController::class, 'registerWithEmailVerification']);
 Route::post('login', [AuthController::class, 'login']);
+
+// OTP routes - public
+Route::post('send-email-verification-otp', [AuthController::class, 'sendEmailVerificationOTP']);
+Route::post('verify-email', [AuthController::class, 'verifyEmail']);
+Route::post('send-password-reset-otp', [AuthController::class, 'sendPasswordResetOTP']);
+Route::post('verify-password-reset-otp', [AuthController::class, 'verifyPasswordResetOTP']);
+Route::post('reset-password', [AuthController::class, 'resetPassword']);
 
 // Public routes
 Route::get('users/{id}', [UserCrudController::class, 'show']);  // Keep this one public for displaying profiles

@@ -75,6 +75,54 @@ class UserCrudController extends Controller
         
         return new UserResource($user);
     }
+
+    /**
+     * Upload user profile image
+     */
+    public function uploadProfileImage(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+        
+        // Check if the authenticated user is allowed to update this user
+        if (auth()->id() != $id && auth()->user()?->role !== 'admin') {
+            return response()->json(['message' => 'Unauthorized to update this user'], 403);
+        }
+
+        $request->validate([
+            'avatar' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:5120', // max 5MB
+        ]);
+
+        try {
+            // Delete old avatar if exists
+            if ($user->avatar && \Storage::disk('public')->exists($user->avatar)) {
+                \Storage::disk('public')->delete($user->avatar);
+            }
+
+            // Store new avatar
+            $avatarPath = $request->file('avatar')->store('avatars', 'public');
+            
+            // Update user avatar path
+            $user->update(['avatar' => $avatarPath]);
+            
+            // Load seller relationship if needed
+            if ($user->active_role === 'seller' || $user->is_seller) {
+                $user->load('seller.skills');
+            }
+
+            return response()->json([
+                'message' => 'Profile image updated successfully',
+                'data' => new UserResource($user),
+                'avatar_url' => \Storage::disk('public')->url($avatarPath)
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to upload profile image',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function destroy($id) {
         $user = User::findOrFail($id);
         $user->delete();

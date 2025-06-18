@@ -140,6 +140,25 @@ class User extends Authenticatable
         
         return $this;
     }
+
+    /**
+     * Get avatar URL with full path if not already a full URL
+     */
+    public function getAvatarUrlAttribute()
+    {
+        if (!$this->avatar) {
+            return null;
+        }
+
+        // If the URL already starts with http:// or https://, return as-is
+        if (str_starts_with($this->avatar, 'http://') || str_starts_with($this->avatar, 'https://')) {
+            return $this->avatar;
+        }
+        
+        // Otherwise, prepend APP_URL and storage path
+        return config('app.url') . '/storage/' . ltrim($this->avatar, '/');
+    }
+
     public function getSkillsAttribute()
     {
         if ($this->seller) {

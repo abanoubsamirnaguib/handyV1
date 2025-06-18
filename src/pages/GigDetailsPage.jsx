@@ -81,12 +81,12 @@ const GigDetailsPage = () => {
           setSeller({
             id: sellerData.id,
             name: sellerData.user?.name || '',
-            avatar: sellerData.avatar || sellerData.profile_image || '',
+            avatar: sellerData.user?.avatar || '',
             skills: sellerData.skills || sellerData.categories || [],
             rating: sellerData.rating || 0,
             reviewCount: sellerData.reviewCount || sellerData.review_count || 0,
-            bio: sellerData.bio || '',
-            location: sellerData.location || '',
+            bio: sellerData.bio || sellerData.user?.bio || '',
+            location: sellerData.location || sellerData.user?.location || '',
             memberSince: sellerData.member_since || sellerData.memberSince || '',
             completedOrders: sellerData.completed_orders || sellerData.completedOrders || 0,
           });
@@ -336,7 +336,7 @@ const GigDetailsPage = () => {
           {/* Reviews Section */}
   <section className="mb-10">
     <h2 className="text-2xl font-bold text-darkOlive mb-6 text-right">تقييمات العملاء ({reviews.length})</h2>
-    {user && (
+    {/* {user && (
       <form onSubmit={handleSubmitReview} className="mb-8 p-4 border rounded-lg bg-lightGreen/20 border-olivePrimary/20">
         <h3 className="text-lg font-semibold mb-2 text-darkOlive text-right">أضف تقييمك</h3>        <div className="flex items-center mb-2">
           {[5, 4, 3, 2, 1].map(star => (
@@ -354,7 +354,7 @@ const GigDetailsPage = () => {
         />
         <Button type="submit" className="bg-burntOrange hover:bg-burntOrange/90 text-white">إرسال التقييم</Button>
       </form>
-    )}
+    )} */}
     {reviews.length > 0 ? (
       <div className="space-y-6">
         {reviews.map(review => (

@@ -1,43 +1,111 @@
-
 import React from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { DollarSign, ShoppingBag, Users, BarChart3, MessageCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 
-const StatCard = ({ title, value, icon, color, description }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.5 }}
-  >
-    <Card className={`border-${color}-500 border-t-4 shadow-lg hover:shadow-xl transition-shadow`}>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-gray-600">{title}</CardTitle>
-        {React.createElement(icon, { className: `h-5 w-5 text-${color}-500` })}
-      </CardHeader>
-      <CardContent>
-        <div className="text-3xl font-bold text-gray-800">{value}</div>
-        <p className="text-xs text-muted-foreground pt-1">{description}</p>
-      </CardContent>
-    </Card>
-  </motion.div>
-);
+const StatCard = ({ title, value, icon, color, description, path }) => {
+  const navigate = useNavigate();
+  
+  const handleClick = () => {
+    if (path) {
+      navigate(path);
+    }
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      onClick={handleClick}
+      className={path ? 'cursor-pointer' : ''}
+    >
+      <Card className={`border-${color}-500 border-t-4 shadow-lg hover:shadow-xl transition-all duration-300 ${path ? 'hover:scale-105 hover:bg-gray-50' : ''}`}>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium text-gray-600">{title}</CardTitle>
+          {React.createElement(icon, { className: `h-5 w-5 text-${color}-500` })}
+        </CardHeader>
+        <CardContent>
+          <div className="text-3xl font-bold text-gray-800">{value}</div>
+          <p className="text-xs text-muted-foreground pt-1">{description}</p>
+        </CardContent>
+      </Card>
+    </motion.div>
+  );
+};
 
 const DashboardOverview = () => {
   const { user } = useAuth();
 
   
   const stats = user?.active_role === 'seller' ? [
-    { title: "إجمالي الأرباح", value: "12,500 جنيه", icon: DollarSign, color: "green", description: "+15% عن الشهر الماضي" },
-    { title: "الطلبات الجديدة", value: "32", icon: ShoppingBag, color: "blue", description: "+5 طلبات اليوم" },
-    { title: "إجمالي الخدمات", value: "15", icon: BarChart3, color: "orange", description: "2 خدمة غير نشطة" },
-    { title: "العملاء النشطون", value: "120", icon: Users, color: "purple", description: "متوسط تقييم 4.8" },
+    { 
+      title: "إجمالي الأرباح", 
+      value: "12,500 جنيه", 
+      icon: DollarSign, 
+      color: "green", 
+      description: "+15% عن الشهر الماضي",
+      path: "/dashboard/earnings"
+    },
+    { 
+      title: "الطلبات الجديدة", 
+      value: "32", 
+      icon: ShoppingBag, 
+      color: "blue", 
+      description: "+5 طلبات اليوم",
+      path: "/dashboard/orders"
+    },
+    { 
+      title: "إجمالي الخدمات", 
+      value: "15", 
+      icon: BarChart3, 
+      color: "orange", 
+      description: "2 خدمة غير نشطة",
+      path: "/dashboard/gigs"
+    },
+    { 
+      title: "العملاء النشطون", 
+      value: "120", 
+      icon: Users, 
+      color: "purple", 
+      description: "متوسط تقييم 4.8",
+      path: null // No specific page for this yet
+    },
   ] : [
-    { title: "إجمالي الطلبات", value: "18", icon: ShoppingBag, color: "blue", description: "3 طلبات قيد التنفيذ" },
-    { title: "المبلغ المنفق", value: "4,200 جنيه", icon: DollarSign, color: "green", description: "متوسط قيمة الطلب 233 جنيه" },
-    { title: "البائعون المفضلون", value: "5", icon: Users, color: "purple", description: "تواصل معهم الآن" },
-    { title: "الرسائل غير المقروءة", value: "2", icon: MessageCircle, color: "orange", description: "من ليلى حسن وكريم محمود" },
+    { 
+      title: "إجمالي الطلبات", 
+      value: "18", 
+      icon: ShoppingBag, 
+      color: "blue", 
+      description: "3 طلبات قيد التنفيذ",
+      path: "/dashboard/orders"
+    },
+    { 
+      title: "المبلغ المنفق", 
+      value: "4,200 جنيه", 
+      icon: DollarSign, 
+      color: "green", 
+      description: "متوسط قيمة الطلب 233 جنيه",
+      path: null // No specific page for this yet
+    },
+    { 
+      title: "البائعون المفضلون", 
+      value: "5", 
+      icon: Users, 
+      color: "purple", 
+      description: "تواصل معهم الآن",
+      path: null // No specific page for this yet
+    },
+    { 
+      title: "الرسائل غير المقروءة", 
+      value: "2", 
+      icon: MessageCircle, 
+      color: "orange", 
+      description: "من ليلى حسن وكريم محمود",
+      path: "/dashboard/messages"
+    },
   ];
 
   return (

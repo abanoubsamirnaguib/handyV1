@@ -111,7 +111,7 @@ class ExploreController extends Controller
                 return [
                     'id' => $s->id,
                     'name' => $s->user->name ?? '',
-                    'avatar' => $s->user->avatar ?? '',
+                    'avatar' => $s->user->avatar_url ?? '',
                     'skills' => $s->skills ? $s->skills->pluck('skill_name') : [],
                     'rating' => $s->rating,
                     'reviewCount' => $s->review_count,

@@ -101,6 +101,17 @@ export const api = {
         password_confirmation: passwordConfirmation 
       }),
     }),
+
+  // Profile image upload
+  uploadProfileImage: (userId, imageFile) => {
+    const formData = new FormData();
+    formData.append('avatar', imageFile);
+    
+    return apiFormFetch(`users/${userId}/upload-avatar`, {
+      method: 'POST',
+      body: formData,
+    });
+  },
 };
 
 // Admin API functions

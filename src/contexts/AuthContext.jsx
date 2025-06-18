@@ -209,6 +209,42 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Upload profile image
+  const uploadProfileImage = async (imageFile) => {
+    try {
+      const token = getToken();
+      if (!token || !user) {
+        throw new Error('Not authenticated');
+      }
+
+      const response = await api.uploadProfileImage(user.id, imageFile);
+      
+      // Update user data with new avatar
+      const updatedUser = response.data;
+      setUser(updatedUser);
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      
+      toast({
+        title: 'تم تحديث صورة الملف الشخصي',
+        description: 'تم تحديث صورتك الشخصية بنجاح',
+      });
+
+      return {
+        success: true,
+        data: updatedUser,
+        avatarUrl: response.avatar_url
+      };
+    } catch (error) {
+      console.error('Profile image upload failed:', error);
+      toast({
+        variant: 'destructive',
+        title: 'خطأ في رفع الصورة',
+        description: 'حدث خطأ أثناء رفع صورة الملف الشخصي',
+      });
+      return { success: false, error: error.message };
+    }
+  };
+
   const switchRole = async (targetRole) => {
     try {
       const token = getToken();
@@ -475,6 +511,7 @@ export const AuthProvider = ({ children }) => {
     register,
     logout,
     updateProfile,
+    uploadProfileImage,
     switchRole,
     enableSellerMode,
     changePassword,

@@ -61,8 +61,8 @@ class SellerController extends Controller
             return [
                 'id' => $seller->id,
                 'name' => $seller->user->name ?? '',
-                'avatar' => $seller->user->avatar ?? '',
-                'skills' => $seller->skills->pluck('name')->toArray(),
+                'avatar' => $seller->user->avatar_url ?? '',
+                'skills' => $seller->skills->pluck('skill_name')->toArray(),
                 'rating' => $seller->rating ?? 0,
                 'reviewCount' => $seller->review_count ?? 0,
             ];

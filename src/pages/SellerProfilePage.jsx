@@ -158,8 +158,18 @@ const SellerProfilePage = () => {
         transition={{ duration: 0.5 }}
       >        {/* Seller Profile Header */}        <Card className="mb-8 overflow-hidden border-lightBeige/50">
           <div className="h-48 bg-olivePrimary relative">
-            <div className="absolute -bottom-16 right-8 h-32 w-32 rounded-full bg-white flex items-center justify-center text-5xl font-bold text-olivePrimary shadow-lg border-4 border-white">
-              {seller.name.charAt(0)}
+            <div className="absolute -bottom-16 right-8 h-32 w-32 rounded-full bg-white shadow-lg border-4 border-white overflow-hidden">
+              {seller.avatar ? (
+                <img 
+                  src={seller.avatar} 
+                  alt={seller.name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-5xl font-bold text-olivePrimary">
+                  {seller.name.charAt(0)}
+                </div>
+              )}
             </div>
           </div>
           <CardContent className="pt-20 pb-6">

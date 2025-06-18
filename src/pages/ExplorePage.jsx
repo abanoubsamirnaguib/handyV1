@@ -338,9 +338,17 @@ const ExplorePage = () => {
   const SellerCard = ({ seller }) => (
     <Card className="overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 flex flex-col h-full card-hover border-lightBeige/50" dir="rtl">
       <div className="relative h-48 bg-olivePrimary flex items-center justify-center">
-        <div className="h-24 w-24 rounded-full bg-white flex items-center justify-center text-3xl font-bold text-burntOrange shadow-md">
-          {seller.name.charAt(0)}
-        </div>
+        {seller.avatar ? (
+          <img 
+            src={seller.avatar} 
+            alt={seller.name}
+            className="h-24 w-24 rounded-full object-cover border-4 border-white shadow-md"
+          />
+        ) : (
+          <div className="h-24 w-24 rounded-full bg-white flex items-center justify-center text-3xl font-bold text-burntOrange shadow-md">
+            {seller.name.charAt(0)}
+          </div>
+        )}
       </div>
       <CardHeader className="pb-2 text-right">
         <CardTitle className="text-lg font-semibold text-gray-800">{seller.name}</CardTitle>
@@ -380,9 +388,17 @@ const ExplorePage = () => {
   );
   const SellerListItem = ({ seller }) => (    <Card className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col md:flex-row card-hover border-olivePrimary/20 w-full" dir="rtl">
       <div className="relative md:w-1/4 h-48 md:h-auto bg-olivePrimary flex items-center justify-center">
-        <div className="h-24 w-24 rounded-full bg-white flex items-center justify-center text-3xl font-bold text-olivePrimary shadow-md">
-          {seller.name.charAt(0)}
-        </div>
+        {seller.avatar ? (
+          <img 
+            src={seller.avatar} 
+            alt={seller.name}
+            className="h-24 w-24 rounded-full object-cover border-4 border-white shadow-md"
+          />
+        ) : (
+          <div className="h-24 w-24 rounded-full bg-white flex items-center justify-center text-3xl font-bold text-olivePrimary shadow-md">
+            {seller.name.charAt(0)}
+          </div>
+        )}
       </div>
       <div className="md:w-3/4 flex flex-col">
         <CardHeader className="pb-2 text-right">

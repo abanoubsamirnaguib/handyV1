@@ -16,13 +16,16 @@ import { apiFetch, apiUrl } from '@/lib/api';
 const ProfilePage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user, updateProfile } = useAuth();
+  const { user, updateProfile, uploadProfileImage } = useAuth();
   const { startConversation, setActiveConversation } = useChat();
   const [profileData, setProfileData] = useState(null);
   const [userGigs, setUserGigs] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
   const [editFormData, setEditFormData] = useState({ name: '', bio: '', location: '', skills: '', avatar: '', phone: '' });
   const [loading, setLoading] = useState(true);
+  const [avatarFile, setAvatarFile] = useState(null);
+  const [avatarPreview, setAvatarPreview] = useState(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   const isOwnProfile = !id || id === 'me' || (user && user.id === id);
 
@@ -149,6 +152,52 @@ const ProfilePage = () => {
 
   const handleEditFormChange = (e) => {
     setEditFormData({ ...editFormData, [e.target.name]: e.target.value });
+  };
+
+  const handleAvatarChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Validate file type and size
+      if (!file.type.startsWith('image/')) {
+        alert('يرجى اختيار ملف صورة صالح.');
+        return;
+      }
+      
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        alert('حجم الصورة يجب أن يكون أقل من 5 ميجابايت.');
+        return;
+      }
+
+      setAvatarFile(file);
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setAvatarPreview(e.target.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleUploadAvatar = async () => {
+    if (!avatarFile) return;
+    
+    setUploadingAvatar(true);
+    try {
+      const result = await uploadProfileImage(avatarFile);
+      if (result.success) {
+        setAvatarFile(null);
+        setAvatarPreview(null);
+        // Refresh profile data
+        const updatedProfile = { ...profileData, avatar: result.data.avatar };
+        setProfileData(updatedProfile);
+        setEditFormData(prev => ({ ...prev, avatar: result.data.avatar }));
+      }
+    } catch (error) {
+      console.error('Avatar upload failed:', error);
+    } finally {
+      setUploadingAvatar(false);
+    }
   };
   const handleSaveChanges = async () => {
     // Only process skills if the user is a seller
@@ -333,9 +382,56 @@ const ProfilePage = () => {
                     <Input type="text" name="skills" id="skills" value={editFormData.skills} onChange={handleEditFormChange} className="mt-1" />
                   </div>
                 )}
+                {/* Profile Image Upload Section */}
                 <div>
-                  <label htmlFor="avatar" className="block text-sm font-medium text-gray-700">رابط صورة الملف الشخصي</label>
-                  <Input type="text" name="avatar" id="avatar" value={editFormData.avatar} onChange={handleEditFormChange} className="mt-1" placeholder="https://example.com/avatar.jpg" />
+                  <label className="block text-sm font-medium text-gray-700 mb-2">صورة الملف الشخصي</label>
+                  <div className="flex items-center space-x-4 space-x-reverse">
+                    {/* Avatar Preview */}
+                    <div className="relative">
+                      <img 
+                        src={avatarPreview || profileData?.avatar || 'https://avatar.iran.liara.run/public/65'} 
+                        alt="معاينة الصورة الشخصية" 
+                        className="w-20 h-20 rounded-full object-cover border-2 border-gray-300"
+                      />
+                      {avatarFile && (
+                        <div className="absolute -top-2 -right-2 bg-green-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs">
+                          ✓
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Upload Controls */}
+                    <div className="flex-1 space-y-2">
+                      <Input 
+                        id="avatar-upload" 
+                        type="file" 
+                        accept="image/*"
+                        onChange={handleAvatarChange}
+                        className="hidden"
+                      />
+                      <div className="flex gap-2">
+                        <label 
+                          htmlFor="avatar-upload" 
+                          className="cursor-pointer bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-md text-sm font-medium transition-colors"
+                        >
+                          اختيار صورة
+                        </label>
+                        {avatarFile && (
+                          <button 
+                            type="button"
+                            onClick={handleUploadAvatar}
+                            disabled={uploadingAvatar}
+                            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm disabled:opacity-50"
+                          >
+                            {uploadingAvatar ? 'جاري الرفع...' : 'رفع الصورة'}
+                          </button>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-500">
+                        يرجى اختيار صورة بصيغة JPG، PNG أو GIF. الحد الأقصى: 5 ميجابايت
+                      </p>
+                    </div>
+                  </div>
                 </div>
                 <div>
                   <label htmlFor="phone" className="block text-sm font-medium text-gray-700">رقم الهاتف</label>

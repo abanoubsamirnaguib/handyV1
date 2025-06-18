@@ -128,6 +128,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // File Upload
     Route::post('upload', [FileUploadController::class, 'upload']);
 
+    // User profile image upload
+    Route::post('users/{id}/upload-avatar', [UserCrudController::class, 'uploadProfileImage']);
+
     // Site Settings
     Route::get('settings', [SiteSettingController::class, 'index']);
     Route::post('settings', [SiteSettingController::class, 'update']);

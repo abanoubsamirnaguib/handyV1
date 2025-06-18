@@ -26,19 +26,20 @@ const HomePage = () => {
   const [categories, setCategories] = useState([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
   const [categoriesError, setCategoriesError] = useState(null);
-  const [categoriesPerSlide, setCategoriesPerSlide] = useState(window.innerWidth < 640 ? 4 : 8);
+  const [showAllCategories, setShowAllCategories] = useState(false);
+  const [categoriesPerRow, setCategoriesPerRow] = useState(window.innerWidth < 640 ? 4 : window.innerWidth < 1024 ? 6 : 8);
 
-  // For draggable scroll
-  const categoriesRowRef = useRef(null);
-  const dragState = useRef({
-    isDragging: false,
-    startX: 0,
-    scrollLeft: 0,
-    moved: false,
-  });
+  // For draggable scroll - no longer needed
+  // const categoriesRowRef = useRef(null);
+  // const dragState = useRef({
+  //   isDragging: false,
+  //   startX: 0,
+  //   scrollLeft: 0,
+  //   moved: false,
+  // });
 
   useEffect(() => {
-    const handleResize = () => setCategoriesPerSlide(window.innerWidth < 640 ? 4 : 8);
+    const handleResize = () => setCategoriesPerRow(window.innerWidth < 640 ? 4 : window.innerWidth < 1024 ? 6 : 8);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -140,35 +141,35 @@ const HomePage = () => {
     return () => { isMounted = false; };
   }, []);
 
-  // Drag/Swipe handlers for scrollable row
-  const handleDragStart = (e) => {
-    dragState.current.isDragging = true;
-    dragState.current.startX = e.type === 'touchstart'
-      ? e.touches[0].clientX
-      : e.clientX;
-    dragState.current.scrollLeft = categoriesRowRef.current.scrollLeft;
-    dragState.current.moved = false;
-  };
-  const handleDragMove = (e) => {
-    if (!dragState.current.isDragging) return;
-    const x = e.type === 'touchmove'
-      ? e.touches[0].clientX
-      : e.clientX;
-    const walk = dragState.current.startX - x;
-    if (Math.abs(walk) > 2) dragState.current.moved = true;
-    categoriesRowRef.current.scrollLeft = dragState.current.scrollLeft + walk;
-  };
-  const handleDragEnd = () => {
-    dragState.current.isDragging = false;
-  };
+  // Remove drag handlers - no longer needed
+  // const handleDragStart = (e) => {
+  //   dragState.current.isDragging = true;
+  //   dragState.current.startX = e.type === 'touchstart'
+  //     ? e.touches[0].clientX
+  //     : e.clientX;
+  //   dragState.current.scrollLeft = categoriesRowRef.current.scrollLeft;
+  //   dragState.current.moved = false;
+  // };
+  // const handleDragMove = (e) => {
+  //   if (!dragState.current.isDragging) return;
+  //   const x = e.type === 'touchmove'
+  //     ? e.touches[0].clientX
+  //     : e.clientX;
+  //   const walk = dragState.current.startX - x;
+  //   if (Math.abs(walk) > 2) dragState.current.moved = true;
+  //   categoriesRowRef.current.scrollLeft = dragState.current.scrollLeft + walk;
+  // };
+  // const handleDragEnd = () => {
+  //   dragState.current.isDragging = false;
+  // };
 
-  // Prevent click if drag happened
-  const handleCategoryClick = (e) => {
-    if (dragState.current.moved) {
-      e.preventDefault();
-      dragState.current.moved = false;
-    }
-  };
+  // Remove category click handler - no longer needed
+  // const handleCategoryClick = (e) => {
+  //   if (dragState.current.moved) {
+  //     e.preventDefault();
+  //     dragState.current.moved = false;
+  //   }
+  // };
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -273,58 +274,61 @@ const HomePage = () => {
             ) : categories.length === 0 ? (
               <div className="w-full text-center text-darkOlive/60 py-8">لا توجد تصنيفات متاحة</div>
             ) : (
-              <div
-                ref={categoriesRowRef}
-                className="flex gap-4 md:gap-6 lg:gap-8 overflow-x-auto scrollbar-hide px-2 py-4 cursor-grab active:cursor-grabbing select-none"
-                style={{ scrollBehavior: 'smooth', WebkitOverflowScrolling: 'touch' }}
-                onMouseDown={handleDragStart}
-                onMouseMove={handleDragMove}
-                onMouseUp={handleDragEnd}
-                onMouseLeave={handleDragEnd}
-                onTouchStart={handleDragStart}
-                onTouchMove={handleDragMove}
-                onTouchEnd={handleDragEnd}
-              >
-                {categories.map((category, index) => (
-                  <motion.div
-                    key={category.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: index * 0.1 }}
-                  >
-                    <Link
-                      to={`/explore?category=${category.id}`}
-                      onClick={handleCategoryClick}
-                      tabIndex={0}
-                      className="block group"
+              <>
+                <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-4 md:gap-6 lg:gap-8 px-2 py-4">
+                  {(showAllCategories ? categories : categories.slice(0, categoriesPerRow)).map((category, index) => (
+                    <motion.div
+                      key={category.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5, delay: index * 0.1 }}
                     >
-                      <div className="flex flex-col items-center min-w-[120px] max-w-[140px] md:min-w-[140px] md:max-w-[160px] lg:min-w-[160px] lg:max-w-[180px]">
-                        {/* Modern circular icon container */}
-                        <div className="relative mb-3 md:mb-4">
-                          <div className="w-16 h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 rounded-full bg-gradient-to-br from-olivePrimary/10 to-olivePrimary/20 flex items-center justify-center border-2 border-olivePrimary/30 group-hover:border-olivePrimary/60 transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg backdrop-blur-sm">
-                            <div className="w-8 h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 flex items-center justify-center text-olivePrimary group-hover:text-olivePrimary/80 transition-colors duration-300">
-                              {getCategoryIcon(category.icon)}
+                      <Link
+                        to={`/explore?category=${category.id}`}
+                        tabIndex={0}
+                        className="block group"
+                      >
+                        <div className="flex flex-col items-center">
+                          {/* Modern circular icon container */}
+                          <div className="relative mb-3 md:mb-4">
+                            <div className="w-16 h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 rounded-full bg-gradient-to-br from-olivePrimary/10 to-olivePrimary/20 flex items-center justify-center border-2 border-olivePrimary/30 group-hover:border-olivePrimary/60 transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg backdrop-blur-sm">
+                              <div className="w-8 h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 flex items-center justify-center text-olivePrimary group-hover:text-olivePrimary/80 transition-colors duration-300">
+                                {getCategoryIcon(category.icon)}
+                              </div>
+                              {/* Decorative ring */}
+                              <div className="absolute inset-0 rounded-full border border-olivePrimary/20 animate-pulse"></div>
                             </div>
-                            {/* Decorative ring */}
-                            <div className="absolute inset-0 rounded-full border border-olivePrimary/20 animate-pulse"></div>
+                            {/* Glow effect */}
+                            <div className="absolute inset-0 rounded-full bg-olivePrimary/10 blur-xl opacity-0 group-hover:opacity-30 transition-opacity duration-300"></div>
                           </div>
-                          {/* Glow effect */}
-                          <div className="absolute inset-0 rounded-full bg-olivePrimary/10 blur-xl opacity-0 group-hover:opacity-30 transition-opacity duration-300"></div>
+                          
+                          {/* Category name */}
+                          <h3 className="font-semibold text-center text-sm md:text-base text-darkOlive group-hover:text-olivePrimary transition-colors duration-300 leading-tight px-2">
+                            {category.name}
+                          </h3>
+                          
+                          {/* Hover indicator */}
+                          <div className="w-0 group-hover:w-8 h-0.5 bg-olivePrimary mt-2 transition-all duration-300 rounded-full"></div>
                         </div>
-                        
-                        {/* Category name */}
-                        <h3 className="font-semibold text-center text-sm md:text-base text-darkOlive group-hover:text-olivePrimary transition-colors duration-300 leading-tight px-2">
-                          {category.name}
-                        </h3>
-                        
-                        {/* Hover indicator */}
-                        <div className="w-0 group-hover:w-8 h-0.5 bg-olivePrimary mt-2 transition-all duration-300 rounded-full"></div>
-                      </div>
-                    </Link>
-                  </motion.div>
-                ))}
+                      </Link>
+                    </motion.div>
+                  ))}
+                </div>
                 
-              </div>
+                {/* Show More Button */}
+                {categories.length > categoriesPerRow * 2 && (
+                  <div className="text-center mt-8">
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowAllCategories(!showAllCategories)}
+                      className="border-olivePrimary text-olivePrimary hover:bg-olivePrimary hover:text-white px-6 py-2"
+                    >
+                      {showAllCategories ? 'عرض أقل' : 'عرض المزيد'}
+                      <ArrowRight className={`mr-2 h-4 w-4 transition-transform duration-300 ${showAllCategories ? 'rotate-90' : ''}`} />
+                    </Button>
+                  </div>
+                )}
+              </>
             )}
           </div>
           

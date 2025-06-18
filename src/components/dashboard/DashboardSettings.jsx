@@ -32,14 +32,14 @@ const SettingsSection = ({ title, description, icon, children }) => (
 );
 
 const DashboardSettings = () => {
-  const { user, updateProfile, changePassword } = useAuth();
+  const { user, updateProfile, changePassword, uploadProfileImage } = useAuth();
   const { toast } = useToast();
 
   const [profileData, setProfileData] = useState({
     name: user?.name || '',
     email: user?.email || '',
     bio: user?.bio || '',
-    avatarUrl: user?.avatar || '', // Assuming avatar is a URL
+    avatarUrl: user?.avatar || '', // Keep for display purposes
     phone: user?.phone || '',
     skills: user?.skills || []
   });
@@ -51,9 +51,64 @@ const DashboardSettings = () => {
   });
 
   const [newSkill, setNewSkill] = useState('');
+  const [avatarFile, setAvatarFile] = useState(null);
+  const [avatarPreview, setAvatarPreview] = useState(user?.avatar || null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   const handleProfileChange = (e) => {
     setProfileData({ ...profileData, [e.target.name]: e.target.value });
+  };
+
+  const handleAvatarChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Validate file type and size
+      if (!file.type.startsWith('image/')) {
+        toast({ 
+          variant: "destructive", 
+          title: "خطأ", 
+          description: "يرجى اختيار ملف صورة صالح." 
+        });
+        return;
+      }
+      
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        toast({ 
+          variant: "destructive", 
+          title: "خطأ", 
+          description: "حجم الصورة يجب أن يكون أقل من 5 ميجابايت." 
+        });
+        return;
+      }
+
+      setAvatarFile(file);
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setAvatarPreview(e.target.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleUploadAvatar = async () => {
+    if (!avatarFile) return;
+    
+    setUploadingAvatar(true);
+    try {
+      const result = await uploadProfileImage(avatarFile);
+      if (result.success) {
+        setAvatarFile(null);
+        setAvatarPreview(result.data.avatar);
+        // Update profileData with new avatar URL
+        setProfileData(prev => ({ ...prev, avatarUrl: result.data.avatar }));
+      }
+    } catch (error) {
+      console.error('Avatar upload failed:', error);
+    } finally {
+      setUploadingAvatar(false);
+    }
   };
 
   const handlePasswordChange = (e) => {
@@ -154,10 +209,59 @@ const DashboardSettings = () => {
             <Label htmlFor="bio">نبذة تعريفية</Label>
             <Textarea id="bio" name="bio" value={profileData.bio} onChange={handleProfileChange} rows={3} placeholder="أخبرنا المزيد عنك..." />
           </div>
+          
+          {/* Profile Image Upload Section */}
           <div>
-            <Label htmlFor="avatarUrl">رابط صورة الملف الشخصي</Label>
-            <Input id="avatarUrl" name="avatarUrl" value={profileData.avatarUrl} onChange={handleProfileChange} placeholder="https://example.com/avatar.jpg" />
+            <Label>صورة الملف الشخصي</Label>
+            <div className="flex items-center space-x-4 space-x-reverse mt-2">
+              {/* Avatar Preview */}
+              <div className="relative">
+                <img 
+                  src={avatarPreview || 'https://avatar.iran.liara.run/public/65'} 
+                  alt="معاينة الصورة الشخصية" 
+                  className="w-20 h-20 rounded-full object-cover border-2 border-gray-300"
+                />
+                {avatarFile && (
+                  <div className="absolute -top-2 -right-2 bg-green-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs">
+                    ✓
+                  </div>
+                )}
+              </div>
+              
+              {/* Upload Controls */}
+              <div className="flex-1 space-y-2">
+                <Input 
+                  id="avatar" 
+                  type="file" 
+                  accept="image/*"
+                  onChange={handleAvatarChange}
+                  className="hidden"
+                />
+                <div className="flex gap-2">
+                  <Label 
+                    htmlFor="avatar" 
+                    className="cursor-pointer bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-md text-sm font-medium transition-colors"
+                  >
+                    اختيار صورة
+                  </Label>
+                  {avatarFile && (
+                    <Button 
+                      type="button"
+                      onClick={handleUploadAvatar}
+                      disabled={uploadingAvatar}
+                      className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 text-sm"
+                    >
+                      {uploadingAvatar ? 'جاري الرفع...' : 'رفع الصورة'}
+                    </Button>
+                  )}
+                </div>
+                <p className="text-xs text-gray-500">
+                  يرجى اختيار صورة بصيغة JPG، PNG أو GIF. الحد الأقصى: 5 ميجابايت
+                </p>
+              </div>
+            </div>
           </div>
+          
           <div>
             <Label htmlFor="phone">رقم الهاتف</Label>
             <Input id="phone" name="phone" value={profileData.phone} onChange={handleProfileChange} placeholder="مثال: +201234567890" />

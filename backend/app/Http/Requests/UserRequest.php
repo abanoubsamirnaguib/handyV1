@@ -16,6 +16,7 @@ class UserRequest extends FormRequest
                 'password' => 'required|string|min:6',
                 'role' => 'in:admin,seller,buyer',
                 'phone' => 'nullable|string|max:20',
+                'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
             ];
         }        // PATCH/PUT (update)
         return [

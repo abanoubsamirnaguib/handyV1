@@ -2,7 +2,7 @@
   "name": "بازار - منصة للمنتجات اليدوية",
   "short_name": "بازار",
   "description": "منصة للمنتجات اليدوية والبائعين والمشترين",
-  "start_url": ".",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#10b981",

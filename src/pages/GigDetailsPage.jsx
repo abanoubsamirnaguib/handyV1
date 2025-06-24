@@ -65,6 +65,7 @@ const GigDetailsPage = () => {
           title: prod.title,
           description: prod.description,
           price: prod.price,
+          type : prod.type || 'gig',
           images,
           category: prod.category,
           rating: prod.rating || 0,
@@ -154,30 +155,30 @@ const GigDetailsPage = () => {
     setCurrentImageIndex(newIndex);
   };
   
-  const handleSubmitReview = (e) => {
-    e.preventDefault();
-    if (!user) {
-      toast({ variant: "destructive", title: "يرجى تسجيل الدخول", description: "يجب عليك تسجيل الدخول لترك تقييم." });
-      return;
-    }
-    if (newRating === 0 || !newReview.trim()) {
-      toast({ variant: "destructive", title: "بيانات غير كاملة", description: "يرجى تقديم تقييم نصي وتقييم بالنجوم." });
-      return;
-    }
-    const reviewData = {
-      id: `r${reviews.length + 1}`,
-      gigId: gig.id,
-      userId: user.id,
-      userName: user.name,
-      rating: newRating,
-      comment: newReview,
-      date: new Date().toISOString().split('T')[0],
-    };
-    setReviews([reviewData, ...reviews]);
-    setNewReview('');
-    setNewRating(0);
-    toast({ title: "تم إرسال التقييم", description: "شكراً لك على تقييم هذا المنتج." });
-  };
+  // const handleSubmitReview = (e) => {
+  //   e.preventDefault();
+  //   if (!user) {
+  //     toast({ variant: "destructive", title: "يرجى تسجيل الدخول", description: "يجب عليك تسجيل الدخول لترك تقييم." });
+  //     return;
+  //   }
+  //   if (newRating === 0 || !newReview.trim()) {
+  //     toast({ variant: "destructive", title: "بيانات غير كاملة", description: "يرجى تقديم تقييم نصي وتقييم بالنجوم." });
+  //     return;
+  //   }
+  //   const reviewData = {
+  //     id: `r${reviews.length + 1}`,
+  //     gigId: gig.id,
+  //     userId: user.id,
+  //     userName: user.name,
+  //     rating: newRating,
+  //     comment: newReview,
+  //     date: new Date().toISOString().split('T')[0],
+  //   };
+  //   setReviews([reviewData, ...reviews]);
+  //   setNewReview('');
+  //   setNewRating(0);
+  //   toast({ title: "تم إرسال التقييم", description: "شكراً لك على تقييم هذا المنتج." });
+  // };
 
   const gigImages = gig.images && gig.images.length > 0 
     ? gig.images 
@@ -277,10 +278,16 @@ const GigDetailsPage = () => {
                 className="w-20 text-center border-olivePrimary/30 focus:border-olivePrimary focus:ring-olivePrimary/20"
               />
             </div>
-
-            <div className="flex flex-col sm:flex-row gap-3">              <Button size="lg" onClick={handleAddToCart} className="bg-burntOrange hover:bg-burntOrange/90 text-white flex-1">
-                <ShoppingCart className="ml-2 h-5 w-5" /> أضف إلى السلة
-              </Button>
+            <div className="flex flex-col sm:flex-row gap-3">
+              {gig.type === 'gig' ? (
+                <Button size="lg" onClick={handleContactSeller} className="bg-burntOrange hover:bg-burntOrange/90 text-white flex-1">
+                  <MessageSquare className="ml-2 h-5 w-5" /> تواصل مع البائع
+                </Button>
+              ) : (
+                <Button size="lg" onClick={handleAddToCart} className="bg-burntOrange hover:bg-burntOrange/90 text-white flex-1">
+                  <ShoppingCart className="ml-2 h-5 w-5" /> أضف إلى السلة
+                </Button>
+              )}
               <Button size="lg" variant="outline" className="border-olivePrimary/50 text-olivePrimary hover:bg-olivePrimary hover:text-white flex-1">
                 <Heart className="ml-2 h-5 w-5" /> أضف إلى المفضلة
               </Button>

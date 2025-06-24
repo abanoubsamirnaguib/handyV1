@@ -15,6 +15,10 @@ class SellerResource extends JsonResource
         return [
             'id' => $this->id,
             'user' => new UserResource($this->whenLoaded('user')),
+            'name' => $this->user->name ?? null,
+            'phone' => $this->whenLoaded('user', function() {
+                return $this->user->phone ?? null;
+            }),
             'bio' => $this->user->bio ?? null,
             'location' => $this->user->location ?? null,
             'status' => $this->user->status ?? null,

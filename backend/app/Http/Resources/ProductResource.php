@@ -10,16 +10,15 @@ class ProductResource extends JsonResource
         return [
             'id' => $this->id,
             'title' => $this->title,
+            'name' => $this->title, // For frontend compatibility
             'description' => $this->description,
             'price' => $this->price,
-            'category_id' => $this->category_id,
+            'category_name' => $this->category->name?? '',
             'category' => new CategoryResource($this->whenLoaded('category')),
-            'category_name' => $this->whenLoaded('category', function() {
-                return $this->category->name ?? null;
-            }),
             'seller' => new SellerResource($this->whenLoaded('seller')),
             'sellerId' => $this->seller_id,
             'images' => ProductImageResource::collection($this->whenLoaded('images')),
+            'image' => $this->images->first()?->image_url ?? 'https://via.placeholder.com/100',
             'tags' => ProductTagResource::collection($this->whenLoaded('tags')),
             'rating' => $this->rating,
             'reviewCount' => $this->review_count,

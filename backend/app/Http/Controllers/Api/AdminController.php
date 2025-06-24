@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use App\Http\Resources\UserResource;
 use App\Http\Resources\ProductResource;
 use App\Http\Resources\SellerResource;
+use App\Http\Resources\OrderResource;
 
 
 class AdminController extends Controller
@@ -170,5 +171,100 @@ class AdminController extends Controller
         ]);
         $product->update(['status' => $validated['status']]);
         return new ProductResource($product);
+    }
+
+    public function getOrders(Request $request)
+    {
+        $query = Order::with(['user', 'seller.user', 'items.product', 'adminApprover', 'deliveryPerson']);
+
+        // Search functionality
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('customer_name', 'like', "%{$search}%")
+                  ->orWhere('customer_phone', 'like', "%{$search}%")
+                  ->orWhere('id', 'like', "%{$search}%")
+                  ->orWhereHas('user', function($subQ) use ($search) {
+                      $subQ->where('name', 'like', "%{$search}%")
+                           ->orWhere('email', 'like', "%{$search}%");
+                  })
+                  ->orWhereHas('seller.user', function($subQ) use ($search) {
+                      $subQ->where('name', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        // Filter by status
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+        // Filter by payment status
+        if ($request->filled('payment_status')) {
+            $query->where('payment_status', $request->payment_status);
+        }
+        // Filter by payment proof
+        if ($request->filled('payment_proof')) {
+            if ($request->payment_proof === 'with_proof') {
+                $query->whereNotNull('payment_proof');
+            } elseif ($request->payment_proof === 'without_proof') {
+                $query->whereNull('payment_proof');
+            } elseif ($request->payment_proof === 'cash_on_delivery') {
+                $query->where('payment_method',  'cash_on_delivery');
+            }
+        }
+
+        // Filter by date range
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        $perPage = $request->get('per_page', 20);
+        $orders = $query->orderBy('created_at', 'desc')->paginate($perPage);
+        
+        return OrderResource::collection($orders);
+    }
+
+    public function getPendingOrders(Request $request)
+    {
+        $query = Order::with(['user', 'seller.user', 'items.product', 'adminApprover'])
+            ->where('status', 'pending_admin_approval');
+
+        $perPage = $request->get('per_page', 20);
+        $orders = $query->orderBy('created_at', 'desc')->paginate($perPage);
+        
+        return OrderResource::collection($orders);
+    }
+
+    public function approveOrder(Request $request, $id)
+    {
+        $order = Order::findOrFail($id);
+        
+        if ($order->status !== 'pending_admin_approval') {
+            return response()->json([
+                'message' => 'Order cannot be approved in current status'
+            ], 400);
+        }
+
+        $order->update([
+            'status' => 'admin_approved',
+            'payment_status' => 'paid',
+            'admin_approved_at' => now(),
+            'admin_approved_by' => auth()->id(),
+            'admin_notes' => $request->input('notes', '')
+        ]);
+
+        // Create order history entry
+        $order->history()->create([
+            'status' => 'admin_approved',
+            'notes' => $request->input('notes', ''),
+            'changed_by' => auth()->id(),
+            'changed_at' => now()
+        ]);
+
+        return new OrderResource($order->load(['user', 'seller.user', 'items.product', 'adminApprover']));
     }
 }

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -9,12 +8,13 @@ import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { useCart } from '@/contexts/CartContext';
 import { useToast } from '@/components/ui/use-toast';
+import { api } from '@/lib/api';
 
 const CartPage = () => {
   const { cart, removeFromCart, updateQuantity, getCartTotal, clearCart } = useCart();
   const { toast } = useToast();
   const navigate = useNavigate();
-  const handleCheckout = async () => {
+  const handleCheckout = () => {
     if (cart.length === 0) {
       toast({
         variant: "destructive",
@@ -24,59 +24,8 @@ const CartPage = () => {
       return;
     }
 
-    try {
-      // إنشاء الطلب
-      const newOrder = {
-        id: `ord_${Date.now()}`, // في التطبيق الحقيقي، سيتم الحصول على ID من الخادم
-        items: cart.map(item => ({
-          product_id: item.id,
-          product_name: item.title,
-          product_image: item.image,
-          quantity: item.quantity,
-          price: item.price,
-          total: item.price * item.quantity
-        })),
-        total_price: getCartTotal(),
-        payment_method: 'cash_on_delivery', // الدفع عند الاستلام كإعداد افتراضي
-        payment_status: 'pending',
-        status: 'pending',
-        order_date: new Date().toISOString(),
-        customer: {
-          name: '', // سيتم ملؤها لاحقاً
-          phone: '',
-          address: ''
-        },
-        requires_deposit: false,
-        deposit_status: 'not_required'
-      };
-
-      // في التطبيق الحقيقي، نرسل البيانات للخادم
-      /* const response = await api.post('/orders', newOrder); */
-      
-      // مؤقتاً، نحفظ الطلب في التخزين المحلي
-      const existingOrders = JSON.parse(localStorage.getItem('user_orders') || '[]');
-      existingOrders.push(newOrder);
-      localStorage.setItem('user_orders', JSON.stringify(existingOrders));
-
-      // تفريغ السلة
-      clearCart();
-
-      toast({
-        title: "تم إنشاء الطلب بنجاح!",
-        description: "يمكنك الآن متابعة تفاصيل الطلب وإدخال معلومات التوصيل.",
-      });
-
-      // الانتقال لصفحة تفاصيل الطلب
-      navigate(`/orders/${newOrder.id}`);
-      
-    } catch (error) {
-      console.error('Error creating order:', error);
-      toast({
-        variant: "destructive",
-        title: "خطأ في إنشاء الطلب",
-        description: "حدث خطأ أثناء إنشاء الطلب. يرجى المحاولة مرة أخرى.",
-      });
-    }
+    // الانتقال لصفحة إتمام الطلب
+    navigate('/checkout');
   };
 
   return (

@@ -112,6 +112,78 @@ export const api = {
       body: formData,
     });
   },
+
+  // Cart API functions
+  getCart: () => apiFetch('cart'),
+  addToCart: (productId, quantity = 1) => 
+    apiFetch('cart/add', {
+      method: 'POST',
+      body: JSON.stringify({ product_id: productId, quantity }),
+    }),
+  updateCartItem: (cartItemId, quantity) => 
+    apiFetch(`cart-items/${cartItemId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ quantity }),
+    }),
+  removeFromCart: (cartItemId) => 
+    apiFetch(`cart-items/${cartItemId}`, { method: 'DELETE' }),
+  clearCart: () => 
+    apiFetch('cart/clear', { method: 'DELETE' }),
+
+  // Order API functions
+  createOrder: (orderData) => 
+    apiFetch('orders', {
+      method: 'POST',
+      body: JSON.stringify(orderData),
+    }),
+  createOrderWithFiles: (formData) => 
+    apiFormFetch('orders', {
+      method: 'POST',
+      body: formData,
+    }),
+  getOrders: (params = {}) => {
+    const searchParams = new URLSearchParams(params);
+    const queryString = searchParams.toString();
+    return apiFetch(`orders${queryString ? `?${queryString}` : ''}`);
+  },
+  getOrder: (orderId) => apiFetch(`orders/${orderId}`),
+  updateOrder: (orderId, orderData) => 
+    apiFetch(`orders/${orderId}`, {
+      method: 'PUT',
+      body: JSON.stringify(orderData),
+    }),
+  deleteOrder: (orderId) => 
+    apiFetch(`orders/${orderId}`, { method: 'DELETE' }),
+
+  // Order workflow functions
+  uploadPaymentProof: (orderId, imageFile) => {
+    const formData = new FormData();
+    formData.append('payment_proof', imageFile);
+    
+    return apiFormFetch(`orders/${orderId}/upload-payment-proof`, {
+      method: 'POST',
+      body: formData,
+    });
+  },
+  
+  // Customer actions
+  completeOrder: (orderId) => 
+    apiFetch(`orders/${orderId}/complete`, { method: 'POST' }),
+  cancelOrder: (orderId, reason) => 
+    apiFetch(`orders/${orderId}/cancel`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    }),
+
+  // Wishlist functions
+  getWishlist: () => apiFetch('wishlist-items'),
+  addToWishlist: (productId) => 
+    apiFetch('wishlist-items', {
+      method: 'POST',
+      body: JSON.stringify({ product_id: productId }),
+    }),
+  removeFromWishlist: (wishlistItemId) => 
+    apiFetch(`wishlist-items/${wishlistItemId}`, { method: 'DELETE' }),
 };
 
 // Admin API functions
@@ -177,6 +249,31 @@ export const adminApi = {
     }),
   deleteCategory: (categoryId) => 
     apiFetch(`categories/${categoryId}`, { method: 'DELETE' }),
+
+  // Admin order management
+  getOrders: (params = {}) => {
+    const searchParams = new URLSearchParams(params);
+    return apiFetch(`admin/orders?${searchParams}`);
+  },
+  getPendingOrders: () => apiFetch('admin/orders/pending'),
+  approveOrder: (orderId, notes = '') => 
+    apiFetch(`admin/orders/${orderId}/approve`, {
+      method: 'POST',
+      body: JSON.stringify({ notes }),
+    }),
+  rejectOrder: (orderId, reason) => 
+    apiFetch(`admin/orders/${orderId}/reject`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    }),
+  
+  // Admin order workflow functions
+  adminApproveOrder: (orderId, notes = '') => 
+    apiFetch(`orders/${orderId}/admin-approve`, {
+      method: 'POST',
+      body: JSON.stringify({ notes }),
+    }),
+  getPendingApprovalOrders: () => apiFetch('orders/pending-approval'),
 };
 
 // Seller API for product/gig CRUD
@@ -253,5 +350,52 @@ export const sellerApi = {
     return apiFetch(`seller/products/${id}`, {
       method: 'DELETE',
     });
+  },
+
+  // Seller order management functions
+  getSellerOrders: (params = {}) => {
+    const searchParams = new URLSearchParams({ seller_orders: true, ...params });
+    return apiFetch(`orders?${searchParams}`);
+  },
+  
+  // Seller order workflow functions
+  approveOrder: (orderId, notes = '') => 
+    apiFetch(`orders/${orderId}/seller-approve`, {
+      method: 'POST',
+      body: JSON.stringify({ notes }),
+    }),
+  startWork: (orderId, notes = '') => 
+    apiFetch(`orders/${orderId}/start-work`, {
+      method: 'POST',
+      body: JSON.stringify({ notes }),
+    }),
+  completeWork: (orderId, notes = '', deliveryDate = null) => 
+    apiFetch(`orders/${orderId}/complete-work`, {
+      method: 'POST',
+      body: JSON.stringify({ notes, delivery_date: deliveryDate }),
+    }),
+};
+
+// Delivery API functions
+export const deliveryApi = {
+  // Get orders ready for delivery
+  getReadyForDelivery: () => apiFetch('orders/ready-for-delivery'),
+  
+  // Delivery workflow functions
+  pickupOrder: (orderId, notes = '') => 
+    apiFetch(`orders/${orderId}/pickup-delivery`, {
+      method: 'POST',
+      body: JSON.stringify({ notes }),
+    }),
+  markAsDelivered: (orderId, notes = '') => 
+    apiFetch(`orders/${orderId}/mark-delivered`, {
+      method: 'POST',
+      body: JSON.stringify({ notes }),
+    }),
+  
+  // Get delivery person orders
+  getDeliveryOrders: (params = {}) => {
+    const searchParams = new URLSearchParams(params);
+    return apiFetch(`orders?delivery=true&${searchParams}`);
   },
 };

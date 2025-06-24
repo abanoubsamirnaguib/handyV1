@@ -33,6 +33,7 @@ const AdminSidebar = () => {
 
   const adminLinks = [
     { path: '/admin/dashboard', label: 'لوحة التحكم', icon: LayoutDashboard },
+    { path: '/admin/orders', label: 'الطلبات', icon: ShoppingBag },
     { path: '/admin/categories', label: 'التصنيفات', icon: Tag },
     { path: '/admin/products', label: 'المنتجات', icon: PackageOpen },
     { path: '/admin/sellers', label: 'البائعين', icon: UserCheck },
@@ -134,6 +135,7 @@ const AdminLayout = () => {
   // Admin navigation links
   const adminLinks = [
     { path: '/admin/dashboard', label: 'لوحة التحكم', icon: LayoutDashboard },
+    { path: '/admin/orders', label: 'الطلبات', icon: ShoppingBag },
     { path: '/admin/categories', label: 'التصنيفات', icon: Tag },
     { path: '/admin/products', label: 'المنتجات', icon: PackageOpen },
     { path: '/admin/sellers', label: 'البائعين', icon: UserCheck },

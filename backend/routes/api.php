@@ -48,7 +48,15 @@ Route::get('listcategories', [CategoryController::class, 'index']);
 Route::get('TopProducts', [ProductController::class, 'TopProducts']);
 Route::get('sellers/search', [SellerController::class, 'search']);
 Route::get('sellers/top', [SellerController::class, 'topSellers']);
-Route::get('orders/{id}', [OrderCrudController::class, 'show']);
+
+// Debug route for testing order creation response
+Route::get('debug/order-test', function() {
+    $testOrder = \App\Models\Order::latest()->first();
+    if ($testOrder) {
+        return new \App\Http\Resources\OrderResource($testOrder);
+    }
+    return response()->json(['message' => 'No orders found'], 404);
+});
 
 // Authentication - public routes
 Route::post('register', [AuthController::class, 'register']);
@@ -82,8 +90,32 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // Product CRUD
     Route::apiResource('products', ProductCrudController::class)->except(['show']);
     
-    // Order CRUD
-    Route::apiResource('orders', OrderCrudController::class)->except(['show']);
+    // Order CRUD - استخدام OrderCrudController المحديث
+    Route::apiResource('orders', OrderCrudController::class);
+    
+    // Order workflow routes - إضافة routes جديدة لتتبع الطلبات
+    Route::prefix('orders')->group(function () {
+        // Admin actions
+        Route::post('{id}/admin-approve', [OrderCrudController::class, 'adminApprove']);
+        Route::get('pending-approval', [OrderCrudController::class, 'getPendingApproval']);
+        
+        // Seller actions  
+        Route::post('{id}/seller-approve', [OrderCrudController::class, 'sellerApprove']);
+        Route::post('{id}/start-work', [OrderCrudController::class, 'startWork']);
+        Route::post('{id}/complete-work', [OrderCrudController::class, 'completeWork']);
+        
+        // Delivery actions
+        Route::post('{id}/pickup-delivery', [OrderCrudController::class, 'pickupByDelivery']);
+        Route::post('{id}/mark-delivered', [OrderCrudController::class, 'markAsDelivered']);
+        Route::get('ready-for-delivery', [OrderCrudController::class, 'getReadyForDelivery']);
+        
+        // Customer actions
+        Route::post('{id}/complete', [OrderCrudController::class, 'completeOrder']);
+        Route::post('{id}/upload-payment-proof', [OrderCrudController::class, 'uploadPaymentProof']);
+        
+        // General actions
+        Route::post('{id}/cancel', [OrderCrudController::class, 'cancelOrder']);
+    });
     
     // Category CRUD
     Route::apiResource('categories', CategoryCrudController::class)->except(['show']);
@@ -101,8 +133,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::put('users/{id}', [UserCrudController::class, 'update']);
     Route::patch('users/{id}', [UserCrudController::class, 'update']);
     
-    // Cart Item CRUD
+    // Cart Item CRUD - تحديث routes للعربة
     Route::apiResource('cart-items', CartItemCrudController::class)->except(['show']);
+    Route::get('cart', [CartItemCrudController::class, 'getUserCart']); // جلب عربة المستخدم
+    Route::post('cart/add', [CartItemCrudController::class, 'addToCart']); // إضافة للعربة
+    Route::delete('cart/clear', [CartItemCrudController::class, 'clearCart']); // تفريغ العربة
     
     // Wishlist Item CRUD
     Route::apiResource('wishlist-items', WishlistItemCrudController::class)->except(['show']);
@@ -158,6 +193,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
         
         Route::delete('users/{id}', [AdminController::class, 'deleteUser']);
         Route::delete('products/{id}', [AdminController::class, 'deleteProduct']);
+        
+        // Admin order management routes
+        Route::get('orders', [AdminController::class, 'getOrders']);
+        Route::get('orders/pending', [AdminController::class, 'getPendingOrders']);
+        Route::post('orders/{id}/approve', [AdminController::class, 'approveOrder']);
+        Route::post('orders/{id}/reject', [AdminController::class, 'rejectOrder']);
     });
     
     // Product CRUD for sellers (gigs/products)

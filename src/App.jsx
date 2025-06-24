@@ -19,7 +19,7 @@ import MessagePage from '@/pages/MessagePage.jsx';
 import DashboardPage from '@/pages/DashboardPage.jsx';
 import ChatPage from '@/pages/ChatPage.jsx';
 import CartPage from '@/pages/CartPage.jsx';
-import OrdersPage from '@/pages/OrdersPage.jsx';
+import CheckoutPage from '@/pages/CheckoutPage.jsx';
 import OrderDetailPage from '@/pages/OrderDetailPage.jsx';
 import LoginPage from '@/pages/LoginPage.jsx';
 import RegisterPage from '@/pages/RegisterPage.jsx';
@@ -41,6 +41,7 @@ import EditGigPage from '@/components/dashboard/EditGigPage';
 
 // Admin Sub-Pages
 import AdminCategories from '@/components/admin/AdminCategories';
+import AdminOrders from '@/components/admin/AdminOrders';
 import AdminProducts from '@/components/admin/AdminProducts';
 import AdminSellers from '@/components/admin/AdminSellers';
 import AdminUsers from '@/components/admin/AdminUsers';
@@ -101,12 +102,13 @@ function App() {
                 <ProtectedRoute>
                   <CartPage />
                 </ProtectedRoute>
-              } />              <Route path="orders" element={
+              } />
+              <Route path="checkout" element={
                 <ProtectedRoute>
-                  <OrdersPage />
+                  <CheckoutPage />
                 </ProtectedRoute>
               } />
-              <Route path="orders/:id" element={
+              <Route path="orders/:orderId" element={
                 <ProtectedRoute>
                   <OrderDetailPage />
                 </ProtectedRoute>
@@ -149,6 +151,7 @@ function App() {
               </ProtectedRoute>
             }>
               <Route path="dashboard" element={<AdminDashboardPage />} />
+              <Route path="orders" element={<AdminOrders />} />
               <Route path="categories" element={<AdminCategories />} />
               <Route path="products" element={<AdminProducts />} />
               <Route path="sellers" element={<AdminSellers />} />

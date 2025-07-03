@@ -186,7 +186,7 @@ const AdminUsers = () => {
     });
   };
 
-  const handleChatWithUser = (userData) => {
+  const handleChatWithUser = async (userData) => {
     if (userData.id === user.id) {
       toast({ 
         variant: "destructive", 
@@ -204,10 +204,14 @@ const AdminUsers = () => {
       lastSeen: userData.last_login || new Date().toISOString()
     };
     
-    // Start a conversation with the user
-    const conversationId = startConversation(chatParticipant);
-    setActiveConversation(conversationId);
-    navigate('/chat');
+    try {
+      // Start a conversation with the user
+      const conversationId = await startConversation(chatParticipant);
+      setActiveConversation(conversationId);
+      navigate('/chat');
+    } catch (error) {
+      console.error('Error starting conversation:', error);
+    }
   };
 
   const getStatusBadge = (status) => {

@@ -57,6 +57,7 @@ class User extends Authenticatable
             'is_seller' => 'boolean',
             'is_buyer' => 'boolean',
             'email_verified' => 'boolean',
+            'last_seen' => 'datetime',
         ];
     }
 

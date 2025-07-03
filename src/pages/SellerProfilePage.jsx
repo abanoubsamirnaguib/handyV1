@@ -124,7 +124,7 @@ const SellerProfilePage = () => {
     return null;
   }
   
-  const handleContactSeller = () => {
+  const handleContactSeller = async () => {
     if (!user) {
       toast({ 
         variant: "destructive", 
@@ -144,10 +144,14 @@ const SellerProfilePage = () => {
       return;
     }
     
-    // Start a conversation with the seller
-    const conversationId = startConversation(seller);
-    setActiveConversation(conversationId);
-    navigate('/chat');
+    try {
+      // Start a conversation with the seller
+      const conversationId = await startConversation(seller);
+      setActiveConversation(conversationId);
+      navigate('/chat');
+    } catch (error) {
+      console.error('Error starting conversation:', error);
+    }
   };
 
   return (

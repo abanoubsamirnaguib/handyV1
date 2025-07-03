@@ -21,10 +21,7 @@ use App\Http\Controllers\Api\SellerCrudController;
 use App\Http\Controllers\Api\UserCrudController;
 use App\Http\Controllers\Api\CartItemCrudController;
 use App\Http\Controllers\Api\WishlistItemCrudController;
-use App\Http\Controllers\Api\MessageCrudController;
-use App\Http\Controllers\Api\ConversationCrudController;
 use App\Http\Controllers\Api\NotificationCrudController;
-use App\Http\Controllers\Api\MessageAttachmentCrudController;
 use App\Http\Controllers\Api\ActivityLogCrudController;
 use App\Http\Controllers\Api\OrderHistoryCrudController;
 use App\Http\Controllers\Api\FileUploadController;
@@ -32,6 +29,10 @@ use App\Http\Controllers\Api\SiteSettingController;
 use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\Api\ExploreController;
+use App\Http\Controllers\Api\ChatController;
+
+
+Broadcast::routes(['middleware' => ['broadcast.auth']]);
 
 Route::prefix('listsellers')->group(function () {
     Route::get('{id}', [SellerController::class, 'show']);
@@ -43,6 +44,9 @@ Route::prefix('Listpoducts')->group(function () {
     Route::get('{id}/reviews', [ProductController::class, 'reviews']);
     Route::get('{id}/related', [ProductController::class, 'relatedProducts']); // Related gigs endpoint
 });
+
+// Seller services endpoint (takes user ID, finds seller internally)
+Route::get('users/{userId}/services', [ProductController::class, 'getSellerServices']);
 
 Route::get('listcategories', [CategoryController::class, 'index']);
 Route::get('TopProducts', [ProductController::class, 'TopProducts']);
@@ -142,17 +146,22 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // Wishlist Item CRUD
     Route::apiResource('wishlist-items', WishlistItemCrudController::class)->except(['show']);
     
-    // Message CRUD
-    Route::apiResource('messages', MessageCrudController::class)->except(['show']);
-    
-    // Conversation CRUD
-    Route::apiResource('conversations', ConversationCrudController::class)->except(['show']);
+    // Real-time Chat Routes (Comprehensive chat system)
+    Route::prefix('chat')->group(function () {
+        Route::get('conversations', [ChatController::class, 'getConversations']);
+        Route::get('conversations/{conversationId}/messages', [ChatController::class, 'getMessages']);
+        Route::post('messages', [ChatController::class, 'sendMessage']);
+        Route::post('conversations/start', [ChatController::class, 'startConversation']);
+        Route::post('conversations/{conversationId}/mark-read', [ChatController::class, 'markAsRead']);
+        Route::delete('conversations/{conversationId}', [ChatController::class, 'deleteConversation']);
+        Route::post('update-online-status', [ChatController::class, 'updateOnlineStatus']);
+    });
     
     // Notification CRUD
     Route::apiResource('notifications', NotificationCrudController::class)->except(['show']);
-    
-    // Message Attachment CRUD
-    Route::apiResource('message-attachments', MessageAttachmentCrudController::class)->except(['show']);
+    Route::get('notifications/unread-count', [NotificationCrudController::class, 'unreadCount'])->middleware('auth:sanctum');
+    Route::post('notifications/{id}/mark-read', [NotificationCrudController::class, 'markAsRead'])->middleware('auth:sanctum');
+    Route::post('notifications/mark-all-read', [NotificationCrudController::class, 'markAllAsRead'])->middleware('auth:sanctum');
     
     // Activity Log CRUD
     Route::apiResource('activity-logs', ActivityLogCrudController::class)->except(['show']);

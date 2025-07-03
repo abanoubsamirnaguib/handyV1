@@ -13,7 +13,7 @@ return [
     |
     | To learn more: https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS
     |
-    */    'paths' => ['api/*', 'sanctum/csrf-cookie'],
+    */    'paths' => ['api/*', 'sanctum/csrf-cookie', 'broadcasting/auth'],
 
     'allowed_methods' => ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],    'allowed_origins' => [
         'http://localhost:3000',

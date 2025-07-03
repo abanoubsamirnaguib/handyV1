@@ -133,7 +133,7 @@ const GigDetailsPage = () => {
     });
   };
 
-  const handleContactSeller = () => {
+  const handleContactSeller = async () => {
     if (!user) {
       toast({ variant: "destructive", title: "يرجى تسجيل الدخول", description: "يجب عليك تسجيل الدخول أولاً للتواصل مع البائع." });
       navigate('/login');
@@ -143,9 +143,13 @@ const GigDetailsPage = () => {
       toast({ variant: "destructive", title: "لا يمكن مراسلة نفسك", description: "لا يمكنك بدء محادثة مع نفسك." });
       return;
     }
-    const conversationId = startConversation(seller);
-    setActiveConversation(conversationId);
-    navigate('/chat');
+    try {
+      const conversationId = await startConversation(seller);
+      setActiveConversation(conversationId);
+      navigate('/chat');
+    } catch (error) {
+      console.error('Error starting conversation:', error);
+    }
   };
 
   const handleImageNavigation = (direction) => {

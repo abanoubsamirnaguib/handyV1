@@ -21,8 +21,19 @@ class Conversation extends Model
     {
         return $this->belongsTo(User::class, 'buyer_id');
     }
+    
     public function seller()
     {
         return $this->belongsTo(User::class, 'seller_id');
+    }
+    
+    public function messages()
+    {
+        return $this->hasMany(Message::class)->orderBy('message_time', 'asc');
+    }
+    
+    public function latestMessage()
+    {
+        return $this->hasOne(Message::class)->latest('message_time');
     }
 }

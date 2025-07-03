@@ -99,7 +99,7 @@ const DashboardMessages = () => {
                       <div>
                         <p className="font-semibold text-gray-800">{conv.participant.name}</p>
                         {conv.lastMessage && (
-                          <p className="text-sm text-gray-500 truncate max-w-xs">
+                          <p className="text-sm text-gray-500 truncate max-w-xs" dir="rtl">
                              {conv.lastMessage.senderId === user?.id ? 'أنت: ' : ''}
                              {conv.lastMessage.text}
                           </p>

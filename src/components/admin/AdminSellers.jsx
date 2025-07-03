@@ -275,7 +275,7 @@ const AdminSellers = () => {
     navigate(`/sellers/${sellerId}`);
   };
   
-  const handleChatWithUser = (seller) => {
+  const handleChatWithUser = async (seller) => {
     if (seller.user.id === user.id) {
       toast({ 
         variant: "destructive", 
@@ -293,10 +293,14 @@ const AdminSellers = () => {
       lastSeen: new Date().toISOString()
     };
     
-    // Start a conversation with the seller
-    const conversationId = startConversation(chatParticipant);
-    setActiveConversation(conversationId);
-    navigate('/chat');
+    try {
+      // Start a conversation with the seller
+      const conversationId = await startConversation(chatParticipant);
+      setActiveConversation(conversationId);
+      navigate('/chat');
+    } catch (error) {
+      console.error('Error starting conversation:', error);
+    }
   };
 
   const getStatusBadge = (status) => {

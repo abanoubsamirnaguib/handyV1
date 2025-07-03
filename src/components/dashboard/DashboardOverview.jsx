@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { DollarSign, ShoppingBag, Users, BarChart3, MessageCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
+import { api } from '@/lib/api';
 
 const StatCard = ({ title, value, icon, color, description, path }) => {
   const navigate = useNavigate();
@@ -38,8 +39,23 @@ const StatCard = ({ title, value, icon, color, description, path }) => {
 
 const DashboardOverview = () => {
   const { user } = useAuth();
+  const [notifications, setNotifications] = useState([]);
 
-  
+  useEffect(() => {
+    if (user) {
+      fetchNotifications();
+    }
+  }, [user]);
+
+  const fetchNotifications = async () => {
+    try {
+      const data = await api.getNotifications();
+      setNotifications(Array.isArray(data) ? data.reverse() : []);
+    } catch (e) {
+      setNotifications([]);
+    }
+  };
+
   const stats = user?.active_role === 'seller' ? [
     { 
       title: "إجمالي الأرباح", 
@@ -124,20 +140,28 @@ const DashboardOverview = () => {
         ))}
       </div>
 
+      {/* Notifications Card */}
       <div className="grid gap-6 md:grid-cols-2">
-        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2, duration: 0.5 }}>
+        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.1, duration: 0.5 }}>
           <Card className="shadow-lg">
             <CardHeader>
-              <CardTitle className="text-xl text-gray-700">الطلبات الأخيرة</CardTitle>
+              <CardTitle className="text-xl text-gray-700">الإشعارات الأخيرة</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-gray-600">هنا ستظهر قائمة بأحدث الطلبات.</p>
-              
-              <ul className="mt-4 space-y-2">
-                <li className="flex justify-between p-2 bg-gray-50 rounded-md"><span>طلب #1234</span> <span className="text-green-600">مكتمل</span></li>
-                <li className="flex justify-between p-2 bg-gray-50 rounded-md"><span>طلب #1235</span> <span className="text-blue-600">قيد التنفيذ</span></li>
-                <li className="flex justify-between p-2 bg-gray-50 rounded-md"><span>طلب #1236</span> <span className="text-burntOrange">في انتظار الدفع</span></li>
-              </ul>
+              {notifications.length === 0 ? (
+                <p className="text-gray-500 text-center py-4">لا توجد إشعارات لعرضها.</p>
+              ) : (
+                <ul className="space-y-3">
+                  {notifications.slice(0, 5).map((notif, idx) => (
+                    <li key={notif.id || idx} className={`p-3 rounded-lg ${!notif.is_read ? 'bg-gray-100 font-bold' : 'bg-gray-50'}`}>
+                      <div className="flex flex-col">
+                        <span className="text-sm">{notif.message}</span>
+                        <span className="text-xs text-gray-400 mt-1">{notif.created_at ? new Date(notif.created_at).toLocaleString('ar-EG') : ''}</span>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </CardContent>
           </Card>
         </motion.div>

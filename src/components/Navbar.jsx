@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Menu, X, ShoppingCart, Bell, Search, User, Shield } from 'lucide-react';
@@ -15,14 +15,65 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { api } from '@/lib/api';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, logout } = useAuth();
   const { cart } = useCart();
   const navigate = useNavigate();
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [notifDropdownOpen, setNotifDropdownOpen] = useState(false);
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+
+  useEffect(() => {
+    if (user) {
+      fetchNotifications();
+      fetchUnreadCount();
+    }
+  }, [user]);
+
+  const fetchNotifications = async () => {
+    try {
+      const data = await api.getNotifications();
+      setNotifications(Array.isArray(data) ? data.reverse() : []);
+    } catch (e) {
+      setNotifications([]);
+    }
+  };
+
+  const fetchUnreadCount = async () => {
+    try {
+      const data = await api.getUnreadNotificationCount();
+      setUnreadCount(data.unread_count || 0);
+    } catch (e) {
+      setUnreadCount(0);
+    }
+  };
+
+  const handleNotifDropdownOpen = async () => {
+    setNotifDropdownOpen(true);
+    // Mark all as read in backend
+    try {
+      await api.markAllNotificationsAsRead();
+      setUnreadCount(0);
+      // Update local notifications state
+      setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+    } catch {}
+  };
+
+  const handleNotificationClick = async (notif) => {
+    if (!notif.is_read) {
+      try {
+        await api.markNotificationAsRead(notif.id);
+        setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, is_read: true } : n));
+        setUnreadCount(c => Math.max(0, c - 1));
+      } catch {}
+    }
+    if (notif.link) navigate(notif.link);
+  };
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -99,9 +150,34 @@ const Navbar = () => {
                     </span>
                   )}
                 </Button>
-                <Button variant="ghost" size="icon" className="text-olivePrimary hover:text-burntOrange hover:bg-lightGreen">
-                  <Bell className="h-5 w-5" />
-                </Button>
+                <DropdownMenu onOpenChange={open => { if (open) handleNotifDropdownOpen(); }}>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="relative text-olivePrimary hover:text-burntOrange hover:bg-lightGreen">
+                      <Bell className="h-5 w-5" />
+                      {unreadCount > 0 && (
+                        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                          {unreadCount}
+                        </span>
+                      )}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-80 max-h-96 overflow-y-auto">
+                    <DropdownMenuLabel className="text-darkOlive">الإشعارات</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    {notifications.length === 0 ? (
+                      <div className="p-4 text-center text-gray-500">لا توجد إشعارات</div>
+                    ) : (
+                      notifications.slice(0, 10).map((notif, idx) => (
+                        <DropdownMenuItem key={notif.id || idx} onClick={() => handleNotificationClick(notif)} className={!notif.is_read ? 'bg-gray-100 font-bold' : ''}>
+                          <div className="flex flex-col w-full">
+                            <span className="text-sm">{notif.message}</span>
+                            <span className="text-xs text-gray-400 mt-1">{notif.created_at ? new Date(notif.created_at).toLocaleString('ar-EG') : ''}</span>
+                          </div>
+                        </DropdownMenuItem>
+                      ))
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="p-0 rounded-full">

@@ -355,7 +355,7 @@ const AdminMessages = () => {
                         const sender = isSentByParticipant ? selectedConversation.participant : selectedConversation.otherParticipant;
                         
                         return (
-                          <div key={index} className={`flex ${isSentByParticipant ? 'justify-start' : 'justify-end'}`}>
+                          <div key={index} className={`flex ${isSentByParticipant ? 'justify-end' : 'justify-start'}`}>
                             <div className={`flex items-start max-w-[70%] ${isSentByParticipant ? 'flex-row' : 'flex-row-reverse'}`}>
                               <Avatar className={`h-8 w-8 ${isSentByParticipant ? 'ml-2' : 'mr-2'}`}>
                                 <AvatarImage src={sender?.avatar} />
@@ -363,7 +363,7 @@ const AdminMessages = () => {
                               </Avatar>
                               <div>
                                 <div className={`px-3 py-2 rounded-lg ${isSentByParticipant ? 'bg-blue-100 text-blue-900' : 'bg-gray-200 text-gray-900'}`}>
-                                  <p className="text-sm">{msg.text}</p>
+                                  <p className="text-sm" dir="rtl">{msg.text}</p>
                                 </div>
                                 <p className={`text-xs text-gray-500 mt-1 ${isSentByParticipant ? 'text-right' : 'text-left'}`}>
                                   {new Date(msg.timestamp).toLocaleTimeString('ar-EG', {hour: '2-digit', minute: '2-digit'})}

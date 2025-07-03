@@ -58,6 +58,10 @@ return new class extends Migration
         });
 
         Schema::table('order_history', function (Blueprint $table) {
+            // تحديث الحالات لتتطابق مع المتطلبات الجديدة
+            $table->dropColumn('status');
+        });
+        Schema::table('order_history', function (Blueprint $table) {
             $table->enum('status', [
                 'pending',            // قيد الانتظار (بعد إنشاء الطلب)
                 'admin_approved',     // موافقة السوبر ادمن

@@ -6,16 +6,40 @@ use App\Models\Product;
 use Illuminate\Http\Request;
 use App\Http\Resources\ProductResource;
 use App\Http\Resources\ReviewResource;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
 
 class ProductController extends Controller
 {
+    /**
+     * Get seller services (products with type 'gig')
+     */
+    public function getSellerServices($userId)
+    {
+        // First find the seller record for this user
+        $seller = \App\Models\Seller::where('user_id', $userId)->first();
+        
+        if (!$seller) {
+            return response()->json([]);
+        }
+        
+        // Get active gig services for this seller
+        $services = Product::where('seller_id', $seller->id)
+            ->where('type', 'gig')
+            ->where('status', 'active')
+            ->with(['category', 'images'])
+            ->get();
+
+        return ProductResource::collection($services);
+    }
+
     /**
      * Get all products for the authenticated seller.
      */
     public function index(Request $request)
     {
         $query = Product::with(['images', 'tags', 'category'])
-            ->where('seller_id', auth()->id());
+            ->where('seller_id', Auth::id());
         
         // Optional filtering
         if ($request->filled('status')) {
@@ -100,7 +124,7 @@ class ProductController extends Controller
             'images.*' => 'image|max:2048',
         ]);
         $product = new Product($validated);
-        $product->seller_id = auth()->id();
+        $product->seller_id = Auth::id();
         $product->status = 'pending_review';
         $product->save();
         // Save tags
@@ -125,7 +149,7 @@ class ProductController extends Controller
     public function update(Request $request, $id)
     {
         $product = Product::findOrFail($id);
-        if ($product->seller_id !== auth()->id()) {
+        if ($product->seller_id !== Auth::id()) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
         $validated = $request->validate([
@@ -168,16 +192,16 @@ class ProductController extends Controller
                 }
                 }
                 if (!$found) {
-                if (\Storage::disk('public')->exists($image->image_url)) {
-                    \Storage::disk('public')->delete($image->image_url);
+                if (Storage::disk('public')->exists($image->image_url)) {
+                    Storage::disk('public')->delete($image->image_url);
                 }
                 $image->delete();
                 }
             }
             } else if ($hasNewImages) {
             foreach ($product->images as $image) {
-                if ($image->image_url && \Storage::disk('public')->exists($image->image_url)) {
-                \Storage::disk('public')->delete($image->image_url);
+                if ($image->image_url && Storage::disk('public')->exists($image->image_url)) {
+                Storage::disk('public')->delete($image->image_url);
                 }
             }
             $product->images()->delete();
@@ -198,20 +222,20 @@ class ProductController extends Controller
     public function destroy($id)
     {
         $product = Product::findOrFail($id);
-        if ($product->seller_id !== auth()->id()) {
+        if ($product->seller_id !== Auth::id()) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
         // Delete images from storage (stored in public/products/{product_id})
         foreach ($product->images as $image) {
-            if ($image->image_url && \Storage::disk('public')->exists($image->image_url)) {
-            \Storage::disk('public')->delete($image->image_url);
+            if ($image->image_url && Storage::disk('public')->exists($image->image_url)) {
+            Storage::disk('public')->delete($image->image_url);
             }
         }
         // Optionally, remove the entire product directory if empty
         $productDir = 'products/' . $product->id;
-        if (\Storage::disk('public')->exists($productDir) && empty(\Storage::disk('public')->files($productDir))) {
-            \Storage::disk('public')->deleteDirectory($productDir);
+        if (Storage::disk('public')->exists($productDir) && empty(Storage::disk('public')->files($productDir))) {
+            Storage::disk('public')->deleteDirectory($productDir);
         }
 
         $product->images()->delete();

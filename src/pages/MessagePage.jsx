@@ -22,7 +22,51 @@ const MessagePage = () => {  const { id } = useParams();
   const messageEndRef = useRef(null);
 
   // For local UI state
-  const [currentMessage, setCurrentMessage] = useState('');  useEffect(() => {
+  const [currentMessage, setCurrentMessage] = useState('');
+  
+  // Function to check if a user is online based on last_seen timestamp
+  const isUserOnline = (lastSeen) => {
+    if (!lastSeen) {
+      return false;
+    }
+    
+    const lastSeenDate = new Date(lastSeen);
+    const now = new Date();
+    
+    // Consider user online if they were active in the last 5 minutes (increased from 2)
+    const diffInMinutes = (now - lastSeenDate) / (1000 * 60);
+    return diffInMinutes < 5;
+  };
+  
+  // Format last seen time
+  const formatLastSeen = (lastSeen) => {
+    if (!lastSeen) return 'غير متصل';
+    
+    const lastSeenDate = new Date(lastSeen);
+    const now = new Date();
+    
+    // If online in the last 5 minutes (matching isUserOnline)
+    if (isUserOnline(lastSeen)) {
+      return 'متصل الآن';
+    }
+    
+    // If today
+    if (lastSeenDate.toDateString() === now.toDateString()) {
+      return `آخر ظهور اليوم ${lastSeenDate.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' })}`;
+    }
+    
+    // If yesterday
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    if (lastSeenDate.toDateString() === yesterday.toDateString()) {
+      return `آخر ظهور أمس ${lastSeenDate.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' })}`;
+    }
+    
+    // Otherwise show date
+    return `آخر ظهور ${lastSeenDate.toLocaleDateString('ar-SA')}`;
+  };
+
+  useEffect(() => {
     // Redirect if not logged in
     if (!user) {
       navigate('/login', { state: { from: `/message/${id}` } });
@@ -110,12 +154,17 @@ const MessagePage = () => {  const { id } = useParams();
         </div>        <Card className="border-lightBeige/50 mb-6">
           <CardHeader className="bg-lightBeige/20 pb-3">
             <div className="flex items-center">
-              <div className="h-10 w-10 rounded-full bg-olivePrimary flex items-center justify-center text-white font-bold ml-3">
+              <div className="h-10 w-10 rounded-full bg-olivePrimary flex items-center justify-center text-white font-bold ml-3 relative">
                 {seller.name.charAt(0)}
+                {isUserOnline(seller.last_seen) && (
+                  <span className="absolute bottom-0 right-0 h-3 w-3 bg-green-500 rounded-full border-2 border-white"></span>
+                )}
               </div>
               <div>
                 <CardTitle>{seller.name}</CardTitle>
-                <p className="text-sm text-gray-500">{seller.location}</p>
+                <p className="text-sm text-gray-500">
+                  {formatLastSeen(seller.last_seen)}
+                </p>
               </div>
             </div>
           </CardHeader>          <CardContent className="p-0">
@@ -134,7 +183,7 @@ const MessagePage = () => {  const { id } = useParams();
                   {messages[activeConversation].map((msg) => (
                     <div 
                       key={msg.id} 
-                      className={`flex ${msg.senderId === user.id ? 'justify-end' : 'justify-start'}`}
+                      className={`flex ${msg.senderId === user.id ? 'justify-start' : 'justify-end'}`}
                     >
                       <div 
                         className={`max-w-[70%] p-3 rounded-lg ${
@@ -143,7 +192,7 @@ const MessagePage = () => {  const { id } = useParams();
                             : 'bg-gray-100 text-gray-800'
                         }`}
                       >
-                        <p>{msg.text}</p>
+                        <p dir="rtl">{msg.text}</p>
                         <p className={`text-xs mt-1 ${
                           msg.senderId === user.id ? 'text-lightBeige' : 'text-gray-500'
                         }`}>

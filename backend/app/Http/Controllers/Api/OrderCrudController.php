@@ -11,6 +11,7 @@ use App\Http\Requests\OrderRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use App\Models\Notification;
 
 class OrderCrudController extends Controller
 {
@@ -60,94 +61,167 @@ class OrderCrudController extends Controller
             $request->merge(['cart_items' => $cartItems]);
         }
         
-        $validated = $request->validate([
-            'cart_items' => 'required|array',
-            'cart_items.*.product_id' => 'required|exists:products,id',
-            'cart_items.*.quantity' => 'required|integer|min:1',
-            'customer_name' => 'required|string|max:100',
-            'customer_phone' => 'required|string|max:20',
-            'delivery_address' => 'required|string',
-            'payment_method' => 'required|in:cash_on_delivery,bank_transfer,credit_card,vodafone_cash,instapay',
-            'requirements' => 'nullable|string',
-            'payment_proof' => 'nullable|image|max:2048', // صورة إثبات الدفع
-        ]);
+        // Check if this is a service order
+        $isServiceOrder = $request->has('is_service_order') && $request->boolean('is_service_order');
+        
+        if ($isServiceOrder) {
+            $validated = $request->validate([
+                'service_id' => 'required|exists:products,id',
+                'seller_id' => 'required|exists:sellers,id',
+                'customer_name' => 'required|string|max:100',
+                'customer_phone' => 'required|string|max:20',
+                'delivery_address' => 'required|string',
+                'service_requirements' => 'nullable|string',
+                'deposit_amount' => 'required|numeric|min:1',
+                'payment_method' => 'required|in:cash_on_delivery,bank_transfer,credit_card,vodafone_cash,instapay',
+                'deposit_image' => 'required|image|max:2048',
+                'total_price' => 'required|numeric|min:1',
+            ]);
+        } else {
+            $validated = $request->validate([
+                'cart_items' => 'required|array',
+                'cart_items.*.product_id' => 'required|exists:products,id',
+                'cart_items.*.quantity' => 'required|integer|min:1',
+                'customer_name' => 'required|string|max:100',
+                'customer_phone' => 'required|string|max:20',
+                'delivery_address' => 'required|string',
+                'payment_method' => 'required|in:cash_on_delivery,bank_transfer,credit_card,vodafone_cash,instapay',
+                'requirements' => 'nullable|string',
+                'payment_proof' => 'nullable|image|max:2048', // صورة إثبات الدفع
+            ]);
+        }
 
         try {
             DB::beginTransaction();
             
             \Log::info('Starting order creation process');
             \Log::info('Validated data: ', $validated);
+            \Log::info('Is service order: ', [$isServiceOrder]);
             
-            // حساب إجمالي السعر
-            $totalPrice = 0;
-            $sellerId = null;
-            
-            foreach ($validated['cart_items'] as $item) {
-                \Log::info('Processing cart item: ', $item);
+            if ($isServiceOrder) {
+                // Handle service order
+                $service = \App\Models\Product::findOrFail($validated['service_id']);
                 
-                $product = \App\Models\Product::findOrFail($item['product_id']);
-                \Log::info('Found product: ', ['id' => $product->id, 'title' => $product->title, 'seller_id' => $product->seller_id]);
-                
-                $totalPrice += $product->price * $item['quantity'];
-                
-                // تأكد من أن جميع المنتجات من نفس البائع
-                if (!$sellerId) {
-                    $sellerId = $product->seller_id;
-                    \Log::info('Set seller ID: ' . $sellerId);
-                } elseif ($sellerId !== $product->seller_id) {
-                    throw new \Exception('لا يمكن أن تحتوي الطلبية على منتجات من بائعين مختلفين');
+                // Verify service belongs to seller
+                if ($service->seller_id != $validated['seller_id']) {
+                    throw new \Exception('الخدمة لا تنتمي لهذا البائع');
                 }
+                
+                // Upload deposit image
+                $depositImagePath = null;
+                if ($request->hasFile('deposit_image')) {
+                    $depositImagePath = $request->file('deposit_image')->store('deposit_images', 'public');
+                }
+                
+                // Create service order
+                $order = Order::create([
+                    'user_id' => Auth::id(),
+                    'seller_id' => $validated['seller_id'],
+                    'status' => 'pending',
+                    'total_price' => $validated['total_price'],
+                    'order_date' => now(),
+                    'customer_name' => $validated['customer_name'],
+                    'customer_phone' => $validated['customer_phone'],
+                    'delivery_address' => $validated['delivery_address'],
+                    'payment_method' => $validated['payment_method'],
+                    'payment_status' => 'partial', // partial because deposit is paid
+                    'requires_deposit' => true,
+                    'deposit_amount' => $validated['deposit_amount'],
+                    'deposit_status' => 'paid',
+                    'deposit_image' => $depositImagePath,
+                    'is_service_order' => true,
+                    'service_requirements' => $validated['service_requirements'] ?? null,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+                
+                // Add service as order item
+                OrderItem::create([
+                    'order_id' => $order->id,
+                    'product_id' => $service->id,
+                    'quantity' => 1,
+                    'price' => $service->price,
+                    'subtotal' => $service->price,
+                    'created_at' => now(),
+                ]);
+                
+                // Add order history
+                $order->addToHistory('pending', Auth::id(), 'service_order_created', 'تم إنشاء طلب خدمة مع دفع العربون');
+                
+            } else {
+                // Handle regular product order
+                // حساب إجمالي السعر
+                $totalPrice = 0;
+                $sellerId = null;
+                
+                foreach ($validated['cart_items'] as $item) {
+                    \Log::info('Processing cart item: ', $item);
+                    
+                    $product = \App\Models\Product::findOrFail($item['product_id']);
+                    \Log::info('Found product: ', ['id' => $product->id, 'title' => $product->title, 'seller_id' => $product->seller_id]);
+                    
+                    $totalPrice += $product->price * $item['quantity'];
+                    
+                    // تأكد من أن جميع المنتجات من نفس البائع
+                    if (!$sellerId) {
+                        $sellerId = $product->seller_id;
+                        \Log::info('Set seller ID: ' . $sellerId);
+                    } elseif ($sellerId !== $product->seller_id) {
+                        throw new \Exception('لا يمكن أن تحتوي الطلبية على منتجات من بائعين مختلفين');
+                    }
+                }
+                
+                \Log::info('Total price calculated: ' . $totalPrice);
+                \Log::info('Seller ID: ' . $sellerId);
+                
+                // رفع صورة إثبات الدفع إذا وجدت
+                $paymentProofPath = null;
+                if ($request->hasFile('payment_proof')) {
+                    $paymentProofPath = $request->file('payment_proof')->store('payment_proofs', 'public');
+                }
+                
+                // إنشاء الطلب
+                $order = Order::create([
+                    'user_id' => Auth::id(),
+                    'seller_id' => $sellerId,
+                    'status' => 'pending',
+                    'total_price' => $totalPrice,
+                    'order_date' => now(),
+                    'customer_name' => $validated['customer_name'],
+                    'customer_phone' => $validated['customer_phone'],
+                    'delivery_address' => $validated['delivery_address'],
+                    'payment_method' => $validated['payment_method'],
+                    'payment_status' => 'pending',
+                    'requirements' => $validated['requirements'] ?? null,
+                    'payment_proof' => $paymentProofPath,
+                    'is_service_order' => false,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+                
+                // إضافة عناصر الطلب
+                foreach ($validated['cart_items'] as $item) {
+                    $product = \App\Models\Product::findOrFail($item['product_id']);
+                    
+                    OrderItem::create([
+                        'order_id' => $order->id,
+                        'product_id' => $item['product_id'],
+                        'quantity' => $item['quantity'],
+                        'price' => $product->price,
+                        'subtotal' => $product->price * $item['quantity'],
+                        'created_at' => now(),
+                    ]);
+                }
+                
+                // حذف عناصر السلة
+                CartItem::where('user_id', Auth::id())->delete();
+                
+                // إضافة سجل في تاريخ الطلب
+                $order->addToHistory('pending', Auth::id(), 'order_created', 'تم إنشاء الطلب');
             }
-            
-            \Log::info('Total price calculated: ' . $totalPrice);
-            \Log::info('Seller ID: ' . $sellerId);
-            
-            // رفع صورة إثبات الدفع إذا وجدت
-            $paymentProofPath = null;
-            if ($request->hasFile('payment_proof')) {
-                $paymentProofPath = $request->file('payment_proof')->store('payment_proofs', 'public');
-            }
-            
-            // إنشاء الطلب
-            $order = Order::create([
-                'user_id' => Auth::id(),
-                'seller_id' => $sellerId,
-                'status' => 'pending',
-                'total_price' => $totalPrice,
-                'order_date' => now(),
-                'customer_name' => $validated['customer_name'],
-                'customer_phone' => $validated['customer_phone'],
-                'delivery_address' => $validated['delivery_address'],
-                'payment_method' => $validated['payment_method'],
-                'payment_status' => 'pending',
-                'requirements' => $validated['requirements'] ?? null,
-                'payment_proof' => $paymentProofPath,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
             
             // تسجيل ID الطلب للتحقق
             \Log::info('Order created with ID: ' . $order->id);
-            
-            // إضافة عناصر الطلب
-            foreach ($validated['cart_items'] as $item) {
-                $product = \App\Models\Product::findOrFail($item['product_id']);
-                
-                OrderItem::create([
-                    'order_id' => $order->id,
-                    'product_id' => $item['product_id'],
-                    'quantity' => $item['quantity'],
-                    'price' => $product->price,
-                    'subtotal' => $product->price * $item['quantity'],
-                    'created_at' => now(),
-                ]);
-            }
-            
-            // إضافة سجل في تاريخ الطلب
-            $order->addToHistory('pending', Auth::id(), 'order_created', 'تم إنشاء الطلب');
-            
-            // حذف عناصر السلة
-            CartItem::where('user_id', Auth::id())->delete();
             
             DB::commit();
             
@@ -155,6 +229,26 @@ class OrderCrudController extends Controller
             
             // تسجيل البيانات المرجعة للتحقق
             \Log::info('Returning order data: ', $order->toArray());
+            
+            // Create notifications for buyer and seller
+            Notification::create([
+                'user_id' => $order->user_id,
+                'notification_type' => 'order_created',
+                'message' => 'تم إنشاء طلب جديد بنجاح. رقم الطلب: ' . $order->id,
+                'is_read' => false,
+                'link' => '/orders/' . $order->id,
+                'created_at' => now(),
+            ]);
+            if ($order->seller && $order->seller->user_id) {
+                Notification::create([
+                    'user_id' => $order->seller->user_id,
+                    'notification_type' => 'order_created',
+                    'message' => 'تم استلام طلب جديد من عميل. رقم الطلب: ' . $order->id,
+                    'is_read' => false,
+                    'link' => '/orders/' . $order->id,
+                    'created_at' => now(),
+                ]);
+            }
             
             return new OrderResource($order);
             
@@ -244,6 +338,25 @@ class OrderCrudController extends Controller
         
         try {
             $order->approveByAdmin(Auth::id(), $request->notes);
+            // Notify buyer and seller
+            Notification::create([
+                'user_id' => $order->user_id,
+                'notification_type' => 'order_status_changed',
+                'message' => 'تمت موافقة الإدارة على طلبك رقم: ' . $order->id,
+                'is_read' => false,
+                'link' => '/orders/' . $order->id,
+                'created_at' => now(),
+            ]);
+            if ($order->seller && $order->seller->user_id) {
+                Notification::create([
+                    'user_id' => $order->seller->user_id,
+                    'notification_type' => 'order_status_changed',
+                    'message' => 'تمت موافقة الإدارة على الطلب رقم: ' . $order->id,
+                    'is_read' => false,
+                    'link' => '/orders/' . $order->id,
+                    'created_at' => now(),
+                ]);
+            }
             return response()->json([
                 'message' => 'تمت الموافقة على الطلب بنجاح',
                 'order' => new OrderResource($order->fresh())
@@ -269,6 +382,25 @@ class OrderCrudController extends Controller
         
         try {
             $order->approveBySeller($request->notes);
+            // Notify buyer and seller
+            Notification::create([
+                'user_id' => $order->user_id,
+                'notification_type' => 'order_status_changed',
+                'message' => 'تمت موافقة البائع على طلبك رقم: ' . $order->id,
+                'is_read' => false,
+                'link' => '/orders/' . $order->id,
+                'created_at' => now(),
+            ]);
+            if ($order->seller && $order->seller->user_id) {
+                Notification::create([
+                    'user_id' => $order->seller->user_id,
+                    'notification_type' => 'order_status_changed',
+                    'message' => 'لقد وافقت على الطلب رقم: ' . $order->id,
+                    'is_read' => false,
+                    'link' => '/orders/' . $order->id,
+                    'created_at' => now(),
+                ]);
+            }
             return response()->json([
                 'message' => 'تمت الموافقة على الطلب بنجاح',
                 'order' => new OrderResource($order->fresh())
@@ -290,6 +422,25 @@ class OrderCrudController extends Controller
         
         try {
             $order->startWork();
+            // Notify buyer and seller
+            Notification::create([
+                'user_id' => $order->user_id,
+                'notification_type' => 'order_status_changed',
+                'message' => 'بدأ البائع العمل على طلبك رقم: ' . $order->id,
+                'is_read' => false,
+                'link' => '/orders/' . $order->id,
+                'created_at' => now(),
+            ]);
+            if ($order->seller && $order->seller->user_id) {
+                Notification::create([
+                    'user_id' => $order->seller->user_id,
+                    'notification_type' => 'order_status_changed',
+                    'message' => 'لقد بدأت العمل على الطلب رقم: ' . $order->id,
+                    'is_read' => false,
+                    'link' => '/orders/' . $order->id,
+                    'created_at' => now(),
+                ]);
+            }
             return response()->json([
                 'message' => 'تم بدء العمل على الطلب بنجاح',
                 'order' => new OrderResource($order->fresh())
@@ -319,6 +470,25 @@ class OrderCrudController extends Controller
                 now()->addDays(1); // افتراضي: يوم واحد
                 
             $order->completeWork($deliveryTime);
+            // Notify buyer and seller
+            Notification::create([
+                'user_id' => $order->user_id,
+                'notification_type' => 'order_status_changed',
+                'message' => 'تم إكمال العمل على طلبك رقم: ' . $order->id . ' وجاري جدولة التوصيل.',
+                'is_read' => false,
+                'link' => '/orders/' . $order->id,
+                'created_at' => now(),
+            ]);
+            if ($order->seller && $order->seller->user_id) {
+                Notification::create([
+                    'user_id' => $order->seller->user_id,
+                    'notification_type' => 'order_status_changed',
+                    'message' => 'تم إكمال العمل على الطلب رقم: ' . $order->id . ' وجاري جدولة التوصيل.',
+                    'is_read' => false,
+                    'link' => '/orders/' . $order->id,
+                    'created_at' => now(),
+                ]);
+            }
             return response()->json([
                 'message' => 'تم إكمال العمل وجدولة التوصيل بنجاح',
                 'order' => new OrderResource($order->fresh())
@@ -423,11 +593,27 @@ class OrderCrudController extends Controller
         // Seller and Admin can cancel anytime (based on current logic)
 
         try {
-            $order->cancel(Auth::id(), $request->reason);
-            return response()->json([
-                'message' => 'تم إلغاء الطلب بنجاح',
-                'order' => new OrderResource($order->fresh())
+            $order->cancel(Auth::id(), $request->input('reason'));
+            // Notify buyer and seller
+            Notification::create([
+                'user_id' => $order->user_id,
+                'notification_type' => 'order_status_changed',
+                'message' => 'تم إلغاء طلبك رقم: ' . $order->id,
+                'is_read' => false,
+                'link' => '/orders/' . $order->id,
+                'created_at' => now(),
             ]);
+            if ($order->seller && $order->seller->user_id) {
+                Notification::create([
+                    'user_id' => $order->seller->user_id,
+                    'notification_type' => 'order_status_changed',
+                    'message' => 'تم إلغاء الطلب رقم: ' . $order->id,
+                    'is_read' => false,
+                    'link' => '/orders/' . $order->id,
+                    'created_at' => now(),
+                ]);
+            }
+            return response()->json(['message' => 'تم إلغاء الطلب بنجاح' , 'order' => new OrderResource($order->fresh())]);
         } catch (\Exception $e) {
             return response()->json(['message' => $e->getMessage()], 400);
         }

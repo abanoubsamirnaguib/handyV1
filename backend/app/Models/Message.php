@@ -19,16 +19,25 @@ class Message extends Model
     ];
     public $timestamps = false;
 
+    protected $with = ['attachments'];
+
     public function conversation()
     {
         return $this->belongsTo(Conversation::class);
     }
+    
     public function sender()
     {
         return $this->belongsTo(User::class, 'sender_id');
     }
+    
     public function recipient()
     {
         return $this->belongsTo(User::class, 'recipient_id');
+    }
+    
+    public function attachments()
+    {
+        return $this->hasMany(MessageAttachment::class);
     }
 }

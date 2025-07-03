@@ -15,6 +15,35 @@ export const AuthProvider = ({ children }) => {
 
   // Helper to get token from localStorage
   const getToken = () => localStorage.getItem('token');
+  
+  // Update online status periodically
+  useEffect(() => {
+    if (!user) return;
+    
+    // Update online status immediately
+    api.updateOnlineStatus().catch(err => console.error('Failed to update online status:', err));
+    
+    // Set up interval to update online status every 15 seconds (reduced from 30)
+    const intervalId = setInterval(() => {
+      api.updateOnlineStatus().catch(err => console.error('Failed to update online status:', err));
+    }, 15000); // 15 seconds
+    
+    // Set up visibility change listener to update status when tab becomes visible
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        api.updateOnlineStatus().catch(err => console.error('Failed to update online status:', err));
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    // Clean up
+    return () => {
+      clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [user]);
+  
   // Fetch user info if token exists
   useEffect(() => {
     const token = getToken();

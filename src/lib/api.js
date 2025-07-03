@@ -184,6 +184,48 @@ export const api = {
     }),
   removeFromWishlist: (wishlistItemId) => 
     apiFetch(`wishlist-items/${wishlistItemId}`, { method: 'DELETE' }),
+
+  // Chat API functions
+  getConversations: () => apiFetch('chat/conversations'),
+  getMessages: (conversationId) => apiFetch(`chat/conversations/${conversationId}/messages`),
+  sendMessage: (messageData) => 
+    apiFetch('chat/messages', {
+      method: 'POST',
+      body: JSON.stringify(messageData),
+    }),
+  sendMessageWithFiles: (formData) => 
+    apiFormFetch('chat/messages', {
+      method: 'POST',
+      body: formData,
+    }),
+  updateOnlineStatus: () => 
+    apiFetch('chat/update-online-status', {
+      method: 'POST',
+    }),
+
+  // Service order API functions
+  getSellerServices: (userId) => apiFetch(`users/${userId}/services`),
+  createServiceOrder: (formData) => 
+    apiFormFetch('orders', {
+      method: 'POST',
+      body: formData,
+    }),
+  startConversation: (recipientId) => 
+    apiFetch('chat/conversations/start', {
+      method: 'POST',
+      body: JSON.stringify({ recipient_id: recipientId }),
+    }),
+  markAsRead: (conversationId) => 
+    apiFetch(`chat/conversations/${conversationId}/mark-read`, { method: 'POST' }),
+  deleteConversation: (conversationId) => 
+    apiFetch(`chat/conversations/${conversationId}`, { method: 'DELETE' }),
+
+
+  // Notification API functions
+  getNotifications: () => apiFetch('notifications'),
+  getUnreadNotificationCount: () => apiFetch('notifications/unread-count'),
+  markNotificationAsRead: (id) => apiFetch(`notifications/${id}/mark-read`, { method: 'POST' }),
+  markAllNotificationsAsRead: () => apiFetch('notifications/mark-all-read', { method: 'POST' }),
 };
 
 // Admin API functions
@@ -332,14 +374,8 @@ export const sellerApi = {
         formData.append(key, value);
       }
     });
-      // Add _method=PUT for Laravel to handle it as PUT request
+    // Add _method=PUT for Laravel to handle it as PUT request
     formData.append('_method', 'PUT');
-    
-    // Debug FormData contents (can't directly console log FormData)
-    console.log('FormData keys:');
-    for (let pair of formData.entries()) {
-      console.log(`${pair[0]}: ${pair[1] instanceof File ? 'File object' : pair[1]}`);
-    }
     
     return apiFormFetch(`seller/products/${id}`, {
       method: 'POST', // Using POST but Laravel will treat it as PUT due to _method

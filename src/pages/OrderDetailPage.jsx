@@ -822,24 +822,69 @@ const OrderDetailPage = () => {
                           {order.payment_status === 'paid' ? 'مدفوع ✓' : 'غير مدفوع ⏳'}
                         </Badge>
                       </div>
+                      
+                      {/* Service Order Deposit Information */}
+                      {order.is_service_order && order.requires_deposit && (
+                        <>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">نوع الطلب:</span>
+                            <Badge className="bg-blue-100 text-blue-800 border-blue-200">
+                              طلب خدمة
+                            </Badge>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">قيمة العربون:</span>
+                            <span className="font-semibold text-blue-600">{order.deposit_amount} جنيه</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">حالة العربون:</span>
+                            <Badge 
+                              variant={order.deposit_status === 'paid' ? 'default' : 'secondary'}
+                              className={order.deposit_status === 'paid' 
+                                ? 'bg-green-100 text-green-800 border-green-200' 
+                                : 'bg-amber-100 text-amber-800 border-amber-200'
+                              }
+                            >
+                              {order.deposit_status === 'paid' ? 'مدفوع ✓' : 'غير مدفوع ⏳'}
+                            </Badge>
+                          </div>
+                        </>
+                      )}
                     </div>
-                    {order.payment_proof && (
-                      <div>
-                        <span className="text-sm text-gray-600 mb-2 block">إيصال الدفع:</span>
-                        <img 
-                          src={order.payment_proof} 
-                          alt="إيصال الدفع" 
-                          className="max-w-full h-auto rounded-lg shadow-md cursor-pointer hover:shadow-lg transition-shadow duration-300"
-                          onClick={() => window.open(order.payment_proof, '_blank')}
-                        />
-                      </div>
-                    )}
+                    
+                    <div className="space-y-4">
+                      {/* Service Order Deposit Image */}
+                      {order.is_service_order && order.deposit_image && (
+                        <div>
+                          <span className="text-sm text-gray-600 mb-2 block">صورة إيصال العربون:</span>
+                          <img 
+                            src={order.deposit_image} 
+                            alt="إيصال العربون" 
+                            className="max-w-full h-auto rounded-lg shadow-md cursor-pointer hover:shadow-lg transition-shadow duration-300"
+                            onClick={() => window.open(order.deposit_image, '_blank')}
+                          />
+                        </div>
+                      )}
+                      
+                      {/* Regular Payment Proof */}
+                      {order.payment_proof && (
+                        <div>
+                          <span className="text-sm text-gray-600 mb-2 block">إيصال الدفع:</span>
+                          <img 
+                            src={order.payment_proof} 
+                            alt="إيصال الدفع" 
+                            className="max-w-full h-auto rounded-lg shadow-md cursor-pointer hover:shadow-lg transition-shadow duration-300"
+                            onClick={() => window.open(order.payment_proof, '_blank')}
+                          />
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </CardContent>
               </Card>
 
               {/* Requirements and Notes */}
-              {(order.requirements || order.notes) && (
+              {(order.requirements || order.service_requirements || order.notes) && (
                 <Card className="border-0 shadow-lg">
                   <CardHeader className="bg-olivePrimary text-white">
                     <CardTitle className="flex items-center text-xl">
@@ -848,6 +893,14 @@ const OrderDetailPage = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="pt-6">
+                    {order.is_service_order && order.service_requirements && (
+                      <div className="mb-4">
+                        <h4 className="font-semibold text-gray-800 mb-2">متطلبات الخدمة:</h4>
+                        <p className="text-gray-600 bg-blue-50 p-4 rounded-lg border-r-4 border-blue-500">
+                          {order.service_requirements}
+                        </p>
+                      </div>
+                    )}
                     {order.requirements && (
                       <div className="mb-4">
                         <h4 className="font-semibold text-gray-800 mb-2">متطلبات خاصة:</h4>
@@ -859,7 +912,7 @@ const OrderDetailPage = () => {
                     {order.notes && (
                       <div>
                         <h4 className="font-semibold text-gray-800 mb-2">ملاحظات إضافية:</h4>
-                        <p className="text-gray-600 bg-blue-50 p-4 rounded-lg border-r-4 border-blue-500">
+                        <p className="text-gray-600 bg-green-50 p-4 rounded-lg border-r-4 border-green-500">
                           {order.notes}
                         </p>
                       </div>

@@ -295,15 +295,19 @@ const ProfilePage = () => {
     }
   };
 
-  const handleContactSeller = () => {
+  const handleContactSeller = async () => {
     if (!user) {
       navigate('/login');
       return;
     }
     if (user.id === profileData.id) return;
-    const conversationId = startConversation(profileData);
-    setActiveConversation(conversationId);
-    navigate('/chat');
+    try {
+      const conversationId = await startConversation(profileData);
+      setActiveConversation(conversationId);
+      navigate('/chat');
+    } catch (error) {
+      console.error('Error starting conversation:', error);
+    }
   };
 
   if (loading) {

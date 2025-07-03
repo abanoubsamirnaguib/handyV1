@@ -24,7 +24,7 @@ const ProductChatCard = ({
             {product.category}
           </Badge>
         </div>
-        <CardDescription>{product.description && product.description.substring(0, 100)}{product.description && product.description.length > 100 ? '...' : ''}</CardDescription>
+        <CardDescription dir="rtl">{product.description && product.description.substring(0, 100)}{product.description && product.description.length > 100 ? '...' : ''}</CardDescription>
       </CardHeader>
       
       <CardContent className="pb-2">

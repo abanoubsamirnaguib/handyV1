@@ -23,7 +23,7 @@ const PaymentMessage = ({ message, isUserMessage }) => {
         isUserMessage 
           ? "bg-green-50 text-green-800 border-green-200 rounded-br-none" 
           : "bg-gray-100 text-gray-800 border-gray-200 rounded-bl-none"
-      )}>
+      )} dir="rtl">
         <div className="flex items-center mb-2">
           <BadgeDollarSign className="h-5 w-5 ml-2" />
           <p className="font-semibold">تم دفع عربون</p>

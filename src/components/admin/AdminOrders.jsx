@@ -298,8 +298,38 @@ const AdminOrders = () => {
                         عند الاستلام
                       </Badge>
                     )}
+                    {order.is_service_order && (
+                      <Badge variant="outline" className="bg-green-50 text-green-800 text-xs">
+                        طلب خدمة
+                      </Badge>
+                    )}
                   </div>
                 </div>
+                {/* Service Order Deposit Info */}
+                {order.is_service_order && order.requires_deposit && (
+                  <>
+                    <div className="flex justify-between">
+                      <span>قيمة العربون:</span>
+                      <span className="font-semibold text-green-600">{order.deposit_amount} جنيه</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>حالة العربون:</span>
+                      <Badge 
+                        variant={order.deposit_status === 'paid' ? 'default' : 'secondary'}
+                        className={order.deposit_status === 'paid' 
+                          ? 'bg-green-100 text-green-800 border-green-200' 
+                          : 'bg-amber-100 text-amber-800 border-amber-200'
+                        }
+                      >
+                        {order.deposit_status === 'paid' ? 'مدفوع ✓' : 'غير مدفوع ⏳'}
+                      </Badge>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>المبلغ المتبقي:</span>
+                      <span className="font-semibold text-blue-600">{order.total_amount - order.deposit_amount} جنيه</span>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 
@@ -363,6 +393,44 @@ const AdminOrders = () => {
                 ))}
               </div>
             </div>
+
+            {/* Service Order Deposit Image */}
+            {order.is_service_order && order.deposit_image && (
+              <div>
+                <h4 className="font-semibold mb-2 flex items-center">
+                  <CreditCard className="h-4 w-4 ml-2 text-green-600" />
+                  إيصال العربون (طلب خدمة)
+                </h4>
+                <div className="p-3 bg-green-50 border border-green-200 rounded-lg mb-3">
+                  <div className="flex items-center mb-2">
+                    <div className="w-3 h-3 bg-green-500 rounded-full ml-2"></div>
+                    <span className="font-medium text-green-800">طلب خدمة - تم دفع العربون</span>
+                  </div>
+                  <p className="text-sm text-green-700">
+                    قيمة العربون: {order.deposit_amount} جنيه
+                  </p>
+                  <p className="text-xs text-green-600 mt-1 font-medium">
+                    المبلغ المتبقي: {order.total_amount - order.deposit_amount} جنيه
+                  </p>
+                </div>
+                <img 
+                  src={order.deposit_image} 
+                  alt="إيصال العربون" 
+                  className="max-w-full h-auto rounded-md border cursor-pointer"
+                  onClick={() => window.open(order.deposit_image, '_blank')}
+                />
+              </div>
+            )}
+
+            {/* Service Requirements */}
+            {order.is_service_order && order.service_requirements && (
+              <div>
+                <h4 className="font-semibold mb-2">متطلبات الخدمة</h4>
+                <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-sm text-blue-800">{order.service_requirements}</p>
+                </div>
+              </div>
+            )}
 
             {/* Payment Proof or Cash on Delivery Note */}
             {order.payment_proof ? (

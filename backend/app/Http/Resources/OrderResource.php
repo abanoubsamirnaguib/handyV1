@@ -33,6 +33,9 @@ class OrderResource extends JsonResource
             'deposit_amount' => $this->deposit_amount,
             'deposit_status' => $this->deposit_status,
             'deposit_notes' => $this->deposit_notes,
+            'deposit_image' => $this->deposit_image ? Storage::disk('public')->url($this->deposit_image) : null,
+            'is_service_order' => $this->is_service_order,
+            'service_requirements' => $this->service_requirements,
             'chat_conversation_id' => $this->chat_conversation_id,
             'conversation' => $this->whenLoaded('conversation'),
             

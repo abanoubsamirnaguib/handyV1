@@ -1,9 +1,11 @@
-import React from 'react';
-import { File, Download, Image, AlertCircle } from 'lucide-react';
+import React, { useState } from 'react';
+import { File, Image, AlertCircle, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import ImageExample from '@/components/ui/image-example';
 
 const MessageAttachment = ({ attachment, isOwn }) => {
+  const [showFullImage, setShowFullImage] = useState(false);
+  
   // Check if attachment is undefined or null
   if (!attachment) {
     return (
@@ -45,44 +47,73 @@ const MessageAttachment = ({ attachment, isOwn }) => {
   const attachmentUrl = attachment.file_url || attachment.url || '';
   const fullUrl = attachmentUrl ? getFullUrl(attachmentUrl) : '';
   
+  const handleImageClick = (e) => {
+    e.preventDefault();
+    if (fullUrl) {
+      // Instead of redirecting, show modal
+      setShowFullImage(true);
+    }
+  };
+
   return (
-    <div className={cn(
-      "border rounded-lg overflow-hidden mt-2",
-      isOwn ? "border-primary/20" : "border-gray-200"
-    )}>
-      {isImage ? (
-        <ImageExample 
-          src={fullUrl} 
-          alt="مرفق" 
-          className="max-w-full h-auto cursor-pointer"
-          onClick={() => fullUrl && window.open(fullUrl, '_blank')}
-          fallbackSrc="/placeholder-image.jpg"
-        />
-      ) : (
-        <div className="p-3 flex items-center justify-between">
-          <div className="flex items-center space-x-2 rtl:space-x-reverse">
-            <File className="h-4 w-4" />
-            <span className="truncate max-w-[150px]">ملف مرفق</span>
+    <>
+      <div className={cn(
+        "border rounded-lg overflow-hidden mt-2",
+        isOwn ? "border-primary/20" : "border-gray-200"
+      )}>
+        {isImage ? (
+          <div className="relative">
+            <ImageExample 
+              src={fullUrl} 
+              alt="مرفق" 
+              className="max-w-full h-auto cursor-pointer"
+              onClick={handleImageClick}
+              fallbackSrc="/placeholder-image.jpg"
+            />
           </div>
-          {fullUrl ? (
-            <a 
-              href={fullUrl} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:underline"
-              download
+        ) : (
+          <div className="p-3 flex items-center">
+            <div className="flex items-center space-x-2 rtl:space-x-reverse">
+              <File className="h-4 w-4" />
+              <span className="truncate max-w-[150px]">ملف مرفق</span>
+            </div>
+            {fullUrl && (
+              <a 
+                href={fullUrl} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:underline mr-auto"
+              >
+                عرض
+              </a>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Full Image Modal */}
+      {showFullImage && fullUrl && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4 pb-20 md:pb-4"
+          onClick={() => setShowFullImage(false)}
+        >
+          <div className="relative max-w-[90vw] max-h-[90vh]">
+            <button 
+              className="absolute -top-10 right-0 bg-white rounded-full p-2"
+              onClick={() => setShowFullImage(false)}
             >
-              <Download className="h-4 w-4" />
-            </a>
-          ) : (
-            <span className="text-gray-400">
-              <Download className="h-4 w-4" />
-            </span>
-          )}
+              <X className="h-6 w-6" />
+            </button>
+            <img 
+              src={fullUrl} 
+              alt="مرفق" 
+              className="max-w-full max-h-[85vh] object-contain" 
+            />
+          </div>
         </div>
       )}
-    </div>
+    </>
   );
 };
 
-export default MessageAttachment; 
+export default MessageAttachment;

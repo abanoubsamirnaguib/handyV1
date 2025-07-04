@@ -10,7 +10,7 @@ const MainLayout = () => {
     <div className="flex flex-col min-h-screen" dir="rtl">
       <Navbar />
       <motion.main 
-        className="flex-grow"
+        className="flex-grow pb-16 md:pb-0"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 20 }}

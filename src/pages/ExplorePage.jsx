@@ -616,10 +616,11 @@ const ExplorePage = () => {
             </main>
           </div>
         </TabsContent>
-          <TabsContent value="sellers" className="mt-0">          <div className="flex flex-col md:flex-row-reverse gap-8">
+          <TabsContent value="sellers" className="mt-0">          
+            <div className="flex flex-col md:flex-row-reverse gap-8">
             {/* Sellers Filters Sidebar */}
             <motion.aside 
-              className={`md:w-1/4 ${isFiltersOpen ? 'block' : 'hidden'} md:block fixed inset-0 z-40 bg-white p-6 md:relative md:bg-transparent md:p-0 md:z-auto transition-transform duration-300 ease-in-out transform ${isFiltersOpen ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}`}
+              className={`md:w-1/4 ${isFiltersOpen ? 'block' : 'hidden'} md:block fixed inset-0 z-40 bg-white p-6 pt-15 md:relative md:bg-transparent md:p-0 md:z-auto transition-transform duration-300 ease-in-out transform ${isFiltersOpen ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}`}
               initial={{ x: -200, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               transition={{ duration: 0.5 }}

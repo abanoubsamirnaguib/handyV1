@@ -209,7 +209,7 @@ const HomePage = () => {
           e.target.style.display = 'none';
           const img = document.createElement('img');
           img.src = "https://images.unsplash.com/photo-1686825374490-663137bad061";
-          img.alt = "خلفية"; 
+          img.alt = "خلفية";  
           img.className = "absolute inset-0 w-screen h-screen object-cover z-0";
           e.target.parentNode.appendChild(img);
             }}

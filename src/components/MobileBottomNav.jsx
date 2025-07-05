@@ -136,7 +136,7 @@ const MobileBottomNav = () => {
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-olivePrimary/10 shadow-xl flex justify-around items-end h-20 md:hidden pt-2 pb-2 rounded-t-3xl">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-olivePrimary/10 shadow-xl flex justify-around items-end h-20 md:hidden pt-2 pb-4 rounded-t-3xl">
       {navItems.filter(item => item.show()).map(renderNavItem)}
     </nav>
   );

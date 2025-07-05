@@ -8,6 +8,8 @@ use App\Models\Message;
 use App\Models\MessageAttachment;
 use App\Models\User;
 use App\Events\MessageSent;
+use App\Services\NotificationService;
+use App\Events\NotificationCreated;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -195,6 +197,12 @@ class ChatController extends Controller
 
             // Broadcast the message
             broadcast(new MessageSent($message, $user));
+
+            // Create notification for the recipient
+            $notification = NotificationService::messageReceived($recipientId, $user->name);
+            
+            // Broadcast the notification to the recipient
+            broadcast(new NotificationCreated($notification));
 
             DB::commit();
 

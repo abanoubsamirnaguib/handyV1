@@ -222,10 +222,11 @@ export const api = {
 
 
   // Notification API functions
-  getNotifications: () => apiFetch('notifications'),
-  getUnreadNotificationCount: () => apiFetch('notifications/unread-count'),
+  getNotifications: () => {return apiFetch('notifications');},
+  getUnreadNotificationCount: () => {return apiFetch('notifications/unread-count');},
   markNotificationAsRead: (id) => apiFetch(`notifications/${id}/mark-read`, { method: 'POST' }),
   markAllNotificationsAsRead: () => apiFetch('notifications/mark-all-read', { method: 'POST' }),
+  deleteNotification: (id) => apiFetch(`notifications/${id}`, { method: 'DELETE' }),
 };
 
 // Admin API functions

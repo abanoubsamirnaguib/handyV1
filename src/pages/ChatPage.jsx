@@ -536,7 +536,7 @@ const ChatPage = () => {
             )}
 
             {/* Message Input */}
-            <div className="p-4 border-t bg-white shrink-0 pb-20 md:pb-4">
+            <div className="p-4 border-t bg-white shrink-0 md:pb-4">
               <form onSubmit={handleSendMessage} className="flex items-center space-x-2">
                 <div className="flex-1 flex items-center space-x-2">
                   <Button

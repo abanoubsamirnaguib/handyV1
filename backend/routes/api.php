@@ -159,9 +159,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
     
     // Notification CRUD
     Route::apiResource('notifications', NotificationCrudController::class)->except(['show']);
-    Route::get('notifications/unread-count', [NotificationCrudController::class, 'unreadCount'])->middleware('auth:sanctum');
-    Route::post('notifications/{id}/mark-read', [NotificationCrudController::class, 'markAsRead'])->middleware('auth:sanctum');
-    Route::post('notifications/mark-all-read', [NotificationCrudController::class, 'markAllAsRead'])->middleware('auth:sanctum');
+    Route::get('notifications/unread-count', [NotificationCrudController::class, 'unreadCount']);
+    Route::post('notifications/{id}/mark-read', [NotificationCrudController::class, 'markAsRead']);
+    Route::post('notifications/mark-all-read', [NotificationCrudController::class, 'markAllAsRead']);
     
     // Activity Log CRUD
     Route::apiResource('activity-logs', ActivityLogCrudController::class)->except(['show']);

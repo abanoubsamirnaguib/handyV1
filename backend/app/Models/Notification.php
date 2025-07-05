@@ -17,6 +17,9 @@ class Notification extends Model
         'created_at',
     ];
     public $timestamps = false;
+    protected $casts = [
+        'created_at' => 'datetime',
+    ];
 
     public function user()
     {

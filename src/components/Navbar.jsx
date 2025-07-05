@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
+import { useNotifications } from '@/contexts/NotificationContext';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,62 +16,24 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { api } from '@/lib/api';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, logout } = useAuth();
   const { cart } = useCart();
+  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
   const navigate = useNavigate();
-  const [notifications, setNotifications] = useState([]);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [notifDropdownOpen, setNotifDropdownOpen] = useState(false);
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
-  useEffect(() => {
-    if (user) {
-      fetchNotifications();
-      fetchUnreadCount();
-    }
-  }, [user]);
-
-  const fetchNotifications = async () => {
-    try {
-      const data = await api.getNotifications();
-      setNotifications(Array.isArray(data) ? data.reverse() : []);
-    } catch (e) {
-      setNotifications([]);
-    }
-  };
-
-  const fetchUnreadCount = async () => {
-    try {
-      const data = await api.getUnreadNotificationCount();
-      setUnreadCount(data.unread_count || 0);
-    } catch (e) {
-      setUnreadCount(0);
-    }
-  };
-
   const handleNotifDropdownOpen = async () => {
-    setNotifDropdownOpen(true);
-    // Mark all as read in backend
-    try {
-      await api.markAllNotificationsAsRead();
-      setUnreadCount(0);
-      // Update local notifications state
-      setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
-    } catch {}
+    // Mark all as read when dropdown opens
+    await markAllAsRead();
   };
 
   const handleNotificationClick = async (notif) => {
-    if (!notif.is_read) {
-      try {
-        await api.markNotificationAsRead(notif.id);
-        setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, is_read: true } : n));
-        setUnreadCount(c => Math.max(0, c - 1));
-      } catch {}
+    if (!notif.read) {
+      await markAsRead(notif.id);
     }
     if (notif.link) navigate(notif.link);
   };
@@ -168,10 +131,11 @@ const Navbar = () => {
                       <div className="p-4 text-center text-gray-500">لا توجد إشعارات</div>
                     ) : (
                       notifications.slice(0, 10).map((notif, idx) => (
-                        <DropdownMenuItem key={notif.id || idx} onClick={() => handleNotificationClick(notif)} className={!notif.is_read ? 'bg-gray-100 font-bold' : ''}>
+                        <DropdownMenuItem key={notif.id || idx} onClick={() => handleNotificationClick(notif)} className={!notif.read ? 'bg-gray-100 font-bold' : ''}>
                           <div className="flex flex-col w-full">
-                            <span className="text-sm">{notif.message}</span>
-                            <span className="text-xs text-gray-400 mt-1">{notif.created_at ? new Date(notif.created_at).toLocaleString('ar-EG') : ''}</span>
+                            <span className="text-sm font-medium">{notif.title || 'إشعار'}</span>
+                            <span className="text-xs text-gray-600">{notif.message}</span>
+                            <span className="text-xs text-gray-400 mt-1">{notif.time || (notif.createdAt ? new Date(notif.createdAt).toLocaleString('ar-EG') : '')}</span>
                           </div>
                         </DropdownMenuItem>
                       ))

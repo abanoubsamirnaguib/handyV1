@@ -1,11 +1,49 @@
 // src/lib/api.js
 
-// Use import.meta.env for Vite env variables
-const BASE_URL = import.meta.env.VITE_API_BASE_URL + '/api/' || 'http://localhost:8000/api/';
+// Use import.meta.env for Vite env variables with fallback for different environments
+const getApiBaseUrl = () => {
+  // Production
+  if (window.location.hostname === 'handy3.abanoubsamir.com') {
+    return 'https://handy3.abanoubsamir.com/backend/public/api';
+  }
+  
+  // Development - from environment variable or default
+  return import.meta.env.VITE_API_BASE_URL + '/api' || 'http://localhost:8000/api';
+};
+
+// Get base URL for assets (images, files)
+const getAssetBaseUrl = () => {
+  // Production
+  if (window.location.hostname === 'handy3.abanoubsamir.com') {
+    return 'https://handy3.abanoubsamir.com/backend/public';
+  }
+  
+  // Development
+  return import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+};
+
+const BASE_URL = getApiBaseUrl();
+export const ASSET_BASE_URL = getAssetBaseUrl();
 
 export function apiUrl(path) {
   // Ensure no double slashes
-  return `${BASE_URL.replace(/\/$/, '')}/${path.replace(/^\//, '')}`;
+  const cleanBase = BASE_URL.replace(/\/$/, '');
+  const cleanPath = path.replace(/^\//, '');
+  return `${cleanBase}/${cleanPath}`;
+}
+
+// Helper function to get asset URLs (images, files)
+export function assetUrl(path) {
+  if (!path) return null;
+  
+  // If it's already a full URL, return as is
+  if (path.startsWith('http://') || path.startsWith('https://')) {
+    return path;
+  }
+  
+  // Remove leading slash if present and construct full URL
+  const cleanPath = path.startsWith('/') ? path.substring(1) : path;
+  return `${ASSET_BASE_URL}/${cleanPath}`;
 }
 
 export async function apiFetch(path, options = {}) {

@@ -13,13 +13,47 @@
     RewriteCond %{HTTP:x-xsrf-token} .
     RewriteRule .* - [E=HTTP_X_XSRF_TOKEN:%{HTTP:X-XSRF-Token}]
 
+    # Serve static files directly (images, css, js, etc.)
+    RewriteCond %{REQUEST_URI} ^/storage/.*\.(jpg|jpeg|png|gif|bmp|svg|css|js|pdf|doc|docx|zip)$ [NC]
+    RewriteRule ^(.*)$ $1 [L]
+
     # Redirect Trailing Slashes If Not A Folder...
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_URI} (.+)/$
     RewriteRule ^ %1 [L,R=301]
 
-    # Send Requests To Front Controller...
+    # Send Requests To Front Controller (only if file/directory doesn't exist)
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
+
+    # Security headers for API responses
+    <IfModule mod_headers.c>
+        # For API responses (PHP files)
+        <FilesMatch "\.php$">
+            Header always set X-Content-Type-Options nosniff
+            Header always set X-Frame-Options DENY
+            Header always set X-XSS-Protection "1; mode=block"
+            Header always set Referrer-Policy "strict-origin-when-cross-origin"
+            
+            # CORS headers (backup to Laravel)
+            Header always set Access-Control-Allow-Methods "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+            Header always set Access-Control-Allow-Headers "X-CSRF-TOKEN, X-Requested-With, Content-Type, Accept, Authorization, X-XSRF-TOKEN"
+        </FilesMatch>
+        
+        # For image files, set proper CORS
+        <FilesMatch "\.(jpg|jpeg|png|gif|bmp|svg)$">
+            Header always set Access-Control-Allow-Origin "*"
+            Header always set Cache-Control "public, max-age=31536000"
+        </FilesMatch>
+    </IfModule>
+
+    # Proper MIME types for images
+    <IfModule mod_mime.c>
+        AddType image/jpeg .jpg .jpeg
+        AddType image/png .png
+        AddType image/gif .gif
+        AddType image/svg+xml .svg
+        AddType image/bmp .bmp
+    </IfModule>
 </IfModule>

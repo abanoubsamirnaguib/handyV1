@@ -21,7 +21,9 @@ return [
         'http://localhost:5174',
         'http://127.0.0.1:3000',
         'http://127.0.0.1:5173',
-        'http://127.0.0.1:5174'
+        'http://127.0.0.1:5174',
+        'https://handy3.abanoubsamir.com',  // Your frontend domain
+        'https://www.handy3.abanoubsamir.com'  // Include www variant
     ],
 
     'allowed_origins_patterns' => [],

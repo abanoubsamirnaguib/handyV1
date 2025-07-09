@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Notification;
+use App\Services\NotificationService;
 
 class OrderCrudController extends Controller
 {
@@ -147,6 +148,15 @@ class OrderCrudController extends Controller
                 
                 // Add order history
                 $order->addToHistory('pending', Auth::id(), 'service_order_created', 'تم إنشاء طلب خدمة مع دفع العربون');
+                
+                // Send deposit notification to seller
+                if ($order->seller && $order->seller->user_id && $order->deposit_status === 'paid') {
+                    NotificationService::depositReceived(
+                        $order->seller->user_id,
+                        $order->deposit_amount,
+                        $order->id
+                    );
+                }
                 
             } else {
                 // Handle regular product order

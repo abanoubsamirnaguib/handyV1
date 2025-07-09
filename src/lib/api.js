@@ -227,6 +227,24 @@ export const api = {
   markNotificationAsRead: (id) => apiFetch(`notifications/${id}/mark-read`, { method: 'POST' }),
   markAllNotificationsAsRead: () => apiFetch('notifications/mark-all-read', { method: 'POST' }),
   deleteNotification: (id) => apiFetch(`notifications/${id}`, { method: 'DELETE' }),
+
+  // Reviews API functions
+  getProductReviews: (productId) => apiFetch(`products/${productId}/reviews`),
+  getSellerReviews: (sellerId) => apiFetch(`sellers/${sellerId}/reviews`),
+  getOrderReviews: (orderId) => apiFetch(`orders/${orderId}/reviews`),
+  canReviewOrder: (orderId) => apiFetch(`orders/${orderId}/can-review`),
+  createReview: (reviewData) => 
+    apiFetch('reviews', {
+      method: 'POST',
+      body: JSON.stringify(reviewData),
+    }),
+  updateReview: (reviewId, reviewData) => 
+    apiFetch(`reviews/${reviewId}`, {
+      method: 'PUT',
+      body: JSON.stringify(reviewData),
+    }),
+  deleteReview: (reviewId) => 
+    apiFetch(`reviews/${reviewId}`, { method: 'DELETE' }),
 };
 
 // Admin API functions

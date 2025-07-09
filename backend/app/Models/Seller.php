@@ -34,4 +34,33 @@ class Seller extends Model
     {
         return $this->hasMany(Product::class);
     }
+
+    // Get all reviews for this seller's products
+    public function reviews()
+    {
+        return Review::whereHas('product', function($query) {
+            $query->where('seller_id', $this->id);
+        })->where('status', 'published');
+    }
+
+    // Calculate average rating from all product reviews
+    public function getAverageRating()
+    {
+        return $this->reviews()->avg('rating') ?? 0;
+    }
+
+    // Get total review count
+    public function getReviewCount()
+    {
+        return $this->reviews()->count();
+    }
+
+    // Update seller rating and review count
+    public function updateRatingStats()
+    {
+        $this->update([
+            'rating' => $this->getAverageRating(),
+            'review_count' => $this->getReviewCount()
+        ]);
+    }
 }

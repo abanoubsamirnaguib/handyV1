@@ -110,6 +110,24 @@ const GigDetailsPage = () => {
             setRelatedGigs([]);
           }
         }).catch(() => setRelatedGigs([]));
+        
+        // Fetch product reviews from backend
+        api.getProductReviews(id).then(reviewsData => {
+          if (reviewsData && Array.isArray(reviewsData.data)) {
+            const formattedReviews = reviewsData.data.map(review => ({
+              id: review.id,
+              gigId: normalizedGig.id,
+              userId: review.user?.id,
+              userName: review.user?.name || 'مستخدم',
+              rating: review.rating,
+              comment: review.comment,
+              date: review.created_at,
+              order_id: review.order_id
+            }));
+            setReviews(formattedReviews);
+          }
+        }).catch(() => setReviews([]));
+        
         setLoading(false);
       })
       .catch(() => {

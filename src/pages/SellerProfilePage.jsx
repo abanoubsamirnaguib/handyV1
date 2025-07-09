@@ -27,8 +27,10 @@ const SellerProfilePage = () => {
   const { id } = useParams();
   const [seller, setSeller] = useState(null);
   const [sellerGigs, setSellerGigs] = useState([]);
+  const [sellerReviews, setSellerReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
   const { startConversation, setActiveConversation } = useChat();
@@ -94,6 +96,23 @@ const SellerProfilePage = () => {
     };
     fetchSellerData();
   }, [id, navigate]);
+
+  // Function to load seller reviews
+  const loadSellerReviews = async () => {
+    if (!seller?.id || sellerReviews.length > 0) return; // Don't load if already loaded
+    
+    setReviewsLoading(true);
+    try {
+      const reviewsData = await api.getSellerReviews(seller.id);
+      if (reviewsData && Array.isArray(reviewsData.data)) {
+        setSellerReviews(reviewsData.data);
+      }
+    } catch (error) {
+      console.error('Error loading seller reviews:', error);
+    } finally {
+      setReviewsLoading(false);
+    }
+  };
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-16 text-center">
@@ -268,10 +287,14 @@ const SellerProfilePage = () => {
             </CardContent>
           </Card>
         </div>
-        <Tabs defaultValue="products" className="w-full">
+        <Tabs defaultValue="products" className="w-full" onValueChange={(value) => {
+          if (value === 'reviews') {
+            loadSellerReviews();
+          }
+        }}>
           <TabsList className="w-full max-w-md mx-auto grid grid-cols-2 mb-8">
             <TabsTrigger value="products" className="text-lg">المنتجات</TabsTrigger>
-            <TabsTrigger value="reviews" className="text-lg">التقييمات</TabsTrigger>
+            <TabsTrigger value="reviews" className="text-lg">التقييمات ({seller?.reviewCount || 0})</TabsTrigger>
           </TabsList>
           
           <TabsContent value="products">
@@ -320,9 +343,91 @@ const SellerProfilePage = () => {
           
           <TabsContent value="reviews">
             <h2 className="text-2xl font-bold mb-6">تقييمات العملاء</h2>
-            <div className="text-center py-12 bg-gray-50 rounded-lg">
-              <p className="text-xl text-gray-600">لا توجد تقييمات لعرضها حالياً</p>
-            </div>
+            {reviewsLoading ? (
+              <div className="text-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+                <p className="text-gray-600">جاري تحميل التقييمات...</p>
+              </div>
+            ) : sellerReviews.length > 0 ? (
+              <div className="space-y-6" dir="rtl">
+                {sellerReviews.map((review) => (
+                  <Card key={review.id} className="border-lightBeige/50">
+                    <CardContent className="p-6">
+                      <div className="flex items-start gap-4">
+                        <div className="flex-shrink-0">
+                          {review.user?.avatar ? (
+                            <img 
+                              src={review.user.avatar} 
+                              alt={review.user.name || 'مستخدم'}
+                              className="w-12 h-12 rounded-full object-cover border-2 border-lightBeige"
+                            />
+                          ) : (
+                            <div className="w-12 h-12 bg-olivePrimary rounded-full flex items-center justify-center text-white font-bold">
+                              {review.user?.name?.charAt(0) || 'م'}
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between mb-2">
+                            <div>
+                              <h4 className="font-semibold text-gray-800 text-right">{review.user?.name || 'مستخدم'}</h4>
+                              <p className="text-sm text-gray-500 text-right">
+                                {new Date(review.created_at).toLocaleDateString('ar-EG')}
+                              </p>
+                            </div>
+                          </div>
+                          
+                          {review.product && (
+                            <div className="flex items-center gap-3 mb-3 p-3 bg-gray-50 rounded-lg">
+                              {review.product.image ? (
+                                <img 
+                                  src={review.product.image} 
+                                  alt={review.product.title}
+                                  className="w-12 h-12 rounded-lg object-cover border border-lightBeige"
+                                />
+                              ) : (
+                                <div className="w-12 h-12 bg-lightBeige rounded-lg flex items-center justify-center">
+                                  <Package className="h-6 w-6 text-olivePrimary" />
+                                </div>
+                              )}
+                              <div className="flex-1">
+                                <span className="text-sm font-medium text-gray-700 block text-right">
+                                  {review.product.title}
+                                </span>
+                                <span className="text-xs text-gray-500 block text-right">
+                                  {review.product.category_name}
+                                </span>
+                              </div>
+                            </div>
+                          )}
+                            <div className="flex items-center gap-1">
+                              {[1, 2, 3, 4, 5].map((star) => (
+                                <Star
+                                  key={star}
+                                  className={`h-4 w-4 ${
+                                    star <= review.rating
+                                      ? 'text-yellow-400 fill-current'
+                                      : 'text-gray-300'
+                                  }`}
+                                />
+                              ))}
+                            </div>
+                          {review.comment && (
+                            <p className="text-gray-700 leading-relaxed text-right">{review.comment}</p>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12 bg-gray-50 rounded-lg">
+                <Star className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                <p className="text-xl text-gray-600 mb-2">لا توجد تقييمات حتى الآن</p>
+                <p className="text-gray-500">سيظهر هنا تقييمات العملاء عند شراء منتجات هذا الحرفي</p>
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </motion.div>

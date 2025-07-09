@@ -62,7 +62,7 @@ class NotificationService
             userId: $userId,
             type: 'review',
             message: "تم تقييم منتجك بـ {$stars} نجوم",
-            link: "/products/{$productId}"
+            link: "/gigs/{$productId}"
         );
     }
 
@@ -76,6 +76,19 @@ class NotificationService
             type: 'payment',
             message: "تم استلام دفعة بقيمة {$amount} جنيه",
             link: "/dashboard/earnings"
+        );
+    }
+
+    /**
+     * Create a deposit notification
+     */
+    public static function depositReceived(int $userId, float $amount, int $orderId): Notification
+    {
+        return self::create(
+            userId: $userId,
+            type: 'payment',
+            message: "تم استلام عربون بقيمة {$amount} جنيه لطلب #{$orderId}",
+            link: "/orders/{$orderId}"
         );
     }
 

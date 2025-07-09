@@ -32,15 +32,15 @@ export const ChatProvider = ({ children }) => {
       // Update online status immediately
       updateOnlineStatus();
       
-      // Set up interval to refresh conversations every 30 seconds to get updated online status
+      // Set up interval to refresh conversations every 8 minutes to get updated online status
       const conversationsIntervalId = setInterval(() => {
         loadConversations();
-      }, 120000); // 2 minutes
+      }, 480000); // 8 minutes
       
       // Set up interval to update user's own online status every minute
       const onlineStatusIntervalId = setInterval(() => {
         updateOnlineStatus();
-      }, 120000); // 2 minutes
+      }, 480000); // 8 minutes
       
       return () => {
         clearInterval(conversationsIntervalId);

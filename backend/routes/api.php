@@ -127,6 +127,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // Review CRUD    
     Route::apiResource('reviews', ReviewCrudController::class)->except(['show']);
     
+    // Additional review endpoints
+    Route::get('products/{productId}/reviews', [ReviewCrudController::class, 'getProductReviews']);
+    Route::get('sellers/{sellerId}/reviews', [ReviewCrudController::class, 'getSellerReviews']);
+    Route::get('orders/{orderId}/reviews', [ReviewCrudController::class, 'getOrderReviews']);
+    Route::get('orders/{orderId}/can-review', [ReviewCrudController::class, 'canReviewOrder']);
+    
     // Seller CRUD
     Route::apiResource('sellers', SellerCrudController::class);    
     

@@ -12,7 +12,7 @@ class ReviewRequest extends FormRequest
         if ($this->isMethod('post')) {
             return [
                 'product_id' => 'required|exists:products,id',
-                'user_id' => 'required|exists:users,id',
+                'order_id' => 'nullable|exists:orders,id',
                 'rating' => 'required|integer|min:1|max:5',
                 'comment' => 'nullable|string',
                 'status' => 'in:published,hidden,pending',

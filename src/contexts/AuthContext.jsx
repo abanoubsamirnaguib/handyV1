@@ -23,10 +23,10 @@ export const AuthProvider = ({ children }) => {
     // Update online status immediately
     api.updateOnlineStatus().catch(err => console.error('Failed to update online status:', err));
     
-    // Set up interval to update online status every 15 seconds (reduced from 30)
+    // Set up interval to update online status every 8 minutes
     const intervalId = setInterval(() => {
       api.updateOnlineStatus().catch(err => console.error('Failed to update online status:', err));
-    }, 15000); // 15 seconds
+    }, 480000); // 8 minutes
     
     // Set up visibility change listener to update status when tab becomes visible
     const handleVisibilityChange = () => {

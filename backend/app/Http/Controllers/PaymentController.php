@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use App\Services\NotificationService;
 
 class PaymentController extends Controller
 {
@@ -70,6 +71,15 @@ class PaymentController extends Controller
             
             // Registrar en el historial del pedido
             // (esto requeriría un modelo OrderHistory que no implementamos aquí)
+            
+            // Send deposit notification to seller
+            if ($order->seller && $order->seller->user_id) {
+                NotificationService::depositReceived(
+                    $order->seller->user_id,
+                    $request->amount,
+                    $order->id
+                );
+            }
             
             return response()->json([
                 'success' => true,

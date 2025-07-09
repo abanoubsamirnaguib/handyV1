@@ -81,6 +81,10 @@ Route::get('users/{id}', [UserCrudController::class, 'show']);  // Keep this one
 Route::get('explore/products', [ExploreController::class, 'products']);
 Route::get('explore/sellers', [ExploreController::class, 'sellers']);
 
+// Public review endpoints - allow guests to view reviews
+Route::get('products/{productId}/reviews', [ReviewCrudController::class, 'getProductReviews']);
+Route::get('sellers/{sellerId}/reviews', [ReviewCrudController::class, 'getSellerReviews']);
+
 // Protected Routes with middleware 
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('me', [AuthController::class, 'me']);
@@ -127,9 +131,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // Review CRUD    
     Route::apiResource('reviews', ReviewCrudController::class)->except(['show']);
     
-    // Additional review endpoints
-    Route::get('products/{productId}/reviews', [ReviewCrudController::class, 'getProductReviews']);
-    Route::get('sellers/{sellerId}/reviews', [ReviewCrudController::class, 'getSellerReviews']);
+    // Additional review endpoints (protected - for order reviews and review management)
     Route::get('orders/{orderId}/reviews', [ReviewCrudController::class, 'getOrderReviews']);
     Route::get('orders/{orderId}/can-review', [ReviewCrudController::class, 'canReviewOrder']);
     

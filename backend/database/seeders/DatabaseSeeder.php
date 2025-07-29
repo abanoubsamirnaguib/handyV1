@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
         // Truncate tables before seeding
         DB::statement('SET FOREIGN_KEY_CHECKS=0;');
         // Add all tables that are seeded below
+        DB::table('announcements')->truncate();
         DB::table('reviews')->truncate();
         DB::table('orders')->truncate();
         DB::table('product_tags')->truncate();
@@ -38,6 +39,7 @@ class DatabaseSeeder extends Seeder
             OrderSeeder::class,
             ReviewSeeder::class,
             SellerSkillSeeder::class,
+            AnnouncementSeeder::class,
         ]);
     }
 }

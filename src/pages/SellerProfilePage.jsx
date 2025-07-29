@@ -62,6 +62,7 @@ const SellerProfilePage = () => {
           completedOrders: sellerResponse.completed_orders || 0,
           responseTime: sellerResponse.response_time || 'غير محدد',
           avatar: sellerResponse.user?.avatar || '',
+          cover_image: sellerResponse.user?.cover_image || '',
           products: sellerResponse.products || []
         };
         setSeller(sellerData);
@@ -181,12 +182,28 @@ const SellerProfilePage = () => {
         transition={{ duration: 0.5 }}
       >        {/* Seller Profile Header */}        <Card className="mb-8 overflow-hidden border-lightBeige/50">
           <div className="h-48 bg-olivePrimary relative">
+            {seller.cover_image ? (
+              <img 
+                src={seller.cover_image} 
+                alt="غلاف الحرفي" 
+                className="w-full h-full object-cover" 
+              />
+            ) : (
+              <>
+                <img 
+                  src="https://images.unsplash.com/photo-1692975716697-4abaff365786" 
+                  alt="غلاف افتراضي للحرفي" 
+                  className="w-full h-full object-cover opacity-30" 
+                />
+                <div className="absolute inset-0 bg-gradient-to-r from-olivePrimary/40 to-transparent"></div>
+              </>
+            )}
             <div className="absolute -bottom-16 right-8 h-32 w-32 rounded-full bg-white shadow-lg border-4 border-white overflow-hidden">
               {seller.avatar ? (
                 <img 
                   src={seller.avatar} 
                   alt={seller.name}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover opacity-30"
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-5xl font-bold text-olivePrimary">

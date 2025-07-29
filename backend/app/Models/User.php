@@ -30,6 +30,7 @@ class User extends Authenticatable
         'bio',
         'location',
         'avatar',
+        'cover_image',
         'phone',
         'email_verified'
     ];
@@ -158,6 +159,24 @@ class User extends Authenticatable
         
         // Otherwise, prepend APP_URL and storage path
         return config('app.url') . '/storage/' . ltrim($this->avatar, '/');
+    }
+
+    /**
+     * Get cover image URL with full path if not already a full URL
+     */
+    public function getCoverImageUrlAttribute()
+    {
+        if (!$this->cover_image) {
+            return null;
+        }
+
+        // If the URL already starts with http:// or https://, return as-is
+        if (str_starts_with($this->cover_image, 'http://') || str_starts_with($this->cover_image, 'https://')) {
+            return $this->cover_image;
+        }
+        
+        // Otherwise, prepend APP_URL and storage path
+        return config('app.url') . '/storage/' . ltrim($this->cover_image, '/');
     }
 
     public function getSkillsAttribute()

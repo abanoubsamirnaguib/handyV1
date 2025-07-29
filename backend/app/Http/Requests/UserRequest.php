@@ -27,6 +27,7 @@ class UserRequest extends FormRequest
             'bio' => 'nullable|string',
             'location' => 'nullable|string',
             'avatar' => 'nullable|string',
+            'cover_image' => 'nullable|string',
             'phone' => 'nullable|string|max:20',
             'skills' => 'nullable|array',
             'skills.*' => 'nullable|string',

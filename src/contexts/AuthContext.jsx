@@ -274,6 +274,42 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Upload cover image
+  const uploadCoverImage = async (imageFile) => {
+    try {
+      const token = getToken();
+      if (!token || !user) {
+        throw new Error('Not authenticated');
+      }
+
+      const response = await api.uploadCoverImage(user.id, imageFile);
+      
+      // Update user data with new cover image
+      const updatedUser = response.data;
+      setUser(updatedUser);
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      
+      toast({
+        title: 'تم تحديث صورة الغلاف',
+        description: 'تم تحديث صورة الغلاف بنجاح',
+      });
+
+      return {
+        success: true,
+        data: updatedUser,
+        coverImageUrl: response.cover_image_url
+      };
+    } catch (error) {
+      console.error('Cover image upload failed:', error);
+      toast({
+        variant: 'destructive',
+        title: 'خطأ في رفع الصورة',
+        description: 'حدث خطأ أثناء رفع صورة الغلاف',
+      });
+      return { success: false, error: error.message };
+    }
+  };
+
   const switchRole = async (targetRole) => {
     try {
       const token = getToken();
@@ -541,6 +577,7 @@ export const AuthProvider = ({ children }) => {
     logout,
     updateProfile,
     uploadProfileImage,
+    uploadCoverImage,
     switchRole,
     enableSellerMode,
     changePassword,

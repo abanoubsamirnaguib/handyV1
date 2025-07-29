@@ -14,7 +14,11 @@ import {
   Menu,
   X,
   ChevronLeft,
-  Shield
+  Shield,
+  Truck,
+  DollarSign,
+  HelpCircle,
+  Megaphone
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
@@ -38,7 +42,12 @@ const AdminSidebar = () => {
     { path: '/admin/products', label: 'المنتجات', icon: PackageOpen },
     { path: '/admin/sellers', label: 'البائعين', icon: UserCheck },
     { path: '/admin/users', label: 'المستخدمين', icon: Users },
+    { path: '/admin/delivery', label: 'موظفي التوصيل', icon: Truck },
+    { path: '/admin/delivery-orders', label: 'توزيع الطلبات', icon: PackageOpen },
+    { path: '/admin/withdrawals', label: 'طلبات السحب', icon: DollarSign },
     { path: '/admin/messages', label: 'المحادثات', icon: MessageCircle },
+    { path: '/admin/contact-us', label: 'رسائل التواصل', icon: HelpCircle },
+    { path: '/admin/announcements', label: 'الإعلانات', icon: Megaphone },
     { path: '/admin/settings', label: 'إعدادات النظام', icon: Settings },
   ];
 
@@ -89,9 +98,9 @@ const AdminSidebar = () => {
             <nav className="space-y-1">
               {adminLinks.map(link => (                <Button
                   key={link.path}
-                  variant={location.pathname.startsWith(link.path) ? 'subtle' : 'ghost'}
+                  variant={location.pathname === link.path ? 'subtle' : 'ghost'}
                   className={`w-full justify-${isSidebarOpen || isMobile ? 'start' : 'center'} text-right px-3 py-2 ${
-                    location.pathname.startsWith(link.path) ? 'bg-blue-600/10 text-blue-600 font-medium' : 'hover:bg-gray-100 hover:text-blue-600 text-sm font-medium'
+                    location.pathname === link.path ? 'bg-blue-600/10 text-blue-600 font-medium' : 'hover:bg-gray-100 hover:text-blue-600 text-sm font-medium'
                   } transition-all duration-200`}
                   onClick={() => {
                     navigate(link.path);
@@ -140,7 +149,11 @@ const AdminLayout = () => {
     { path: '/admin/products', label: 'المنتجات', icon: PackageOpen },
     { path: '/admin/sellers', label: 'البائعين', icon: UserCheck },
     { path: '/admin/users', label: 'المستخدمين', icon: Users },
+    { path: '/admin/delivery', label: 'موظفي التوصيل', icon: Truck },
+    { path: '/admin/delivery-orders', label: 'توزيع الطلبات', icon: PackageOpen },
+    { path: '/admin/withdrawals', label: 'طلبات السحب', icon: DollarSign },
     { path: '/admin/messages', label: 'المحادثات', icon: MessageCircle },
+    { path: '/admin/contact-us', label: 'رسائل التواصل', icon: HelpCircle },
     { path: '/admin/settings', label: 'إعدادات النظام', icon: Settings },
   ];return (    <div className="flex min-h-[calc(100vh-var(--navbar-height,100px))]">
       {!isMobile && <AdminSidebar />}      <main 
@@ -179,7 +192,7 @@ const AdminLayout = () => {
                     key={link.path}
                     to={link.path}
                     className={`px-3 py-2 text-sm font-medium flex items-center ${
-                      location.pathname.startsWith(link.path) 
+                      location.pathname === link.path 
                         ? 'text-blue-600' 
                         : 'hover:text-blue-600'
                     }`}

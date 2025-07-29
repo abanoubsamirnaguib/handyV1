@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Product;
 use App\Models\Seller;
 use App\Models\Order;
+use App\Models\Category;
 use Illuminate\Http\Request;
 use App\Http\Resources\UserResource;
 use App\Http\Resources\ProductResource;
@@ -266,5 +267,25 @@ class AdminController extends Controller
         ]);
 
         return new OrderResource($order->load(['user', 'seller.user', 'items.product', 'adminApprover']));
+    }
+
+    /**
+     * Get statistics for About Us page (public endpoint)
+     */
+    public function getAboutUsStats()
+    {
+        $stats = [
+            'trusted_artisans' => Seller::whereHas('user', function($query) {
+                $query->where('status', 'active');
+            })->count(),
+            'handmade_products' => Product::where('status', 'active')->count(),
+            'satisfied_customers' => User::where('status', 'active')->where('role', 'customer')->count(),
+            'diverse_categories' => Category::count(),
+        ];
+
+        return response()->json([
+            'success' => true,
+            'data' => $stats
+        ]);
     }
 }

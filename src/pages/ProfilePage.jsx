@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Star, MapPin, CalendarDays, Edit3, PlusCircle, MessageSquare, Briefcase, Award, Users, Phone } from 'lucide-react';
+import { Star, MapPin, CalendarDays, Edit3, PlusCircle, MessageSquare, Briefcase, Award, Users, Phone, X, Crop } from 'lucide-react';
+import ReactCrop, { centerCrop, makeAspectCrop } from 'react-image-crop';
+import 'react-image-crop/dist/ReactCrop.css';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -16,7 +18,7 @@ import { apiFetch, apiUrl } from '@/lib/api';
 const ProfilePage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user, updateProfile, uploadProfileImage } = useAuth();
+  const { user, updateProfile, uploadProfileImage, uploadCoverImage } = useAuth();
   const { startConversation, setActiveConversation } = useChat();
   const [profileData, setProfileData] = useState(null);
   const [userGigs, setUserGigs] = useState([]);
@@ -26,6 +28,14 @@ const ProfilePage = () => {
   const [avatarFile, setAvatarFile] = useState(null);
   const [avatarPreview, setAvatarPreview] = useState(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [coverImageFile, setCoverImageFile] = useState(null);
+  const [coverImagePreview, setCoverImagePreview] = useState(null);
+  const [uploadingCoverImage, setUploadingCoverImage] = useState(false);
+  const [crop, setCrop] = useState();
+  const [completedCrop, setCompletedCrop] = useState();
+  const [showCropModal, setShowCropModal] = useState(false);
+  const imgRef = useRef(null);
+  const canvasRef = useRef(null);
 
   const isOwnProfile = !id || id === 'me' || (user && user.id === id);
 
@@ -68,6 +78,7 @@ const ProfilePage = () => {
           active_role: data.active_role || 'buyer',
           skills: Array.isArray(data.skills) ? data.skills : [],
           avatar: data.avatar || '',
+          cover_image: data.cover_image || '',
           phone: data.phone || '',
           rating: typeof data.rating === 'number' ? data.rating : 0,
           completedOrders: typeof data.completedOrders === 'number' ? data.completedOrders : 0,
@@ -199,6 +210,155 @@ const ProfilePage = () => {
       setUploadingAvatar(false);
     }
   };
+
+  const handleCoverImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Validate file type and size
+      if (!file.type.startsWith('image/')) {
+        alert('يرجى اختيار ملف صورة صالح.');
+        return;
+      }
+      
+      if (file.size > 10 * 1024 * 1024) { // 10MB limit
+        alert('حجم الصورة يجب أن يكون أقل من 10 ميجابايت.');
+        return;
+      }
+
+      setCoverImageFile(file);
+      
+      // Create preview for cropping
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setCoverImagePreview(e.target.result);
+        setShowCropModal(true);
+        // Reset crop state
+        setCrop(undefined);
+        setCompletedCrop(undefined);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleUploadCoverImage = async () => {
+    if (!coverImageFile) return;
+    
+    setUploadingCoverImage(true);
+    try {
+      const result = await uploadCoverImage(coverImageFile);
+      if (result.success) {
+        setCoverImageFile(null);
+        setCoverImagePreview(null);
+        // Refresh profile data
+        const updatedProfile = { ...profileData, cover_image: result.data.cover_image };
+        setProfileData(updatedProfile);
+      }
+    } catch (error) {
+      console.error('Cover image upload failed:', error);
+    } finally {
+      setUploadingCoverImage(false);
+    }
+  };
+
+  // Image cropping functions
+  function onImageLoad(e) {
+    const { width, height } = e.currentTarget;
+    
+    // Set crop to cover image aspect ratio (3:1 for cover images)
+    const crop = centerCrop(
+      makeAspectCrop(
+        {
+          unit: '%',
+          width: 90,
+        },
+        3 / 1, // aspect ratio 3:1
+        width,
+        height
+      ),
+      width,
+      height
+    );
+    
+    setCrop(crop);
+  }
+
+  async function getCroppedImg() {
+    if (!completedCrop || !imgRef.current || !canvasRef.current) {
+      return null;
+    }
+
+    const image = imgRef.current;
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+
+    if (!ctx) {
+      return null;
+    }
+
+    const scaleX = image.naturalWidth / image.width;
+    const scaleY = image.naturalHeight / image.height;
+
+    canvas.width = completedCrop.width * scaleX;
+    canvas.height = completedCrop.height * scaleY;
+
+    ctx.imageSmoothingQuality = 'high';
+
+    ctx.drawImage(
+      image,
+      completedCrop.x * scaleX,
+      completedCrop.y * scaleY,
+      completedCrop.width * scaleX,
+      completedCrop.height * scaleY,
+      0,
+      0,
+      canvas.width,
+      canvas.height
+    );
+
+    return new Promise((resolve) => {
+      canvas.toBlob(resolve, 'image/jpeg', 1);
+    });
+  }
+
+  const handleCropComplete = async () => {
+    try {
+      const croppedBlob = await getCroppedImg();
+      if (croppedBlob) {
+        // Convert blob to file
+        const croppedFile = new File([croppedBlob], coverImageFile.name, {
+          type: croppedBlob.type,
+        });
+        
+        setUploadingCoverImage(true);
+        const result = await uploadCoverImage(croppedFile);
+        
+        if (result.success) {
+          // Refresh profile data
+          const updatedProfile = { ...profileData, cover_image: result.data.cover_image };
+          setProfileData(updatedProfile);
+          
+          // Reset states
+          setCoverImageFile(null);
+          setCoverImagePreview(null);
+          setShowCropModal(false);
+          setCrop(undefined);
+          setCompletedCrop(undefined);
+        }
+      }
+    } catch (error) {
+      console.error('Cover image upload failed:', error);
+    } finally {
+      setUploadingCoverImage(false);
+    }
+  };
+
+  const handleCropCancel = () => {
+    setCoverImageFile(null);
+    setCoverImagePreview(null);
+    setShowCropModal(false);
+    setCrop(undefined);
+    setCompletedCrop(undefined);
+  };
   const handleSaveChanges = async () => {
     // Only process skills if the user is a seller
     const updatedSkills = profileData?.active_role === 'seller' && editFormData.skills
@@ -274,6 +434,7 @@ const ProfilePage = () => {
                 active_role: freshData.active_role || 'buyer',
                 skills: Array.isArray(freshData.skills) ? freshData.skills : [],
                 avatar: freshData.avatar || '',
+                cover_image: freshData.cover_image || '',
                 rating: typeof freshData.rating === 'number' ? freshData.rating : 0,
                 completedOrders: typeof freshData.completedOrders === 'number' ? freshData.completedOrders : 0,
                 reviewCount: typeof freshData.reviewCount === 'number' ? freshData.reviewCount : 0,
@@ -325,7 +486,41 @@ const ProfilePage = () => {
         transition={{ duration: 0.5 }}      >        {/* Profile Header */}
         <Card className="mb-8 shadow-xl overflow-hidden border-lightBeige bg-lightBeige">
           <div className="relative h-48 bg-olivePrimary">
-            <img src="https://images.unsplash.com/photo-1692975716697-4abaff365786" alt="غلاف الملف الشخصي" className="w-full h-full object-cover opacity-30" />
+            {profileData.cover_image ? (
+              <img 
+                src={profileData.cover_image} 
+                alt="غلاف الملف الشخصي" 
+                className="w-full h-full object-cover" 
+              />
+            ) : (
+              <img 
+                src="https://images.unsplash.com/photo-1692975716697-4abaff365786" 
+                alt="غلاف الملف الشخصي" 
+                className="w-full h-full object-cover opacity-30" 
+              />
+            )}
+            {isOwnProfile && (
+              <div className="absolute top-4 right-4">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="bg-white/80 hover:bg-white text-gray-700"
+                  onClick={() => {
+                    document.getElementById('cover-image-upload')?.click();
+                  }}
+                >
+                  <Edit3 className="ml-2 h-4 w-4" /> تغيير صورة الغلاف
+                </Button>
+                <input
+                  id="cover-image-upload"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleCoverImageChange}
+                  className="hidden"
+                />
+              </div>
+            )}
+            {/* Crop modal will be rendered after the Card component */}
           </div>
           <CardContent className="pt-0 -mt-16">
             <div className="flex flex-col md:flex-row items-center md:items-end">
@@ -356,6 +551,95 @@ const ProfilePage = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Cover Image Crop Modal */}
+        {showCropModal && (
+          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg max-w-6xl w-full max-h-[95vh] overflow-hidden flex flex-col">
+              <div className="p-4 border-b border-gray-200 flex items-center justify-between flex-shrink-0">
+                <h3 className="text-lg font-semibold text-gray-900">اختر منطقة صورة الغلاف</h3>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleCropCancel}
+                  className="p-2"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              
+              <div className="p-4 space-y-4 flex-1 overflow-auto">
+                <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg flex-shrink-0">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Crop className="h-4 w-4 text-blue-600" />
+                    <span className="font-medium text-blue-900">كيفية الاستخدام:</span>
+                  </div>
+                  <p>اسحب الحدود لتحديد المنطقة التي تريد عرضها في صورة الغلاف. نسبة العرض إلى الارتفاع ستكون 3:1 لتناسب منطقة الغلاف.</p>
+                </div>
+
+                <div className="relative crop-container rounded-lg bg-gray-100 max-h-[60vh] flex items-center justify-center">
+                  {coverImagePreview && (
+                    <>
+                      <div className="overflow-auto max-w-full max-h-full p-4">
+                        <ReactCrop
+                          crop={crop}
+                          onChange={(_, percentCrop) => setCrop(percentCrop)}
+                          onComplete={(c) => setCompletedCrop(c)}
+                          aspect={3 / 1}
+                          className="max-w-none"
+                        >
+                          <img
+                            ref={imgRef}
+                            alt="اختر منطقة الغلاف"
+                            src={coverImagePreview}
+                            onLoad={onImageLoad}
+                            className="block max-w-none"
+                            style={{ maxHeight: '70vh', width: 'auto' }}
+                          />
+                        </ReactCrop>
+                      </div>
+                      <canvas
+                        ref={canvasRef}
+                        className="hidden"
+                      />
+                    </>
+                  )}
+                </div>
+
+                <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded flex-shrink-0">
+                  💡 نصيحة: إذا كانت الصورة طويلة، يمكنك التمرير داخل منطقة الصورة للوصول لجميع أجزائها وتحديد المنطقة المناسبة.
+                </div>
+              </div>
+
+              <div className="p-4 border-t border-gray-200 flex-shrink-0">
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Button
+                    onClick={handleCropComplete}
+                    disabled={!completedCrop || uploadingCoverImage}
+                    className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                  >
+                    {uploadingCoverImage ? (
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        جارٍ الرفع...
+                      </div>
+                    ) : (
+                      'رفع صورة الغلاف'
+                    )}
+                  </Button>
+                  <Button
+                    onClick={handleCropCancel}
+                    variant="outline"
+                    className="flex-1 sm:flex-none"
+                    disabled={uploadingCoverImage}
+                  >
+                    إلغاء
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {isEditing && isOwnProfile && (
           <motion.div

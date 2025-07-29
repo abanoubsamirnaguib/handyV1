@@ -34,7 +34,9 @@ class OrderHistoryResource extends JsonResource
             'out_for_delivery' => 'قيد التوصيل',
             'delivered' => 'تم التوصيل',
             'completed' => 'مكتمل',
-            'cancelled' => 'ملغي'
+            'cancelled' => 'ملغي',
+            'assigned_to_pickup' => 'تعيين موظف الاستلام',
+            'assigned_to_delivery' => 'تعيين موظف التسليم'
         ];
         
         return $statusLabels[$this->status] ?? $this->status;
@@ -51,7 +53,9 @@ class OrderHistoryResource extends JsonResource
             'picked_up_by_delivery' => 'استلام الدليفري',
             'delivered' => 'التوصيل',
             'order_completed' => 'إكمال الطلب',
-            'order_cancelled' => 'إلغاء الطلب'
+            'order_cancelled' => 'إلغاء الطلب',
+            'assigned_to_pickup' => 'تعيين موظف الاستلام',
+            'assigned_to_delivery' => 'تعيين موظف التسليم'
         ];
         
         return $actionTypeLabels[$this->action_type] ?? $this->action_type;

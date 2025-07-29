@@ -43,6 +43,10 @@ const OrderDetailPage = () => {
   const [notes, setNotes] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   
+  // Seller approval fields
+  const [sellerAddress, setSellerAddress] = useState('');
+  const [completionDeadline, setCompletionDeadline] = useState('');
+  
   // Review-related state
   const [reviewableProducts, setReviewableProducts] = useState([]);
   const [showReviewSection, setShowReviewSection] = useState(false);
@@ -64,6 +68,35 @@ const OrderDetailPage = () => {
     }
   }, [orderId]);
 
+  const checkAndUpdateLateOrder = async (orderData) => {
+    // Check if order has completion deadline and is in active status
+    if (!orderData.completion_deadline || 
+        !['seller_approved', 'in_progress'].includes(orderData.status) ||
+        orderData.is_late) {
+      return;
+    }
+
+    const now = new Date();
+    const deadline = new Date(orderData.completion_deadline);
+    
+    // If current time is past the deadline, mark as late
+    if (now > deadline) {
+      try {
+        console.log('Order is late, updating status...');
+        await api.put(`/orders/${orderData.id}/check-late`);
+        
+        // Update the order data locally to reflect the change
+        orderData.is_late = true;
+        orderData.late_reason = 'تجاوز الموعد النهائي للإنجاز';
+        
+        console.log('Order marked as late successfully');
+      } catch (error) {
+        console.error('Error marking order as late:', error);
+        // Don't throw error here to not break the page loading
+      }
+    }
+  };
+
   const loadOrder = async () => {
     setIsLoading(true);
     try {
@@ -77,6 +110,9 @@ const OrderDetailPage = () => {
       if (!orderData || !orderData.id) {
         throw new Error('Invalid order data received');
       }
+      
+      // Check if order is late and update it automatically
+      await checkAndUpdateLateOrder(orderData);
       
       setOrder(orderData);
       setDeliveryAddress(orderData.delivery_address || '');
@@ -182,22 +218,70 @@ const OrderDetailPage = () => {
   };
 
   const handleSellerApprove = async () => {
+    if (!sellerAddress.trim()) {
+      toast({
+        variant: "destructive",
+        title: "خطأ في البيانات",
+        description: "يرجى إدخال عنوان البائع لاستلام الطلب.",
+      });
+      return;
+    }
+
+    if (!completionDeadline) {
+      toast({
+        variant: "destructive",
+        title: "خطأ في البيانات",
+        description: "يرجى تحديد الموعد النهائي لإنجاز الطلب.",
+      });
+      return;
+    }
+
+    // Check if the deadline is in the future
+    const deadline = new Date(completionDeadline);
+    const now = new Date();
+    if (deadline <= now) {
+      toast({
+        variant: "destructive",
+        title: "خطأ في التاريخ",
+        description: "يجب أن يكون الموعد النهائي للإنجاز في المستقبل.",
+      });
+      return;
+    }
+
     setIsUpdating(true);
     try {
-      await sellerApi.approveOrder(orderId, notes);
+      await sellerApi.approveOrder(orderId, {
+        notes,
+        seller_address: sellerAddress,
+        completion_deadline: completionDeadline
+      });
       toast({
         title: "تم قبول الطلب",
         description: "تم قبول الطلب من قبل البائع بنجاح.",
       });
       setNotes('');
+      setSellerAddress('');
+      setCompletionDeadline('');
       loadOrder();
     } catch (error) {
       console.error('Error seller approving order:', error);
-      toast({
-        variant: "destructive",
-        title: "خطأ في قبول الطلب",
-        description: "حدث خطأ أثناء قبول الطلب.",
-      });
+      
+      // Handle validation errors
+      if (error.response?.status === 422 && error.response?.data?.errors) {
+        const errors = error.response.data.errors;
+        const errorMessages = Object.values(errors).flat();
+        toast({
+          variant: "destructive",
+          title: "خطأ في البيانات",
+          description: errorMessages.join('. '),
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "خطأ في قبول الطلب",
+          description: error.response?.data?.message || "حدث خطأ أثناء قبول الطلب.",
+        });
+      }
     } finally {
       setIsUpdating(false);
     }
@@ -724,13 +808,42 @@ const OrderDetailPage = () => {
           {isSeller && (
             <>
               {order.status === 'admin_approved' && (
-                <div className="space-y-3">
-                  <Label>ملاحظات البائع</Label>
-                  <Textarea
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    placeholder="أدخل ملاحظات قبول الطلب..."
-                  />
+                <div className="space-y-4">
+                  <div>
+                    <Label>عنوان البائع لاستلام الطلب</Label>
+                    <Textarea
+                      value={sellerAddress}
+                      onChange={(e) => setSellerAddress(e.target.value)}
+                      placeholder="أدخل عنوانك الكامل لاستلام الطلب من قبل الدليفري..."
+                      className="mt-2"
+                      rows={3}
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label>الموعد النهائي لإنجاز الطلب</Label>
+                    <Input
+                      type="datetime-local"
+                      value={completionDeadline}
+                      onChange={(e) => setCompletionDeadline(e.target.value)}
+                      className="mt-2"
+                      min={new Date().toISOString().slice(0, 16)}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      يجب أن يكون الموعد في المستقبل
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <Label>ملاحظات البائع</Label>
+                    <Textarea
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                      placeholder="أدخل ملاحظات قبول الطلب..."
+                      className="mt-2"
+                    />
+                  </div>
+                  
                   <Button 
                     onClick={handleSellerApprove}
                     disabled={isUpdating}
@@ -1191,6 +1304,17 @@ const OrderDetailPage = () => {
                       </div>
                     </div>
                   )}
+                  {order.seller_address && (
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-olivePrimary rounded-full flex items-center justify-center">
+                        <MapPin className="h-5 w-5 text-white" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-gray-800">{order.seller_address}</p>
+                        <p className="text-sm text-gray-500">عنوان البائع</p>
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
@@ -1223,7 +1347,75 @@ const OrderDetailPage = () => {
                         </span>
                       </div>
                     )}
+                    {order.completion_deadline && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-600">الموعد النهائي للإنجاز:</span>
+                        <span className={`font-semibold ${
+                          order.is_late ? 'text-red-600' : 
+                          order.time_remaining?.is_late ? 'text-red-600' : 'text-blue-600'
+                        }`}>
+                          {new Date(order.completion_deadline).toLocaleDateString('ar-EG')}
+                        </span>
+                      </div>
+                    )}
                   </div>
+                  
+                  {/* Late Order Warning */}
+                  {(order.is_late || order.time_remaining?.is_late) && (
+                    <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                      <div className="flex items-center">
+                        <AlertTriangle className="h-5 w-5 text-red-600 ml-2" />
+                        <span className="font-semibold text-red-800">تحذير: تأخر في إنجاز الطلب</span>
+                      </div>
+                      <p className="text-sm text-red-700 mt-2">
+                        {order.time_remaining?.is_late 
+                          ? `تأخر الطلب بـ ${order.time_remaining.overdue_hours} ساعة`
+                          : 'لم يتم إنجاز الطلب في الوقت المحدد'
+                        }
+                      </p>
+                    </div>
+                  )}
+                  
+                  {/* Time Remaining for Active Orders */}
+                  {order.time_remaining && !order.time_remaining.is_late && 
+                   ['seller_approved', 'in_progress'].includes(order.status) && (
+                    <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                      <div className="flex items-center">
+                        <Clock className="h-5 w-5 text-blue-600 ml-2" />
+                        <span className="font-semibold text-blue-800">الوقت المتبقي للإنجاز</span>
+                      </div>
+                      <p className="text-sm text-blue-700 mt-2">
+                        {(() => {
+                          // Handle both backend formats - days/hours as separate fields or days as decimal
+                          let totalHours = 0;
+                          
+                          if (order.time_remaining.total_hours) {
+                            // Use total_hours if available (more accurate)
+                            totalHours = Math.floor(order.time_remaining.total_hours);
+                          } else if (order.time_remaining.days) {
+                            // Convert decimal days to hours
+                            totalHours = Math.floor(order.time_remaining.days * 24);
+                          }
+                          
+                          const days = Math.floor(totalHours / 24);
+                          const hours = totalHours % 24;
+                          
+                          let timeText = '';
+                          if (days > 0) {
+                            timeText += `${days} يوم`;
+                          }
+                          if (days > 0 && hours > 0) {
+                            timeText += ' و ';
+                          }
+                          if (hours > 0) {
+                            timeText += `${hours} ساعة`;
+                          }
+                          
+                          return timeText || 'أقل من ساعة';
+                        })()}
+                      </p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 

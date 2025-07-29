@@ -39,10 +39,20 @@ class Order extends Model
         'delivery_picked_up_at',
         'delivered_at',
         'completed_at',
+        'suspended_at',
         'delivery_person_id',
+        'pickup_person_id',
+        'pickup_notes',
+        'delivery_fee',
+        'delivery_fee_status',
         'delivery_notes',
         'admin_notes',
         'seller_notes',
+        'suspension_reason',
+        'seller_address',
+        'completion_deadline',
+        'is_late',
+        'late_reason',
         'created_at',
         'updated_at',
     ];
@@ -58,6 +68,8 @@ class Order extends Model
         'delivery_picked_up_at',
         'delivered_at',
         'completed_at',
+        'suspended_at',
+        'completion_deadline',
         'created_at',
         'updated_at',
     ];
@@ -94,7 +106,17 @@ class Order extends Model
     
     public function deliveryPerson()
     {
-        return $this->belongsTo(User::class, 'delivery_person_id');
+        return $this->belongsTo(DeliveryPersonnel::class, 'delivery_person_id');
+    }
+
+    public function pickupPerson()
+    {
+        return $this->belongsTo(DeliveryPersonnel::class, 'pickup_person_id');
+    }
+
+    public function deliveryEarnings()
+    {
+        return $this->hasMany(DeliveryEarning::class);
     }
     
     public function history()
@@ -147,6 +169,11 @@ class Order extends Model
         return $this->status === 'cancelled';
     }
     
+    public function isSuspended()
+    {
+        return $this->status === 'suspended';
+    }
+    
     public function canBeApprovedByAdmin()
     {
         return $this->isPending() && $this->payment_proof;
@@ -177,6 +204,11 @@ class Order extends Model
         return $this->isOutForDelivery();
     }
     
+    public function canBeSuspended()
+    {
+        return $this->isOutForDelivery();
+    }
+    
     public function canBeCompleted()
     {
         return $this->isDelivered();
@@ -203,16 +235,26 @@ class Order extends Model
         $this->addToHistory('admin_approved', $adminId, 'admin_approval', $notes);
     }
     
-    public function approveBySeller($notes = null)
+    public function approveBySeller($notes = null, $sellerAddress = null, $completionDeadline = null)
     {
         if (!$this->canBeApprovedBySeller()) {
             throw new \Exception('لا يمكن الموافقة على هذا الطلب في الوقت الحالي');
         }
         
+        if (empty($sellerAddress)) {
+            throw new \Exception('عنوان البائع مطلوب لقبول الطلب');
+        }
+        
+        if (empty($completionDeadline)) {
+            throw new \Exception('موعد إنهاء العمل مطلوب لقبول الطلب');
+        }
+        
         $this->update([
             'status' => 'seller_approved',
             'seller_approved_at' => now(),
-            'seller_notes' => $notes
+            'seller_notes' => $notes,
+            'seller_address' => $sellerAddress,
+            'completion_deadline' => $completionDeadline
         ]);
         
         $this->addToHistory('seller_approved', $this->seller->user_id, 'seller_approval', $notes);
@@ -241,7 +283,9 @@ class Order extends Model
         $this->update([
             'status' => 'ready_for_delivery',
             'work_completed_at' => now(),
-            'delivery_scheduled_at' => $deliveryScheduledAt
+            'delivery_scheduled_at' => $deliveryScheduledAt,
+            'is_late' => false, // إيقاف الحالة المتأخرة عند إكمال العمل
+            'late_reason' => null
         ]);
         
         $this->addToHistory('ready_for_delivery', $this->seller->user_id, 'work_completed');
@@ -253,14 +297,23 @@ class Order extends Model
             throw new \Exception('لا يمكن استلام هذا الطلب في الوقت الحالي');
         }
         
-        $this->update([
-            'status' => 'out_for_delivery',
-            'delivery_person_id' => $deliveryPersonId,
-            'delivery_picked_up_at' => now(),
-            'delivery_notes' => $notes
-        ]);
-        
-        $this->addToHistory('out_for_delivery', $deliveryPersonId, 'picked_up_by_delivery', $notes);
+        // إذا كان الشخص نفسه معين للاستلام والتسليم، نقوم بالتحويل لـ out_for_delivery
+        // إذا كان معين فقط للاستلام، نبقي الطلب ready_for_delivery مع تسجيل الاستلام
+        if ($this->pickup_person_id == $deliveryPersonId && $this->delivery_person_id == $deliveryPersonId) {
+            $this->update([
+                'status' => 'out_for_delivery',
+                'delivery_picked_up_at' => now(),
+                'pickup_notes' => $notes
+            ]);
+            $this->addToHistory('out_for_delivery', $deliveryPersonId, 'picked_up_by_delivery', $notes);
+        } else {
+            // الاستلام فقط - الطلب يبقى ready_for_delivery لتعيين موظف التسليم
+            $this->update([
+                'delivery_picked_up_at' => now(),
+                'pickup_notes' => $notes
+            ]);
+            $this->addToHistory('ready_for_delivery', $deliveryPersonId, 'picked_up_by_delivery', $notes);
+        }
     }
     
     public function markAsDelivered($notes = null)
@@ -289,6 +342,9 @@ class Order extends Model
             'completed_at' => now()
         ]);
         
+        // Transfer money to seller's wallet
+        $this->seller->addToWallet($this->total_price);
+        
         $this->addToHistory('completed', $this->user_id, 'order_completed');
     }
     
@@ -299,6 +355,21 @@ class Order extends Model
         ]);
         
         $this->addToHistory('cancelled', $userId, 'order_cancelled', $reason);
+    }
+    
+    public function suspend($deliveryPersonId, $reason = null)
+    {
+        if (!$this->canBeSuspended()) {
+            throw new \Exception('لا يمكن تعليق هذا الطلب في الوقت الحالي');
+        }
+        
+        $this->update([
+            'status' => 'suspended',
+            'suspended_at' => now(),
+            'suspension_reason' => $reason
+        ]);
+        
+        $this->addToHistory('suspended', $deliveryPersonId, 'order_suspended', $reason);
     }
     
     public function addToHistory($status, $actionBy, $actionType, $note = null)
@@ -337,7 +408,8 @@ class Order extends Model
             'out_for_delivery' => 'قيد التوصيل',
             'delivered' => 'تم التوصيل',
             'completed' => 'مكتمل',
-            'cancelled' => 'ملغي'
+            'cancelled' => 'ملغي',
+            'suspended' => 'معلق'
         ];
         
         return $statusLabels[$this->status] ?? $this->status;
@@ -364,8 +436,72 @@ class Order extends Model
                 return 'تم الإكمال';
             case 'cancelled':
                 return 'ملغي';
+            case 'suspended':
+                return 'معلق - لم يتم الوصول للعميل';
             default:
                 return 'غير محدد';
         }
+    }
+
+    // تعيين الطلب للدليفري
+    public function assignToDelivery($deliveryPersonId)
+    {
+        if (!$this->isReadyForDelivery()) {
+            throw new \Exception('الطلب غير جاهز للتوصيل');
+        }
+
+        $this->update([
+            'delivery_person_id' => $deliveryPersonId,
+            'delivery_scheduled_at' => now()
+        ]);
+
+        $this->addToHistory('assigned_to_delivery', $deliveryPersonId, 'assigned_to_delivery', 'تم تعيين الطلب للدليفري');
+    }
+
+    // التحقق من تأخير الطلب
+    public function checkIfLate()
+    {
+        if (!$this->completion_deadline || $this->isCompleted() || $this->isCancelled()) {
+            return false;
+        }
+
+        // الطلب يصبح متأخر إذا تجاوز الموعد المحدد ولم يصل لحالة "جاهز للتوصيل" بعد
+        $isLate = now()->gt($this->completion_deadline) && 
+                  in_array($this->status, ['seller_approved', 'in_progress']) && 
+                  !$this->isReadyForDelivery();
+        
+        if ($isLate && !$this->is_late) {
+            $this->update(['is_late' => true]);
+        }
+        
+        return $isLate;
+    }
+
+    // الحصول على الوقت المتبقي لإنجاز الطلب
+    public function getTimeRemaining()
+    {
+        if (!$this->completion_deadline || $this->isCompleted() || $this->isCancelled()) {
+            return null;
+        }
+
+        $now = now();
+        $deadline = \Carbon\Carbon::parse($this->completion_deadline);
+
+        // إذا تجاوزنا الموعد ولم نصل لحالة "جاهز للتوصيل"
+        if ($now->gt($deadline) && !$this->isReadyForDelivery()) {
+            return ['is_late' => true, 'overdue_hours' => $now->diffInHours($deadline)];
+        }
+
+        // إذا وصلنا لحالة "جاهز للتوصيل" فالطلب لم يعد متأخراً
+        if ($this->isReadyForDelivery() || $this->isOutForDelivery() || $this->isDelivered()) {
+            return null;
+        }
+
+        return [
+            'is_late' => false,
+            'days' => $now->diffInDays($deadline, false),
+            'hours' => $now->diffInHours($deadline) % 24,
+            'total_hours' => $now->diffInHours($deadline)
+        ];
     }
 }

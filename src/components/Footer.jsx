@@ -49,13 +49,13 @@ const Footer = () => {
                 <Link to="/explore" className="text-lightBeige/70 hover:text-burntOrange transition-colors">استكشاف</Link>
               </li>
               <li>
-                <Link to="/dashboard" className="text-lightBeige/70 hover:text-burntOrange transition-colors">لوحة التحكم</Link>
+                <Link to="/about-us" className="text-lightBeige/70 hover:text-burntOrange transition-colors">من نحن</Link>
               </li>
               <li>
-                <Link to="/login" className="text-lightBeige/70 hover:text-burntOrange transition-colors">تسجيل الدخول</Link>
+                <Link to="/policy" className="text-lightBeige/70 hover:text-burntOrange transition-colors">السياسات</Link>
               </li>
               <li>
-                <Link to="/register" className="text-lightBeige/70 hover:text-burntOrange transition-colors">إنشاء حساب</Link>
+                <Link to="/contact-us" className="text-lightBeige/70 hover:text-burntOrange transition-colors">اتصل بنا</Link>
               </li>
             </ul>
           </div>
@@ -103,8 +103,15 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="border-t border-lightBeige/20 mt-10 pt-6 text-center text-lightBeige/60">
-          <p>© {new Date().getFullYear()} بازار. جميع الحقوق محفوظة.</p>
+        <div className="border-t border-lightBeige/20 mt-10 pt-6">
+          <div className="flex flex-col md:flex-row justify-between items-center text-lightBeige/60">
+            <p>© {new Date().getFullYear()} بازار. جميع الحقوق محفوظة.</p>
+            <div className="flex space-x-6 space-x-reverse mt-4 md:mt-0">
+              <Link to="/policy" className="hover:text-burntOrange transition-colors">شروط الاستخدام</Link>
+              <Link to="/about-us" className="hover:text-burntOrange transition-colors">من نحن</Link>
+              <Link to="/contact-us" className="hover:text-burntOrange transition-colors">تواصل معنا</Link>
+            </div>
+          </div>
         </div>
       </div>
     </footer>

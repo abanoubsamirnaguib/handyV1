@@ -30,6 +30,12 @@ use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\Api\ExploreController;
 use App\Http\Controllers\Api\ChatController;
+use App\Http\Controllers\Api\DeliveryController;
+use App\Http\Controllers\Api\DeliveryPersonnelCrudController;
+use App\Http\Controllers\Api\WithdrawalRequestController;
+use App\Http\Controllers\Api\ContactController;
+use App\Http\Controllers\Api\AnnouncementController;
+use App\Http\Controllers\Api\AdminAnnouncementController;
 
 
 Broadcast::routes(['middleware' => ['broadcast.auth']]);
@@ -85,6 +91,17 @@ Route::get('explore/sellers', [ExploreController::class, 'sellers']);
 Route::get('products/{productId}/reviews', [ReviewCrudController::class, 'getProductReviews']);
 Route::get('sellers/{sellerId}/reviews', [ReviewCrudController::class, 'getSellerReviews']);
 
+// Public Announcements - للزوار
+Route::prefix('announcements')->group(function () {
+    Route::get('/', [AnnouncementController::class, 'index']); // جميع الإعلانات المرئية
+    Route::get('latest', [AnnouncementController::class, 'latest']); // أحدث الإعلانات
+    Route::get('stats', [AnnouncementController::class, 'stats']); // إحصائيات الإعلانات
+    Route::get('{id}', [AnnouncementController::class, 'show']); // إعلان واحد
+});
+
+// Public About Us Statistics
+Route::get('about-us/stats', [AdminController::class, 'getAboutUsStats']);
+
 // Protected Routes with middleware 
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('me', [AuthController::class, 'me']);
@@ -106,6 +123,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         // Admin actions
         Route::post('{id}/admin-approve', [OrderCrudController::class, 'adminApprove']);
         Route::get('pending-approval', [OrderCrudController::class, 'getPendingApproval']);
+        Route::get('check-late', [OrderCrudController::class, 'checkLateOrders']);
         
         // Seller actions  
         Route::post('{id}/seller-approve', [OrderCrudController::class, 'sellerApprove']);
@@ -120,6 +138,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
         // Customer actions
         Route::post('{id}/complete', [OrderCrudController::class, 'completeOrder']);
         Route::post('{id}/upload-payment-proof', [OrderCrudController::class, 'uploadPaymentProof']);
+        
+        // Check late status for individual order
+        Route::put('{id}/check-late', [OrderCrudController::class, 'checkLateStatus']);
         
         // General actions
         Route::post('{id}/cancel', [OrderCrudController::class, 'cancelOrder']);
@@ -151,8 +172,15 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('cart/add', [CartItemCrudController::class, 'addToCart']); // إضافة للعربة
     Route::delete('cart/clear', [CartItemCrudController::class, 'clearCart']); // تفريغ العربة
     
-    // Wishlist Item CRUD
+    // Wishlist Item CRUD - Enhanced with existence checks and user-specific methods
     Route::apiResource('wishlist-items', WishlistItemCrudController::class)->except(['show']);
+    Route::get('wishlist', [WishlistItemCrudController::class, 'getUserWishlist']); // Get user's wishlist
+    Route::post('wishlist/add', [WishlistItemCrudController::class, 'addToWishlist']); // Add to wishlist
+    Route::delete('wishlist/remove/{productId}', [WishlistItemCrudController::class, 'removeFromWishlist']); // Remove by product ID
+    Route::post('wishlist/toggle', [WishlistItemCrudController::class, 'toggleWishlist']); // Toggle wishlist status
+    Route::get('wishlist/check/{productId}', [WishlistItemCrudController::class, 'checkWishlistStatus']); // Check if in wishlist
+    Route::get('wishlist/count', [WishlistItemCrudController::class, 'getWishlistCount']); // Get wishlist count
+    Route::delete('wishlist/clear', [WishlistItemCrudController::class, 'clearWishlist']); // Clear all wishlist items
     
     // Real-time Chat Routes (Comprehensive chat system)
     Route::prefix('chat')->group(function () {
@@ -182,6 +210,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     // User profile image upload
     Route::post('users/{id}/upload-avatar', [UserCrudController::class, 'uploadProfileImage']);
+    
+    // User cover image upload
+    Route::post('users/{id}/upload-cover-image', [UserCrudController::class, 'uploadCoverImage']);
 
     // Site Settings
     Route::get('settings', [SiteSettingController::class, 'index']);
@@ -216,6 +247,55 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('orders/pending', [AdminController::class, 'getPendingOrders']);
         Route::post('orders/{id}/approve', [AdminController::class, 'approveOrder']);
         Route::post('orders/{id}/reject', [AdminController::class, 'rejectOrder']);
+        
+        // Delivery Personnel Management
+        Route::apiResource('delivery-personnel', DeliveryPersonnelCrudController::class);
+        Route::post('delivery-personnel/{id}/reset-password', [DeliveryPersonnelCrudController::class, 'resetPassword']);
+        Route::get('delivery/available-personnel', [DeliveryPersonnelCrudController::class, 'availableDeliveryPersonnel']);
+        
+        // New Delivery Order Management
+        Route::get('delivery/orders-ready', [DeliveryPersonnelCrudController::class, 'getOrdersReadyForDelivery']);
+        Route::get('delivery/picked-up-orders', [DeliveryPersonnelCrudController::class, 'getPickedUpOrdersAwaitingDeliveryAssignment']);
+        Route::post('delivery/bulk-assign-orders', [DeliveryPersonnelCrudController::class, 'bulkAssignOrders']);
+        Route::post('delivery/assign-pickup-person', [DeliveryPersonnelCrudController::class, 'assignPickupPerson']);
+        Route::post('delivery/assign-delivery-person', [DeliveryPersonnelCrudController::class, 'assignDeliveryPerson']);
+        
+        // Withdrawal management for admin
+        Route::get('withdrawal-requests', [WithdrawalRequestController::class, 'adminIndex']);
+        Route::post('withdrawal-requests/{id}/approve', [WithdrawalRequestController::class, 'approve']);
+        Route::post('withdrawal-requests/{id}/reject', [WithdrawalRequestController::class, 'reject']);
+        
+        // Withdrawal settings management
+        Route::get('withdrawal-settings', [WithdrawalRequestController::class, 'getWithdrawalSettings']);
+        Route::post('withdrawal-settings', [WithdrawalRequestController::class, 'updateWithdrawalSettings']);
+        
+        // Admin site settings management
+        Route::get('site-settings', [SiteSettingController::class, 'getAdminSettings']);
+        Route::post('site-settings', [SiteSettingController::class, 'updateAdminSettings']);
+        
+        // Admin chat management routes
+        Route::prefix('chat')->group(function () {
+            Route::get('conversations', [ChatController::class, 'adminGetAllConversations']);
+            Route::get('conversations/{conversationId}/messages', [ChatController::class, 'adminGetMessages']);
+            Route::get('stats', [ChatController::class, 'adminGetStats']);
+        });
+        
+        // Admin wishlist management routes
+        Route::prefix('wishlist')->group(function () {
+            Route::get('statistics', [WishlistItemCrudController::class, 'getStatistics']); // Get wishlist statistics
+            Route::post('cleanup-inactive', [WishlistItemCrudController::class, 'cleanupInactive']); // Clean up inactive products
+        });
+        
+        // Admin announcements management
+        Route::prefix('announcements')->group(function () {
+            Route::get('/', [AdminAnnouncementController::class, 'index']); // جميع الإعلانات للأدمن
+            Route::post('/', [AdminAnnouncementController::class, 'store']); // إنشاء إعلان جديد
+            Route::get('stats', [AdminAnnouncementController::class, 'stats']); // إحصائيات الإعلانات للأدمن
+            Route::get('{id}', [AdminAnnouncementController::class, 'show']); // عرض إعلان واحد
+            Route::put('{id}', [AdminAnnouncementController::class, 'update']); // تحديث الإعلان
+            Route::delete('{id}', [AdminAnnouncementController::class, 'destroy']); // حذف الإعلان
+            Route::post('{id}/toggle-status', [AdminAnnouncementController::class, 'toggleStatus']); // تغيير حالة الإعلان
+        });
     });
     
     // Product CRUD for sellers (gigs/products)
@@ -224,4 +304,50 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('seller/products/{id}', [ProductController::class, 'show']);
     Route::put('seller/products/{id}', [ProductController::class, 'update']);
     Route::delete('seller/products/{id}', [ProductController::class, 'destroy']);
+    
+    // Withdrawal routes for sellers
+    Route::get('withdrawals', [WithdrawalRequestController::class, 'index']);
+    Route::post('withdrawals', [WithdrawalRequestController::class, 'store']);
+    Route::get('earnings-summary', [WithdrawalRequestController::class, 'earningsSummary']);
+});
+
+// Delivery Personnel Routes (separate authentication)
+Route::prefix('delivery')->name('delivery.')->group(function () {
+    // Public routes (login only)
+    Route::post('login', [DeliveryController::class, 'login'])->name('login');
+    
+    // Protected routes (require delivery personnel authentication)
+    Route::middleware(['delivery.auth'])->group(function () {
+        Route::post('logout', [DeliveryController::class, 'logout'])->name('logout');
+        Route::get('profile', [DeliveryController::class, 'profile'])->name('profile');
+        Route::get('stats', [DeliveryController::class, 'stats'])->name('stats');
+        Route::post('toggle-availability', [DeliveryController::class, 'toggleAvailability'])->name('toggle-availability');
+        
+        // Orders management
+
+        Route::get('orders-to-pickup', [DeliveryController::class, 'ordersToPickup']); // الطلبات المخصصة للاستلام
+        Route::get('orders-to-deliver', [DeliveryController::class, 'ordersToDeliver']); // الطلبات المخصصة للتسليم
+        Route::get('my-orders', [DeliveryController::class, 'myOrders']);
+        Route::get('suspended-orders', [DeliveryController::class, 'suspendedOrders']); // الطلبات المعلقة
+        Route::get('orders/{id}', [DeliveryController::class, 'orderDetails']);
+        
+        // Order actions
+
+        Route::post('orders/{id}/pickup', [DeliveryController::class, 'pickupOrder']);
+        Route::post('orders/{id}/deliver', [DeliveryController::class, 'deliverOrder']);
+        Route::post('orders/{id}/suspend', [DeliveryController::class, 'suspendOrder']); // تعليق الطلب
+    });
+});
+
+// Contact Us Routes (Public submission, protected admin management)
+Route::post('contact', [ContactController::class, 'store']); // Public endpoint for contact form submission
+
+// Protected Contact Us Routes for Admin
+Route::middleware(['auth:sanctum'])->prefix('admin/contact')->group(function () {
+    Route::get('/', [ContactController::class, 'index']); // Get all contact messages
+    Route::get('stats', [ContactController::class, 'stats']); // Get contact message statistics
+    Route::get('{id}', [ContactController::class, 'show']); // Get single contact message
+    Route::patch('{id}/read', [ContactController::class, 'markAsRead']); // Mark as read
+    Route::patch('{id}/resolve', [ContactController::class, 'markAsResolved']); // Mark as resolved
+    Route::delete('{id}', [ContactController::class, 'destroy']); // Delete contact message
 });

@@ -83,8 +83,41 @@ export async function apiFormFetch(path, options = {}) {
   return res.json();
 }
 
+// Delivery-specific API fetch function
+export async function deliveryApiFetch(path, options = {}) {
+  const token = localStorage.getItem('delivery_token');
+  
+  const defaultOptions = {
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token && { Authorization: `Bearer ${token}` }),
+    },
+  };
+
+  const res = await fetch(apiUrl(path), { ...defaultOptions, ...options });
+  if (!res.ok) {
+    const error = await res.text();
+    throw new Error(`API error: ${res.status} - ${error}`);
+  }
+  return res.json();
+}
+
 // General API functions
 export const api = {
+  // Generic HTTP methods
+  get: (path) => apiFetch(path),
+  post: (path, data) => apiFetch(path, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }),
+  put: (path, data) => apiFetch(path, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  }),
+  delete: (path) => apiFetch(path, {
+    method: 'DELETE',
+  }),
+  
   // Categories
   getCategories: () => apiFetch('listcategories'),
   
@@ -146,6 +179,17 @@ export const api = {
     formData.append('avatar', imageFile);
     
     return apiFormFetch(`users/${userId}/upload-avatar`, {
+      method: 'POST',
+      body: formData,
+    });
+  },
+
+  // Cover image upload
+  uploadCoverImage: (userId, imageFile) => {
+    const formData = new FormData();
+    formData.append('cover_image', imageFile);
+    
+    return apiFormFetch(`users/${userId}/upload-cover-image`, {
       method: 'POST',
       body: formData,
     });
@@ -213,15 +257,23 @@ export const api = {
       body: JSON.stringify({ reason }),
     }),
 
-  // Wishlist functions
-  getWishlist: () => apiFetch('wishlist-items'),
+  // Enhanced Wishlist functions with existence checks
+  getWishlist: () => apiFetch('wishlist'),
+  getWishlistCount: () => apiFetch('wishlist/count'),
   addToWishlist: (productId) => 
-    apiFetch('wishlist-items', {
+    apiFetch('wishlist/add', {
       method: 'POST',
       body: JSON.stringify({ product_id: productId }),
     }),
-  removeFromWishlist: (wishlistItemId) => 
-    apiFetch(`wishlist-items/${wishlistItemId}`, { method: 'DELETE' }),
+  removeFromWishlist: (productId) => 
+    apiFetch(`wishlist/remove/${productId}`, { method: 'DELETE' }),
+  toggleWishlist: (productId) => 
+    apiFetch('wishlist/toggle', {
+      method: 'POST',
+      body: JSON.stringify({ product_id: productId }),
+    }),
+  checkWishlistStatus: (productId) => apiFetch(`wishlist/check/${productId}`),
+  clearWishlist: () => apiFetch('wishlist/clear', { method: 'DELETE' }),
 
   // Chat API functions
   getConversations: () => apiFetch('chat/conversations'),
@@ -266,6 +318,15 @@ export const api = {
   markAllNotificationsAsRead: () => apiFetch('notifications/mark-all-read', { method: 'POST' }),
   deleteNotification: (id) => apiFetch(`notifications/${id}`, { method: 'DELETE' }),
 
+  // Withdrawal requests for sellers
+  getWithdrawalRequests: () => apiFetch('withdrawals'),
+  createWithdrawalRequest: (data) => 
+    apiFetch('withdrawals', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  getEarningsSummary: () => apiFetch('earnings-summary'),
+
   // Reviews API functions
   getProductReviews: (productId) => apiFetch(`products/${productId}/reviews`),
   getSellerReviews: (sellerId) => apiFetch(`sellers/${sellerId}/reviews`),
@@ -283,6 +344,29 @@ export const api = {
     }),
   deleteReview: (reviewId) => 
     apiFetch(`reviews/${reviewId}`, { method: 'DELETE' }),
+
+  // Contact Us form submission (public endpoint)
+  submitContactForm: (formData) => 
+    apiFetch('contact', {
+      method: 'POST',
+      body: JSON.stringify(formData),
+    }),
+
+  // Public announcements endpoints
+  getPublicAnnouncements: (params = {}) => {
+    const searchParams = new URLSearchParams(params);
+    return apiFetch(`announcements?${searchParams}`);
+  },
+  getLatestAnnouncements: (limit = 3) => 
+    apiFetch(`announcements/latest?limit=${limit}`),
+  getAnnouncementById: (id) => 
+    apiFetch(`announcements/${id}`),
+  getAnnouncementStats: () => 
+    apiFetch('announcements/stats'),
+
+  // About Us Statistics
+  getAboutUsStats: () => 
+    apiFetch('about-us/stats'),
 };
 
 // Admin API functions
@@ -336,16 +420,32 @@ export const adminApi = {
     const searchParams = new URLSearchParams(params);
     return apiFetch(`categories?${searchParams}`);
   },
-  createCategory: (categoryData) => 
-    apiFetch('categories', {
+  createCategory: (categoryData) => {
+    // Check if categoryData contains file data
+    if (categoryData instanceof FormData) {
+      return apiFormFetch('categories', {
+        method: 'POST',
+        body: categoryData,
+      });
+    }
+    return apiFetch('categories', {
       method: 'POST',
       body: JSON.stringify(categoryData),
-    }),
-  updateCategory: (categoryId, categoryData) => 
-    apiFetch(`categories/${categoryId}`, {
+    });
+  },
+  updateCategory: (categoryId, categoryData) => {
+    // Check if categoryData contains file data
+    if (categoryData instanceof FormData) {
+      return apiFormFetch(`categories/${categoryId}`, {
+        method: 'POST', // Using POST with _method=PUT for file uploads
+        body: categoryData,
+      });
+    }
+    return apiFetch(`categories/${categoryId}`, {
       method: 'PUT',
       body: JSON.stringify(categoryData),
-    }),
+    });
+  },
   deleteCategory: (categoryId) => 
     apiFetch(`categories/${categoryId}`, { method: 'DELETE' }),
 
@@ -373,6 +473,137 @@ export const adminApi = {
       body: JSON.stringify({ notes }),
     }),
   getPendingApprovalOrders: () => apiFetch('orders/pending-approval'),
+
+  // Delivery Personnel Management
+  getDeliveryPersonnel: (params = {}) => {
+    const searchParams = new URLSearchParams(params);
+    return apiFetch(`admin/delivery-personnel?${searchParams}`);
+  },
+  createDeliveryPersonnel: (personnelData) => 
+    apiFetch('admin/delivery-personnel', {
+      method: 'POST',
+      body: JSON.stringify(personnelData),
+    }),
+  updateDeliveryPersonnel: (personnelId, personnelData) => 
+    apiFetch(`admin/delivery-personnel/${personnelId}`, {
+      method: 'PUT',
+      body: JSON.stringify(personnelData),
+    }),
+  deleteDeliveryPersonnel: (personnelId) => 
+    apiFetch(`admin/delivery-personnel/${personnelId}`, { method: 'DELETE' }),
+  resetDeliveryPersonnelPassword: (personnelId) => 
+    apiFetch(`admin/delivery-personnel/${personnelId}/reset-password`, { method: 'POST' }),
+  getAvailableDeliveryPersonnel: () => apiFetch('admin/delivery/available-personnel'),
+  
+  // New Delivery Order Management
+  getOrdersReadyForDelivery: (params = {}) => {
+    const searchParams = new URLSearchParams(params);
+    return apiFetch(`admin/delivery/orders-ready?${searchParams}`);
+  },
+  getPickedUpOrdersAwaitingDelivery: (params = {}) => {
+    const searchParams = new URLSearchParams(params);
+    return apiFetch(`admin/delivery/picked-up-orders?${searchParams}`);
+  },
+  bulkAssignOrders: (orderIds, deliveryPersonId) => 
+    apiFetch('admin/delivery/bulk-assign-orders', {
+      method: 'POST',
+      body: JSON.stringify({ 
+        order_ids: orderIds, 
+        delivery_person_id: deliveryPersonId 
+      }),
+    }),
+  assignPickupPerson: (orderId, pickupPersonId) => 
+    apiFetch('admin/delivery/assign-pickup-person', {
+      method: 'POST',
+      body: JSON.stringify({ 
+        order_id: orderId, 
+        pickup_person_id: pickupPersonId 
+      }),
+    }),
+  assignDeliveryPerson: (orderId, deliveryPersonId) => 
+    apiFetch('admin/delivery/assign-delivery-person', {
+      method: 'POST',
+      body: JSON.stringify({ 
+        order_id: orderId, 
+        delivery_person_id: deliveryPersonId 
+      }),
+    }),
+
+  // Withdrawal requests management
+  getWithdrawalRequests: () => apiFetch('admin/withdrawal-requests'),
+  approveWithdrawalRequest: (requestId, data) => 
+    apiFetch(`admin/withdrawal-requests/${requestId}/approve`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  rejectWithdrawalRequest: (requestId, data) => 
+    apiFetch(`admin/withdrawal-requests/${requestId}/reject`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  // Withdrawal settings management
+  getWithdrawalSettings: () => apiFetch('admin/withdrawal-settings'),
+  updateWithdrawalSettings: (data) => 
+    apiFetch('admin/withdrawal-settings', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  // Admin site settings management
+  getSiteSettings: () => apiFetch('admin/site-settings'),
+  updateSiteSettings: (settingsType, settings) => 
+    apiFetch('admin/site-settings', {
+      method: 'POST',
+      body: JSON.stringify({ settingsType, settings }),
+    }),
+
+  // Contact Us management
+  getContactMessages: (params = {}) => {
+    const searchParams = new URLSearchParams(params);
+    return apiFetch(`admin/contact?${searchParams}`);
+  },
+  getContactStats: () => apiFetch('admin/contact/stats'),
+  getContactMessage: (id) => apiFetch(`admin/contact/${id}`),
+  markContactMessageAsRead: (id) => 
+    apiFetch(`admin/contact/${id}/read`, { method: 'PATCH' }),
+  markContactMessageAsResolved: (id, data) => 
+    apiFetch(`admin/contact/${id}/resolve`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
+  deleteContactMessage: (id) => 
+    apiFetch(`admin/contact/${id}`, { method: 'DELETE' }),
+
+  // Admin chat management
+  getAllConversations: (params = {}) => {
+    const searchParams = new URLSearchParams(params);
+    return apiFetch(`admin/chat/conversations?${searchParams}`);
+  },
+  getConversationMessages: (conversationId) => 
+    apiFetch(`admin/chat/conversations/${conversationId}/messages`),
+  getChatStats: () => apiFetch('admin/chat/stats'),
+
+  // Admin announcements management
+  getAnnouncements: (params = {}) => {
+    const searchParams = new URLSearchParams(params);
+    return apiFetch(`admin/announcements?${searchParams}`);
+  },
+  getAnnouncementStats: () => apiFetch('admin/announcements/stats'),
+  createAnnouncement: (formData) => 
+    apiFormFetch('admin/announcements', {
+      method: 'POST',
+      body: formData,
+    }),
+  updateAnnouncement: (id, formData) => 
+    apiFormFetch(`admin/announcements/${id}`, {
+      method: 'POST',
+      body: formData,
+    }),
+  deleteAnnouncement: (id) => 
+    apiFetch(`admin/announcements/${id}`, { method: 'DELETE' }),
+  toggleAnnouncementStatus: (id) => 
+    apiFetch(`admin/announcements/${id}/toggle-status`, { method: 'POST' }),
 };
 
 // Seller API for product/gig CRUD
@@ -452,11 +683,14 @@ export const sellerApi = {
   },
   
   // Seller order workflow functions
-  approveOrder: (orderId, notes = '') => 
-    apiFetch(`orders/${orderId}/seller-approve`, {
+  approveOrder: (orderId, data = {}) => {
+    // Handle both old format (notes as string) and new format (data object)
+    const payload = typeof data === 'string' ? { notes: data } : data;
+    return apiFetch(`orders/${orderId}/seller-approve`, {
       method: 'POST',
-      body: JSON.stringify({ notes }),
-    }),
+      body: JSON.stringify(payload),
+    });
+  },
   startWork: (orderId, notes = '') => 
     apiFetch(`orders/${orderId}/start-work`, {
       method: 'POST',
@@ -471,24 +705,44 @@ export const sellerApi = {
 
 // Delivery API functions
 export const deliveryApi = {
-  // Get orders ready for delivery
-  getReadyForDelivery: () => apiFetch('orders/ready-for-delivery'),
-  
-  // Delivery workflow functions
-  pickupOrder: (orderId, notes = '') => 
-    apiFetch(`orders/${orderId}/pickup-delivery`, {
+  // Authentication
+  login: (credentials) => 
+    apiFetch('delivery/login', {
       method: 'POST',
-      body: JSON.stringify({ notes }),
+      body: JSON.stringify(credentials),
     }),
-  markAsDelivered: (orderId, notes = '') => 
-    apiFetch(`orders/${orderId}/mark-delivered`, {
+  logout: () => 
+    deliveryApiFetch('delivery/logout', { method: 'POST' }),
+  
+  // Profile and stats
+  getProfile: () => deliveryApiFetch('delivery/profile'),
+  getStats: () => deliveryApiFetch('delivery/stats'),
+  toggleAvailability: () => 
+    deliveryApiFetch('delivery/toggle-availability', { method: 'POST' }),
+  
+  // Orders management
+  getOrdersToPickup: () => deliveryApiFetch('delivery/orders-to-pickup'), // الطلبات المخصصة للاستلام
+  getOrdersToDeliver: () => deliveryApiFetch('delivery/orders-to-deliver'), // الطلبات المخصصة للتسليم
+  getOrderDetails: (orderId) => deliveryApiFetch(`delivery/orders/${orderId}`),
+  
+  // Order actions
+  pickupOrder: (orderId) => 
+    deliveryApiFetch(`delivery/orders/${orderId}/pickup`, {
       method: 'POST',
-      body: JSON.stringify({ notes }),
+    }),
+  deliverOrder: (orderId) => 
+    deliveryApiFetch(`delivery/orders/${orderId}/deliver`, {
+      method: 'POST',
+    }),
+  suspendOrder: (orderId, data) =>
+    deliveryApiFetch(`delivery/orders/${orderId}/suspend`, {
+      method: 'POST',
+      body: JSON.stringify(data),
     }),
   
-  // Get delivery person orders
-  getDeliveryOrders: (params = {}) => {
-    const searchParams = new URLSearchParams(params);
-    return apiFetch(`orders?delivery=true&${searchParams}`);
-  },
+  // Get all orders assigned to delivery person
+  myOrders: () => deliveryApiFetch('delivery/my-orders'),
+  
+  // Get suspended orders
+  suspendedOrders: () => deliveryApiFetch('delivery/suspended-orders'),
 };

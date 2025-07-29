@@ -34,6 +34,8 @@ const GigDetailsPage = () => {
   const [newRating, setNewRating] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isInWishlist, setIsInWishlist] = useState(false);
+  const [wishlistLoading, setWishlistLoading] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -135,6 +137,62 @@ const GigDetailsPage = () => {
         setLoading(false);
       });
   }, [id, navigate]);
+
+  // Check if product is in wishlist when gig data is loaded
+  useEffect(() => {
+    if (gig && user) {
+      checkWishlistStatus();
+    }
+  }, [gig, user]);
+
+  const checkWishlistStatus = async () => {
+    try {
+      const response = await api.checkWishlistStatus(gig.id);
+      setIsInWishlist(response.in_wishlist);
+    } catch (error) {
+      console.error('Error checking wishlist status:', error);
+    }
+  };
+
+  const handleToggleWishlist = async () => {
+    if (!user) {
+      toast({
+        title: 'تسجيل الدخول مطلوب',
+        description: 'يجب تسجيل الدخول لإضافة المنتجات لقائمة الأمنيات',
+        variant: 'destructive',
+      });
+      navigate('/login');
+      return;
+    }
+
+    try {
+      setWishlistLoading(true);
+      const response = await api.toggleWishlist(gig.id);
+      
+      if (response.success) {
+        setIsInWishlist(response.action === 'added');
+        toast({
+          title: response.action === 'added' ? 'تمت الإضافة' : 'تمت الإزالة',
+          description: response.message,
+        });
+      } else {
+        toast({
+          title: 'خطأ',
+          description: response.message,
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      console.error('Error toggling wishlist:', error);
+      toast({
+        title: 'خطأ',
+        description: 'حدث خطأ في تحديث قائمة الأمنيات',
+        variant: 'destructive',
+      });
+    } finally {
+      setWishlistLoading(false);
+    }
+  };
 
   if (loading) {
     return <div className="container mx-auto px-4 py-8 text-center">جاري تحميل تفاصيل المنتج...</div>;
@@ -310,8 +368,24 @@ const GigDetailsPage = () => {
                   <ShoppingCart className="ml-2 h-5 w-5" /> أضف إلى السلة
                 </Button>
               )}
-              <Button size="lg" variant="outline" className="border-olivePrimary/50 text-olivePrimary hover:bg-olivePrimary hover:text-white flex-1">
-                <Heart className="ml-2 h-5 w-5" /> أضف إلى المفضلة
+              <Button 
+                size="lg" 
+                variant="outline" 
+                onClick={handleToggleWishlist}
+                disabled={wishlistLoading}
+                className={`border-olivePrimary/50 hover:bg-olivePrimary hover:text-white flex-1 ${
+                  isInWishlist 
+                    ? 'bg-burntOrange text-white border-burntOrange hover:bg-burntOrange/90' 
+                    : 'text-olivePrimary'
+                }`}
+              >
+                <Heart className={`ml-2 h-5 w-5 ${isInWishlist ? 'fill-current' : ''}`} /> 
+                {wishlistLoading 
+                  ? 'جاري التحديث...' 
+                  : isInWishlist 
+                    ? 'إزالة من المفضلة' 
+                    : 'أضف إلى المفضلة'
+                }
               </Button>
             </div>            <div className="grid grid-cols-2 gap-4 text-sm text-darkOlive/80">
                 <div className="flex items-center"><ShieldCheck className="h-5 w-5 text-olivePrimary ml-2" /> دفع آمن ومضمون</div>

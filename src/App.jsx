@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from '@/components/ui/toaster';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { CartProvider } from '@/contexts/CartContext';
@@ -7,6 +7,7 @@ import { ChatProvider } from '@/contexts/ChatContext';
 import { NotificationProvider } from '@/contexts/NotificationContext';
 import ScrollToTop from '@/components/ScrollToTop';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import DeliveryProtectedRoute from '@/components/DeliveryProtectedRoute';
 
 import MainLayout from '@/layouts/MainLayout';
 import AdminLayout from '@/layouts/AdminLayout';
@@ -20,6 +21,7 @@ import MessagePage from '@/pages/MessagePage.jsx';
 import DashboardPage from '@/pages/DashboardPage.jsx';
 import ChatPage from '@/pages/ChatPage.jsx';
 import CartPage from '@/pages/CartPage.jsx';
+import WishlistPage from '@/pages/WishlistPage.jsx';
 import CheckoutPage from '@/pages/CheckoutPage.jsx';
 import OrderDetailPage from '@/pages/OrderDetailPage.jsx';
 import LoginPage from '@/pages/LoginPage.jsx';
@@ -30,6 +32,16 @@ import EmailVerificationPage from '@/pages/EmailVerificationPage.jsx';
 import NotFoundPage from '@/pages/NotFoundPage.jsx';
 import AdminDashboardPage from '@/pages/AdminDashboardPage.jsx';
 import NotificationsPage from '@/pages/NotificationsPage.jsx';
+import ContactUsPage from '@/pages/ContactUsPage.jsx';
+import AboutUsPage from '@/pages/AboutUsPage.jsx';
+import PolicyPage from '@/pages/PolicyPage.jsx';
+import AnnouncementsPage from '@/pages/AnnouncementsPage.jsx';
+
+// Delivery Pages
+import DeliveryLoginPage from '@/pages/DeliveryLoginPage.jsx';
+import DeliveryDashboardPage from '@/pages/DeliveryDashboardPage.jsx';
+import DeliveryPickupPage from '@/pages/DeliveryPickupPage.jsx';
+import DeliveryDeliverPage from '@/pages/DeliveryDeliverPage.jsx';
 
 // Dashboard Sub-Pages
 import DashboardOverview from '@/components/dashboard/DashboardOverview';
@@ -49,6 +61,11 @@ import AdminSellers from '@/components/admin/AdminSellers';
 import AdminUsers from '@/components/admin/AdminUsers';
 import AdminMessages from '@/components/admin/AdminMessages';
 import AdminSettings from '@/components/admin/AdminSettings';
+import AdminDelivery from '@/components/admin/AdminDelivery';
+import AdminDeliveryOrders from '@/components/admin/AdminDeliveryOrders';
+import AdminWithdrawals from '@/components/admin/AdminWithdrawals';
+import AdminContactUs from '@/components/admin/AdminContactUs';
+import AdminAnnouncements from '@/components/admin/AdminAnnouncements';
 
 import './styles/rtl-dropdown.css'; // Import our RTL dropdown styles
 
@@ -65,6 +82,10 @@ function App() {
                 <Route path="explore" element={<ExplorePage />} />
                 <Route path="gigs/:id" element={<GigDetailsPage />} />
                 <Route path="sellers/:id" element={<SellerProfilePage />} />
+                <Route path="contact-us" element={<ContactUsPage />} />
+                <Route path="about-us" element={<AboutUsPage />} />
+                <Route path="policy" element={<PolicyPage />} />
+                <Route path="announcements" element={<AnnouncementsPage />} />
                 
                 {/* Protected routes that require authentication */}
                 <Route path="message/:id" element={
@@ -110,6 +131,11 @@ function App() {
                 <Route path="cart" element={
                   <ProtectedRoute>
                     <CartPage />
+                  </ProtectedRoute>
+                } />
+                <Route path="wishlist" element={
+                  <ProtectedRoute>
+                    <WishlistPage />
                   </ProtectedRoute>
                 } />
                 <Route path="checkout" element={
@@ -165,8 +191,34 @@ function App() {
                 <Route path="products" element={<AdminProducts />} />
                 <Route path="sellers" element={<AdminSellers />} />
                 <Route path="users" element={<AdminUsers />} />
+                <Route path="delivery" element={<AdminDelivery />} />
+                <Route path="delivery-orders" element={<AdminDeliveryOrders />} />
+                <Route path="withdrawals" element={<AdminWithdrawals />} />
                 <Route path="messages" element={<AdminMessages />} />
+                <Route path="contact-us" element={<AdminContactUs />} />
+                <Route path="announcements" element={<AdminAnnouncements />} />
                 <Route path="settings" element={<AdminSettings />} />
+              </Route>
+              
+              {/* Delivery Routes (separate from main layout) */}
+              <Route path="/delivery">
+                <Route index element={<Navigate to="/delivery/login" replace />} />
+                <Route path="login" element={<DeliveryLoginPage />} />
+                <Route path="dashboard" element={
+                  <DeliveryProtectedRoute>
+                    <DeliveryDashboardPage />
+                  </DeliveryProtectedRoute>
+                } />
+                <Route path="pickup/:orderId" element={
+                  <DeliveryProtectedRoute>
+                    <DeliveryPickupPage />
+                  </DeliveryProtectedRoute>
+                } />
+                <Route path="deliver/:orderId" element={
+                  <DeliveryProtectedRoute>
+                    <DeliveryDeliverPage />
+                  </DeliveryProtectedRoute>
+                } />
               </Route>
             </Routes>
             <Toaster />

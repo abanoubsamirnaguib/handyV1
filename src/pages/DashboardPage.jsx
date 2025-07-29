@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, Outlet, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LayoutDashboard, ShoppingBag, MessageCircle, Settings, BarChart2, DollarSign, Users, LogOut, PlusCircle, Edit, Menu, X, ChevronLeft } from 'lucide-react';
+import { LayoutDashboard, ShoppingBag, MessageCircle, Settings, BarChart2, DollarSign, Users, LogOut, PlusCircle, Edit, Menu, X, ChevronLeft, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
@@ -22,6 +22,7 @@ const DashboardSidebar = ({ user }) => {
 
   const buyerLinks = [
     { path: '/dashboard/orders', label: 'طلباتي', icon: ShoppingBag },
+    { path: '/wishlist', label: 'قائمة الأمنيات', icon: Heart },
     { path: '/dashboard/messages', label: 'الرسائل', icon: MessageCircle },
     { path: '/dashboard/settings', label: 'إعدادات الحساب', icon: Settings },
   ];
@@ -217,6 +218,7 @@ const DashboardContent = ({ user }) => {
   // Links based on user role
   const buyerLinks = [
     { path: '/dashboard/orders', label: 'طلباتي', icon: ShoppingBag },
+    { path: '/wishlist', label: 'قائمة الأمنيات', icon: Heart },
     { path: '/dashboard/messages', label: 'الرسائل', icon: MessageCircle },
     { path: '/dashboard/settings', label: 'إعدادات الحساب', icon: Settings },
   ];

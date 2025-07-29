@@ -57,6 +57,13 @@ class OrderResource extends JsonResource
             'delivery_notes' => $this->delivery_notes,
             'admin_notes' => $this->admin_notes,
             'seller_notes' => $this->seller_notes,
+            'seller_address' => $this->seller_address,
+            'completion_deadline' => $this->completion_deadline,
+            'is_late' => $this->is_late,
+            'late_reason' => $this->late_reason,
+            'time_remaining' => $this->getTimeRemaining(),
+            'suspended_at' => $this->suspended_at,
+            'suspension_reason' => $this->suspension_reason,
             
             // تاريخ الطلب
             'history' => OrderHistoryResource::collection($this->whenLoaded('history')),

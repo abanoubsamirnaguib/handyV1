@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Star, Filter, ArrowRight, ArrowLeft, ListFilter, LayoutGrid, X, Mail, MapPin } from 'lucide-react';
+import { Star, Filter, ArrowRight, ArrowLeft, ListFilter, LayoutGrid, X, Mail, MapPin, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -19,6 +19,7 @@ const ExplorePage = () => {
   const [gigs, setGigs] = useState([]);
   const [sellers, setSellers] = useState([]);
   const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
+  const [quickSearchTerm, setQuickSearchTerm] = useState(searchParams.get('search') || ''); // New state for mobile quick search
   const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || 'all');
   const [selectedType, setSelectedType] = useState(searchParams.get('type') || 'all');
   const [priceRange, setPriceRange] = useState([0, 1000]);
@@ -29,6 +30,7 @@ const ExplorePage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [categories, setCategories] = useState([]);
+  const [searchTimeout, setSearchTimeout] = useState(null);
 
   // Add dir="rtl" to root element once component mounts
   useEffect(() => {
@@ -37,8 +39,12 @@ const ExplorePage = () => {
     // Cleanup when component unmounts
     return () => {
       document.documentElement.removeAttribute('dir');
+      // Clear search timeout on unmount
+      if (searchTimeout) {
+        clearTimeout(searchTimeout);
+      }
     };
-  }, []);
+  }, [searchTimeout]);
 
   useEffect(() => {
     apiFetch('listcategories')
@@ -61,6 +67,7 @@ const ExplorePage = () => {
 
     setActiveTab(tab);
     setSearchTerm(query);
+    setQuickSearchTerm(query); // Update quick search term from URL
     // If the category param is a name, convert to id; otherwise use as is
     let selectedCat = category;
     if (category !== 'all' && categories.length > 0) {
@@ -220,6 +227,7 @@ const ExplorePage = () => {
   
   const resetFilters = () => {
     setSearchTerm('');
+    setQuickSearchTerm(''); // Reset quick search term too
     setSelectedCategory('all');
     setSelectedType('all');
     setPriceRange([0, 1000]);
@@ -229,6 +237,33 @@ const ExplorePage = () => {
     
     // Auto-close mobile filter after resetting
     setIsFiltersOpen(false);
+  };
+
+  // Handle quick search with debouncing
+  const handleQuickSearch = (value) => {
+    setQuickSearchTerm(value);
+    
+    // Clear existing timeout
+    if (searchTimeout) {
+      clearTimeout(searchTimeout);
+    }
+    
+    // Set new timeout for debounced search
+    const newTimeout = setTimeout(() => {
+      setSearchTerm(value); // Sync with main search term
+      
+      // Update URL params after debounce
+      const params = new URLSearchParams(searchParams);
+      params.set('tab', activeTab);
+      if (value) {
+        params.set('search', value);
+      } else {
+        params.delete('search');
+      }
+      setSearchParams(params);
+    }, 500); // 500ms debounce
+    
+    setSearchTimeout(newTimeout);
   };
 
   const handleTabChange = (value) => {
@@ -386,7 +421,8 @@ const ExplorePage = () => {
       </CardFooter>
     </Card>
   );
-  const SellerListItem = ({ seller }) => (    <Card className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col md:flex-row card-hover border-olivePrimary/20 w-full" dir="rtl">
+  const SellerListItem = ({ seller }) => (
+    <Card className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col md:flex-row card-hover border-olivePrimary/20 w-full" dir="rtl">
       <div className="relative md:w-1/4 h-48 md:h-auto bg-olivePrimary flex items-center justify-center">
         {seller.avatar ? (
           <img 
@@ -467,6 +503,31 @@ const ExplorePage = () => {
           <TabsTrigger value="products" className="text-lg data-[state=active]:bg-olivePrimary data-[state=active]:text-white">المنتجات</TabsTrigger>
           <TabsTrigger value="sellers" className="text-lg data-[state=active]:bg-olivePrimary data-[state=active]:text-white">الحرفيين</TabsTrigger>
         </TabsList>
+
+        {/* Mobile Quick Search - Always visible on mobile */}
+        <div className="mb-4 md:hidden">
+          <div className="relative">
+            <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-olivePrimary/60" />
+            <Input
+              type="text"
+              value={quickSearchTerm}
+              onChange={(e) => handleQuickSearch(e.target.value)}
+              placeholder={activeTab === 'products' ? 'بحث سريع في المنتجات...' : 'بحث سريع في الحرفيين...'}
+              className="pl-10 pr-12 border-olivePrimary/30 focus:border-olivePrimary focus:ring-olivePrimary/20 text-right text-base h-12 bg-white shadow-sm"
+              dir="rtl"
+            />
+            {quickSearchTerm && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => handleQuickSearch('')}
+                className="absolute left-2 top-1/2 transform -translate-y-1/2 h-8 w-8 text-olivePrimary/60 hover:text-olivePrimary hover:bg-olivePrimary/10"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+        </div>
           <TabsContent value="products" className="mt-0">          <div className="flex flex-col md:flex-row-reverse gap-8">
             {/* Filters Sidebar */}
             <motion.aside 

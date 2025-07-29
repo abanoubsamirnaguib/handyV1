@@ -13,6 +13,7 @@ class CategoryRequest extends FormRequest
             return [
                 'name' => 'required|string|max:100',
                 'icon' => 'nullable|string|max:50',
+                'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
                 'description' => 'nullable|string',
                 'parent_id' => 'nullable|exists:categories,id',
             ];
@@ -21,6 +22,7 @@ class CategoryRequest extends FormRequest
         return [
             'name' => 'sometimes|required|string|max:100',
             'icon' => 'nullable|string|max:50',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'description' => 'nullable|string',
             'parent_id' => 'nullable|exists:categories,id',
         ];

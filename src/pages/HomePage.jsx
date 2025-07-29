@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Search, ArrowRight, Star, TrendingUp, Shield, Clock, Palette, HandMetal, Gift, Shirt, Image, Utensils } from 'lucide-react';
+import { Search, ArrowRight, Star, TrendingUp, Shield, Clock, Palette, HandMetal, Gift, Shirt, Image, Utensils, AlertCircle, CheckCircle, Info, AlertTriangle, Calendar, Megaphone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -28,6 +28,18 @@ const HomePage = () => {
   const [categoriesError, setCategoriesError] = useState(null);
   const [showAllCategories, setShowAllCategories] = useState(false);
   const [categoriesPerRow, setCategoriesPerRow] = useState(window.innerWidth < 640 ? 4 : window.innerWidth < 1024 ? 6 : 8);
+
+  // Helper to get full image URL
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return null;
+    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+    return `${baseUrl}/storage/${imagePath}`;
+  };
+
+  // Latest announcements from backend
+  const [latestAnnouncements, setLatestAnnouncements] = useState([]);
+  const [loadingAnnouncements, setLoadingAnnouncements] = useState(true);
+  const [announcementsError, setAnnouncementsError] = useState(null);
 
   // For draggable scroll - no longer needed
   // const categoriesRowRef = useRef(null);
@@ -56,7 +68,8 @@ const HomePage = () => {
             ? data.data.map(cat => ({
                 id: cat.id || cat._id || cat.category_id || cat.slug || cat.name,
                 name: cat.name || cat.title || cat.label,
-                icon: cat.icon || cat.iconName || 'star'
+                icon: cat.icon || cat.iconName || 'star',
+                image: cat.image
               }))
             : [];
           setCategories(normalized);
@@ -141,6 +154,31 @@ const HomePage = () => {
     return () => { isMounted = false; };
   }, []);
 
+  // Fetch latest announcements from backend
+  useEffect(() => {
+    let isMounted = true;
+    setLoadingAnnouncements(true);
+    setAnnouncementsError(null);
+    api.get('/announcements/latest?limit=3')
+      .then(response => {
+        if (isMounted) {
+          if (response.data.success) {
+            setLatestAnnouncements(response.data.data);
+          } else {
+            setLatestAnnouncements([]);
+          }
+          setLoadingAnnouncements(false);
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setAnnouncementsError('تعذر تحميل الإعلانات');
+          setLoadingAnnouncements(false);
+        }
+      });
+    return () => { isMounted = false; };
+  }, []);
+
   // Remove drag handlers - no longer needed
   // const handleDragStart = (e) => {
   //   dragState.current.isDragging = true;
@@ -189,6 +227,27 @@ const HomePage = () => {
       case 'image': return <Image size={iconSize} />;
       case 'utensils': return <Utensils size={iconSize} />;
       default: return <Star size={iconSize} />;
+    }
+  };
+
+  const getAnnouncementIcon = (type) => {
+    const iconSize = 24;
+    switch (type) {
+      case 'info': return <Info size={iconSize} className="text-darkOlive" />;
+      case 'warning': return <AlertTriangle size={iconSize} className="text-darkBrown" />;
+      case 'success': return <CheckCircle size={iconSize} className="text-olivePrimary" />;
+      case 'error': return <AlertCircle size={iconSize} className="text-brightOrange" />;
+      default: return <Info size={iconSize} className="text-darkOlive" />;
+    }
+  };
+
+  const getAnnouncementTypeColor = (type) => {
+    switch (type) {
+      case 'info': return 'bg-lightGreen text-darkOlive';
+      case 'warning': return 'bg-palePink text-darkBrown';
+      case 'success': return 'bg-paleGreen text-olivePrimary';
+      case 'error': return 'bg-peachOrange/20 text-brightOrange';
+      default: return 'bg-lightGreen text-darkOlive';
     }
   };
 
@@ -289,12 +348,20 @@ const HomePage = () => {
                         className="block group"
                       >
                         <div className="flex flex-col items-center">
-                          {/* Modern circular icon container */}
+                          {/* Modern circular container for icon or image */}
                           <div className="relative mb-3 md:mb-4">
-                            <div className="w-16 h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 rounded-full bg-gradient-to-br from-olivePrimary/10 to-olivePrimary/20 flex items-center justify-center border-2 border-olivePrimary/30 group-hover:border-olivePrimary/60 transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg backdrop-blur-sm">
-                              <div className="w-8 h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 flex items-center justify-center text-olivePrimary group-hover:text-olivePrimary/80 transition-colors duration-300">
-                                {getCategoryIcon(category.icon)}
-                              </div>
+                            <div className="w-16 h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 rounded-full bg-gradient-to-br from-olivePrimary/10 to-olivePrimary/20 flex items-center justify-center border-2 border-olivePrimary/30 group-hover:border-olivePrimary/60 transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg backdrop-blur-sm overflow-hidden">
+                              {category.image ? (
+                                <img 
+                                  src={getImageUrl(category.image)} 
+                                  alt={category.name}
+                                  className="w-full h-full object-cover rounded-full"
+                                />
+                              ) : (
+                                <div className="w-8 h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 flex items-center justify-center text-olivePrimary group-hover:text-olivePrimary/80 transition-colors duration-300">
+                                  {getCategoryIcon(category.icon)}
+                                </div>
+                              )}
                               {/* Decorative ring */}
                               <div className="absolute inset-0 rounded-full border border-olivePrimary/20 animate-pulse"></div>
                             </div>
@@ -402,6 +469,90 @@ const HomePage = () => {
           </div>
         </div>
       </section>
+
+      {/* Latest Announcements Section */}
+      {!loadingAnnouncements && !announcementsError && latestAnnouncements.length > 0 && (
+        <section className="py-16 bg-gradient-to-r from-creamyBeige to-paleGreen">
+          <div className="container mx-auto px-4">
+            <motion.div 
+              className="text-center mb-12"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              <h2 className="text-3xl font-bold mb-4 text-darkOlive">
+                <Megaphone className="inline-block mr-2 text-olivePrimary" size={32} />
+                آخر <span className="text-olivePrimary">الإعلانات</span>
+              </h2>
+              <p className="text-darkOlive/70">اطلع على أحدث الأخبار والتحديثات المهمة</p>
+            </motion.div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {latestAnnouncements.map((announcement, index) => (
+                <motion.div
+                  key={announcement.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                >
+                  <Card className="h-full hover:shadow-lg transition-shadow duration-300 border-l-4 border-l-olivePrimary bg-white/90 backdrop-blur-sm">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          {getAnnouncementIcon(announcement.type)}
+                          <Badge className={getAnnouncementTypeColor(announcement.type)}>
+                            {announcement.type === 'info' ? 'معلومات' : 
+                             announcement.type === 'warning' ? 'تحذير' : 
+                             announcement.type === 'success' ? 'نجاح' : 'تنبيه'}
+                          </Badge>
+                        </div>
+                        <div className="text-xs text-lightBrownGray flex items-center">
+                          <Calendar className="h-3 w-3 mr-1 text-olivePrimary" />
+                          {new Date(announcement.created_at).toLocaleDateString('ar-EG')}
+                        </div>
+                      </div>
+                      <CardTitle className="text-lg font-semibold text-darkOlive leading-tight">
+                        {announcement.title}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                      <p className="text-darkOlive/80 leading-relaxed line-clamp-3">
+                        {announcement.content}
+                      </p>
+                      {announcement.image && (
+                        <div className="mt-3">
+                          <img 
+                            src={`/storage/${announcement.image}`} 
+                            alt={announcement.title}
+                            className="w-full h-32 object-cover rounded-md"
+                          />
+                        </div>
+                      )}
+                    </CardContent>
+                    <CardFooter className="pt-2">
+                      <Button asChild variant="outline" size="sm" className="w-full text-olivePrimary border-olivePrimary hover:bg-olivePrimary hover:text-white">
+                        <Link to={`/announcements#${announcement.id}`}>
+                          اقرأ المزيد
+                          <ArrowRight className="mr-2 h-3 w-3" />
+                        </Link>
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                </motion.div>
+              ))}
+            </div>
+            
+            <div className="text-center mt-8">
+              <Button asChild variant="outline" size="lg" className="border-olivePrimary text-olivePrimary hover:bg-olivePrimary hover:text-white">
+                <Link to="/announcements">
+                  عرض جميع الإعلانات
+                  <ArrowRight className="mr-2 h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* How It Works Section */}
       <section className="py-16 bg-white">

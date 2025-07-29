@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Admin Settings API</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            direction: rtl;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .test-section {
+            background: #f5f5f5;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        button {
+            background: #007cba;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #005a87;
+        }
+        .result {
+            background: white;
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            direction: ltr;
+        }
+        .error {
+            background: #ffe6e6;
+            border-color: #ff9999;
+            color: #cc0000;
+        }
+        .success {
+            background: #e6ffe6;
+            border-color: #99ff99;
+            color: #006600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>اختبار واجهة برمجة التطبيقات لإعدادات الإدارة</h1>
+        
+        <div class="test-section">
+            <h2>1. جلب جميع الإعدادات</h2>
+            <button onclick="testGetSettings()">جلب الإعدادات</button>
+            <div id="getResult" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>2. تحديث الإعدادات العامة</h2>
+            <button onclick="testUpdateGeneral()">تحديث الإعدادات العامة</button>
+            <div id="updateGeneralResult" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>3. تحديث إعدادات البريد الإلكتروني</h2>
+            <button onclick="testUpdateEmail()">تحديث إعدادات البريد</button>
+            <div id="updateEmailResult" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>4. تحديث إعدادات الإشعارات</h2>
+            <button onclick="testUpdateNotifications()">تحديث إعدادات الإشعارات</button>
+            <div id="updateNotificationsResult" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>5. تحديث إعدادات الأمان</h2>
+            <button onclick="testUpdateSecurity()">تحديث إعدادات الأمان</button>
+            <div id="updateSecurityResult" class="result"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000/api';
+        
+        // Note: In a real application, you would get this token from login
+        const ADMIN_TOKEN = 'your_admin_token_here'; // Replace with actual admin token
+
+        async function apiCall(endpoint, method = 'GET', data = null) {
+            const options = {
+                method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
+            };
+
+            if (ADMIN_TOKEN !== 'your_admin_token_here') {
+                options.headers['Authorization'] = `Bearer ${ADMIN_TOKEN}`;
+            }
+
+            if (data) {
+                options.body = JSON.stringify(data);
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/${endpoint}`, options);
+                const result = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${JSON.stringify(result)}`);
+                }
+                
+                return { success: true, data: result };
+            } catch (error) {
+                return { success: false, error: error.message };
+            }
+        }
+
+        function displayResult(elementId, result) {
+            const element = document.getElementById(elementId);
+            if (result.success) {
+                element.className = 'result success';
+                element.textContent = JSON.stringify(result.data, null, 2);
+            } else {
+                element.className = 'result error';
+                element.textContent = `خطأ: ${result.error}`;
+            }
+        }
+
+        async function testGetSettings() {
+            const result = await apiCall('admin/site-settings');
+            displayResult('getResult', result);
+        }
+
+        async function testUpdateGeneral() {
+            const data = {
+                settingsType: 'general',
+                settings: {
+                    siteName: 'منصة الصنايعي - محدث',
+                    siteDescription: 'منصة تسويق المنتجات الحرفية اليدوية - تم التحديث',
+                    logoUrl: '/logo-updated.png',
+                    faviconUrl: '/favicon-updated.ico',
+                    maintenanceMode: false,
+                    registrationsEnabled: true,
+                    defaultLanguage: 'ar',
+                    defaultCurrency: 'EGP'
+                }
+            };
+            const result = await apiCall('admin/site-settings', 'POST', data);
+            displayResult('updateGeneralResult', result);
+        }
+
+        async function testUpdateEmail() {
+            const data = {
+                settingsType: 'email',
+                settings: {
+                    senderName: 'منصة الصنايعي المحدثة',
+                    senderEmail: 'updated@example.com',
+                    smtpServer: 'smtp.updated.com',
+                    smtpPort: '587',
+                    smtpUsername: 'updated-user',
+                    smtpPassword: 'updated-password',
+                    useSMTP: true
+                }
+            };
+            const result = await apiCall('admin/site-settings', 'POST', data);
+            displayResult('updateEmailResult', result);
+        }
+
+        async function testUpdateNotifications() {
+            const data = {
+                settingsType: 'notifications',
+                settings: {
+                    newUserNotifications: true,
+                    newOrderNotifications: true,
+                    productReportNotifications: false,
+                    chatReportNotifications: true,
+                    lowStockNotifications: false,
+                    adminEmails: 'admin@updated.com, admin2@updated.com'
+                }
+            };
+            const result = await apiCall('admin/site-settings', 'POST', data);
+            displayResult('updateNotificationsResult', result);
+        }
+
+        async function testUpdateSecurity() {
+            const data = {
+                settingsType: 'security',
+                settings: {
+                    requireEmailVerification: true,
+                    twoFactorAuthEnabled: true,
+                    passwordMinLength: '10',
+                    passwordRequiresUppercase: true,
+                    passwordRequiresNumber: true,
+                    passwordRequiresSymbol: true,
+                    sessionTimeout: '90'
+                }
+            };
+            const result = await apiCall('admin/site-settings', 'POST', data);
+            displayResult('updateSecurityResult', result);
+        }
+
+        // Show initial message
+        document.addEventListener('DOMContentLoaded', function() {
+            if (ADMIN_TOKEN === 'your_admin_token_here') {
+                alert('تنبيه: يجب إضافة token صحيح للمدير في متغير ADMIN_TOKEN لاختبار واجهات برمجة التطبيقات بشكل صحيح');
+            }
+        });
+    </script>
+</body>
+</html> 

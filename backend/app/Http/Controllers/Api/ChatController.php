@@ -354,4 +354,168 @@ class ChatController extends Controller
             ]
         ]);
     }
+
+    /**
+     * Admin: Get all conversations in the system
+     */
+    public function adminGetAllConversations(Request $request)
+    {
+        $user = Auth::user();
+        
+        // Check if user is admin
+        if (!$user || $user->role !== 'admin') {
+            return response()->json(['message' => 'غير مصرح لك بالوصول'], 403);
+        }
+        
+        $query = Conversation::with(['buyer', 'seller', 'latestMessage.sender'])
+            ->orderBy('last_message_time', 'desc');
+
+        // Apply search filter if provided
+        if ($request->has('search') && !empty($request->search)) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->whereHas('buyer', function($subq) use ($search) {
+                    $subq->where('name', 'like', "%{$search}%")
+                         ->orWhere('email', 'like', "%{$search}%");
+                })
+                ->orWhereHas('seller', function($subq) use ($search) {
+                    $subq->where('name', 'like', "%{$search}%")
+                         ->orWhere('email', 'like', "%{$search}%");
+                })
+                ->orWhereHas('latestMessage', function($subq) use ($search) {
+                    $subq->where('message_text', 'like', "%{$search}%");
+                });
+            });
+        }
+
+        $conversations = $query->get();
+
+        $formattedConversations = $conversations->map(function ($conversation) {
+            $messageCount = Message::where('conversation_id', $conversation->id)->count();
+            
+            return [
+                'id' => $conversation->id,
+                'buyer' => [
+                    'id' => $conversation->buyer->id,
+                    'name' => $conversation->buyer->name,
+                    'email' => $conversation->buyer->email,
+                    'avatar' => $conversation->buyer->avatar,
+                    'last_seen' => $conversation->buyer->last_seen ? $conversation->buyer->last_seen->toIso8601String() : null,
+                ],
+                'seller' => [
+                    'id' => $conversation->seller->id,
+                    'name' => $conversation->seller->name,
+                    'email' => $conversation->seller->email,
+                    'avatar' => $conversation->seller->avatar,
+                    'last_seen' => $conversation->seller->last_seen ? $conversation->seller->last_seen->toIso8601String() : null,
+                ],
+                'lastMessage' => $conversation->latestMessage ? [
+                    'id' => $conversation->latestMessage->id,
+                    'text' => $conversation->latestMessage->message_text,
+                    'timestamp' => $conversation->latestMessage->message_time,
+                    'senderId' => $conversation->latestMessage->sender_id,
+                ] : null,
+                'messageCount' => $messageCount,
+                'lastMessageTime' => $conversation->last_message_time,
+                'createdAt' => $conversation->created_at,
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => $formattedConversations
+        ]);
+    }
+
+    /**
+     * Admin: Get messages for any conversation (bypasses participant restriction)
+     */
+    public function adminGetMessages($conversationId)
+    {
+        $user = Auth::user();
+        
+        // Check if user is admin
+        if (!$user || $user->role !== 'admin') {
+            return response()->json(['message' => 'غير مصرح لك بالوصول'], 403);
+        }
+
+        $conversation = Conversation::with(['buyer', 'seller'])->find($conversationId);
+
+        if (!$conversation) {
+            return response()->json(['error' => 'Conversation not found'], 404);
+        }
+
+        $messages = Message::where('conversation_id', $conversationId)
+            ->with(['sender', 'attachments'])
+            ->orderBy('message_time', 'asc')
+            ->get();
+
+        $formattedMessages = $messages->map(function ($message) {
+            return [
+                'id' => $message->id,
+                'text' => $message->message_text,
+                'timestamp' => $message->message_time,
+                'senderId' => $message->sender_id,
+                'sender' => [
+                    'id' => $message->sender->id,
+                    'name' => $message->sender->name,
+                    'avatar' => $message->sender->avatar,
+                ],
+                'attachments' => $message->attachments->map(function ($attachment) {
+                    return [
+                        'id' => $attachment->id,
+                        'file_url' => $attachment->file_url,
+                        'file_type' => $attachment->file_type,
+                    ];
+                }),
+                'readStatus' => $message->read_status,
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'conversation' => [
+                'id' => $conversation->id,
+                'buyer' => [
+                    'id' => $conversation->buyer->id,
+                    'name' => $conversation->buyer->name,
+                    'avatar' => $conversation->buyer->avatar,
+                ],
+                'seller' => [
+                    'id' => $conversation->seller->id,
+                    'name' => $conversation->seller->name,
+                    'avatar' => $conversation->seller->avatar,
+                ],
+            ],
+            'messages' => $formattedMessages
+        ]);
+    }
+
+    /**
+     * Admin: Get conversation statistics
+     */
+    public function adminGetStats()
+    {
+        $user = Auth::user();
+        
+        // Check if user is admin
+        if (!$user || $user->role !== 'admin') {
+            return response()->json(['message' => 'غير مصرح لك بالوصول'], 403);
+        }
+
+        $totalConversations = Conversation::count();
+        $totalMessages = Message::count();
+        $activeConversations = Conversation::where('last_message_time', '>=', now()->subDays(7))->count();
+        $todayMessages = Message::whereDate('message_time', today())->count();
+
+        return response()->json([
+            'success' => true,
+            'stats' => [
+                'total_conversations' => $totalConversations,
+                'total_messages' => $totalMessages,
+                'active_conversations' => $activeConversations,
+                'today_messages' => $todayMessages,
+            ]
+        ]);
+    }
 }

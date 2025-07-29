@@ -22,6 +22,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { adminApi } from '@/lib/api';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
@@ -64,6 +65,7 @@ const SettingsSection = ({ title, description, icon: Icon, children }) => (
 const AdminSettings = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
 
   // إعدادات الموقع العامة
   const [generalSettings, setGeneralSettings] = useState({
@@ -97,6 +99,21 @@ const AdminSettings = () => {
     lowStockNotifications: true,
     adminEmails: 'admin@example.com',
   });
+  // إعدادات السحب
+  const [withdrawalSettings, setWithdrawalSettings] = useState({
+    minWithdrawalAmount: '100',
+    maxWithdrawalAmount: '100000',
+    withdrawalProcessingFee: '0',
+    withdrawalProcessingTime: '3-5 أيام عمل',
+    enabledPaymentMethods: {
+      vodafone_cash: true,
+      instapay: true,
+      etisalat_cash: true,
+      orange_cash: true,
+      bank_transfer: true,
+    },
+  });
+
   // إعدادات الأمان
   const [securitySettings, setSecuritySettings] = useState({
     requireEmailVerification: true,
@@ -132,6 +149,24 @@ const AdminSettings = () => {
     }));
   };
 
+  const handleWithdrawalChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setWithdrawalSettings(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+  };
+
+  const handlePaymentMethodChange = (method, enabled) => {
+    setWithdrawalSettings(prev => ({
+      ...prev,
+      enabledPaymentMethods: {
+        ...prev.enabledPaymentMethods,
+        [method]: enabled
+      }
+    }));
+  };
+
   const handleSecurityChange = (e) => {
     const { name, value, type, checked } = e.target;
     setSecuritySettings(prev => ({
@@ -140,30 +175,185 @@ const AdminSettings = () => {
     }));
   };
 
-  const handleSaveSettings = (settingsType) => {
-    let message = '';
-    
-    switch(settingsType) {
-      case 'general':
-        message = 'تم حفظ الإعدادات العامة بنجاح';
-        break;
-      case 'email':
-        message = 'تم حفظ إعدادات البريد الإلكتروني بنجاح';
-        break;
-      case 'notifications':
-        message = 'تم حفظ إعدادات الإشعارات بنجاح';
-        break;
-      case 'security':
-        message = 'تم حفظ إعدادات الأمان بنجاح';
-        break;
-      default:
-        message = 'تم حفظ الإعدادات بنجاح';
+  // Load all settings on component mount
+  useEffect(() => {
+    loadWithdrawalSettings();
+    loadAllSettings();
+  }, []);
+
+  const loadWithdrawalSettings = async () => {
+    try {
+      const response = await adminApi.getWithdrawalSettings();
+      if (response.settings) {
+        setWithdrawalSettings({
+          minWithdrawalAmount: response.settings.min_withdrawal_amount || '100',
+          maxWithdrawalAmount: response.settings.max_withdrawal_amount || '100000',
+          withdrawalProcessingFee: response.settings.withdrawal_processing_fee || '0',
+          withdrawalProcessingTime: response.settings.withdrawal_processing_time || '3-5 أيام عمل',
+          enabledPaymentMethods: response.settings.enabled_payment_methods || {
+            vodafone_cash: true,
+            instapay: true,
+            etisalat_cash: true,
+            orange_cash: true,
+            bank_transfer: true,
+          },
+        });
+      }
+    } catch (error) {
+      console.error('Error loading withdrawal settings:', error);
     }
-    
-    toast({
-      title: "تم حفظ الإعدادات",
-      description: message
-    });  };
+  };
+
+  const loadAllSettings = async () => {
+    try {
+      const response = await adminApi.getSiteSettings();
+      if (response.settings) {
+        // Update general settings
+        if (response.settings.general) {
+          setGeneralSettings(prev => ({
+            ...prev,
+            ...response.settings.general
+          }));
+        }
+
+        // Update email settings
+        if (response.settings.email) {
+          setEmailSettings(prev => ({
+            ...prev,
+            ...response.settings.email
+          }));
+        }
+
+        // Update notification settings
+        if (response.settings.notifications) {
+          setNotificationSettings(prev => ({
+            ...prev,
+            ...response.settings.notifications
+          }));
+        }
+
+        // Update security settings
+        if (response.settings.security) {
+          setSecuritySettings(prev => ({
+            ...prev,
+            ...response.settings.security
+          }));
+        }
+      }
+    } catch (error) {
+      console.error('Error loading admin settings:', error);
+      toast({
+        variant: 'destructive',
+        title: 'خطأ في تحميل الإعدادات',
+        description: 'تعذر تحميل الإعدادات من الخادم'
+      });
+    }
+  };
+
+  const saveWithdrawalSettings = async () => {
+    setLoading(true);
+    try {
+      const payload = {
+        min_withdrawal_amount: withdrawalSettings.minWithdrawalAmount,
+        max_withdrawal_amount: withdrawalSettings.maxWithdrawalAmount,
+        withdrawal_processing_fee: withdrawalSettings.withdrawalProcessingFee,
+        withdrawal_processing_time: withdrawalSettings.withdrawalProcessingTime,
+        enabled_payment_methods: withdrawalSettings.enabledPaymentMethods,
+      };
+
+      await adminApi.updateWithdrawalSettings(payload);
+      
+      toast({
+        title: "تم حفظ الإعدادات",
+        description: "تم حفظ إعدادات السحب بنجاح",
+        variant: "default",
+      });
+    } catch (error) {
+      let errorMessage = "حدث خطأ في حفظ إعدادات السحب";
+      
+      if (error.message && error.message.includes('API error:')) {
+        try {
+          const errorText = error.message.split('API error:')[1];
+          const errorJson = JSON.parse(errorText.split(' - ')[1]);
+          errorMessage = errorJson.error || errorJson.message || errorMessage;
+        } catch (parseError) {
+          console.error('Error parsing API error:', parseError);
+        }
+      }
+      
+      toast({
+        title: "خطأ",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSaveSettings = async (settingsType) => {
+    if (settingsType === 'withdrawals') {
+      saveWithdrawalSettings();
+      return;
+    }
+
+    setLoading(true);
+    try {
+      let settings;
+      
+      switch(settingsType) {
+        case 'general':
+          settings = generalSettings;
+          break;
+        case 'email':
+          settings = emailSettings;
+          break;
+        case 'notifications':
+          settings = notificationSettings;
+          break;
+        case 'security':
+          settings = securitySettings;
+          break;
+        default:
+          throw new Error('نوع إعدادات غير صحيح');
+      }
+
+      await adminApi.updateSiteSettings(settingsType, settings);
+      
+      const messages = {
+        'general': 'تم حفظ الإعدادات العامة بنجاح',
+        'email': 'تم حفظ إعدادات البريد الإلكتروني بنجاح',
+        'notifications': 'تم حفظ إعدادات الإشعارات بنجاح',
+        'security': 'تم حفظ إعدادات الأمان بنجاح',
+      };
+      
+      toast({
+        title: "تم حفظ الإعدادات",
+        description: messages[settingsType],
+        variant: "default",
+      });
+    } catch (error) {
+      let errorMessage = "حدث خطأ في حفظ الإعدادات";
+      
+      if (error.message && error.message.includes('API error:')) {
+        try {
+          const errorText = error.message.split('API error:')[1];
+          const errorJson = JSON.parse(errorText.split(' - ')[1]);
+          errorMessage = errorJson.error || errorJson.message || errorMessage;
+        } catch (parseError) {
+          console.error('Error parsing API error:', parseError);
+        }
+      }
+      
+      toast({
+        title: "خطأ",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="p-6 md:p-8 space-y-8">
@@ -179,7 +369,7 @@ const AdminSettings = () => {
       </motion.div>
 
       <Tabs defaultValue="general">
-        <TabsList className="grid grid-cols-4 mb-8">
+        <TabsList className="grid grid-cols-5 mb-8">
           <TabsTrigger value="general">
             <Globe className="ml-2 h-4 w-4" />
             عام
@@ -191,6 +381,10 @@ const AdminSettings = () => {
           <TabsTrigger value="notifications">
             <Bell className="ml-2 h-4 w-4" />
             الإشعارات
+          </TabsTrigger>
+          <TabsTrigger value="withdrawals">
+            <DollarSign className="ml-2 h-4 w-4" />
+            السحب
           </TabsTrigger>
           <TabsTrigger value="security">
             <Shield className="ml-2 h-4 w-4" />
@@ -314,9 +508,10 @@ const AdminSettings = () => {
               <Button 
                 onClick={() => handleSaveSettings('general')}
                 className="bg-blue-600 hover:bg-blue-700"
+                disabled={loading}
               >
                 <Save className="ml-2 h-4 w-4" />
-                حفظ الإعدادات
+                {loading ? 'جاري الحفظ...' : 'حفظ الإعدادات'}
               </Button>
             </div>
           </SettingsSection>
@@ -415,9 +610,10 @@ const AdminSettings = () => {
               <Button 
                 onClick={() => handleSaveSettings('email')}
                 className="bg-blue-600 hover:bg-blue-700"
+                disabled={loading}
               >
                 <Save className="ml-2 h-4 w-4" />
-                حفظ الإعدادات
+                {loading ? 'جاري الحفظ...' : 'حفظ الإعدادات'}
               </Button>
             </div>
           </SettingsSection>
@@ -503,9 +699,147 @@ const AdminSettings = () => {
               <Button 
                 onClick={() => handleSaveSettings('notifications')}
                 className="bg-blue-600 hover:bg-blue-700"
+                disabled={loading}
               >
                 <Save className="ml-2 h-4 w-4" />
-                حفظ الإعدادات
+                {loading ? 'جاري الحفظ...' : 'حفظ الإعدادات'}
+              </Button>
+            </div>
+          </SettingsSection>
+        </TabsContent>
+
+        <TabsContent value="withdrawals">
+          <SettingsSection 
+            title="إعدادات السحب" 
+            description="تكوين حدود ومتطلبات سحب الأرباح للبائعين" 
+            icon={DollarSign}
+          >
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="minWithdrawalAmount">الحد الأدنى للسحب (جنيه مصري)</Label>
+                  <Input
+                    id="minWithdrawalAmount"
+                    name="minWithdrawalAmount"
+                    type="number"
+                    min="1"
+                    value={withdrawalSettings.minWithdrawalAmount}
+                    onChange={handleWithdrawalChange}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">أقل مبلغ يمكن للبائع طلب سحبه</p>
+                </div>
+                <div>
+                  <Label htmlFor="maxWithdrawalAmount">الحد الأقصى للسحب (جنيه مصري)</Label>
+                  <Input
+                    id="maxWithdrawalAmount"
+                    name="maxWithdrawalAmount"
+                    type="number"
+                    min="1"
+                    value={withdrawalSettings.maxWithdrawalAmount}
+                    onChange={handleWithdrawalChange}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">أعلى مبلغ يمكن للبائع طلب سحبه في المرة الواحدة</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="withdrawalProcessingFee">رسوم المعالجة (جنيه مصري)</Label>
+                  <Input
+                    id="withdrawalProcessingFee"
+                    name="withdrawalProcessingFee"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={withdrawalSettings.withdrawalProcessingFee}
+                    onChange={handleWithdrawalChange}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">رسوم إضافية يتم خصمها من كل عملية سحب</p>
+                </div>
+                <div>
+                  <Label htmlFor="withdrawalProcessingTime">وقت المعالجة المتوقع</Label>
+                  <Input
+                    id="withdrawalProcessingTime"
+                    name="withdrawalProcessingTime"
+                    value={withdrawalSettings.withdrawalProcessingTime}
+                    onChange={handleWithdrawalChange}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">الوقت المتوقع لمعالجة طلبات السحب</p>
+                </div>
+              </div>
+
+              <Separator className="my-4" />
+
+              <div className="space-y-3">
+                <Label className="block mb-2">طرق الدفع المتاحة للسحب</Label>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="vodafone_cash" className="cursor-pointer">فودافون كاش</Label>
+                    <Switch
+                      id="vodafone_cash"
+                      checked={withdrawalSettings.enabledPaymentMethods.vodafone_cash}
+                      onCheckedChange={(checked) => handlePaymentMethodChange('vodafone_cash', checked)}
+                    />
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="instapay" className="cursor-pointer">انستا باي</Label>
+                    <Switch
+                      id="instapay"
+                      checked={withdrawalSettings.enabledPaymentMethods.instapay}
+                      onCheckedChange={(checked) => handlePaymentMethodChange('instapay', checked)}
+                    />
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="etisalat_cash" className="cursor-pointer">اتصالات كاش</Label>
+                    <Switch
+                      id="etisalat_cash"
+                      checked={withdrawalSettings.enabledPaymentMethods.etisalat_cash}
+                      onCheckedChange={(checked) => handlePaymentMethodChange('etisalat_cash', checked)}
+                    />
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="orange_cash" className="cursor-pointer">أورانج كاش</Label>
+                    <Switch
+                      id="orange_cash"
+                      checked={withdrawalSettings.enabledPaymentMethods.orange_cash}
+                      onCheckedChange={(checked) => handlePaymentMethodChange('orange_cash', checked)}
+                    />
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="bank_transfer" className="cursor-pointer">تحويل بنكي</Label>
+                    <Switch
+                      id="bank_transfer"
+                      checked={withdrawalSettings.enabledPaymentMethods.bank_transfer}
+                      onCheckedChange={(checked) => handlePaymentMethodChange('bank_transfer', checked)}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <h4 className="font-medium text-blue-800 mb-2">معلومات مهمة:</h4>
+                <ul className="text-sm text-blue-700 space-y-1">
+                  <li>• يجب أن يكون الحد الأقصى أكبر من الحد الأدنى</li>
+                  <li>• تطبق هذه الحدود على جميع البائعين في المنصة</li>
+                  <li>• يمكن للبائعين رؤية هذه الحدود في صفحة الأرباح</li>
+                  <li>• تؤثر طرق الدفع المعطلة على جميع طلبات السحب الجديدة</li>
+                </ul>
+              </div>
+            </div>
+
+            <div className="flex justify-end mt-6">
+              <Button 
+                onClick={() => handleSaveSettings('withdrawals')}
+                className="bg-blue-600 hover:bg-blue-700"
+                disabled={loading}
+              >
+                <Save className="ml-2 h-4 w-4" />
+                {loading ? 'جاري الحفظ...' : 'حفظ الإعدادات'}
               </Button>
             </div>
           </SettingsSection>
@@ -604,9 +938,10 @@ const AdminSettings = () => {
               <Button 
                 onClick={() => handleSaveSettings('security')}
                 className="bg-blue-600 hover:bg-blue-700"
+                disabled={loading}
               >
                 <Save className="ml-2 h-4 w-4" />
-                حفظ الإعدادات
+                {loading ? 'جاري الحفظ...' : 'حفظ الإعدادات'}
               </Button>
             </div>
           </SettingsSection>

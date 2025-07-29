@@ -123,6 +123,53 @@ class UserCrudController extends Controller
         }
     }
 
+    /**
+     * Upload user cover image
+     */
+    public function uploadCoverImage(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+        
+        // Check if the authenticated user is allowed to update this user
+        if (auth()->id() != $id && auth()->user()?->role !== 'admin') {
+            return response()->json(['message' => 'Unauthorized to update this user'], 403);
+        }
+
+        $request->validate([
+            'cover_image' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:10240', // max 10MB
+        ]);
+
+        try {
+            // Delete old cover image if exists
+            if ($user->cover_image && \Storage::disk('public')->exists($user->cover_image)) {
+                \Storage::disk('public')->delete($user->cover_image);
+            }
+
+            // Store new cover image
+            $coverImagePath = $request->file('cover_image')->store('cover_images', 'public');
+            
+            // Update user cover image path
+            $user->update(['cover_image' => $coverImagePath]);
+            
+            // Load seller relationship if needed
+            if ($user->active_role === 'seller' || $user->is_seller) {
+                $user->load('seller.skills');
+            }
+
+            return response()->json([
+                'message' => 'Cover image updated successfully',
+                'data' => new UserResource($user),
+                'cover_image_url' => \Storage::disk('public')->url($coverImagePath)
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to upload cover image',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function destroy($id) {
         $user = User::findOrFail($id);
         $user->delete();

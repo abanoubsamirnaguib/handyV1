@@ -8,7 +8,8 @@ import {
   CheckCircle, 
   AlertCircle,
   RefreshCw,
-  Eye
+  Eye,
+  Loader2
 } from 'lucide-react';
 import { 
   Card, 
@@ -25,73 +26,87 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { useChat } from '@/contexts/ChatContext';
-import { sellers, users } from '@/lib/data';
+import { adminApi } from '@/lib/api';
 
 const AdminMessages = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const { conversations, messages } = useChat();
   
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('all');
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [allConversations, setAllConversations] = useState([]);
   const [filteredConversations, setFilteredConversations] = useState([]);
+  const [selectedMessages, setSelectedMessages] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [messagesLoading, setMessagesLoading] = useState(false);
+  const [stats, setStats] = useState({});
 
-  // إنشاء قائمة بجميع المحادثات مع بيانات المشاركين
+  // Load conversations and stats on component mount
   useEffect(() => {
-    if (conversations.length) {
-      const mappedConversations = conversations.map(conv => {
-        // العثور على بيانات المشاركين
-        const participant = conv.participant;
-        const lastMsg = messages[conv.id]?.[messages[conv.id]?.length - 1] || {};
-        
-        // محاولة العثور على المستخدم الآخر المشترك في المحادثة
-        const otherParticipantId = lastMsg.senderId !== participant.id ? lastMsg.senderId : null;
-        
-        // لأغراض العرض فقط نفترض أن المستخدم الآخر هو أحد الحسابات من البيانات
-        let otherParticipant = null;
-        if (otherParticipantId) {
-          otherParticipant = sellers.find(s => s.id === otherParticipantId) || users?.[0] || {
-            id: otherParticipantId,
-            name: `User ${otherParticipantId.substring(0, 4)}`,
-            avatar: ''
-          };
-        }
-        
-        return {
-          ...conv,
-          participant,
-          otherParticipant,
-          lastMessage: lastMsg,
-          messageCount: messages[conv.id]?.length || 0,
-          lastActivity: lastMsg.timestamp || new Date().toISOString(),
-          isReported: Math.random() > 0.8 // افتراضيًا بعض المحادثات مبلغ عنها للعرض
-        };
-      });
-      
-      setAllConversations(mappedConversations);
-      setFilteredConversations(mappedConversations);
-    }
-  }, [conversations, messages]);
+    loadConversations();
+    loadStats();
+  }, []);
 
-  // تطبيق الفلاتر عند تغيير مصطلح البحث أو علامة التبويب النشطة
+  const loadConversations = async () => {
+    try {
+      setLoading(true);
+      const params = {};
+      if (searchTerm) {
+        params.search = searchTerm;
+      }
+      
+      const response = await adminApi.getAllConversations(params);
+      if (response.success) {
+        const mappedConversations = response.data.map(conv => ({
+          id: conv.id,
+          buyer: conv.buyer,
+          seller: conv.seller,
+          lastMessage: conv.lastMessage,
+          messageCount: conv.messageCount,
+          lastActivity: conv.lastMessageTime || conv.createdAt,
+          isReported: Math.random() > 0.9 // Simulated reported conversations
+        }));
+        
+        setAllConversations(mappedConversations);
+      }
+    } catch (error) {
+      console.error('Error loading conversations:', error);
+      toast({
+        title: "خطأ",
+        description: "حدث خطأ أثناء تحميل المحادثات",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadStats = async () => {
+    try {
+      const response = await adminApi.getChatStats();
+      if (response.success) {
+        setStats(response.stats);
+      }
+    } catch (error) {
+      console.error('Error loading chat stats:', error);
+    }
+  };
+
+  // Search with debounce
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (searchTerm !== '') {
+        loadConversations();
+      }
+    }, 500);
+    
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm]);
+
+  // تطبيق الفلاتر عند تغيير علامة التبويب النشطة
   useEffect(() => {
     let filtered = [...allConversations];
-    
-    // تطبيق فلتر البحث
-    if (searchTerm) {
-      filtered = filtered.filter(conv => {
-        const participantName = conv.participant?.name || '';
-        const otherParticipantName = conv.otherParticipant?.name || '';
-        const lastMessageText = conv.lastMessage?.text || '';
-        
-        return participantName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-               otherParticipantName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-               lastMessageText.toLowerCase().includes(searchTerm.toLowerCase());
-      });
-    }
     
     // تطبيق فلتر علامة التبويب
     if (activeTab === 'reported') {
@@ -99,10 +114,27 @@ const AdminMessages = () => {
     }
     
     setFilteredConversations(filtered);
-  }, [searchTerm, activeTab, allConversations]);
+  }, [activeTab, allConversations]);
 
-  const handleViewConversation = (conversation) => {
+  const handleViewConversation = async (conversation) => {
     setSelectedConversation(conversation);
+    setMessagesLoading(true);
+    
+    try {
+      const response = await adminApi.getConversationMessages(conversation.id);
+      if (response.success) {
+        setSelectedMessages(response.messages);
+      }
+    } catch (error) {
+      console.error('Error loading messages:', error);
+      toast({
+        title: "خطأ",
+        description: "حدث خطأ أثناء تحميل الرسائل",
+        variant: "destructive"
+      });
+    } finally {
+      setMessagesLoading(false);
+    }
   };
 
   const handleCloseConversation = () => {
@@ -152,7 +184,11 @@ const AdminMessages = () => {
         <div className="flex flex-wrap gap-2">
           <Badge className="bg-blue-100 text-blue-700 py-2 px-3">
             <MessageSquare className="h-4 w-4 ml-1" />
-            إجمالي المحادثات: {allConversations.length}
+            إجمالي المحادثات: {stats.total_conversations || allConversations.length}
+          </Badge>
+          <Badge className="bg-green-100 text-green-700 py-2 px-3">
+            <RefreshCw className="h-4 w-4 ml-1" />
+            نشطة: {stats.active_conversations || 0}
           </Badge>
           <Badge className="bg-yellow-100 text-yellow-700 py-2 px-3">
             <AlertCircle className="h-4 w-4 ml-1" />
@@ -193,7 +229,12 @@ const AdminMessages = () => {
                   <CardDescription>مراقبة جميع المحادثات بين المستخدمين</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {filteredConversations.length > 0 ? (
+                  {loading ? (
+                    <div className="text-center py-8">
+                      <Loader2 className="h-8 w-8 animate-spin mx-auto mb-3" />
+                      <p className="text-gray-500">جاري تحميل المحادثات...</p>
+                    </div>
+                  ) : filteredConversations.length > 0 ? (
                     <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2">
                       {filteredConversations.map(conv => (
                         <div 
@@ -204,19 +245,22 @@ const AdminMessages = () => {
                           <div className="flex justify-between items-start">
                             <div className="flex items-center">
                               <Avatar className="h-10 w-10 ml-3">
-                                <AvatarImage src={conv.participant.avatar} />
-                                <AvatarFallback>{conv.participant.name.charAt(0)}</AvatarFallback>
+                                <AvatarImage src={conv.buyer.avatar} />
+                                <AvatarFallback>{conv.buyer.name.charAt(0)}</AvatarFallback>
                               </Avatar>
                               <div>
                                 <p className="font-semibold text-gray-800">
-                                  {conv.participant.name} 
-                                  {conv.otherParticipant && <span className="text-gray-500"> ↔ {conv.otherParticipant.name}</span>}
+                                  {conv.buyer.name} 
+                                  <span className="text-gray-500"> ↔ {conv.seller.name}</span>
                                 </p>
                                 {conv.lastMessage && (
                                   <p className="text-xs text-gray-500 truncate max-w-[200px]">
                                     {conv.lastMessage.text}
                                   </p>
                                 )}
+                                <p className="text-xs text-gray-400">
+                                  {conv.messageCount} رسالة
+                                </p>
                               </div>
                             </div>
                             <div className="flex flex-col items-end">
@@ -250,7 +294,12 @@ const AdminMessages = () => {
                   <CardDescription>المحادثات التي تم الإبلاغ عنها من المستخدمين</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {filteredConversations.length > 0 ? (
+                  {loading ? (
+                    <div className="text-center py-8">
+                      <Loader2 className="h-8 w-8 animate-spin mx-auto mb-3" />
+                      <p className="text-gray-500">جاري تحميل البلاغات...</p>
+                    </div>
+                  ) : filteredConversations.length > 0 ? (
                     <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2">
                       {filteredConversations.map(conv => (
                         <div 
@@ -261,19 +310,22 @@ const AdminMessages = () => {
                           <div className="flex justify-between items-start">
                             <div className="flex items-center">
                               <Avatar className="h-10 w-10 ml-3">
-                                <AvatarImage src={conv.participant.avatar} />
-                                <AvatarFallback>{conv.participant.name.charAt(0)}</AvatarFallback>
+                                <AvatarImage src={conv.buyer.avatar} />
+                                <AvatarFallback>{conv.buyer.name.charAt(0)}</AvatarFallback>
                               </Avatar>
                               <div>
                                 <p className="font-semibold text-gray-800">
-                                  {conv.participant.name} 
-                                  {conv.otherParticipant && <span className="text-gray-500"> ↔ {conv.otherParticipant.name}</span>}
+                                  {conv.buyer.name} 
+                                  <span className="text-gray-500"> ↔ {conv.seller.name}</span>
                                 </p>
                                 {conv.lastMessage && (
                                   <p className="text-xs text-gray-500 truncate max-w-[200px]">
                                     {conv.lastMessage.text}
                                   </p>
                                 )}
+                                <p className="text-xs text-gray-400">
+                                  {conv.messageCount} رسالة
+                                </p>
                               </div>
                             </div>
                             <div className="flex flex-col items-end">
@@ -311,13 +363,12 @@ const AdminMessages = () => {
               <CardHeader className="flex flex-row items-center justify-between">
                 <div className="flex items-center">
                   <Avatar className="h-10 w-10 ml-3">
-                    <AvatarImage src={selectedConversation.participant.avatar} />
-                    <AvatarFallback>{selectedConversation.participant.name.charAt(0)}</AvatarFallback>
+                    <AvatarImage src={selectedConversation.buyer.avatar} />
+                    <AvatarFallback>{selectedConversation.buyer.name.charAt(0)}</AvatarFallback>
                   </Avatar>
                   <div>
                     <CardTitle className="text-lg">
-                      محادثة بين {selectedConversation.participant.name} 
-                      {selectedConversation.otherParticipant && ` و ${selectedConversation.otherParticipant.name}`}
+                      محادثة بين {selectedConversation.buyer.name} و {selectedConversation.seller.name}
                     </CardTitle>
                     <CardDescription>
                       {selectedConversation.messageCount} رسالة - آخر نشاط: {new Date(selectedConversation.lastActivity).toLocaleDateString('ar-EG')}
@@ -348,24 +399,29 @@ const AdminMessages = () => {
               
               <CardContent>
                 <div className="bg-gray-50 rounded-lg p-4 h-[400px] overflow-y-auto">
-                  {messages[selectedConversation.id]?.length > 0 ? (
+                  {messagesLoading ? (
+                    <div className="h-full flex items-center justify-center">
+                      <Loader2 className="h-8 w-8 animate-spin mb-3" />
+                      <p className="text-gray-500">جاري تحميل الرسائل...</p>
+                    </div>
+                  ) : selectedMessages.length > 0 ? (
                     <div className="space-y-4">
-                      {messages[selectedConversation.id].map((msg, index) => {
-                        const isSentByParticipant = msg.senderId === selectedConversation.participant.id;
-                        const sender = isSentByParticipant ? selectedConversation.participant : selectedConversation.otherParticipant;
+                      {selectedMessages.map((msg, index) => {
+                        const isSentByBuyer = msg.senderId === selectedConversation.buyer.id;
+                        const sender = isSentByBuyer ? selectedConversation.buyer : selectedConversation.seller;
                         
                         return (
-                          <div key={index} className={`flex ${isSentByParticipant ? 'justify-end' : 'justify-start'}`}>
-                            <div className={`flex items-start max-w-[70%] ${isSentByParticipant ? 'flex-row' : 'flex-row-reverse'}`}>
-                              <Avatar className={`h-8 w-8 ${isSentByParticipant ? 'ml-2' : 'mr-2'}`}>
+                          <div key={msg.id || index} className={`flex ${isSentByBuyer ? 'justify-end' : 'justify-start'}`}>
+                            <div className={`flex items-start max-w-[70%] ${isSentByBuyer ? 'flex-row' : 'flex-row-reverse'}`}>
+                              <Avatar className={`h-8 w-8 ${isSentByBuyer ? 'ml-2' : 'mr-2'}`}>
                                 <AvatarImage src={sender?.avatar} />
                                 <AvatarFallback>{sender?.name?.charAt(0) || 'U'}</AvatarFallback>
                               </Avatar>
                               <div>
-                                <div className={`px-3 py-2 rounded-lg ${isSentByParticipant ? 'bg-blue-100 text-blue-900' : 'bg-gray-200 text-gray-900'}`}>
+                                <div className={`px-3 py-2 rounded-lg ${isSentByBuyer ? 'bg-blue-100 text-blue-900' : 'bg-gray-200 text-gray-900'}`}>
                                   <p className="text-sm" dir="rtl">{msg.text}</p>
                                 </div>
-                                <p className={`text-xs text-gray-500 mt-1 ${isSentByParticipant ? 'text-right' : 'text-left'}`}>
+                                <p className={`text-xs text-gray-500 mt-1 ${isSentByBuyer ? 'text-right' : 'text-left'}`}>
                                   {new Date(msg.timestamp).toLocaleTimeString('ar-EG', {hour: '2-digit', minute: '2-digit'})}
                                 </p>
                               </div>

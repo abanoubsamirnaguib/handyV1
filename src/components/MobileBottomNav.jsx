@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Search, ShoppingCart, User, LogIn, Bell, MessageCircle } from 'lucide-react';
+import { Search, ShoppingCart, User, LogIn, Bell, MessageCircle, Heart } from 'lucide-react';
 import { useNotifications } from '@/contexts/NotificationContext';
 
 const navItems = [
@@ -26,9 +26,9 @@ const navItems = [
     type: 'search'
   },
   {
-    label: 'السلة',
-    icon: ShoppingCart,
-    to: '/cart',
+    label: 'المفضلة',
+    icon: Heart,
+    to: '/wishlist',
     show: () => !!localStorage.getItem('token'),
     type: 'regular'
   },
@@ -88,7 +88,7 @@ const MobileBottomNav = () => {
             <div className="absolute top-1 left-1/2 transform -translate-x-1/2 w-12 h-12 bg-burntOrange/20 rounded-full blur-xl" />
           </div>
           <span className={`text-xs font-medium mt-0 transition-colors duration-200 ${
-            isActive ? 'text-burntOrange font-semibold' : 'text-darkOlive/70'
+            isActive ? 'text-olivePrimary font-semibold' : 'text-darkOlive/70'
           }`}>
             {label}
           </span>
@@ -102,8 +102,8 @@ const MobileBottomNav = () => {
           key={to}
           to={to}
           className={`relative flex flex-col items-center justify-center text-xs font-medium transition-colors duration-200 ${
-            isActive ? 'text-burntOrange' : 'text-darkOlive/70'
-          } hover:text-burntOrange`}
+            isActive ? 'text-olivePrimary' : 'text-darkOlive/70'
+          } hover:text-olivePrimary`}
           aria-label={label}
         >
           <div className="relative">
@@ -125,8 +125,8 @@ const MobileBottomNav = () => {
         key={to}
         to={to}
         className={`flex flex-col items-center justify-center text-xs font-medium transition-colors duration-200 ${
-          isActive ? 'text-burntOrange' : 'text-darkOlive/70'
-        } hover:text-burntOrange`}
+          isActive ? 'text-olivePrimary' : 'text-darkOlive/70'
+        } hover:text-olivePrimary`}
         aria-label={label}
       >
         <Icon size={24} className="mb-1" />

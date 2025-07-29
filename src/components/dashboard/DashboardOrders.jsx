@@ -293,12 +293,56 @@ const DashboardOrders = () => {
                       <CardTitle className="text-lg font-bold text-olivePrimary">
                         طلب رقم #{order.id}
                       </CardTitle>
-                      <OrderStatusBadge status={order.status} statusLabel={order.status_label} />
+                      <div className="flex items-center gap-2">
+                        <OrderStatusBadge status={order.status} statusLabel={order.status_label} />
+                        {(order.is_late || order.time_remaining?.is_late) && (
+                          <Badge variant="destructive" className="text-xs animate-pulse">
+                            <AlertTriangle className="ml-1 h-3 w-3" />
+                            متأخر
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                     <CardDescription className="text-sm text-gray-500 pt-1">
                       <Calendar className="inline ml-1 h-3 w-3" />
                       {formatDate(order.order_date)}
                     </CardDescription>
+                    {/* Deadline and time remaining */}
+                    {order.completion_deadline && (
+                      <div className="mt-2 text-xs text-gray-500">
+                        <Clock className="inline ml-1 h-3 w-3" />
+                        موعد الإنجاز: {formatDate(order.completion_deadline)}
+                        {order.time_remaining && !order.time_remaining.is_late && (
+                          <span className="text-blue-600 mr-2">
+                            (متبقي: {(() => {
+                              // Handle both backend formats - days/hours as separate fields or days as decimal
+                              let totalHours = 0;
+                              
+                              if (order.time_remaining.total_hours) {
+                                // Use total_hours if available (more accurate)
+                                totalHours = Math.floor(order.time_remaining.total_hours);
+                              } else if (order.time_remaining.days) {
+                                // Convert decimal days to hours
+                                totalHours = Math.floor(order.time_remaining.days * 24);
+                              }
+                              
+                              const days = Math.floor(totalHours / 24);
+                              const hours = totalHours % 24;
+                              
+                              let timeText = '';
+                              if (days > 0) {
+                                timeText += `${days}د `;
+                              }
+                              if (hours > 0) {
+                                timeText += `${hours}س`;
+                              }
+                              
+                              return timeText || 'أقل من ساعة';
+                            })()})
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </CardHeader>
 
                   <CardContent className="p-5 flex-grow">

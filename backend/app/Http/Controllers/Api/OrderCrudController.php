@@ -11,6 +11,7 @@ use App\Http\Requests\OrderRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 use App\Models\Notification;
 use App\Services\NotificationService;
 
@@ -379,9 +380,24 @@ class OrderCrudController extends Controller
     // موافقة البائع على الطلب
     public function sellerApprove(Request $request, $id)
     {
-        $request->validate([
-            'notes' => 'nullable|string|max:500'
+        $validator = \Validator::make($request->all(), [
+            'notes' => 'nullable|string|max:500',
+            'seller_address' => 'required|string|max:1000',
+            'completion_deadline' => 'required|date|after:now'
+        ], [
+            'completion_deadline.after' => 'يجب أن يكون الموعد النهائي للإنجاز في المستقبل',
+            'completion_deadline.required' => 'الموعد النهائي للإنجاز مطلوب',
+            'completion_deadline.date' => 'تنسيق التاريخ غير صحيح',
+            'seller_address.required' => 'عنوان البائع مطلوب',
+            'seller_address.max' => 'عنوان البائع لا يمكن أن يتجاوز 1000 حرف',
         ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'بيانات غير صحيحة',
+                'errors' => $validator->errors()
+            ], 422);
+        }
         
         $order = Order::findOrFail($id);
         
@@ -391,7 +407,11 @@ class OrderCrudController extends Controller
         }
         
         try {
-            $order->approveBySeller($request->notes);
+            $order->approveBySeller(
+                $request->notes, 
+                $request->seller_address, 
+                $request->completion_deadline
+            );
             // Notify buyer and seller
             Notification::create([
                 'user_id' => $order->user_id,
@@ -686,5 +706,51 @@ class OrderCrudController extends Controller
             ->paginate(10);
             
         return OrderResource::collection($orders);
+    }
+    
+    // فحص الطلبات المتأخرة
+    public function checkLateOrders()
+    {
+        $orders = Order::whereNotNull('completion_deadline')
+                      ->whereNotIn('status', ['completed', 'cancelled', 'delivered'])
+                      ->where('completion_deadline', '<', now())
+                      ->where('is_late', false)
+                      ->get();
+
+        $updatedCount = 0;
+
+        foreach ($orders as $order) {
+            if ($order->checkIfLate()) {
+                $updatedCount++;
+            }
+        }
+
+        return response()->json([
+            'message' => "Updated {$updatedCount} orders as late",
+            'updated_count' => $updatedCount
+        ]);
+    }
+    
+    // Check late status for individual order
+    public function checkLateStatus($id)
+    {
+        $order = Order::findOrFail($id);
+        
+        // Check if order is late and update if needed
+        $wasLate = $order->is_late;
+        $isLate = $order->checkIfLate();
+        
+        if ($isLate && !$wasLate) {
+            // Order just became late
+            // You can add notifications here if needed
+            \Log::info("Order #{$order->id} marked as late");
+        }
+        
+        return response()->json([
+            'message' => $isLate ? 'Order is late' : 'Order is not late',
+            'is_late' => $isLate,
+            'was_updated' => $isLate && !$wasLate,
+            'order' => new OrderResource($order->fresh())
+        ]);
     }
 }

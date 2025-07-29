@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Menu, X, ShoppingCart, Bell, Search, User, Shield } from 'lucide-react';
+import { Menu, X, ShoppingCart, Bell, Search, User, Shield, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -23,8 +23,17 @@ const Navbar = () => {
   const { cart } = useCart();
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+
+  // Helper function to determine if a link is active
+  const isActiveLink = (path) => {
+    if (path === '/') {
+      return location.pathname === '/';
+    }
+    return location.pathname.startsWith(path);
+  };
 
   const handleNotifDropdownOpen = async () => {
     // Mark all as read when dropdown opens
@@ -69,22 +78,50 @@ const Navbar = () => {
           </Link>
 
           <nav className="hidden md:flex items-center space-x-1 space-x-reverse">
-            <Link to="/" className="px-3 py-2 text-sm font-medium hover:text-olivePrimary">
+            <Link to="/" className={`px-3 py-2 text-sm font-medium hover:text-olivePrimary transition-colors ${
+              isActiveLink('/') ? 'text-olivePrimary border-b-2 border-olivePrimary font-semibold' : ''
+            }`}>
               الرئيسية
             </Link>
-            <Link to="/explore" className="px-3 py-2 text-sm font-medium hover:text-olivePrimary">
+            <Link to="/explore" className={`px-3 py-2 text-sm font-medium hover:text-olivePrimary transition-colors ${
+              isActiveLink('/explore') ? 'text-olivePrimary border-b-2 border-olivePrimary font-semibold' : ''
+            }`}>
               استكشاف
+            </Link>
+            <Link to="/about-us" className={`px-3 py-2 text-sm font-medium hover:text-olivePrimary transition-colors ${
+              isActiveLink('/about-us') ? 'text-olivePrimary border-b-2 border-olivePrimary font-semibold' : ''
+            }`}>
+              من نحن
+            </Link>
+            <Link to="/announcements" className={`px-3 py-2 text-sm font-medium hover:text-olivePrimary transition-colors ${
+              isActiveLink('/announcements') ? 'text-olivePrimary border-b-2 border-olivePrimary font-semibold' : ''
+            }`}>
+              الإعلانات
+            </Link>
+            <Link to="/policy" className={`px-3 py-2 text-sm font-medium hover:text-olivePrimary transition-colors ${
+              isActiveLink('/policy') ? 'text-olivePrimary border-b-2 border-olivePrimary font-semibold' : ''
+            }`}>
+              السياسات
+            </Link>
+            <Link to="/contact-us" className={`px-3 py-2 text-sm font-medium hover:text-olivePrimary transition-colors ${
+              isActiveLink('/contact-us') ? 'text-olivePrimary border-b-2 border-olivePrimary font-semibold' : ''
+            }`}>
+              تواصل معنا
             </Link>
             {user && (
               <>
                 {user.role !== 'admin' && (
-                  <Link to="/dashboard" className="px-3 py-2 text-sm font-medium hover:text-olivePrimary">
+                  <Link to="/dashboard" className={`px-3 py-2 text-sm font-medium hover:text-olivePrimary transition-colors ${
+                    isActiveLink('/dashboard') ? 'text-olivePrimary border-b-2 border-olivePrimary font-semibold' : ''
+                  }`}>
                     لوحة التحكم
                   </Link>
                 )}
                 {user.role === 'admin' && (
-                  <Link to="/admin/dashboard" className="px-3 py-2 text-sm font-medium hover:text-burntOrange flex items-center">
-                    <Shield className="ml-1 h-4 w-4 text-burntOrange" />
+                  <Link to="/admin/dashboard" className={`px-3 py-2 text-sm font-medium hover:text-olivePrimary flex items-center transition-colors ${
+                    isActiveLink('/admin') ? 'text-olivePrimary border-b-2 border-olivePrimary font-semibold' : ''
+                  }`}>
+                    <Shield className={`ml-1 h-4 w-4 ${isActiveLink('/admin') ? 'text-olivePrimary' : 'text-burntOrange'}`} />
                     لوحة المدير
                   </Link>
                 )}
@@ -112,6 +149,9 @@ const Navbar = () => {
                       {cart.length}
                     </span>
                   )}
+                </Button>
+                <Button variant="ghost" size="icon" onClick={() => navigate('/wishlist')} className="text-olivePrimary hover:text-burntOrange hover:bg-lightGreen">
+                  <Heart className="h-5 w-5" />
                 </Button>
                 <DropdownMenu onOpenChange={open => { if (open) handleNotifDropdownOpen(); }}>
                   <DropdownMenuTrigger asChild>
@@ -210,22 +250,50 @@ const Navbar = () => {
               </Button>
             </form>
             <nav className="flex flex-col space-y-2">
-              <Link to="/" className="px-3 py-2 text-sm font-medium hover:text-primary" onClick={toggleMenu}>
+              <Link to="/" className={`px-3 py-2 text-sm font-medium hover:text-primary transition-colors ${
+                isActiveLink('/') ? 'text-olivePrimary bg-olivePrimary/10 rounded-md font-semibold' : ''
+              }`} onClick={toggleMenu}>
                 الرئيسية
               </Link>
-              <Link to="/explore" className="px-3 py-2 text-sm font-medium hover:text-primary" onClick={toggleMenu}>
+              <Link to="/explore" className={`px-3 py-2 text-sm font-medium hover:text-primary transition-colors ${
+                isActiveLink('/explore') ? 'text-olivePrimary bg-olivePrimary/10 rounded-md font-semibold' : ''
+              }`} onClick={toggleMenu}>
                 استكشاف
+              </Link>
+              <Link to="/about-us" className={`px-3 py-2 text-sm font-medium hover:text-primary transition-colors ${
+                isActiveLink('/about-us') ? 'text-olivePrimary bg-olivePrimary/10 rounded-md font-semibold' : ''
+              }`} onClick={toggleMenu}>
+                من نحن
+              </Link>
+              <Link to="/announcements" className={`px-3 py-2 text-sm font-medium hover:text-primary transition-colors ${
+                isActiveLink('/announcements') ? 'text-olivePrimary bg-olivePrimary/10 rounded-md font-semibold' : ''
+              }`} onClick={toggleMenu}>
+                الإعلانات
+              </Link>
+              <Link to="/contact-us" className={`px-3 py-2 text-sm font-medium hover:text-primary transition-colors ${
+                isActiveLink('/contact-us') ? 'text-olivePrimary bg-olivePrimary/10 rounded-md font-semibold' : ''
+              }`} onClick={toggleMenu}>
+                تواصل معنا
+              </Link>
+              <Link to="/policy" className={`px-3 py-2 text-sm font-medium hover:text-primary transition-colors ${
+                isActiveLink('/policy') ? 'text-olivePrimary bg-olivePrimary/10 rounded-md font-semibold' : ''
+              }`} onClick={toggleMenu}>
+                السياسات
               </Link>
               {user && (
                 <>
                   {user.role !== 'admin' && (
-                    <Link to="/dashboard" className="px-3 py-2 text-sm font-medium hover:text-primary" onClick={toggleMenu}>
+                    <Link to="/dashboard" className={`px-3 py-2 text-sm font-medium hover:text-primary transition-colors ${
+                      isActiveLink('/dashboard') ? 'text-olivePrimary bg-olivePrimary/10 rounded-md font-semibold' : ''
+                    }`} onClick={toggleMenu}>
                       لوحة التحكم
                     </Link>
                   )}
                   {user.role === 'admin' && (
-                    <Link to="/admin/dashboard" className="px-3 py-2 text-sm font-medium hover:text-blue-600 flex items-center" onClick={toggleMenu}>
-                      <Shield className="ml-1 h-4 w-4 text-blue-600" />
+                    <Link to="/admin/dashboard" className={`px-3 py-2 text-sm font-medium hover:text-primary flex items-center transition-colors ${
+                      isActiveLink('/admin') ? 'text-olivePrimary bg-olivePrimary/10 rounded-md font-semibold' : ''
+                    }`} onClick={toggleMenu}>
+                      <Shield className={`ml-1 h-4 w-4 ${isActiveLink('/admin') ? 'text-olivePrimary' : 'text-blue-600'}`} />
                       لوحة المدير
                     </Link>
                   )}
@@ -233,13 +301,19 @@ const Navbar = () => {
               )}
               {user ? (
                 <>
-                  <Link to="/profile/me" className="px-3 py-2 text-sm font-medium hover:text-primary" onClick={toggleMenu}>
+                  <Link to="/profile/me" className={`px-3 py-2 text-sm font-medium hover:text-primary transition-colors ${
+                    isActiveLink('/profile') ? 'text-olivePrimary bg-olivePrimary/10 rounded-md font-semibold' : ''
+                  }`} onClick={toggleMenu}>
                     الملف الشخصي
                   </Link>
-                  <Link to="/chat" className="px-3 py-2 text-sm font-medium hover:text-primary" onClick={toggleMenu}>
+                  <Link to="/chat" className={`px-3 py-2 text-sm font-medium hover:text-primary transition-colors ${
+                    isActiveLink('/chat') ? 'text-olivePrimary bg-olivePrimary/10 rounded-md font-semibold' : ''
+                  }`} onClick={toggleMenu}>
                     الرسائل
                   </Link>
-                  <Link to="/cart" className="px-3 py-2 text-sm font-medium hover:text-primary" onClick={toggleMenu}>
+                  <Link to="/cart" className={`px-3 py-2 text-sm font-medium hover:text-primary transition-colors ${
+                    isActiveLink('/cart') ? 'text-olivePrimary bg-olivePrimary/10 rounded-md font-semibold' : ''
+                  }`} onClick={toggleMenu}>
                     السلة ({cart.length})
                   </Link>
                   <button

@@ -28,6 +28,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Register broadcasting auth middleware
         $middleware->alias([
             'broadcast.auth' => \App\Http\Middleware\BroadcastAuth::class,
+            'delivery.auth' => \App\Http\Middleware\DeliveryAuth::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

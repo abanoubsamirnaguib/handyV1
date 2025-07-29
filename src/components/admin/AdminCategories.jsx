@@ -27,7 +27,9 @@ import {
   Watch, 
   Hammer, 
   Utensils,
-  Loader2
+  Loader2,
+  Upload,
+  ImageIcon
 } from 'lucide-react';
 import { 
   Card, 
@@ -83,15 +85,24 @@ const getIconComponent = (value) => {
   return found ? found.icon : null;
 };
 
+// Helper to get full image URL
+const getImageUrl = (imagePath) => {
+  if (!imagePath) return null;
+  const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+  return `${baseUrl}/storage/${imagePath}`;
+};
+
 const AdminCategories = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [allCategories, setAllCategories] = useState([]);
   const [editingCategory, setEditingCategory] = useState(null);
-  const [newCategory, setNewCategory] = useState({ id: '', name: '', icon: '', description: '' });
+  const [newCategory, setNewCategory] = useState({ id: '', name: '', icon: '', description: '', image: null });
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [editImagePreview, setEditImagePreview] = useState(null);
   useEffect(() => {
     if (user?.role !== 'admin') {
       toast({
@@ -104,6 +115,33 @@ const AdminCategories = () => {
     
     fetchCategories();
   }, [user]);
+
+  const handleImageChange = (e, isEdit = false) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        if (isEdit) {
+          setEditImagePreview(reader.result);
+          setEditingCategory(prev => ({ ...prev, image: file }));
+        } else {
+          setImagePreview(reader.result);
+          setNewCategory(prev => ({ ...prev, image: file }));
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const clearImage = (isEdit = false) => {
+    if (isEdit) {
+      setEditImagePreview(null);
+      setEditingCategory(prev => ({ ...prev, image: null, removeImage: true }));
+    } else {
+      setImagePreview(null);
+      setNewCategory(prev => ({ ...prev, image: null }));
+    }
+  };
 
   const fetchCategories = async () => {
     try {
@@ -144,6 +182,7 @@ const AdminCategories = () => {
 
   const handleEditCategory = (category) => {
     setEditingCategory({ ...category });
+    setEditImagePreview(category.image ? getImageUrl(category.image) : null);
   };
   const handleSaveEdit = async () => {
     if (!editingCategory.name) {
@@ -157,11 +196,30 @@ const AdminCategories = () => {
     
     try {
       setUpdating(true);
-      const updated = await adminApi.updateCategory(editingCategory.id, {
-        name: editingCategory.name,
-        icon: editingCategory.icon,
-        description: editingCategory.description
-      });
+      
+      // Create FormData if image is present or needs to be removed, otherwise send JSON
+      let categoryData;
+      if (editingCategory.image instanceof File || editingCategory.removeImage) {
+        categoryData = new FormData();
+        categoryData.append('name', editingCategory.name);
+        categoryData.append('icon', editingCategory.icon || '');
+        categoryData.append('description', editingCategory.description || '');
+        if (editingCategory.image instanceof File) {
+          categoryData.append('image', editingCategory.image);
+        }
+        if (editingCategory.removeImage) {
+          categoryData.append('remove_image', '1');
+        }
+        categoryData.append('_method', 'PUT');
+      } else {
+        categoryData = {
+          name: editingCategory.name,
+          icon: editingCategory.icon,
+          description: editingCategory.description
+        };
+      }
+      
+      const updated = await adminApi.updateCategory(editingCategory.id, categoryData);
       
       setAllCategories(prev => prev.map(cat => cat.id === editingCategory.id ? updated.data : cat));
       toast({
@@ -169,6 +227,7 @@ const AdminCategories = () => {
         description: `تم تحديث التصنيف "${editingCategory.name}" بنجاح`
       });
       setEditingCategory(null);
+      setEditImagePreview(null);
     } catch (error) {
       console.error('Error updating category:', error);
       toast({
@@ -183,6 +242,7 @@ const AdminCategories = () => {
 
   const handleCancelEdit = () => {
     setEditingCategory(null);
+    setEditImagePreview(null);
   };
   const handleAddCategory = async () => {
     if (!newCategory.name) {
@@ -196,18 +256,32 @@ const AdminCategories = () => {
     
     try {
       setUpdating(true);
-      const created = await adminApi.createCategory({
-        name: newCategory.name,
-        icon: newCategory.icon,
-        description: newCategory.description
-      });
+      
+      // Create FormData if image is present, otherwise send JSON
+      let categoryData;
+      if (newCategory.image) {
+        categoryData = new FormData();
+        categoryData.append('name', newCategory.name);
+        categoryData.append('icon', newCategory.icon || '');
+        categoryData.append('description', newCategory.description || '');
+        categoryData.append('image', newCategory.image);
+      } else {
+        categoryData = {
+          name: newCategory.name,
+          icon: newCategory.icon,
+          description: newCategory.description
+        };
+      }
+      
+      const created = await adminApi.createCategory(categoryData);
       
       setAllCategories(prev => [...prev, created.data]);
       toast({
         title: "تم إضافة التصنيف",
         description: `تم إضافة التصنيف "${newCategory.name}" بنجاح`
       });
-      setNewCategory({ id: '', name: '', icon: '', description: '' });
+      setNewCategory({ id: '', name: '', icon: '', description: '', image: null });
+      setImagePreview(null);
       setIsAddingCategory(false);
     } catch (error) {
       console.error('Error creating category:', error);
@@ -221,7 +295,8 @@ const AdminCategories = () => {
     }
   };
   const handleCancelAdd = () => {
-    setNewCategory({ id: '', name: '', icon: '', description: '' });
+    setNewCategory({ id: '', name: '', icon: '', description: '', image: null });
+    setImagePreview(null);
     setIsAddingCategory(false);
   };
 
@@ -317,6 +392,51 @@ const AdminCategories = () => {
                 />
               </div>
 
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">صورة التصنيف</label>
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
+                  {imagePreview ? (
+                    <div className="relative">
+                      <img 
+                        src={imagePreview} 
+                        alt="Preview" 
+                        className="w-20 h-20 object-cover rounded-lg mx-auto"
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        className="absolute -top-2 -right-2 h-6 w-6 rounded-full p-0"
+                        onClick={() => clearImage(false)}
+                        disabled={updating}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="text-center">
+                      <Upload className="mx-auto h-8 w-8 text-gray-400" />
+                      <div className="mt-2">
+                        <label htmlFor="category-image" className="cursor-pointer">
+                          <span className="text-sm text-blue-600 hover:text-blue-500">
+                            اختر صورة
+                          </span>
+                          <input
+                            id="category-image"
+                            type="file"
+                            className="hidden"
+                            accept="image/*"
+                            onChange={(e) => handleImageChange(e, false)}
+                            disabled={updating}
+                          />
+                        </label>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">PNG, JPG, GIF up to 2MB</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
               <div className="flex justify-end mt-4 space-x-2 space-x-reverse">
                 <Button onClick={handleCancelAdd} variant="outline" className="border-gray-300" disabled={updating}>
                   <X className="ml-2 h-4 w-4" /> إلغاء
@@ -388,6 +508,51 @@ const AdminCategories = () => {
                         disabled={updating}
                       />
                     </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">صورة التصنيف</label>
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
+                        {editImagePreview ? (
+                          <div className="relative">
+                            <img 
+                              src={editImagePreview} 
+                              alt="Preview" 
+                              className="w-20 h-20 object-cover rounded-lg mx-auto"
+                            />
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              size="sm"
+                              className="absolute -top-2 -right-2 h-6 w-6 rounded-full p-0"
+                              onClick={() => clearImage(true)}
+                              disabled={updating}
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="text-center">
+                            <Upload className="mx-auto h-8 w-8 text-gray-400" />
+                            <div className="mt-2">
+                              <label htmlFor="edit-category-image" className="cursor-pointer">
+                                <span className="text-sm text-blue-600 hover:text-blue-500">
+                                  اختر صورة
+                                </span>
+                                <input
+                                  id="edit-category-image"
+                                  type="file"
+                                  className="hidden"
+                                  accept="image/*"
+                                  onChange={(e) => handleImageChange(e, true)}
+                                  disabled={updating}
+                                />
+                              </label>
+                            </div>
+                            <p className="text-xs text-gray-500 mt-1">PNG, JPG, GIF up to 2MB</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
                   <div className="flex justify-end mt-4 space-x-2 space-x-reverse">
                     <Button onClick={handleCancelEdit} variant="outline" className="border-gray-300" disabled={updating}>
@@ -415,6 +580,15 @@ const AdminCategories = () => {
                     </div>
                   </div>                </CardHeader>
                 <CardContent>
+                  {category.image && (
+                    <div className="mb-4">
+                      <img 
+                        src={getImageUrl(category.image)} 
+                        alt={category.name}
+                        className="w-16 h-16 object-cover rounded-lg mx-auto"
+                      />
+                    </div>
+                  )}
                   <div className="flex justify-between items-center text-sm text-gray-500">
                     <span>الأيقونة: {getIconComponent(category.icon) || category.icon}</span>
                   </div>

@@ -37,7 +37,7 @@
   
   /* UI element styling */
   --border: 51 12% 65%;  /* #B2AD9A - light brown-gray */
-  --input: 55 10% 95%;  /* #EFEDE6 - light beige */
+  --input: 51 12% 75%;  /* #C5C1B3 - slightly darker beige for visible borders */
   --ring: 14 59% 63%;  /* #E18562 - burnt orange */
   
   /* Other settings */
@@ -141,6 +141,14 @@ body {
   animation: bounce 1s infinite;
 }
 
+.animate-scroll {
+  animation: scroll 8s linear infinite;
+}
+
+.animate-scroll:hover {
+  animation-play-state: paused;
+}
+
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -154,6 +162,15 @@ body {
 @keyframes bounce {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-10px); }
+}
+
+@keyframes scroll {
+  0% { 
+    transform: translateX(-100%); 
+  }
+  100% { 
+    transform: translateX(100%); 
+  }
 }
 
 /* Custom Utilities */
@@ -336,4 +353,34 @@ html[dir="rtl"] .ltr-icon {
   .crop-container {
     max-height: 50vh;
   }
+}
+
+/* Scrollbar hide utility */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* Internet Explorer 10+ */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Safari and Chrome */
+}
+
+/* Ensure input borders are always visible */
+input, textarea, select {
+  @apply border-gray-300;
+}
+
+input:focus, textarea:focus, select:focus {
+  @apply border-olivePrimary ring-olivePrimary/20;
+}
+
+/* Override any background styling that might hide inputs */
+.bg-background input,
+.bg-lightBeige input {
+  @apply bg-white border-gray-300;
+}
+
+.bg-background textarea,
+.bg-lightBeige textarea {
+  @apply bg-white border-gray-300;
 }

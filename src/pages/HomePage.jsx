@@ -284,9 +284,11 @@ const HomePage = () => {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8 }}
           >
-            <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
-              اكتشف <span className="text-creamyBeige">إبداعات</span> الحرفيين
-            </h1>
+            <div className="flex items-center justify-center mb-6">
+              <h1 className="text-4xl md:text-6xl font-bold leading-tight">
+                اكتشف <span className="text-creamyBeige">إبداعات</span> الحرفيين
+              </h1>
+            </div>
             <p className="text-lg md:text-xl mb-8 text-lightBeige">
               منصتك الأولى للعثور على منتجات يدوية فريدة ومصنوعة بحب وشغف.
             </p>

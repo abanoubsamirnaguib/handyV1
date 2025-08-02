@@ -61,7 +61,12 @@ const DashboardSidebar = ({ user }) => {
 
           <div className="p-4 space-y-4 overflow-y-auto flex-grow">
             <div className="flex items-center justify-between mb-6 px-2">
-              <Link to="/" className="flex items-center">
+              <Link to="/" className="flex items-center space-x-2 space-x-reverse">
+              <img 
+                src="/Asset_5.svg" 
+                alt="بازار Logo" 
+                className={`h-6 w-6 object-contain ${!isSidebarOpen && !isMobile ? 'scale-010 opacity-0' : 'scale-100 opacity-100'} transition-all duration-300`}
+              />
                 <motion.div
                   whileHover={{ scale: 1.05 }}
                   className={`text-xl font-bold text-olivePrimary ${!isSidebarOpen && !isMobile ? 'scale-0 w-0 opacity-0' : 'scale-100 opacity-100'} transition-all duration-300`}

@@ -22,6 +22,7 @@ import { api } from '@/lib/api';
 import { useChat } from '@/contexts/ChatContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
+import WishlistButton from '@/components/ui/WishlistButton';
 
 const SellerProfilePage = () => {
   const { id } = useParams();
@@ -329,6 +330,9 @@ const SellerProfilePage = () => {
                         className="w-full h-full object-cover" 
                       />
                       <Badge variant="secondary" className="absolute top-2 right-2 bg-olivePrimary text-white">{gig.category}</Badge>
+                      <div className="absolute top-2 left-2">
+                        <WishlistButton productId={gig.id} size="md" />
+                      </div>
                     </div>
                     <CardHeader className="pb-2">
                       <CardTitle className="text-lg font-semibold text-gray-800 h-14 overflow-hidden">{gig.title}</CardTitle>

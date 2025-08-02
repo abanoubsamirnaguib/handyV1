@@ -162,7 +162,14 @@ const AboutUsPage = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.4 }}
             >
-              منصة <strong className="text-creamyBeige">بازار</strong> هي المكان الذي يجمع بين الحرفيين المبدعين والعملاء الباحثين عن الأصالة والجودة. 
+              منصة <span className="inline-flex items-center gap-2 font-bold text-creamyBeige">
+                <img 
+                  src="/Asset_9.svg" 
+                  alt="بازار Logo" 
+                  className="h-8 w-8 object-contain inline"
+                />
+                بازار
+              </span> هي المكان الذي يجمع بين الحرفيين المبدعين والعملاء الباحثين عن الأصالة والجودة. 
               نؤمن بقوة الإبداع اليدوي ونسعى لإحياء التراث المصري العريق في ثوب عصري جديد.
             </motion.p>
           </div>

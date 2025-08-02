@@ -15,6 +15,7 @@ import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useChat } from '@/contexts/ChatContext';
 import { api, apiFetch } from '@/lib/api';
+import WishlistButton from '@/components/ui/WishlistButton';
 
 const GigDetailsPage = () => {
   const { id } = useParams();
@@ -506,6 +507,9 @@ const GigDetailsPage = () => {
                         className="w-full h-full object-cover" 
                       />
                       <Badge variant="secondary" className="absolute top-2 right-2 bg-olivePrimary text-white">{relatedGig.category?.name}</Badge>
+                      <div className="absolute top-2 left-2">
+                        <WishlistButton productId={relatedGig.id} size="md" />
+                      </div>
                     </div>
                     <CardHeader className="pb-1">
                       <CardTitle className="text-md font-semibold text-darkOlive h-12 overflow-hidden text-right">{relatedGig.title}</CardTitle>

@@ -69,7 +69,13 @@ const Navbar = () => {
     <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-olivePrimary/20">
       <div className="container mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
-          <Link to="/" className="flex items-center">            <motion.div
+          <Link to="/" className="flex items-center space-x-2 space-x-reverse">
+            <img 
+              src="/Asset_5.svg" 
+              alt="بازار Logo" 
+              className="h-8 w-8 object-contain"
+            />
+            <motion.div
               whileHover={{ scale: 1.05 }}
               className="text-2xl font-bold text-olivePrimary"
             >

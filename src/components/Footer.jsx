@@ -18,7 +18,14 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
           {/* About */}
           <div>
-            <h3 className="text-xl font-bold mb-4 text-lightBeige">بازار</h3>
+            <div className="flex items-center mb-4">
+              <img 
+                src="/Asset_9.svg" 
+                alt="بازار Logo" 
+                className="h-8 w-8 object-contain ml-2"
+              />
+              <h3 className="text-xl font-bold text-lightBeige">بازار</h3>
+            </div>
             <p className="text-lightBeige/80 mb-4">
               منصة تجمع الحرفيين والمبدعين في مكان واحد، لعرض منتجاتهم اليدوية الفريدة والتواصل مع العملاء مباشرة.
             </p>

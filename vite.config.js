@@ -190,7 +190,9 @@ export default defineConfig({
     workbox: {
       cleanupOutdatedCaches: true,
       globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,mp4}'],
-      maximumFileSizeToCacheInBytes: 2 * 1024 * 1024
+      maximumFileSizeToCacheInBytes: 2 * 1024 * 1024,
+      navigateFallback: '/index.html',
+      navigateFallbackDenylist: [/^\/api/, /^\/backend/]
     },
     devOptions: {
       enabled: true,

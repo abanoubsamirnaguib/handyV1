@@ -181,8 +181,8 @@ const SellerProfilePage = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-      >        {/* Seller Profile Header */}        <Card className="mb-8 overflow-hidden border-lightBeige/50">
-          <div className="h-48 bg-olivePrimary relative">
+      >        {/* Seller Profile Header */}        <Card className="mb-8 overflow-hidden border-neutral-200/50">
+          <div className="h-48 bg-roman-500 relative">
             {seller.cover_image ? (
               <img 
                 src={seller.cover_image} 
@@ -196,7 +196,7 @@ const SellerProfilePage = () => {
                   alt="غلاف افتراضي للحرفي" 
                   className="w-full h-full object-cover opacity-30" 
                 />
-                <div className="absolute inset-0 bg-gradient-to-r from-olivePrimary/40 to-transparent"></div>
+                <div className="absolute inset-0 bg-gradient-to-r from-roman-500/40 to-transparent"></div>
               </>
             )}
             <div className="absolute -bottom-16 right-8 h-32 w-32 rounded-full bg-white shadow-lg border-4 border-white overflow-hidden">
@@ -207,7 +207,7 @@ const SellerProfilePage = () => {
                   className="w-full h-full object-cover opacity-30"
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-5xl font-bold text-olivePrimary">
+                <div className="w-full h-full flex items-center justify-center text-5xl font-bold text-roman-500">
                   {seller.name.charAt(0)}
                 </div>
               )}
@@ -227,7 +227,7 @@ const SellerProfilePage = () => {
                 <p className="text-gray-700 mb-4 max-w-3xl">{seller.bio}</p>
                 <div className="flex flex-wrap gap-2">
                   {seller.skills.map((_, index) => (
-                    <Badge key={index} variant="outline" className="border-olivePrimary/30 bg-lightGreen/10">
+                    <Badge key={index} variant="outline" className="border-roman-500/30 bg-success-100/10">
                       {seller.skills[index]}
                     </Badge>
                   ))}
@@ -235,7 +235,7 @@ const SellerProfilePage = () => {
               </div>              <div className="mt-6 md:mt-0 flex md:flex-col gap-3">
                 <Button 
                   onClick={handleContactSeller} 
-                  className="bg-burntOrange hover:bg-burntOrange/90 text-white"
+                  className="bg-warning-500 hover:bg-warning-600 text-white"
                 >
                   <MessageSquare className="ml-2 h-4 w-4" />
                   تواصل مع الحرفي
@@ -247,7 +247,7 @@ const SellerProfilePage = () => {
 
         {/* Seller Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <Card className="border-lightBeige/50 bg-lightBeige/10">
+          <Card className="border-neutral-200/50 bg-neutral-100/10">
             <CardContent className="p-6 flex items-center">
               <Star className="h-10 w-10 text-yellow-500 ml-4" />
               <div>
@@ -258,27 +258,27 @@ const SellerProfilePage = () => {
               </div>
             </CardContent>
           </Card>
-          <Card className="border-lightBeige/50 bg-lightBeige/10">
+          <Card className="border-neutral-200/50 bg-neutral-100/10">
             <CardContent className="p-6 flex items-center">
-              <Package className="h-10 w-10 text-blue-500 ml-4" />
+              <Package className="h-10 w-10 text-roman-500 ml-4" />
               <div>
                 <p className="text-sm text-gray-500">الطلبات المكتملة</p>
                 <p className="text-2xl font-bold">{seller.completedOrders}</p>
               </div>
             </CardContent>
           </Card>
-          <Card className="border-lightBeige/50 bg-lightBeige/10">
+          <Card className="border-neutral-200/50 bg-neutral-100/10">
             <CardContent className="p-6 flex items-center">
-              <Clock className="h-10 w-10 text-green-500 ml-4" />
+              <Clock className="h-10 w-10 text-success-500 ml-4" />
               <div>
                 <p className="text-sm text-gray-500">وقت الاستجابة</p>
                 <p className="text-2xl font-bold">{seller.responseTime}</p>
               </div>
             </CardContent>
           </Card>
-          <Card className="border-lightBeige/50 bg-lightBeige/10">
+          <Card className="border-neutral-200/50 bg-neutral-100/10">
             <CardContent className="p-6 flex items-center">
-              <Award className="h-10 w-10 text-purple-500 ml-4" />
+              <Award className="h-10 w-10 text-warning-500 ml-4" />
               <div>
                 <p className="text-sm text-gray-500">الخبرة</p>
                 <p className="text-2xl font-bold">
@@ -320,7 +320,7 @@ const SellerProfilePage = () => {
             {sellerGigs.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                 {sellerGigs.map((gig) => (
-                  <Card key={gig.id} className="overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 flex flex-col h-full card-hover border-lightBeige/50">
+                  <Card key={gig.id} className="overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 flex flex-col h-full card-hover border-neutral-200/50">
                     <div className="relative h-56">
                       <img 
                         src={gig.images && gig.images.length > 0 
@@ -329,7 +329,7 @@ const SellerProfilePage = () => {
                         alt={gig.title} 
                         className="w-full h-full object-cover" 
                       />
-                      <Badge variant="secondary" className="absolute top-2 right-2 bg-olivePrimary text-white">{gig.category}</Badge>
+                      <Badge variant="secondary" className="absolute top-2 right-2 bg-roman-500 text-white">{gig.category}</Badge>
                       <div className="absolute top-2 left-2">
                         <WishlistButton productId={gig.id} size="md" />
                       </div>
@@ -345,7 +345,7 @@ const SellerProfilePage = () => {
                       <p className="text-xl font-bold text-primary mb-2">{gig.price} جنيه</p>
                     </CardContent>
                     <CardFooter>
-                      <Button asChild className="w-full bg-burntOrange hover:bg-burntOrange/90 text-white">
+                      <Button asChild className="w-full bg-warning-500 hover:bg-warning-500/90 text-white">
                         <Link to={`/gigs/${gig.id}`}>
                           عرض التفاصيل
                           <ArrowRight className="mr-2 h-4 w-4" />
@@ -372,7 +372,7 @@ const SellerProfilePage = () => {
             ) : sellerReviews.length > 0 ? (
               <div className="space-y-6" dir="rtl">
                 {sellerReviews.map((review) => (
-                  <Card key={review.id} className="border-lightBeige/50">
+                  <Card key={review.id} className="border-neutral-200/50">
                     <CardContent className="p-6">
                       <div className="flex items-start gap-4">
                         <div className="flex-shrink-0">
@@ -380,10 +380,10 @@ const SellerProfilePage = () => {
                             <img 
                               src={review.user.avatar} 
                               alt={review.user.name || 'مستخدم'}
-                              className="w-12 h-12 rounded-full object-cover border-2 border-lightBeige"
+                              className="w-12 h-12 rounded-full object-cover border-2 border-neutral-200"
                             />
                           ) : (
-                            <div className="w-12 h-12 bg-olivePrimary rounded-full flex items-center justify-center text-white font-bold">
+                            <div className="w-12 h-12 bg-roman-500 rounded-full flex items-center justify-center text-white font-bold">
                               {review.user?.name?.charAt(0) || 'م'}
                             </div>
                           )}
@@ -404,11 +404,11 @@ const SellerProfilePage = () => {
                                 <img 
                                   src={review.product.image} 
                                   alt={review.product.title}
-                                  className="w-12 h-12 rounded-lg object-cover border border-lightBeige"
+                                  className="w-12 h-12 rounded-lg object-cover border border-neutral-200"
                                 />
                               ) : (
-                                <div className="w-12 h-12 bg-lightBeige rounded-lg flex items-center justify-center">
-                                  <Package className="h-6 w-6 text-olivePrimary" />
+                                <div className="w-12 h-12 bg-neutral-100 rounded-lg flex items-center justify-center">
+                                  <Package className="h-6 w-6 text-roman-500" />
                                 </div>
                               )}
                               <div className="flex-1">

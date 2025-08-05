@@ -43,16 +43,16 @@ const RoleSwitcher = () => {
   };
 
   return (
-    <Card className="mb-6 border-olivePrimary/20 bg-gradient-to-r from-olivePrimary/5 to-olivePrimary/10">
+    <Card className="mb-6 border-roman-500/20 bg-gradient-to-r from-roman-500/5 to-roman-500/10">
       <CardHeader className="pb-4">
         <CardTitle className="flex items-center justify-between text-lg">
           <div className="flex items-center gap-2">
-            <ArrowRightLeft className="h-5 w-5 text-olivePrimary" />
+            <ArrowRightLeft className="h-5 w-5 text-roman-500" />
             <span>تبديل الأدوار</span>
           </div>
           <Badge 
             variant={user.active_role === 'seller' ? 'default' : 'secondary'}
-            className={user.active_role === 'seller' ? 'bg-olivePrimary text-white' : ''}
+            className={user.active_role === 'seller' ? 'bg-roman-500 text-white' : ''}
           >
             {user.active_role === 'seller' ? 'البائع' : 'المشتري'}
           </Badge>
@@ -66,18 +66,18 @@ const RoleSwitcher = () => {
             whileTap={{ scale: 0.98 }}
             className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
               user.active_role === 'buyer'
-                ? 'border-olivePrimary bg-olivePrimary/10'
-                : 'border-gray-200 hover:border-olivePrimary/50'
+                ? 'border-roman-500 bg-roman-500/10'
+                : 'border-gray-200 hover:border-roman-500/50'
             }`}
             onClick={() => user.is_buyer && handleRoleSwitch('buyer')}
           >
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <ShoppingBag className="h-5 w-5 text-olivePrimary" />
+                <ShoppingBag className="h-5 w-5 text-roman-500" />
                 <span className="font-medium">المشتري</span>
               </div>
               {user.active_role === 'buyer' && (
-                <Badge className="bg-olivePrimary text-white">نشط</Badge>
+                <Badge className="bg-roman-500 text-white">نشط</Badge>
               )}
             </div>
             <p className="text-sm text-gray-600 mb-3">
@@ -89,7 +89,7 @@ const RoleSwitcher = () => {
                   checked={user.active_role === 'buyer'}
                   disabled={!user.is_buyer || isLoading}
                   onCheckedChange={() => user.is_buyer && handleRoleSwitch('buyer')}
-                  className="data-[state=checked]:bg-olivePrimary w-11 h-6"
+                  className="data-[state=checked]:bg-roman-500 w-11 h-6"
                 />
               </div>
               <span className="text-xs text-gray-500">
@@ -104,18 +104,18 @@ const RoleSwitcher = () => {
             whileTap={{ scale: 0.98 }}
             className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
               user.active_role === 'seller'
-                ? 'border-olivePrimary bg-olivePrimary/10'
-                : 'border-gray-200 hover:border-olivePrimary/50'
+                ? 'border-roman-500 bg-roman-500/10'
+                : 'border-gray-200 hover:border-roman-500/50'
             }`}
             onClick={() => user.is_seller && handleRoleSwitch('seller')}
           >
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <Store className="h-5 w-5 text-olivePrimary" />
+                <Store className="h-5 w-5 text-roman-500" />
                 <span className="font-medium">البائع</span>
               </div>
               {user.active_role === 'seller' && (
-                <Badge className="bg-olivePrimary text-white">نشط</Badge>
+                <Badge className="bg-roman-500 text-white">نشط</Badge>
               )}
             </div>
             <p className="text-sm text-gray-600 mb-3">
@@ -129,7 +129,7 @@ const RoleSwitcher = () => {
                       checked={user.active_role === 'seller'}
                       disabled={isLoading}
                       onCheckedChange={() => handleRoleSwitch('seller')}
-                      className="data-[state=checked]:bg-olivePrimary w-11 h-6"
+                      className="data-[state=checked]:bg-roman-500 w-11 h-6"
                     />
                   </div>
                   <span className="text-xs text-gray-500">متاح</span>
@@ -141,7 +141,7 @@ const RoleSwitcher = () => {
                     variant="outline"
                     onClick={handleEnableSellerMode}
                     disabled={isLoading}
-                    className="border-olivePrimary text-olivePrimary hover:bg-olivePrimary hover:text-white"
+                    className="border-roman-500 text-roman-500 hover:bg-roman-500 hover:text-white"
                   >
                     <Plus className="h-4 w-4 mr-2" />
                     تفعيل وضع البائع
@@ -158,10 +158,10 @@ const RoleSwitcher = () => {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              className="mt-4 p-3 bg-olivePrimary/10 rounded-lg border border-olivePrimary/20"
+              className="mt-4 p-3 bg-roman-500/10 rounded-lg border border-roman-500/20"
             >
-              <div className="flex items-center gap-2 text-sm text-olivePrimary">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-olivePrimary"></div>
+              <div className="flex items-center gap-2 text-sm text-roman-500">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-roman-500"></div>
                 <span>جاري تحديث الدور...</span>
               </div>
             </motion.div>

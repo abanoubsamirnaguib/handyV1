@@ -9,18 +9,18 @@ const badgeVariants = cva(
     variants: {
       variant: {
         default:
-          "border-transparent bg-primary text-primary-foreground hover:bg-primary/80", // Primary - olivePrimary (60%)
+          "border-transparent bg-primary text-primary-foreground hover:bg-primary/80", // Primary - roman-500 (60%)
         secondary:
-          "border-transparent bg-lightGreen text-darkOlive hover:bg-lightGreen/80", // Secondary - lightGreen (30%)
+          "border-transparent bg-success-100 text-neutral-900 hover:bg-success-100/80", // Secondary - success-100 (30%)
         destructive:
-          "border-transparent bg-brightOrange text-white hover:bg-brightOrange/80", // Accent - brightOrange (10%)
-        outline: "text-foreground border-olivePrimary", // Primary color border
+          "border-transparent bg-warning-500 text-white hover:bg-warning-600", // Accent - warning-500 (10%)
+        outline: "text-foreground border-roman-500", // Primary color border
         accent: 
-          "border-transparent bg-burntOrange text-white hover:bg-burntOrange/80", // Secondary - burntOrange (30%)
+          "border-transparent bg-warning-500 text-white hover:bg-warning-500/80", // Secondary - roman-500 (30%)
         muted:
-          "border-transparent bg-lightBrownGray text-white hover:bg-lightBrownGray/80", // Supporting color
+          "border-transparent bg-neutral-500 text-white hover:bg-neutral-600", // Supporting color
         success:
-          "border-transparent bg-paleGreen text-darkOlive hover:bg-paleGreen/80", // Supporting color
+          "border-transparent bg-success-200 text-neutral-900 hover:bg-success-200/80", // Supporting color
       },
     },
     defaultVariants: {

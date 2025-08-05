@@ -614,18 +614,18 @@ const OrderDetailPage = () => {
       'in_progress': { 
         label: 'جاري العمل', 
         icon: <Timer className="h-4 w-4 ml-1" />, 
-        color: 'bg-olivePrimary/20 text-olivePrimary border-olivePrimary/30 shadow-md',
+        color: 'bg-roman-500/20 text-roman-500 border-roman-500/30 shadow-md',
         pulse: true
       },
       'ready_for_delivery': { 
         label: 'جاهز للتوصيل', 
         icon: <Package className="h-4 w-4 ml-1" />, 
-        color: 'bg-olivePrimary/20 text-olivePrimary border-olivePrimary/30 shadow-md'
+        color: 'bg-roman-500/20 text-roman-500 border-roman-500/30 shadow-md'
       },
       'out_for_delivery': { 
         label: 'في الطريق للتوصيل', 
         icon: <Truck className="h-4 w-4 ml-1" />, 
-        color: 'bg-burntOrange/20 text-burntOrange border-burntOrange/30 shadow-md',
+        color: 'bg-warning-500/20 text-warning-500 border-warning-500/30 shadow-md',
         pulse: true
       },
       'delivered': { 
@@ -667,7 +667,7 @@ const OrderDetailPage = () => {
     if (!order?.timeline) return null;
 
     return (      <Card className="border-0 shadow-lg overflow-hidden">
-        <CardHeader className="bg-olivePrimary text-white">
+        <CardHeader className="bg-roman-500 text-white">
           <CardTitle className="flex items-center text-xl">
             <Calendar className="h-6 w-6 ml-2" />
             الجدول الزمني للطلب
@@ -675,7 +675,7 @@ const OrderDetailPage = () => {
         </CardHeader>
         <CardContent className="p-6">          <div className="relative">
             {/* Timeline Line */}
-            <div className="absolute right-6 top-0 bottom-0 w-0.5 bg-olivePrimary"></div>
+            <div className="absolute right-6 top-0 bottom-0 w-0.5 bg-roman-500"></div>
             
             <div className="space-y-6">
               {order.timeline.map((event, index) => (
@@ -686,7 +686,7 @@ const OrderDetailPage = () => {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.15 }}
                 >                  <div className="flex-shrink-0 relative z-10">
-                    <div className="w-12 h-12 bg-olivePrimary rounded-full flex items-center justify-center shadow-lg border-4 border-white">
+                    <div className="w-12 h-12 bg-roman-500 rounded-full flex items-center justify-center shadow-lg border-4 border-white">
                       <Check className="h-5 w-5 text-white" />
                     </div>
                   </div>
@@ -975,9 +975,9 @@ const OrderDetailPage = () => {
         <Card className="text-center py-12">
           <CardContent>
             <AlertCircle className="h-24 w-24 text-red-500 mx-auto mb-6" />
-            <h2 className="text-2xl font-semibold text-darkOlive mb-2">الطلب غير موجود</h2>
-            <p className="text-darkOlive/70 mb-6">لم يتم العثور على الطلب المطلوب.</p>
-            <Button onClick={() => navigate('/dashboard/orders')} className="bg-olivePrimary hover:bg-olivePrimary/90">
+            <h2 className="text-2xl font-semibold text-neutral-900 mb-2">الطلب غير موجود</h2>
+            <p className="text-neutral-900/70 mb-6">لم يتم العثور على الطلب المطلوب.</p>
+            <Button onClick={() => navigate('/dashboard/orders')} className="bg-roman-500 hover:bg-roman-500/90">
               <ArrowLeft className="h-4 w-4 ml-2" />
               العودة للطلبات
             </Button>
@@ -987,7 +987,7 @@ const OrderDetailPage = () => {
     );
   }
   return (
-    <div className="min-h-screen bg-lightBeige">
+    <div className="min-h-screen bg-neutral-100">
       <div className="container mx-auto px-4 py-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -997,7 +997,7 @@ const OrderDetailPage = () => {
           {/* Header */}
           <div className="mb-8">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">              <div>
-                <h1 className="text-4xl font-bold text-olivePrimary">
+                <h1 className="text-4xl font-bold text-roman-500">
                   تفاصيل الطلب
                 </h1>
                 <div className="flex items-center mt-2 space-x-4">
@@ -1008,7 +1008,7 @@ const OrderDetailPage = () => {
               <Button 
                 variant="outline" 
                 onClick={() => navigate('/dashboard/orders')} 
-                className="self-start sm:self-center border-olivePrimary text-olivePrimary hover:bg-olivePrimary hover:text-white transition-all duration-300"
+                className="self-start sm:self-center border-roman-500 text-roman-500 hover:bg-roman-500 hover:text-white transition-all duration-300"
               >
                 <ArrowLeft className="ml-2 h-4 w-4" />
                 العودة للطلبات
@@ -1022,9 +1022,9 @@ const OrderDetailPage = () => {
             <div className="lg:col-span-8 space-y-6">
                 {/* Order Status Card */}
               <Card className="bg-white border-0 shadow-lg">
-                <CardHeader className="bg-olivePrimary/10 rounded-t-lg">
+                <CardHeader className="bg-roman-500/10 rounded-t-lg">
                   <CardTitle className="flex items-center text-xl">
-                    <AlertCircle className="h-6 w-6 ml-2 text-olivePrimary" />
+                    <AlertCircle className="h-6 w-6 ml-2 text-roman-500" />
                     حالة الطلب الحالية
                   </CardTitle>
                 </CardHeader>
@@ -1046,7 +1046,7 @@ const OrderDetailPage = () => {
                 </CardContent>
               </Card>              {/* Order Items Card */}
               <Card className="border-0 shadow-lg overflow-hidden">
-                <CardHeader className="bg-olivePrimary text-white">
+                <CardHeader className="bg-roman-500 text-white">
                   <CardTitle className="flex items-center text-xl">
                     <Package className="h-6 w-6 ml-2" />
                     عناصر الطلب ({order.items?.length || 0} منتج)
@@ -1069,7 +1069,7 @@ const OrderDetailPage = () => {
                               alt={item.product?.name || 'منتج'} 
                               className="w-20 h-20 object-cover rounded-xl shadow-md"
                             />
-                            <div className="absolute -top-2 -right-2 bg-olivePrimary text-white text-xs font-bold rounded-full h-6 flex items-center justify-center">
+                            <div className="absolute -top-2 -right-2 bg-roman-500 text-white text-xs font-bold rounded-full h-6 flex items-center justify-center">
                               {item.product.category.name}
                             </div>
                           </div>
@@ -1086,7 +1086,7 @@ const OrderDetailPage = () => {
                           </div>
                           <div className="text-right">
                             <p className="text-sm text-gray-500">الإجمالي</p>
-                            <p className="text-xl font-bold text-olivePrimary">{item.subtotal} جنيه</p>
+                            <p className="text-xl font-bold text-roman-500">{item.subtotal} جنيه</p>
                           </div>
                         </div>
                       </motion.div>
@@ -1094,7 +1094,7 @@ const OrderDetailPage = () => {
                   <div className="bg-gray-50 p-6">
                     <div className="flex justify-between items-center">
                       <span className="text-xl font-bold text-gray-800">الإجمالي الكلي</span>
-                      <span className="text-3xl font-bold text-olivePrimary">
+                      <span className="text-3xl font-bold text-roman-500">
                         {order.total_price} جنيه
                       </span>
                     </div>
@@ -1102,7 +1102,7 @@ const OrderDetailPage = () => {
                 </CardContent>
               </Card>              {/* Payment Information Card */}
               <Card className="border-0 shadow-lg">
-                <CardHeader className="bg-olivePrimary text-white">
+                <CardHeader className="bg-roman-500 text-white">
                   <CardTitle className="flex items-center text-xl">
                     <CreditCard className="h-6 w-6 ml-2" />
                     معلومات الدفع
@@ -1191,7 +1191,7 @@ const OrderDetailPage = () => {
               {/* Requirements and Notes */}
               {(order.requirements || order.service_requirements || order.notes) && (
                 <Card className="border-0 shadow-lg">
-                  <CardHeader className="bg-olivePrimary text-white">
+                  <CardHeader className="bg-roman-500 text-white">
                     <CardTitle className="flex items-center text-xl">
                       <FileText className="h-6 w-6 ml-2" />
                       ملاحظات ومتطلبات
@@ -1209,7 +1209,7 @@ const OrderDetailPage = () => {
                     {order.requirements && (
                       <div className="mb-4">
                         <h4 className="font-semibold text-gray-800 mb-2">متطلبات خاصة:</h4>
-                        <p className="text-gray-600 bg-gray-50 p-4 rounded-lg border-r-4 border-olivePrimary">
+                        <p className="text-gray-600 bg-gray-50 p-4 rounded-lg border-r-4 border-roman-500">
                           {order.requirements}
                         </p>
                       </div>
@@ -1234,7 +1234,7 @@ const OrderDetailPage = () => {
             <div className="lg:col-span-4 space-y-6">
                 {/* Customer Information */}
               <Card className="border-0 shadow-lg">
-                <CardHeader className="bg-olivePrimary text-white">
+                <CardHeader className="bg-roman-500 text-white">
                   <CardTitle className="flex items-center">
                     <User className="h-5 w-5 ml-2" />
                     معلومات العميل
@@ -1242,7 +1242,7 @@ const OrderDetailPage = () => {
                 </CardHeader>
                 <CardContent className="pt-6 space-y-4">
                   <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-olivePrimary rounded-full flex items-center justify-center">
+                    <div className="w-10 h-10 bg-roman-500 rounded-full flex items-center justify-center">
                       <User className="h-5 w-5 text-white" />
                     </div>
                     <div>
@@ -1252,7 +1252,7 @@ const OrderDetailPage = () => {
                   </div>
                   {order.customer_phone && (
                     <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-olivePrimary rounded-full flex items-center justify-center">
+                      <div className="w-10 h-10 bg-roman-500 rounded-full flex items-center justify-center">
                         <Phone className="h-5 w-5 text-white" />
                       </div>
                       <div>
@@ -1263,7 +1263,7 @@ const OrderDetailPage = () => {
                   )}
                   {order.delivery_address && (
                     <div className="flex items-start space-x-3">
-                      <div className="w-10 h-10 bg-olivePrimary rounded-full flex items-center justify-center">
+                      <div className="w-10 h-10 bg-roman-500 rounded-full flex items-center justify-center">
                         <MapPin className="h-5 w-5 text-white" />
                       </div>
                       <div>
@@ -1275,7 +1275,7 @@ const OrderDetailPage = () => {
                 </CardContent>
               </Card>              {/* Seller Information */}
               <Card className="border-0 shadow-lg">
-                <CardHeader className="bg-olivePrimary text-white">
+                <CardHeader className="bg-roman-500 text-white">
                   <CardTitle className="flex items-center">
                     <User className="h-5 w-5 ml-2" />
                     معلومات البائع
@@ -1283,7 +1283,7 @@ const OrderDetailPage = () => {
                 </CardHeader>
                 <CardContent className="pt-6 space-y-4">
                   <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-olivePrimary rounded-full flex items-center justify-center">
+                    <div className="w-10 h-10 bg-roman-500 rounded-full flex items-center justify-center">
                       <User className="h-5 w-5 text-white" />
                     </div>
                     <div>
@@ -1295,7 +1295,7 @@ const OrderDetailPage = () => {
                   </div>
                   {order.seller?.phone && (
                     <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-olivePrimary rounded-full flex items-center justify-center">
+                      <div className="w-10 h-10 bg-roman-500 rounded-full flex items-center justify-center">
                         <Phone className="h-5 w-5 text-white" />
                       </div>
                       <div>
@@ -1306,7 +1306,7 @@ const OrderDetailPage = () => {
                   )}
                   {order.seller_address && (
                     <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-olivePrimary rounded-full flex items-center justify-center">
+                      <div className="w-10 h-10 bg-roman-500 rounded-full flex items-center justify-center">
                         <MapPin className="h-5 w-5 text-white" />
                       </div>
                       <div>
@@ -1319,7 +1319,7 @@ const OrderDetailPage = () => {
               </Card>
 
               {/* Important Dates */}              <Card className="border-0 shadow-lg">
-                <CardHeader className="bg-olivePrimary text-white">
+                <CardHeader className="bg-roman-500 text-white">
                   <CardTitle className="flex items-center">
                     <Calendar className="h-5 w-5 ml-2" />
                     التواريخ المهمة
@@ -1422,7 +1422,7 @@ const OrderDetailPage = () => {
               {/* Existing Reviews Section */}
               {existingReviews.length > 0 && (
                 <Card className="border-0 shadow-lg">
-                  <CardHeader className="bg-olivePrimary text-white">
+                  <CardHeader className="bg-roman-500 text-white">
                     <CardTitle className="flex items-center">
                       <Star className="h-5 w-5 ml-2" />
                       تقييمات الطلب
@@ -1444,10 +1444,10 @@ const OrderDetailPage = () => {
                                   <img 
                                     src={review.user.avatar} 
                                     alt={review.user.name || 'مستخدم'}
-                                    className="w-10 h-10 rounded-full object-cover border-2 border-lightBeige"
+                                    className="w-10 h-10 rounded-full object-cover border-2 border-neutral-200"
                                   />
                                 ) : (
-                                  <div className="w-10 h-10 bg-olivePrimary rounded-full flex items-center justify-center text-white font-bold">
+                                  <div className="w-10 h-10 bg-roman-500 rounded-full flex items-center justify-center text-white font-bold">
                                     {review.user?.name?.charAt(0) || 'م'}
                                   </div>
                                 )}
@@ -1548,11 +1548,11 @@ const OrderDetailPage = () => {
                                       <img 
                                         src={review.product.image} 
                                         alt={review.product.title}
-                                        className="w-12 h-12 rounded-lg object-cover border border-lightBeige"
+                                        className="w-12 h-12 rounded-lg object-cover border border-neutral-200"
                                       />
                                     ) : (
-                                      <div className="w-12 h-12 bg-lightBeige rounded-lg flex items-center justify-center">
-                                        <Package className="h-6 w-6 text-olivePrimary" />
+                                      <div className="w-12 h-12 bg-neutral-100 rounded-lg flex items-center justify-center">
+                                        <Package className="h-6 w-6 text-roman-500" />
                                       </div>
                                     )}
                                     <div className="flex-1">
@@ -1595,7 +1595,7 @@ const OrderDetailPage = () => {
               {/* Review Section */}
               {showReviewSection && (
                 <Card className="border-0 shadow-lg">
-                  <CardHeader className="bg-olivePrimary text-white">
+                  <CardHeader className="bg-roman-500 text-white">
                     <CardTitle className="flex items-center">
                       <Star className="h-5 w-5 ml-2" />
                       تقييم المنتجات
@@ -1657,7 +1657,7 @@ const OrderDetailPage = () => {
                               <Button
                                 onClick={() => handleSubmitReview(product.product_id)}
                                 disabled={isSubmittingReview || !reviewRatings[product.product_id]}
-                                className="w-full bg-olivePrimary hover:bg-olivePrimary/90"
+                                className="w-full bg-roman-500 hover:bg-roman-500/90"
                               >
                                 {isSubmittingReview ? (
                                   <Loader2 className="h-4 w-4 animate-spin ml-2" />

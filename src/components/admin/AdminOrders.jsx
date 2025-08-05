@@ -505,12 +505,12 @@ const AdminOrders = () => {
             {order.timeline && order.timeline.length > 0 && (
               <div>
                 <h4 className="font-semibold mb-3 flex items-center">
-                  <Calendar className="h-4 w-4 ml-2 text-olivePrimary" />
+                  <Calendar className="h-4 w-4 ml-2 text-roman-500" />
                   الجدول الزمني
                 </h4>
                 <div className="relative max-h-48 overflow-y-auto">
                   {/* Timeline Line */}
-                  <div className="absolute right-6 top-0 bottom-0 w-0.5 bg-olivePrimary/30"></div>
+                  <div className="absolute right-6 top-0 bottom-0 w-0.5 bg-roman-500/30"></div>
                   
                   <div className="space-y-4">
                     {order.timeline.map((event, index) => (
@@ -522,7 +522,7 @@ const AdminOrders = () => {
                         transition={{ delay: index * 0.1 }}
                       >
                         <div className="flex-shrink-0 relative z-10">
-                          <div className="w-12 h-12 bg-olivePrimary rounded-full flex items-center justify-center shadow-md border-3 border-white">
+                          <div className="w-12 h-12 bg-roman-500 rounded-full flex items-center justify-center shadow-md border-3 border-white">
                             <Check className="h-4 w-4 text-white" />
                           </div>
                         </div>
@@ -680,8 +680,8 @@ const AdminOrders = () => {
     <div className="p-6 space-y-6">
       {/* Header */}
       <div>
-        <h2 className="text-3xl font-bold text-darkOlive">إدارة الطلبات</h2>
-        <p className="text-darkOlive/70">مراجعة واعتماد الطلبات الجديدة</p>
+        <h2 className="text-3xl font-bold text-neutral-900">إدارة الطلبات</h2>
+        <p className="text-neutral-900/70">مراجعة واعتماد الطلبات الجديدة</p>
       </div>
 
       {/* Filters */}
@@ -792,7 +792,7 @@ const AdminOrders = () => {
             >
               <Card className={`group relative hover:shadow-xl transition-all duration-300 border-0 shadow-lg bg-white overflow-hidden ${order.status === 'suspended' ? 'ring-2 ring-yellow-300 bg-yellow-50' : ''}`}>
                 {/* Background Pattern */}
-                <div className="absolute inset-0 bg-olivePrimary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+                <div className="absolute inset-0 bg-roman-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
                 
                 {/* Suspended Order Indicator */}
                 {order.status === 'suspended' && (
@@ -807,7 +807,7 @@ const AdminOrders = () => {
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center space-x-3">                       
                           <div>
-                            <h4 className="inline-block px-3 py-1 rounded-full bg-olivePrimary text-white text-sm font-bold">طلب #{order.id}</h4>
+                            <h4 className="inline-block px-3 py-1 rounded-full bg-roman-500 text-white text-sm font-bold">طلب #{order.id}</h4>
                             <p className="text-xs text-gray-500 mt-1">
                               {new Date(order.created_at).toLocaleDateString('ar-EG')}
                             </p>
@@ -835,7 +835,7 @@ const AdminOrders = () => {
                         {getStatusBadge(order.status)}
                         <div className="text-right">
                           <p className="text-xs text-gray-500">الإجمالي</p>
-                          <p className="text-lg font-bold text-olivePrimary">{order.total_amount} ج.م</p>
+                          <p className="text-lg font-bold text-roman-500">{order.total_amount} ج.م</p>
                         </div>
                       </div>
                     </div>

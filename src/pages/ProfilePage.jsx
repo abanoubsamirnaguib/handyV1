@@ -484,8 +484,8 @@ const ProfilePage = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}      >        {/* Profile Header */}
-        <Card className="mb-8 shadow-xl overflow-hidden border-lightBeige bg-lightBeige">
-          <div className="relative h-48 bg-olivePrimary">
+        <Card className="mb-8 shadow-xl overflow-hidden border-neutral-200 bg-neutral-100">
+          <div className="relative h-48 bg-roman-500">
             {profileData.cover_image ? (
               <img 
                 src={profileData.cover_image} 
@@ -543,7 +543,7 @@ const ProfilePage = () => {
                     <Edit3 className="ml-2 h-4 w-4" /> {isEditing ? 'إلغاء التعديل' : 'تعديل الملف الشخصي'}
                   </Button>
                 ) : (
-                  <Button onClick={handleContactSeller} className="bg-burntOrange hover:bg-burntOrange/90 text-white">
+                  <Button onClick={handleContactSeller} className="bg-warning-500 hover:bg-warning-500/90 text-white">
                     <MessageSquare className="ml-2 h-4 w-4" /> تواصل
                   </Button>
                 )}
@@ -772,7 +772,7 @@ const ProfilePage = () => {
                     <h4 className="font-semibold text-gray-700 mb-2">المهارات:</h4>
                     <div className="flex flex-wrap gap-2">
                       {profileData.skills.map((skill, index) => (
-                        <Badge key={`${skill}-${index}`} variant="secondary" className="bg-lightGreen/20 text-darkOlive">
+                        <Badge key={`${skill}-${index}`} variant="secondary" className="bg-success-100/20 text-neutral-900">
                           {skill}
                         </Badge>
                       ))}
@@ -829,7 +829,7 @@ const ProfilePage = () => {
             {userGigs && userGigs.length > 0 ? (
               <div className="grid sm:grid-cols-2 gap-6">
                 {userGigs.map(gig => (
-                  <Card key={gig.id} className="overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 card-hover border-lightBeige/50">
+                  <Card key={gig.id} className="overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 card-hover border-neutral-200/50">
                     <div className="relative h-48">
                       <img 
                         src={gig.images && gig.images.length > 0 
@@ -838,7 +838,7 @@ const ProfilePage = () => {
                         alt={gig.title} 
                         className="w-full h-full object-cover" 
                       />
-                      <Badge variant="secondary" className="absolute top-2 right-2 bg-olivePrimary text-white">
+                      <Badge variant="secondary" className="absolute top-2 right-2 bg-roman-500 text-white">
                         {gig.category || 'غير محدد'}
                       </Badge>
                     </div>
@@ -855,7 +855,7 @@ const ProfilePage = () => {
                       <p className="text-lg font-bold text-primary">{gig.price || 0} جنيه</p>
                     </CardContent>
                     <CardFooter className="flex gap-2">
-                      <Button asChild variant="outline" className="flex-1 border-olivePrimary/30 text-darkOlive hover:bg-lightGreen/30 hover:text-olivePrimary hover:border-olivePrimary">
+                      <Button asChild variant="outline" className="flex-1 border-roman-500/30 text-neutral-900 hover:bg-success-100/30 hover:text-roman-500 hover:border-roman-500">
                         <Link to={`/gigs/${gig.id}`}>عرض</Link>
                       </Button>
                       {isOwnProfile && (
@@ -878,7 +878,7 @@ const ProfilePage = () => {
                     {profileData?.active_role === 'seller' ? 'ابدأ بإضافة خدماتك ليراها العملاء!' : 'تصفح المنتجات وقم بطلبك الأول!'}
                   </p>
                   {profileData?.active_role === 'buyer' && (
-                    <Button asChild className="mt-4 bg-burntOrange hover:bg-burntOrange/90 text-white">
+                    <Button asChild className="mt-4 bg-warning-500 hover:bg-warning-500/90 text-white">
                       <Link to="/explore">استكشف المنتجات</Link>
                     </Button>
                   )}

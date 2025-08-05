@@ -195,8 +195,8 @@ const CheckoutPage = () => {
         transition={{ duration: 0.5 }}
       >
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold text-darkOlive">إتمام الطلب</h1>
-          <Button variant="outline" onClick={() => navigate('/cart')} className="border-olivePrimary text-olivePrimary hover:bg-olivePrimary hover:text-white">
+          <h1 className="text-3xl font-bold text-neutral-900">إتمام الطلب</h1>
+          <Button variant="outline" onClick={() => navigate('/cart')} className="border-roman-500 text-roman-500 hover:bg-roman-500 hover:text-white">
             <ArrowLeft className="ml-2 h-4 w-4" /> العودة للسلة
           </Button>
         </div>
@@ -204,15 +204,15 @@ const CheckoutPage = () => {
         <div className="grid md:grid-cols-3 gap-8">
           {/* Order Form */}
           <div className="md:col-span-2">
-            <Card className="shadow-lg border-olivePrimary/20">
+            <Card className="shadow-lg border-roman-500/20">
               <CardHeader>
-                <CardTitle className="text-2xl text-darkOlive">بيانات الطلب</CardTitle>
+                <CardTitle className="text-2xl text-neutral-900">بيانات الطلب</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
                 {/* Customer Name */}
                 <div className="space-y-2">
-                  <Label htmlFor="customer_name" className="text-darkOlive flex items-center">
-                    <User className="ml-2 h-4 w-4 text-olivePrimary" />
+                  <Label htmlFor="customer_name" className="text-neutral-900 flex items-center">
+                    <User className="ml-2 h-4 w-4 text-roman-500" />
                     اسم العميل *
                   </Label>
                   <Input
@@ -221,7 +221,7 @@ const CheckoutPage = () => {
                     placeholder="أدخل اسمك الكامل"
                     value={formData.customer_name}
                     onChange={(e) => handleInputChange('customer_name', e.target.value)}
-                    className={`border-olivePrimary/30 ${errors.customer_name ? 'border-red-500' : ''}`}
+                    className={`border-roman-500/30 ${errors.customer_name ? 'border-red-500' : ''}`}
                   />
                   {errors.customer_name && (
                     <p className="text-red-500 text-sm">{errors.customer_name}</p>
@@ -230,8 +230,8 @@ const CheckoutPage = () => {
 
                 {/* Customer Phone */}
                 <div className="space-y-2">
-                  <Label htmlFor="customer_phone" className="text-darkOlive flex items-center">
-                    <Phone className="ml-2 h-4 w-4 text-olivePrimary" />
+                  <Label htmlFor="customer_phone" className="text-neutral-900 flex items-center">
+                    <Phone className="ml-2 h-4 w-4 text-roman-500" />
                     رقم الهاتف *
                   </Label>
                   <Input
@@ -240,7 +240,7 @@ const CheckoutPage = () => {
                     placeholder="مثال: 01234567890"
                     value={formData.customer_phone}
                     onChange={(e) => handleInputChange('customer_phone', e.target.value)}
-                    className={`border-olivePrimary/30 ${errors.customer_phone ? 'border-red-500' : ''}`}
+                    className={`border-roman-500/30 ${errors.customer_phone ? 'border-red-500' : ''}`}
                   />
                   {errors.customer_phone && (
                     <p className="text-red-500 text-sm">{errors.customer_phone}</p>
@@ -249,8 +249,8 @@ const CheckoutPage = () => {
 
                 {/* Delivery Address */}
                 <div className="space-y-2">
-                  <Label htmlFor="delivery_address" className="text-darkOlive flex items-center">
-                    <MapPin className="ml-2 h-4 w-4 text-olivePrimary" />
+                  <Label htmlFor="delivery_address" className="text-neutral-900 flex items-center">
+                    <MapPin className="ml-2 h-4 w-4 text-roman-500" />
                     عنوان التوصيل *
                   </Label>
                   <Textarea
@@ -258,7 +258,7 @@ const CheckoutPage = () => {
                     placeholder="أدخل العنوان المفصل للتوصيل"
                     value={formData.delivery_address}
                     onChange={(e) => handleInputChange('delivery_address', e.target.value)}
-                    className={`border-olivePrimary/30 min-h-[100px] ${errors.delivery_address ? 'border-red-500' : ''}`}
+                    className={`border-roman-500/30 min-h-[100px] ${errors.delivery_address ? 'border-red-500' : ''}`}
                   />
                   {errors.delivery_address && (
                     <p className="text-red-500 text-sm">{errors.delivery_address}</p>
@@ -267,15 +267,15 @@ const CheckoutPage = () => {
 
                 {/* Payment Method */}
                 <div className="space-y-2">
-                  <Label className="text-darkOlive flex items-center">
-                    <CreditCard className="ml-2 h-4 w-4 text-olivePrimary" />
+                  <Label className="text-neutral-900 flex items-center">
+                    <CreditCard className="ml-2 h-4 w-4 text-roman-500" />
                     طريقة الدفع *
                   </Label>
                   <Select
                     value={formData.payment_method}
                     onValueChange={(value) => handleInputChange('payment_method', value)}
                   >
-                    <SelectTrigger className="border-olivePrimary/30">
+                    <SelectTrigger className="border-roman-500/30">
                       <SelectValue placeholder="اختر طريقة الدفع" />
                     </SelectTrigger>
                     <SelectContent>
@@ -292,8 +292,8 @@ const CheckoutPage = () => {
 
                 {/* Requirements */}
                 <div className="space-y-2">
-                  <Label htmlFor="requirements" className="text-darkOlive flex items-center">
-                    <FileText className="ml-2 h-4 w-4 text-olivePrimary" />
+                  <Label htmlFor="requirements" className="text-neutral-900 flex items-center">
+                    <FileText className="ml-2 h-4 w-4 text-roman-500" />
                     متطلبات إضافية (اختياري)
                   </Label>
                   <Textarea
@@ -301,18 +301,18 @@ const CheckoutPage = () => {
                     placeholder="أي متطلبات أو ملاحظات إضافية"
                     value={formData.requirements}
                     onChange={(e) => handleInputChange('requirements', e.target.value)}
-                    className="border-olivePrimary/30"
+                    className="border-roman-500/30"
                   />
                 </div>
 
                 {/* Payment Proof Upload */}
                 {formData.payment_method !== 'cash_on_delivery' && (
                   <div className="space-y-2">
-                    <Label className="text-darkOlive flex items-center">
-                      <Upload className="ml-2 h-4 w-4 text-olivePrimary" />
+                    <Label className="text-neutral-900 flex items-center">
+                      <Upload className="ml-2 h-4 w-4 text-roman-500" />
                       صورة إثبات الدفع (اختياري)
                     </Label>
-                    <div className="border-2 border-dashed border-olivePrimary/30 rounded-lg p-4">
+                    <div className="border-2 border-dashed border-roman-500/30 rounded-lg p-4">
                       <input
                         type="file"
                         accept="image/*"
@@ -324,11 +324,11 @@ const CheckoutPage = () => {
                         htmlFor="payment_proof"
                         className="cursor-pointer flex flex-col items-center justify-center space-y-2"
                       >
-                        <Upload className="h-8 w-8 text-olivePrimary" />
-                        <span className="text-sm text-darkOlive">
+                        <Upload className="h-8 w-8 text-roman-500" />
+                        <span className="text-sm text-neutral-900">
                           {paymentProofFile ? paymentProofFile.name : 'اضغط لاختيار صورة إثبات الدفع'}
                         </span>
-                        <span className="text-xs text-darkOlive/60">
+                        <span className="text-xs text-neutral-900/60">
                           يمكنك رفع الصورة الآن أو لاحقاً من صفحة تفاصيل الطلب
                         </span>
                       </label>
@@ -354,10 +354,10 @@ const CheckoutPage = () => {
                   {cart.map((item) => (
                     <div key={item.id} className="flex justify-between items-center text-sm">
                       <div>
-                        <p className="font-medium text-darkOlive">{item.title}</p>
-                        <p className="text-darkOlive/60">الكمية: {item.quantity}</p>
+                        <p className="font-medium text-neutral-900">{item.title}</p>
+                        <p className="text-neutral-900/60">الكمية: {item.quantity}</p>
                       </div>
-                      <p className="font-medium text-olivePrimary">
+                      <p className="font-medium text-roman-500">
                         {item.price * item.quantity} جنيه
                       </p>
                     </div>

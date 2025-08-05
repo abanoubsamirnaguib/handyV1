@@ -56,10 +56,10 @@ const NotificationsPage = () => {
         <div className="max-w-lg mx-auto px-4 py-4">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              <Bell className="w-6 h-6 text-burntOrange" />
-              <h1 className="text-xl font-bold text-darkOlive">الإشعارات</h1>
+              <Bell className="w-6 h-6 text-warning-500" />
+              <h1 className="text-xl font-bold text-neutral-900">الإشعارات</h1>
               {unreadCount > 0 && (
-                <span className="bg-burntOrange text-white text-xs px-2 py-1 rounded-full">
+                <span className="bg-warning-500 text-white text-xs px-2 py-1 rounded-full">
                   {unreadCount}
                 </span>
               )}
@@ -68,7 +68,7 @@ const NotificationsPage = () => {
               <button
                 onClick={handleRefresh}
                 disabled={refreshing}
-                className="p-2 text-gray-400 hover:text-burntOrange transition-colors disabled:opacity-50"
+                className="p-2 text-gray-400 hover:text-warning-500 transition-colors disabled:opacity-50"
                 title="تحديث"
               >
                 <RefreshCw className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} />
@@ -76,7 +76,7 @@ const NotificationsPage = () => {
               {unreadCount > 0 && (
                 <button
                   onClick={markAllAsRead}
-                  className="text-sm text-burntOrange font-medium hover:text-burntOrange/80"
+                  className="text-sm text-warning-500 font-medium hover:text-warning-500/80"
                 >
                   قراءة الكل
                 </button>
@@ -96,7 +96,7 @@ const NotificationsPage = () => {
                 onClick={() => setFilter(key)}
                 className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
                   filter === key
-                    ? 'bg-white text-burntOrange shadow-sm'
+                    ? 'bg-white text-warning-500 shadow-sm'
                     : 'text-gray-600 hover:text-gray-800'
                 }`}
               >
@@ -111,7 +111,7 @@ const NotificationsPage = () => {
       <div className="max-w-lg mx-auto px-4 py-4">
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 text-burntOrange animate-spin" />
+            <Loader2 className="w-8 h-8 text-warning-500 animate-spin" />
             <span className="mr-3 text-gray-500">جارِ تحميل الإشعارات...</span>
           </div>
         ) : error ? (
@@ -123,7 +123,7 @@ const NotificationsPage = () => {
             <p className="text-gray-400 mb-4">{error}</p>
             <button
               onClick={handleRefresh}
-              className="px-4 py-2 bg-burntOrange text-white rounded-lg hover:bg-burntOrange/90 transition-colors"
+              className="px-4 py-2 bg-warning-500 text-white rounded-lg hover:bg-warning-500/90 transition-colors"
             >
               إعادة المحاولة
             </button>
@@ -146,7 +146,7 @@ const NotificationsPage = () => {
                 <div
                   key={notification.id}
                   className={`bg-white rounded-lg border p-4 transition-all hover:shadow-md ${
-                    !notification.read ? 'border-r-4 border-r-burntOrange' : 'border-gray-200'
+                    !notification.read ? 'border-r-4 border-r-warning-500' : 'border-gray-200'
                   }`}
                 >
                   <div className="flex items-start gap-3">
@@ -156,7 +156,7 @@ const NotificationsPage = () => {
                     
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between mb-1">
-                        <h3 className={`font-medium ${!notification.read ? 'text-darkOlive' : 'text-gray-700'}`}>
+                        <h3 className={`font-medium ${!notification.read ? 'text-neutral-900' : 'text-gray-700'}`}>
                           {notification.title}
                         </h3>
                         <span className="text-xs text-gray-500 whitespace-nowrap mr-2">
@@ -171,7 +171,7 @@ const NotificationsPage = () => {
                         {!notification.read && (
                           <button
                             onClick={() => markAsRead(notification.id)}
-                            className="flex items-center gap-1 text-xs text-burntOrange hover:text-burntOrange/80"
+                            className="flex items-center gap-1 text-xs text-warning-500 hover:text-warning-500/80"
                           >
                             <Check className="w-3 h-3" />
                             تم القراءة

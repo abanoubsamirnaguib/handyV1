@@ -68,14 +68,14 @@ const MobileBottomNav = () => {
           <div className="relative transform -translate-y-3">
             <div className={`relative flex items-center justify-center w-16 h-16 rounded-full shadow-2xl transition-all duration-300 ${
               isActive 
-                ? 'bg-white scale-110 shadow-burntOrange/30' 
+                ? 'bg-white scale-110 shadow-roman-500/30' 
                 : 'bg-white hover:scale-105'
             } border-4 border-white`}>
               {/* Gradient background circle */}
               <div className={`absolute inset-2 rounded-full bg-gradient-to-br transition-all duration-300 ${
                 isActive 
-                  ? 'from-burntOrange via-orange-500 to-red-500' 
-                  : 'from-burntOrange/90 via-orange-400 to-orange-500'
+                  ? 'from-roman-500 via-orange-500 to-red-500' 
+                  : 'from-roman-500/90 via-orange-400 to-orange-500'
               }`} />
               {/* Icon container */}
               <div className="relative z-10 flex items-center justify-center">
@@ -85,10 +85,10 @@ const MobileBottomNav = () => {
               <div className="absolute inset-0 rounded-full bg-gradient-to-br from-white/20 to-transparent" />
             </div>
             {/* Modern shadow underneath */}
-            <div className="absolute top-1 left-1/2 transform -translate-x-1/2 w-12 h-12 bg-burntOrange/20 rounded-full blur-xl" />
+            <div className="absolute top-1 left-1/2 transform -translate-x-1/2 w-12 h-12 bg-roman-500/20 rounded-full blur-xl" />
           </div>
           <span className={`text-xs font-medium mt-0 transition-colors duration-200 ${
-            isActive ? 'text-olivePrimary font-semibold' : 'text-darkOlive/70'
+            isActive ? 'text-roman-500 font-semibold' : 'text-neutral-900/70'
           }`}>
             {label}
           </span>
@@ -102,8 +102,8 @@ const MobileBottomNav = () => {
           key={to}
           to={to}
           className={`relative flex flex-col items-center justify-center text-xs font-medium transition-colors duration-200 ${
-            isActive ? 'text-olivePrimary' : 'text-darkOlive/70'
-          } hover:text-olivePrimary`}
+            isActive ? 'text-roman-500' : 'text-neutral-900/70'
+          } hover:text-roman-500`}
           aria-label={label}
         >
           <div className="relative">
@@ -125,8 +125,8 @@ const MobileBottomNav = () => {
         key={to}
         to={to}
         className={`flex flex-col items-center justify-center text-xs font-medium transition-colors duration-200 ${
-          isActive ? 'text-olivePrimary' : 'text-darkOlive/70'
-        } hover:text-olivePrimary`}
+          isActive ? 'text-roman-500' : 'text-neutral-900/70'
+        } hover:text-roman-500`}
         aria-label={label}
       >
         <Icon size={24} className="mb-1" />
@@ -136,7 +136,7 @@ const MobileBottomNav = () => {
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-olivePrimary/10 shadow-xl flex justify-around items-end h-20 md:hidden pt-2 pb-4 rounded-t-3xl">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-roman-500/10 shadow-xl flex justify-around items-end h-20 md:hidden pt-2 pb-4 rounded-t-3xl">
       {navItems.filter(item => item.show()).map(renderNavItem)}
     </nav>
   );

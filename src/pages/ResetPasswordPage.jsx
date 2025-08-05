@@ -72,42 +72,42 @@ const ResetPasswordPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-lightBeige p-4">
+    <div className="min-h-screen flex items-center justify-center bg-neutral-100 p-4">
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5 }}
         className="w-full max-w-md"
       >
-        <Card className="shadow-2xl border-olivePrimary/20">
+        <Card className="shadow-2xl border-roman-500/20">
           <CardHeader className="text-center">
-            <div className="mx-auto p-3 bg-olivePrimary/10 rounded-full w-fit mb-4">
-              <Shield className="h-10 w-10 text-olivePrimary" />
+            <div className="mx-auto p-3 bg-roman-500/10 rounded-full w-fit mb-4">
+              <Shield className="h-10 w-10 text-roman-500" />
             </div>
-            <CardTitle className="text-3xl font-bold text-darkOlive">
+            <CardTitle className="text-3xl font-bold text-neutral-900">
               تغيير كلمة المرور
             </CardTitle>
-            <CardDescription className="text-darkOlive/70">
+            <CardDescription className="text-neutral-900/70">
               أدخل رمز التحقق وكلمة المرور الجديدة
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
               {/* Email Display */}
-              <div className="bg-lightGreen/20 p-3 rounded-lg border border-olivePrimary/20">
-                <p className="text-sm text-darkOlive/80">البريد الإلكتروني:</p>
-                <p className="font-medium text-darkOlive">{email}</p>
+              <div className="bg-success-100/20 p-3 rounded-lg border border-roman-500/20">
+                <p className="text-sm text-neutral-900/80">البريد الإلكتروني:</p>
+                <p className="font-medium text-neutral-900">{email}</p>
               </div>
 
               {/* OTP Verification */}
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="otp" className="text-darkOlive">
+                  <Label htmlFor="otp" className="text-neutral-900">
                     رمز التحقق (4 أرقام)
                   </Label>
                   <div className="flex gap-2">
                     <div className="relative flex-1">
-                      <Key className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-olivePrimary/60" />
+                      <Key className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-roman-500/60" />
                       <Input
                         id="otp"
                         type="text"
@@ -115,7 +115,7 @@ const ResetPasswordPage = () => {
                         value={otpCode}
                         onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 4))}
                         maxLength={4}
-                        className="pr-10 text-center text-lg letter-spacing-wider border-olivePrimary/30 focus:border-olivePrimary focus:ring-olivePrimary/20"
+                        className="pr-10 text-center text-lg letter-spacing-wider border-roman-500/30 focus:border-roman-500 focus:ring-roman-500/20"
                         disabled={otpVerified}
                       />
                     </div>
@@ -124,7 +124,7 @@ const ResetPasswordPage = () => {
                         type="button"
                         onClick={handleVerifyOTP}
                         disabled={isVerifyingOTP || otpCode.length !== 4}
-                        className="bg-olivePrimary hover:bg-olivePrimary/90"
+                        className="bg-roman-500 hover:bg-roman-500/90"
                       >
                         {isVerifyingOTP ? 'جاري التحقق...' : 'تحقق'}
                       </Button>
@@ -144,7 +144,7 @@ const ResetPasswordPage = () => {
                     variant="outline"
                     onClick={handleResendOTP}
                     disabled={isResending}
-                    className="w-full border-olivePrimary/50 text-olivePrimary hover:bg-olivePrimary hover:text-white"
+                    className="w-full border-roman-500/50 text-roman-500 hover:bg-roman-500 hover:text-white"
                   >
                     {isResending ? 'جاري الإرسال...' : 'إعادة إرسال رمز التحقق'}
                   </Button>
@@ -155,11 +155,11 @@ const ResetPasswordPage = () => {
               {otpVerified && (
                 <form onSubmit={handleResetPassword} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="password" className="text-darkOlive">
+                    <Label htmlFor="password" className="text-neutral-900">
                       كلمة المرور الجديدة
                     </Label>
                     <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-olivePrimary/60" />
+                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-roman-500/60" />
                       <Input
                         id="password"
                         type={showPassword ? 'text' : 'password'}
@@ -167,12 +167,12 @@ const ResetPasswordPage = () => {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
-                        className="pr-10 border-olivePrimary/30 focus:border-olivePrimary focus:ring-olivePrimary/20"
+                        className="pr-10 border-roman-500/30 focus:border-roman-500 focus:ring-roman-500/20"
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-olivePrimary/60 hover:text-olivePrimary"
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-roman-500/60 hover:text-roman-500"
                       >
                         {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                       </button>
@@ -180,11 +180,11 @@ const ResetPasswordPage = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="confirmPassword" className="text-darkOlive">
+                    <Label htmlFor="confirmPassword" className="text-neutral-900">
                       تأكيد كلمة المرور
                     </Label>
                     <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-olivePrimary/60" />
+                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-roman-500/60" />
                       <Input
                         id="confirmPassword"
                         type={showConfirmPassword ? 'text' : 'password'}
@@ -192,12 +192,12 @@ const ResetPasswordPage = () => {
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         required
-                        className="pr-10 border-olivePrimary/30 focus:border-olivePrimary focus:ring-olivePrimary/20"
+                        className="pr-10 border-roman-500/30 focus:border-roman-500 focus:ring-roman-500/20"
                       />
                       <button
                         type="button"
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-olivePrimary/60 hover:text-olivePrimary"
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-roman-500/60 hover:text-roman-500"
                       >
                         {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                       </button>
@@ -206,7 +206,7 @@ const ResetPasswordPage = () => {
 
                   <Button
                     type="submit"
-                    className="w-full bg-burntOrange hover:bg-burntOrange/90 text-white text-lg py-3"
+                    className="w-full bg-warning-500 hover:bg-warning-500/90 text-white text-lg py-3"
                     disabled={isLoading}
                   >
                     {isLoading ? 'جاري التغيير...' : 'تغيير كلمة المرور'}
@@ -216,16 +216,16 @@ const ResetPasswordPage = () => {
             </div>
           </CardContent>
           <CardFooter className="flex flex-col items-center space-y-3">
-            <p className="text-sm text-darkOlive/80">
+            <p className="text-sm text-neutral-900/80">
               تذكرت كلمة المرور؟{' '}
-              <Link to="/login" className="font-medium text-olivePrimary hover:underline">
+              <Link to="/login" className="font-medium text-roman-500 hover:underline">
                 تسجيل الدخول
               </Link>
             </p>
             <Button
               variant="outline"
               onClick={() => navigate('/')}
-              className="w-full border-olivePrimary/50 text-olivePrimary hover:bg-olivePrimary hover:text-white"
+              className="w-full border-roman-500/50 text-roman-500 hover:bg-roman-500 hover:text-white"
             >
               <ArrowLeft className="ml-2 h-4 w-4" />
               العودة إلى الصفحة الرئيسية

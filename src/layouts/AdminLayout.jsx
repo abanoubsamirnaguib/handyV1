@@ -73,7 +73,7 @@ const AdminSidebar = () => {
             <div className="flex items-center justify-between mb-6 px-2">
               <Link to="/" className="flex items-center">                <motion.div
                   whileHover={{ scale: 1.05 }}
-                  className={`text-xl font-bold text-olivePrimary ${!isSidebarOpen && !isMobile ? 'scale-0 w-0 opacity-0' : 'scale-100 opacity-100'} transition-all duration-300`}
+                  className={`text-xl font-bold text-roman-500 ${!isSidebarOpen && !isMobile ? 'scale-0 w-0 opacity-0' : 'scale-100 opacity-100'} transition-all duration-300`}
                 >
                   بازار
                 </motion.div>
@@ -107,7 +107,7 @@ const AdminSidebar = () => {
                     if (isMobile) toggleSidebar();
                   }}                >                  <link.icon className={`${isSidebarOpen || isMobile ? 'ml-2' : ''} h-4 w-4`} />
                   {(isSidebarOpen || isMobile) && (
-                    <span className="text-darkOlive">
+                    <span className="text-neutral-900">
                       {link.label}
                     </span>
                   )}

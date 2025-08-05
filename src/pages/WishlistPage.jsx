@@ -122,7 +122,7 @@ const WishlistPage = () => {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-center min-h-[400px]">
-          <Loader className="h-8 w-8 animate-spin text-olivePrimary" />
+          <Loader className="h-8 w-8 animate-spin text-roman-500" />
           <span className="mr-2 text-lg">جاري تحميل قائمة الأمنيات...</span>
         </div>
       </div>
@@ -138,8 +138,8 @@ const WishlistPage = () => {
       >
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center">
-            <Heart className="h-8 w-8 text-burntOrange ml-3" />
-            <h1 className="text-3xl font-bold text-darkOlive">قائمة الأمنيات</h1>
+            <Heart className="h-8 w-8 text-warning-500 ml-3" />
+            <h1 className="text-3xl font-bold text-neutral-900">قائمة الأمنيات</h1>
             <Badge variant="secondary" className="mr-3">
               {wishlistItems.length} عنصر
             </Badge>
@@ -171,7 +171,7 @@ const WishlistPage = () => {
               لم تقم بإضافة أي منتجات إلى قائمة الأمنيات بعد. استكشف المنتجات وأضف المفضلة لديك!
             </p>
             <Link to="/explore">
-              <Button className="bg-olivePrimary hover:bg-olivePrimary/90">
+              <Button className="bg-roman-500 hover:bg-roman-600">
                 استكشاف المنتجات
               </Button>
             </Link>
@@ -185,7 +185,7 @@ const WishlistPage = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
               >
-                <Card className="group hover:shadow-lg transition-all duration-300 border-olivePrimary/20">
+                <Card className="group hover:shadow-lg transition-all duration-300 border-roman-500/20">
                   <CardHeader className="p-0">
                     <div className="relative">
                       <img
@@ -216,7 +216,7 @@ const WishlistPage = () => {
                   </CardHeader>
                   <CardContent className="p-4">
                     <Link to={`/gigs/${item.product.id}`}>
-                      <h3 className="font-semibold text-lg text-darkOlive hover:text-olivePrimary transition-colors cursor-pointer mb-2">
+                      <h3 className="font-semibold text-lg text-neutral-900 hover:text-roman-500 transition-colors cursor-pointer mb-2">
                         {item.product.title}
                       </h3>
                     </Link>
@@ -224,7 +224,7 @@ const WishlistPage = () => {
                       {item.product.description}
                     </p>
                     <div className="flex items-center justify-between mb-4">
-                      <span className="text-lg font-bold text-burntOrange">
+                      <span className="text-lg font-bold text-warning-500">
                         {item.product.price} ريال
                       </span>
                       {item.product.seller && (
@@ -237,7 +237,7 @@ const WishlistPage = () => {
                       <Button
                         size="sm"
                         onClick={() => handleAddToCart(item.product)}
-                        className="flex-1 bg-olivePrimary hover:bg-olivePrimary/90"
+                        className="flex-1 bg-roman-500 hover:bg-roman-600"
                       >
                         {item.product.type === 'product' ? (
                           <>
@@ -256,7 +256,7 @@ const WishlistPage = () => {
                           size="sm"
                           variant="outline"
                           onClick={() => handleContactSeller(item.product.seller.id)}
-                          className="border-olivePrimary/50 text-olivePrimary hover:bg-olivePrimary hover:text-white"
+                          className="border-roman-500/50 text-roman-500 hover:bg-roman-500 hover:text-white"
                         >
                           <MessageSquare className="h-4 w-4" />
                         </Button>

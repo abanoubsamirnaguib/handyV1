@@ -55,34 +55,34 @@ const EmailVerificationPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-lightBeige p-4">
+    <div className="min-h-screen flex items-center justify-center bg-neutral-100 p-4">
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5 }}
         className="w-full max-w-md"
       >
-        <Card className="shadow-2xl border-olivePrimary/20">
+        <Card className="shadow-2xl border-roman-500/20">
           <CardHeader className="text-center">
-            <div className="mx-auto p-3 bg-olivePrimary/10 rounded-full w-fit mb-4">
-              <CheckCircle className="h-10 w-10 text-olivePrimary" />
+            <div className="mx-auto p-3 bg-roman-500/10 rounded-full w-fit mb-4">
+              <CheckCircle className="h-10 w-10 text-roman-500" />
             </div>
-            <CardTitle className="text-3xl font-bold text-darkOlive">
+            <CardTitle className="text-3xl font-bold text-neutral-900">
               تأكيد البريد الإلكتروني
             </CardTitle>
-            <CardDescription className="text-darkOlive/70">
+            <CardDescription className="text-neutral-900/70">
               أدخل رمز التحقق المرسل إلى بريدك الإلكتروني
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
               {/* Email Display */}
-              <div className="bg-lightGreen/20 p-4 rounded-lg border border-olivePrimary/20">
+              <div className="bg-success-100/20 p-4 rounded-lg border border-roman-500/20">
                 <div className="flex items-center">
-                  <Mail className="h-5 w-5 text-olivePrimary ml-2" />
+                  <Mail className="h-5 w-5 text-roman-500 ml-2" />
                   <div>
-                    <p className="text-sm text-darkOlive/80">تم إرسال رمز التحقق إلى:</p>
-                    <p className="font-medium text-darkOlive">{email}</p>
+                    <p className="text-sm text-neutral-900/80">تم إرسال رمز التحقق إلى:</p>
+                    <p className="font-medium text-neutral-900">{email}</p>
                   </div>
                 </div>
               </div>
@@ -90,11 +90,11 @@ const EmailVerificationPage = () => {
               {/* Verification Form */}
               <form onSubmit={handleVerifyEmail} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="otp" className="text-darkOlive">
+                  <Label htmlFor="otp" className="text-neutral-900">
                     رمز التحقق (4 أرقام)
                   </Label>
                   <div className="relative">
-                    <Key className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-olivePrimary/60" />
+                    <Key className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-roman-500/60" />
                     <Input
                       id="otp"
                       type="text"
@@ -102,18 +102,18 @@ const EmailVerificationPage = () => {
                       value={otpCode}
                       onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 4))}
                       maxLength={4}
-                      className="pr-10 text-center text-2xl letter-spacing-widest border-olivePrimary/30 focus:border-olivePrimary focus:ring-olivePrimary/20"
+                      className="pr-10 text-center text-2xl letter-spacing-widest border-roman-500/30 focus:border-roman-500 focus:ring-roman-500/20"
                       required
                     />
                   </div>
-                  <p className="text-sm text-darkOlive/60">
+                  <p className="text-sm text-neutral-900/60">
                     الرمز صالح لمدة 10 دقائق
                   </p>
                 </div>
 
                 <Button
                   type="submit"
-                  className="w-full bg-burntOrange hover:bg-burntOrange/90 text-white text-lg py-3"
+                  className="w-full bg-warning-500 hover:bg-warning-500/90 text-white text-lg py-3"
                   disabled={isLoading || otpCode.length !== 4}
                 >
                   {isLoading ? 'جاري التحقق...' : 'تأكيد البريد الإلكتروني'}
@@ -122,7 +122,7 @@ const EmailVerificationPage = () => {
 
               {/* Resend OTP */}
               <div className="text-center">
-                <p className="text-sm text-darkOlive/80 mb-2">
+                <p className="text-sm text-neutral-900/80 mb-2">
                   لم تستلم الرمز؟
                 </p>
                 <Button
@@ -130,7 +130,7 @@ const EmailVerificationPage = () => {
                   variant="outline"
                   onClick={handleResendOTP}
                   disabled={isResending}
-                  className="border-olivePrimary/50 text-olivePrimary hover:bg-olivePrimary hover:text-white"
+                  className="border-roman-500/50 text-roman-500 hover:bg-roman-500 hover:text-white"
                 >
                   {isResending ? 'جاري الإرسال...' : 'إعادة إرسال الرمز'}
                 </Button>
@@ -138,16 +138,16 @@ const EmailVerificationPage = () => {
             </div>
           </CardContent>
           <CardFooter className="flex flex-col items-center space-y-3">
-            <p className="text-sm text-darkOlive/80">
+            <p className="text-sm text-neutral-900/80">
               لديك حساب بالفعل؟{' '}
-              <Link to="/login" className="font-medium text-olivePrimary hover:underline">
+              <Link to="/login" className="font-medium text-roman-500 hover:underline">
                 تسجيل الدخول
               </Link>
             </p>
             <Button
               variant="outline"
               onClick={() => navigate('/register')}
-              className="w-full border-olivePrimary/50 text-olivePrimary hover:bg-olivePrimary hover:text-white"
+              className="w-full border-roman-500/50 text-roman-500 hover:bg-roman-500 hover:text-white"
             >
               <ArrowLeft className="ml-2 h-4 w-4" />
               العودة إلى التسجيل

@@ -73,19 +73,19 @@ const AboutUsPage = () => {
       title: "الجودة والإتقان",
       description: "نؤمن بأن كل قطعة يدوية تحمل روح صانعها ولمسة الإبداع الحقيقي",
       icon: Award,
-      color: "olivePrimary"
+      color: "roman-500"
     },
     {
       title: "دعم الحرفيين",
       description: "نوفر منصة عادلة تمكن الحرفيين من عرض إبداعاتهم والوصول لجمهور أوسع",
       icon: UserCheck,
-      color: "burntOrange"
+      color: "roman-500"
     },
     {
       title: "الأصالة والتراث",
       description: "نحافظ على التراث المصري العريق ونقدمه بثوب عصري يناسب الأجيال الجديدة",
       icon: Heart,
-      color: "brightOrange"
+      color: "warning-500"
     }
   ];
 
@@ -93,22 +93,22 @@ const AboutUsPage = () => {
     {
       title: "منتجات يدوية أصلية 100%",
       icon: Palette,
-      color: "olivePrimary"
+      color: "roman-500"
     },
     {
       title: "جودة مضمونة وحرفية عالية",
       icon: Award,
-      color: "burntOrange"
+      color: "roman-500"
     },
     {
       title: "صنع بحب وشغف حقيقي",
       icon: Heart,
-      color: "brightOrange"
+      color: "warning-500"
     },
     {
       title: "دعم فني متواصل",
       icon: Shield,
-      color: "peachOrange"
+      color: "success-500"
     }
   ];
 
@@ -117,26 +117,26 @@ const AboutUsPage = () => {
       name: "أحمد محمد",
       role: "مؤسس ومدير عام",
       description: "خبير في التجارة الإلكترونية مع شغف بدعم الحرفيين المصريين",
-      color: "olivePrimary"
+      color: "roman-500"
     },
     {
       name: "فاطمة أحمد",
       role: "مديرة المنتجات",
       description: "متخصصة في تطوير المنتجات مع خلفية في الفنون والحرف اليدوية",
-      color: "burntOrange"
+      color: "roman-500"
     },
     {
       name: "محمود علي",
       role: "مدير التكنولوجيا",
       description: "مطور برامج محترف يهتم بإنشاء حلول تقنية مبتكرة",
-      color: "brightOrange"
+      color: "warning-500"
     }
   ];
 
   return (
-    <div className="min-h-screen bg-lightBeige" dir="rtl">
+    <div className="min-h-screen bg-neutral-100" dir="rtl">
       {/* Hero Section */}
-      <div className="bg-olivePrimary text-white py-20 relative overflow-hidden">
+      <div className="bg-roman-500 text-white py-20 relative overflow-hidden">
         <div className="absolute inset-0 bg-darkOlive/20"></div>
         <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-32 translate-x-32"></div>
         <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full translate-y-24 -translate-x-24"></div>
@@ -162,7 +162,7 @@ const AboutUsPage = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.4 }}
             >
-              منصة <span className="inline-flex items-center gap-2 font-bold text-creamyBeige">
+              منصة <span className="inline-flex items-center gap-2 font-bold text-neutral-100">
                 <img 
                   src="/Asset_9.svg" 
                   alt="بازار Logo" 
@@ -189,14 +189,14 @@ const AboutUsPage = () => {
             whileHover={{ y: -5 }}
             transition={{ duration: 0.3 }}
           >
-            <div className="bg-white rounded-3xl shadow-xl p-8 border border-paleGreen relative overflow-hidden h-full">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-paleGreen rounded-full -translate-y-16 translate-x-16"></div>
+            <div className="bg-white rounded-3xl shadow-xl p-8 border border-success-200 relative overflow-hidden h-full">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-success-200 rounded-full -translate-y-16 translate-x-16"></div>
               <div className="relative z-10 text-center">
-                <div className="bg-olivePrimary p-4 rounded-2xl w-20 h-20 flex items-center justify-center mx-auto mb-6 shadow-lg">
+                <div className="bg-roman-500 p-4 rounded-2xl w-20 h-20 flex items-center justify-center mx-auto mb-6 shadow-lg">
                   <Eye className="h-10 w-10 text-white" />
                 </div>
-                <h3 className="text-3xl font-bold text-darkOlive mb-6">رؤيتنا</h3>
-                <p className="text-darkBrown leading-relaxed text-lg">
+                <h3 className="text-3xl font-bold text-neutral-900 mb-6">رؤيتنا</h3>
+                <p className="text-neutral-700 leading-relaxed text-lg">
                   أن نكون المنصة الرائدة في الشرق الأوسط لتسويق المنتجات اليدوية والحرف التراثية، 
                   ونصبح الجسر الذي يربط بين الماضي العريق والحاضر المبدع.
                 </p>
@@ -209,14 +209,14 @@ const AboutUsPage = () => {
             whileHover={{ y: -5 }}
             transition={{ duration: 0.3 }}
           >
-            <div className="bg-white rounded-3xl shadow-xl p-8 border border-paleGreen relative overflow-hidden h-full">
-              <div className="absolute top-0 left-0 w-32 h-32 bg-creamyBeige rounded-full -translate-y-16 -translate-x-16"></div>
+            <div className="bg-white rounded-3xl shadow-xl p-8 border border-success-200 relative overflow-hidden h-full">
+              <div className="absolute top-0 left-0 w-32 h-32 bg-neutral-100 rounded-full -translate-y-16 -translate-x-16"></div>
               <div className="relative z-10 text-center">
-                <div className="bg-burntOrange p-4 rounded-2xl w-20 h-20 flex items-center justify-center mx-auto mb-6 shadow-lg">
+                <div className="bg-roman-500 p-4 rounded-2xl w-20 h-20 flex items-center justify-center mx-auto mb-6 shadow-lg">
                   <Target className="h-10 w-10 text-white" />
                 </div>
-                <h3 className="text-3xl font-bold text-darkOlive mb-6">مهمتنا</h3>
-                <p className="text-darkBrown leading-relaxed text-lg">
+                <h3 className="text-3xl font-bold text-neutral-900 mb-6">مهمتنا</h3>
+                <p className="text-neutral-700 leading-relaxed text-lg">
                   تمكين الحرفيين المصريين من عرض وبيع منتجاتهم اليدوية الفريدة، 
                   وتوفير تجربة تسوق مميزة للعملاء الذين يقدرون الفن والإبداع الحقيقي.
                 </p>
@@ -233,11 +233,11 @@ const AboutUsPage = () => {
           transition={{ duration: 0.8, delay: 0.4 }}
         >
           <div className="text-center mb-16">
-            <h3 className="text-4xl font-bold text-darkOlive mb-4">إنجازاتنا بالأرقام</h3>
-            <p className="text-xl text-darkBrown">أرقام تعكس ثقة عملائنا وشركائنا</p>
+            <h3 className="text-4xl font-bold text-neutral-900 mb-4">إنجازاتنا بالأرقام</h3>
+            <p className="text-xl text-neutral-700">أرقام تعكس ثقة عملائنا وشركائنا</p>
           </div>
           
-          <div className="bg-white rounded-3xl shadow-xl p-8 border border-paleGreen">
+          <div className="bg-white rounded-3xl shadow-xl p-8 border border-success-200">
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
               {stats.map((stat, index) => (
                 <motion.div 
@@ -248,18 +248,18 @@ const AboutUsPage = () => {
                   transition={{ duration: 0.5, delay: 0.1 * index }}
                   whileHover={{ y: -5 }}
                 >
-                  <div className="bg-lightBeige rounded-2xl p-6 shadow-lg group-hover:shadow-xl transition-all duration-300">
-                    <div className={`bg-${index % 2 === 0 ? 'olivePrimary' : 'burntOrange'} rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4 shadow-lg`}>
+                  <div className="bg-neutral-100 rounded-2xl p-6 shadow-lg group-hover:shadow-xl transition-all duration-300">
+                    <div className={`bg-${index % 2 === 0 ? 'roman-500' : 'roman-500'} rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4 shadow-lg`}>
                       <stat.icon className="h-8 w-8 text-white" />
                     </div>
-                    <div className={`text-3xl font-bold text-${index % 2 === 0 ? 'olivePrimary' : 'burntOrange'} mb-2`}>
+                    <div className={`text-3xl font-bold text-${index % 2 === 0 ? 'roman-500' : 'roman-500'} mb-2`}>
                       {loading ? (
-                        <div className="animate-pulse bg-paleGreen h-8 w-16 mx-auto rounded"></div>
+                        <div className="animate-pulse bg-success-200 h-8 w-16 mx-auto rounded"></div>
                       ) : (
                         stat.number
                       )}
                     </div>
-                    <div className="text-darkBrown font-medium">{stat.label}</div>
+                    <div className="text-neutral-700 font-medium">{stat.label}</div>
                   </div>
                 </motion.div>
               ))}
@@ -275,8 +275,8 @@ const AboutUsPage = () => {
           transition={{ duration: 0.8, delay: 0.6 }}
         >
           <div className="text-center mb-16">
-            <h3 className="text-4xl font-bold text-darkOlive mb-4">قيمنا ومبادئنا</h3>
-            <p className="text-xl text-darkBrown">المبادئ التي توجه عملنا وتحدد هويتنا</p>
+            <h3 className="text-4xl font-bold text-neutral-900 mb-4">قيمنا ومبادئنا</h3>
+            <p className="text-xl text-neutral-700">المبادئ التي توجه عملنا وتحدد هويتنا</p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -288,13 +288,13 @@ const AboutUsPage = () => {
                 transition={{ duration: 0.5, delay: 0.2 * index }}
                 whileHover={{ y: -5 }}
               >
-                <Card className="h-full border-2 border-paleGreen hover:border-olivePrimary/50 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300">
+                <Card className="h-full border-2 border-success-200 hover:border-roman-500/50 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300">
                   <CardContent className="p-8 text-center">
                     <div className={`bg-${value.color} p-4 rounded-2xl w-20 h-20 flex items-center justify-center mx-auto mb-6 shadow-lg`}>
                       <value.icon className="h-10 w-10 text-white" />
                     </div>
-                    <h4 className="text-xl font-bold text-darkOlive mb-4">{value.title}</h4>
-                    <p className="text-darkBrown leading-relaxed">{value.description}</p>
+                    <h4 className="text-xl font-bold text-neutral-900 mb-4">{value.title}</h4>
+                    <p className="text-neutral-700 leading-relaxed">{value.description}</p>
                   </CardContent>
                 </Card>
               </motion.div>
@@ -310,13 +310,13 @@ const AboutUsPage = () => {
           transition={{ duration: 0.8, delay: 0.8 }}
         >
           <div className="text-center mb-16">
-            <h3 className="text-4xl font-bold text-darkOlive mb-4">شغفنا بالفن والإبداع</h3>
-            <p className="text-xl text-darkBrown">ما يميزنا ويجعلنا خيارك الأول</p>
+            <h3 className="text-4xl font-bold text-neutral-900 mb-4">شغفنا بالفن والإبداع</h3>
+            <p className="text-xl text-neutral-700">ما يميزنا ويجعلنا خيارك الأول</p>
           </div>
           
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-12 items-center">
-            <div className="bg-white rounded-3xl shadow-xl p-8 border border-paleGreen">
-              <p className="text-lg text-darkBrown leading-relaxed mb-8">
+            <div className="bg-white rounded-3xl shadow-xl p-8 border border-success-200">
+              <p className="text-lg text-neutral-700 leading-relaxed mb-8">
                 في بازار، نؤمن بأن كل قطعة يدوية تحكي قصة. قصة الحرفي الذي أبدعها، قصة التراث الذي تحمله، 
                 وقصة الحب والشغف الذي وُضع فيها. نحن لسنا مجرد منصة تجارية، بل مجتمع يقدر الفن الحقيقي.
               </p>
@@ -324,14 +324,14 @@ const AboutUsPage = () => {
                 {features.map((feature, index) => (
                   <motion.div 
                     key={index}
-                    className="flex items-center space-x-3 space-x-reverse p-4 bg-lightBeige rounded-xl"
+                    className="flex items-center space-x-3 space-x-reverse p-4 bg-neutral-100 rounded-xl"
                     whileHover={{ x: -5 }}
                     transition={{ duration: 0.2 }}
                   >
                     <div className={`bg-${feature.color} p-2 rounded-lg`}>
                       <feature.icon className="h-5 w-5 text-white" />
                     </div>
-                    <span className="text-darkOlive font-medium">{feature.title}</span>
+                    <span className="text-neutral-900 font-medium">{feature.title}</span>
                   </motion.div>
                 ))}
               </div>
@@ -340,34 +340,34 @@ const AboutUsPage = () => {
             <div className="grid grid-cols-2 gap-6">
               <div className="space-y-6">
                 <motion.div 
-                  className="bg-olivePrimary/20 rounded-2xl h-40 flex items-center justify-center shadow-lg"
+                  className="bg-roman-500/20 rounded-2xl h-40 flex items-center justify-center shadow-lg"
                   whileHover={{ scale: 1.05 }}
                   transition={{ duration: 0.2 }}
                 >
-                  <Palette className="h-16 w-16 text-olivePrimary" />
+                  <Palette className="h-16 w-16 text-roman-500" />
                 </motion.div>
                 <motion.div 
-                  className="bg-burntOrange/20 rounded-2xl h-32 flex items-center justify-center shadow-lg"
+                  className="bg-roman-500/20 rounded-2xl h-32 flex items-center justify-center shadow-lg"
                   whileHover={{ scale: 1.05 }}
                   transition={{ duration: 0.2 }}
                 >
-                  <Heart className="h-12 w-12 text-burntOrange" />
+                  <Heart className="h-12 w-12 text-roman-500" />
                 </motion.div>
               </div>
               <div className="space-y-6 mt-8">
                 <motion.div 
-                  className="bg-lightGreen/30 rounded-2xl h-32 flex items-center justify-center shadow-lg"
+                  className="bg-success-400/30 rounded-2xl h-32 flex items-center justify-center shadow-lg"
                   whileHover={{ scale: 1.05 }}
                   transition={{ duration: 0.2 }}
                 >
-                  <Award className="h-12 w-12 text-olivePrimary" />
+                  <Award className="h-12 w-12 text-roman-500" />
                 </motion.div>
                 <motion.div 
-                  className="bg-creamyBeige rounded-2xl h-40 flex items-center justify-center shadow-lg"
+                  className="bg-neutral-100 rounded-2xl h-40 flex items-center justify-center shadow-lg"
                   whileHover={{ scale: 1.05 }}
                   transition={{ duration: 0.2 }}
                 >
-                  <Users className="h-16 w-16 text-darkOlive" />
+                  <Users className="h-16 w-16 text-neutral-900" />
                 </motion.div>
               </div>
             </div>
@@ -382,8 +382,8 @@ const AboutUsPage = () => {
           transition={{ duration: 0.8, delay: 1.0 }}
         >
           <div className="text-center mb-16">
-            <h3 className="text-4xl font-bold text-darkOlive mb-4">فريق العمل</h3>
-            <p className="text-xl text-darkBrown">الأشخاص الذين يجعلون أحلامنا حقيقة</p>
+            <h3 className="text-4xl font-bold text-neutral-900 mb-4">فريق العمل</h3>
+            <p className="text-xl text-neutral-700">الأشخاص الذين يجعلون أحلامنا حقيقة</p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -395,14 +395,14 @@ const AboutUsPage = () => {
                 transition={{ duration: 0.5, delay: 0.2 * index }}
                 whileHover={{ y: -5 }}
               >
-                <Card className="h-full border-2 border-paleGreen hover:border-olivePrimary/50 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300">
+                <Card className="h-full border-2 border-success-200 hover:border-roman-500/50 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300">
                   <CardContent className="p-8 text-center">
                     <div className={`bg-${member.color} p-4 rounded-2xl w-24 h-24 flex items-center justify-center mx-auto mb-6 shadow-lg`}>
                       <Users className="h-12 w-12 text-white" />
                     </div>
-                    <h4 className="text-xl font-bold text-darkOlive mb-2">{member.name}</h4>
+                    <h4 className="text-xl font-bold text-neutral-900 mb-2">{member.name}</h4>
                     <p className={`text-${member.color} font-medium mb-4`}>{member.role}</p>
-                    <p className="text-darkBrown text-sm leading-relaxed">{member.description}</p>
+                    <p className="text-neutral-700 text-sm leading-relaxed">{member.description}</p>
                   </CardContent>
                 </Card>
               </motion.div>
@@ -418,12 +418,12 @@ const AboutUsPage = () => {
           transition={{ duration: 0.8, delay: 1.2 }}
         >
           {/* Decorative Background */}
-          <div className="absolute inset-0 bg-creamyBeige rounded-3xl transform rotate-1"></div>
+          <div className="absolute inset-0 bg-neutral-100 rounded-3xl transform rotate-1"></div>
           
           {/* Main Content */}
-          <div className="relative bg-white rounded-3xl shadow-2xl border border-paleGreen overflow-hidden">
+          <div className="relative bg-white rounded-3xl shadow-2xl border border-success-200 overflow-hidden">
             {/* Header */}
-            <div className="bg-olivePrimary p-8 relative">
+            <div className="bg-roman-500 p-8 relative">
               <div className="absolute top-0 left-0 w-full h-full bg-darkOlive/20"></div>
               <div className="relative z-10 text-center">
                 <Heart className="h-12 w-12 text-white mx-auto mb-4" />
@@ -434,43 +434,43 @@ const AboutUsPage = () => {
 
             {/* Contact Content */}
             <div className="p-8">
-              <p className="text-darkBrown mb-8 text-center text-lg leading-relaxed max-w-2xl mx-auto">
+              <p className="text-neutral-700 mb-8 text-center text-lg leading-relaxed max-w-2xl mx-auto">
                 إذا كان لديك أي استفسار أو تريد الانضمام إلى مجتمع الحرفيين لدينا، 
                 لا تتردد في التواصل معنا.
               </p>
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
                 <motion.div 
-                  className="flex flex-col items-center space-y-3 p-6 bg-lightBeige rounded-2xl"
+                  className="flex flex-col items-center space-y-3 p-6 bg-neutral-100 rounded-2xl"
                   whileHover={{ y: -5 }}
                   transition={{ duration: 0.2 }}
                 >
-                  <div className="bg-olivePrimary p-3 rounded-full">
+                  <div className="bg-roman-500 p-3 rounded-full">
                     <Mail className="h-6 w-6 text-white" />
                   </div>
-                  <span className="text-darkOlive font-semibold">support@bazaar.com</span>
+                  <span className="text-neutral-900 font-semibold">support@bazaar.com</span>
                 </motion.div>
                 
                 <motion.div 
-                  className="flex flex-col items-center space-y-3 p-6 bg-lightBeige rounded-2xl"
+                  className="flex flex-col items-center space-y-3 p-6 bg-neutral-100 rounded-2xl"
                   whileHover={{ y: -5 }}
                   transition={{ duration: 0.2 }}
                 >
-                  <div className="bg-burntOrange p-3 rounded-full">
+                  <div className="bg-roman-500 p-3 rounded-full">
                     <Phone className="h-6 w-6 text-white" />
                   </div>
-                  <span className="text-darkOlive font-semibold">+20 123 456 7890</span>
+                  <span className="text-neutral-900 font-semibold">+20 123 456 7890</span>
                 </motion.div>
                 
                 <motion.div 
-                  className="flex flex-col items-center space-y-3 p-6 bg-lightBeige rounded-2xl"
+                  className="flex flex-col items-center space-y-3 p-6 bg-neutral-100 rounded-2xl"
                   whileHover={{ y: -5 }}
                   transition={{ duration: 0.2 }}
                 >
-                  <div className="bg-brightOrange p-3 rounded-full">
+                  <div className="bg-warning-500 p-3 rounded-full">
                     <MapPin className="h-6 w-6 text-white" />
                   </div>
-                  <span className="text-darkOlive font-semibold">القاهرة، مصر</span>
+                  <span className="text-neutral-900 font-semibold">القاهرة، مصر</span>
                 </motion.div>
               </div>
             </div>

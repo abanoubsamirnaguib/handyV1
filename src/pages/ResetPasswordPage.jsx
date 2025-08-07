@@ -206,7 +206,7 @@ const ResetPasswordPage = () => {
 
                   <Button
                     type="submit"
-                    className="w-full bg-warning-500 hover:bg-warning-500/90 text-white text-lg py-3"
+                    className="w-full bg-roman-500 hover:bg-roman-500/90 text-white text-lg py-3"
                     disabled={isLoading}
                   >
                     {isLoading ? 'جاري التغيير...' : 'تغيير كلمة المرور'}

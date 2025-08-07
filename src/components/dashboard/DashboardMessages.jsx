@@ -31,7 +31,7 @@ const DashboardMessages = () => {
         animate={{ opacity: 1, y: 0 }}
       >
         <h1 className="text-3xl font-bold text-gray-800">الرسائل</h1>
-        <Button onClick={() => navigate('/chat')} className="bg-warning-500 hover:bg-warning-500/90 text-white">
+        <Button onClick={() => navigate('/chat')} className="bg-roman-500 hover:bg-roman-500/90 text-white">
           <MessageSquare className="ml-2 h-5 w-5" /> عرض كل الرسائل
         </Button>
       </motion.div>

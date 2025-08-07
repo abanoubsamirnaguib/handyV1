@@ -482,7 +482,10 @@ export const ChatProvider = ({ children }) => {
 
   // Start a new conversation
   const startConversation = async (recipient) => {
-    if (!recipient || !recipient.id) return;
+    if (!recipient || !recipient.id) {
+      console.error('No recipient or recipient.id provided:', recipient);
+      return;
+    }
 
     const recipientId = recipient.id; // Extract the ID from the recipient object
 

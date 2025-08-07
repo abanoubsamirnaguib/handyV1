@@ -16,7 +16,7 @@ const buttonVariants = cva(
           'bg-success-100 text-neutral-900 hover:bg-success-100/80', // Secondary (30%)
 				ghost: 'hover:bg-success-100 hover:text-roman-500', // Secondary (30%)
 				link: 'text-warning-500 underline-offset-4 hover:underline', // Secondary (30%)
-				accent: 'bg-warning-500 text-white hover:bg-warning-500/90', // Secondary (30%)
+				accent: 'bg-roman-500 text-white hover:bg-roman-500/90', // Secondary (30%)
 				neutral: 'bg-neutral-500 text-white hover:bg-neutral-600', // Supporting color
 			},
 			size: {

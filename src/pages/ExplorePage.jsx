@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Star, Filter, ArrowRight, ArrowLeft, ListFilter, LayoutGrid, X, Mail, MapPin, Search, Palette, HandMetal, Gift, Shirt, Image, Utensils, Sparkles, Home, Scissors, Wrench } from 'lucide-react';
+import { Star, Filter, ArrowRight, ArrowLeft, ListFilter, LayoutGrid, X, MapPin, Search, Palette, HandMetal, Gift, Shirt, Image, Utensils, Sparkles, Home, Scissors, Wrench } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -13,6 +13,8 @@ import { apiFetch } from '@/lib/api';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import WishlistButton from '@/components/ui/WishlistButton';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/components/ui/use-toast';
 
 // Helper function to get category icon based on backend icon name
 const getCategoryIcon = (iconName) => {
@@ -143,6 +145,11 @@ const ExplorePage = () => {
   const [error, setError] = useState(null);
   const [categories, setCategories] = useState([]);
   const [searchTimeout, setSearchTimeout] = useState(null);
+  
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { user } = useAuth();
+  const { toast } = useToast();
 
   // Add dir="rtl" to root element once component mounts
   useEffect(() => {
@@ -437,6 +444,8 @@ const ExplorePage = () => {
     setSearchParams(params);
   };
 
+
+
   const GigCard = ({ gig }) => {
     // Find category name from gig.category object if present
     let categoryName = gig.category && gig.category.name ? gig.category.name : null;
@@ -487,7 +496,7 @@ const ExplorePage = () => {
           </div>
         </CardContent>
         <CardFooter className="flex justify-start p-2">
-          <Button asChild className="w-full bg-warning-500 hover:bg-warning-500/90 text-white text-xs">
+          <Button asChild className="w-full bg-roman-500 hover:bg-roman-500/90 text-white text-xs">
             <Link to={`/gigs/${gig.id}`} className="whitespace-nowrap">
               عرض التفاصيل
               <ArrowLeft className="ml-2 h-3 w-3" />
@@ -539,7 +548,7 @@ const ExplorePage = () => {
             <p className="text-xl font-bold text-roman-500 mb-2">{gig.price} جنيه</p>
           </CardContent>
           <CardFooter className="flex">
-            <Button asChild className="w-full md:w-auto bg-warning-500 hover:bg-warning-500/90 text-white">
+            <Button asChild className="w-full md:w-auto bg-roman-500 hover:bg-roman-500/90 text-white">
               <Link to={`/gigs/${gig.id}`}>
                 عرض التفاصيل
                 <ArrowLeft className="ml-2 h-4 w-4" />
@@ -550,58 +559,64 @@ const ExplorePage = () => {
       </Card>
     );
   };
-  const SellerCard = ({ seller }) => (
-    <Card className="overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 flex flex-col h-full card-hover border-neutral-200/50" dir="rtl">
-      <div className="relative h-48 bg-roman-500 flex items-center justify-center">
+  const SellerCard = ({ seller }) => {
+    return (
+    <Card className="overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 flex flex-col h-62 card-hover border-roman-500/20" dir="rtl">
+      <div className="relative h-32 bg-roman-500 flex items-center justify-center">
         {seller.avatar ? (
           <img 
             src={seller.avatar} 
             alt={seller.name}
-            className="h-24 w-24 rounded-full object-cover border-4 border-white shadow-md"
+            className="h-16 w-16 rounded-full object-cover border-2 border-white shadow-md"
           />
         ) : (
-          <div className="h-24 w-24 rounded-full bg-white flex items-center justify-center text-3xl font-bold text-warning-500 shadow-md">
+          <div className="h-16 w-16 rounded-full bg-white flex items-center justify-center text-xl font-bold text-roman-500 shadow-md">
             {seller.name.charAt(0)}
           </div>
         )}
       </div>
-      <CardHeader className="pb-2 text-right">
-        <CardTitle className="text-lg font-semibold text-gray-800 cursor-pointer transition-all duration-300 hover:scale-105 hover:text-roman-500">{seller.name}</CardTitle>
+      <CardHeader className="pb-2 text-right p-2">
+        <CardTitle className="text-sm font-semibold text-neutral-900 overflow-hidden relative group cursor-pointer">
+          <div 
+            className={`whitespace-nowrap transition-all duration-300 hover:scale-105 hover:text-roman-500 ${seller.name.length > 25 ? 'animate-scroll' : ''}`}
+            style={{ animationDuration: `${Math.max(3, seller.name.length * 0.2)}s` }}
+          >
+            {seller.name}
+          </div>
+        </CardTitle>
       </CardHeader>
-      <CardContent className="flex-grow text-right">
-        <div className="flex items-center text-sm text-gray-600 mb-2">
-          <MapPin className="h-4 w-4 text-gray-400 ml-1" />
-          <span>{seller.location}</span>
-        </div>
-        <div className="flex items-center text-sm text-gray-600 mb-2">
-          <Star className="h-4 w-4 text-yellow-500 ml-1" />
-          {seller.rating} ({seller.reviewCount} تقييمات)
+      <CardContent className="flex-grow text-right p-2">
+        <div className="flex items-center justify-between text-xs mb-2">
+          <div className="flex items-center text-neutral-900/70">
+            <Star className="h-3 w-3 text-warning-500 ml-1" />
+            <span className="whitespace-nowrap">{seller.rating} ({seller.reviewCount})</span>
+          </div>
+          <div className="flex items-center text-neutral-900/70">
+            <MapPin className="h-3 w-3 text-roman-500/60 ml-1" />
+            <span className="text-xs truncate max-w-20">{seller.location}</span>
+          </div>
         </div>
         <div className="mt-2 text-right">
-          {seller.skills.slice(0, 3).map((skill, index) => (
-            <Badge key={index} variant="outline" className="ml-1 mb-1 border-roman-500/30 bg-success-100/10">
+          {seller.skills.slice(0, 2).map((skill, index) => (
+            <Badge key={index} variant="outline" className="ml-1 mb-1 border-roman-500/30 bg-success-100/10 text-xs px-1 py-0">
               {skill}
             </Badge>
           ))}
         </div>
-        <p className="text-sm text-gray-600 mt-2 line-clamp-2">{seller.bio}</p>
       </CardContent>
-      <CardFooter className="flex gap-2 flex-row-reverse">
-        <Button asChild className="flex-1 bg-warning-500 hover:bg-warning-500/90 text-white">
-          <Link to={`/sellers/${seller.id}`}>
+      <CardFooter className="flex gap-2 p-2">
+        <Button asChild className="w-full bg-roman-500 hover:bg-roman-500/90 text-white text-xs">
+          <Link to={`/sellers/${seller.id}`} className="whitespace-nowrap">
             عرض الملف
-            <ArrowLeft className="ml-2 h-4 w-4" />
-          </Link>
-        </Button>
-        <Button asChild variant="outline" className="w-10 p-0 flex-none">
-          <Link to={`/message/${seller.id}`}>
-            <Mail className="h-4 w-4" />
+            <ArrowLeft className="ml-2 h-3 w-3" />
           </Link>
         </Button>
       </CardFooter>
     </Card>
-  );
-  const SellerListItem = ({ seller }) => (
+    );
+  };
+  const SellerListItem = ({ seller }) => {
+    return (
     <Card className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col md:flex-row card-hover border-roman-500/20 w-full" dir="rtl">
       <div className="relative md:w-1/4 h-48 md:h-auto bg-roman-500 flex items-center justify-center">
         {seller.avatar ? (
@@ -638,28 +653,24 @@ const ExplorePage = () => {
                 {skill}
               </Badge>
             ))}
-          </div>          <div className="text-sm text-neutral-900/70 mt-2 text-right">
+          </div>          
+          <div className="text-sm text-neutral-900/70 mt-2 text-right">
             <span className="font-semibold">عضو منذ:</span> {new Date(seller.memberSince).toLocaleDateString('ar-EG')} <span className="mx-2">|</span> 
             <span className="font-semibold">طلبات مكتملة:</span> {seller.completedOrders}
           </div>
         </CardContent>
         <CardFooter className="flex flex-row-reverse">
-          <Button asChild className="bg-warning-500 hover:bg-warning-500/90 text-white ml-2">
+          <Button asChild className="bg-roman-500 hover:bg-roman-500/90 text-white">
             <Link to={`/sellers/${seller.id}`}>
               عرض الملف
               <ArrowLeft className="ml-2 h-4 w-4" />
             </Link>
           </Button>
-          <Button asChild variant="outline" className="border-roman-500/50 text-roman-500 hover:bg-roman-500 hover:text-white">
-            <Link to={`/message/${seller.id}`}>
-              <Mail className="ml-2 h-4 w-4" />
-              تواصل مع البائع
-            </Link>
-          </Button>
         </CardFooter>
       </div>
     </Card>
-  );
+    );
+  };
   return (
     <div className="container mx-auto px-4 py-8" dir="rtl">
       {/* Categories Slider Section */}
@@ -826,14 +837,14 @@ const ExplorePage = () => {
                           variant={minRating >= star ? "default" : "outline"} 
                           size="icon" 
                           onClick={() => setMinRating(star === minRating ? 0 : star)}
-                          className={`p-2 ${minRating >= star ? 'bg-warning-500 border-warning-500 hover:bg-warning-500/90' : 'border-roman-500/30'}`}
+                          className={`p-2 ${minRating >= star ? 'bg-roman-500 border-roman-500 hover:bg-roman-500/90' : 'border-roman-500/30'}`}
                         >
                           <Star className={`h-5 w-5 ${minRating >= star ? 'text-white' : 'text-warning-500'}`} />
                         </Button>
                       ))}
                     </div>
                   </div>
-                  <Separator />                  <Button onClick={handleFilterChange} className="w-full bg-warning-500 hover:bg-warning-500/90 text-white">
+                  <Separator />                  <Button onClick={handleFilterChange} className="w-full bg-roman-500 hover:bg-roman-500/90 text-white">
                     <Filter className="ml-2 h-4 w-4" /> تطبيق الفلاتر
                   </Button>
                   <Button onClick={resetFilters} variant="outline" className="w-full border-roman-500/50 text-roman-500 hover:bg-roman-500 hover:text-white">
@@ -1002,7 +1013,7 @@ const ExplorePage = () => {
                   <p className="text-lg text-red-500">{error}</p>
                 </div>              ) : sellers.length > 0 ? (
                 <motion.div 
-                  className={viewMode === 'grid' ? "grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-4 rtl" : "space-y-6"}
+                  className={viewMode === 'grid' ? "grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-2 rtl" : "space-y-6"}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ duration: 0.5 }}

@@ -361,11 +361,11 @@ const GigDetailsPage = () => {
             </div>
             <div className="flex flex-col sm:flex-row gap-3">
               {gig.type === 'gig' ? (
-                <Button size="lg" onClick={handleContactSeller} className="bg-warning-500 hover:bg-warning-500/90 text-white flex-1">
+                <Button size="lg" onClick={handleContactSeller} className="bg-roman-500 hover:bg-roman-500/90 text-white flex-1">
                   <MessageSquare className="ml-2 h-5 w-5" /> تواصل مع البائع
                 </Button>
               ) : (
-                <Button size="lg" onClick={handleAddToCart} className="bg-warning-500 hover:bg-warning-500/90 text-white flex-1">
+                <Button size="lg" onClick={handleAddToCart} className="bg-roman-500 hover:bg-roman-500/90 text-white flex-1">
                   <ShoppingCart className="ml-2 h-5 w-5" /> أضف إلى السلة
                 </Button>
               )}
@@ -376,7 +376,7 @@ const GigDetailsPage = () => {
                 disabled={wishlistLoading}
                 className={`border-roman-500/50 hover:bg-roman-500 hover:text-white flex-1 ${
                   isInWishlist 
-                    ? 'bg-warning-500 text-white border-warning-500 hover:bg-warning-500/90' 
+                    ? 'bg-roman-500 text-white border-roman-500 hover:bg-roman-500/90' 
                     : 'text-roman-500'
                 }`}
               >
@@ -456,7 +456,7 @@ const GigDetailsPage = () => {
           rows={3}
           className="mb-2 border-roman-500/30 focus:border-roman-500 focus:ring-roman-500/20"
         />
-        <Button type="submit" className="bg-warning-500 hover:bg-warning-500/90 text-white">إرسال التقييم</Button>
+        <Button type="submit" className="bg-roman-500 hover:bg-roman-500/90 text-white">إرسال التقييم</Button>
       </form>
     )} */}
     {reviews.length > 0 ? (

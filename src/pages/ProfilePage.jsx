@@ -543,7 +543,7 @@ const ProfilePage = () => {
                     <Edit3 className="ml-2 h-4 w-4" /> {isEditing ? 'إلغاء التعديل' : 'تعديل الملف الشخصي'}
                   </Button>
                 ) : (
-                  <Button onClick={handleContactSeller} className="bg-warning-500 hover:bg-warning-500/90 text-white">
+                  <Button onClick={handleContactSeller} className="bg-roman-500 hover:bg-roman-500/90 text-white">
                     <MessageSquare className="ml-2 h-4 w-4" /> تواصل
                   </Button>
                 )}
@@ -878,7 +878,7 @@ const ProfilePage = () => {
                     {profileData?.active_role === 'seller' ? 'ابدأ بإضافة خدماتك ليراها العملاء!' : 'تصفح المنتجات وقم بطلبك الأول!'}
                   </p>
                   {profileData?.active_role === 'buyer' && (
-                    <Button asChild className="mt-4 bg-warning-500 hover:bg-warning-500/90 text-white">
+                    <Button asChild className="mt-4 bg-roman-500 hover:bg-roman-500/90 text-white">
                       <Link to="/explore">استكشف المنتجات</Link>
                     </Button>
                   )}

@@ -345,7 +345,7 @@ const SellerProfilePage = () => {
                       <p className="text-xl font-bold text-primary mb-2">{gig.price} جنيه</p>
                     </CardContent>
                     <CardFooter>
-                      <Button asChild className="w-full bg-warning-500 hover:bg-warning-500/90 text-white">
+                      <Button asChild className="w-full bg-roman-500 hover:bg-roman-500/90 text-white">
                         <Link to={`/gigs/${gig.id}`}>
                           عرض التفاصيل
                           <ArrowRight className="mr-2 h-4 w-4" />

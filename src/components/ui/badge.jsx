@@ -16,7 +16,7 @@ const badgeVariants = cva(
           "border-transparent bg-warning-500 text-white hover:bg-warning-600", // Accent - warning-500 (10%)
         outline: "text-foreground border-roman-500", // Primary color border
         accent: 
-          "border-transparent bg-warning-500 text-white hover:bg-warning-500/80", // Secondary - roman-500 (30%)
+          "border-transparent bg-roman-500 text-white hover:bg-roman-500/80", // Secondary - roman-500 (30%)
         muted:
           "border-transparent bg-neutral-500 text-white hover:bg-neutral-600", // Supporting color
         success:

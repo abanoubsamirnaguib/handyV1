@@ -1,13 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Search, ArrowRight, Star, TrendingUp, Shield, Clock, Palette, HandMetal, Gift, Shirt, Image, Utensils, AlertCircle, CheckCircle, Info, AlertTriangle, Calendar, Megaphone } from 'lucide-react';
+import { Search, ArrowRight, Star, TrendingUp, Shield, Clock, Palette, HandMetal, Gift, Shirt, Image, Utensils, AlertCircle, CheckCircle, Info, AlertTriangle, Calendar, Megaphone, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { api } from '@/lib/api';
+import WishlistButton from '@/components/ui/WishlistButton';
 
 const HomePage = () => {
   const navigate = useNavigate();
@@ -292,21 +293,32 @@ const HomePage = () => {
             <p className="text-lg md:text-xl mb-8 text-neutral-100">
               منصتك الأولى للعثور على منتجات يدوية فريدة ومصنوعة بحب وشغف.
             </p>
-            <Button
-              size="lg"
-              className="bg-warning-500 hover:bg-warning-500/90 text-white px-8 py-3 text-lg"
-              onClick={() => {
-                  const isLoggedIn = !!localStorage.getItem('token');
-                  if (isLoggedIn) {
-                    navigate('/dashboard');
-                  } else {
-                    navigate('/register');
-                  }
-                }}
+            <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
+              <Button
+                size="lg"
+                className="bg-roman-500 hover:bg-roman-500/90 text-white px-8 py-3 text-lg"
+                onClick={() => {
+                    const isLoggedIn = !!localStorage.getItem('token');
+                    if (isLoggedIn) {
+                      navigate('/dashboard');
+                    } else {
+                      navigate('/register');
+                    }
+                  }}
+                >
+                  ابدا معنا
+                  <ArrowRight className="mr-2 h-5 w-5" />
+                </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-2 border-white text-neutral-500 hover:bg-white hover:text-roman-500 px-8 py-3 text-lg transition-all duration-300"
+                onClick={() => navigate('/explore')}
               >
-                ابدا معنا
-                <ArrowRight className="mr-2 h-5 w-5" />
+                اكتشف إبداعات الحرفيين
+                <ArrowLeft className="mr-2 h-5 w-5" />
               </Button>
+            </div>
             </motion.div>
           </div>
         </div>
@@ -406,7 +418,7 @@ const HomePage = () => {
       </section>
 
       {/* Featured Gigs Section */}
-      <section className="py-16 bg-success-100">
+      <section className="py-16 bg-roman-400/10">
         <div className="container mx-auto px-4">
           <motion.h2 
             className="text-3xl font-bold text-center mb-12 text-neutral-900"
@@ -416,7 +428,7 @@ const HomePage = () => {
           >
             منتجات <span className="text-roman-500">مميزة</span>
           </motion.h2>
-          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-2">
             {loadingFeatured ? (
               <div className="col-span-8 text-center text-neutral-900/60 py-8">جاري التحميل...</div>
             ) : featuredError ? (
@@ -424,41 +436,73 @@ const HomePage = () => {
             ) : featuredGigs.length === 0 ? (
               <div className="col-span-8 text-center text-neutral-900/60 py-8">لا توجد منتجات مميزة متاحة</div>
             ) : (
-              featuredGigs.map((gig, index) => (
-                <motion.div
-                  key={gig.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
-                >
-                  <Card className="overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 flex flex-col h-full card-hover border-roman-500/20 text-center p-4">
-                    <div className="relative h-40 md:h-44 lg:h-48 flex items-center justify-center">
-                      <img src={gig.images.length > 0 ? gig.images[0] : 'https://images.unsplash.com/photo-1680188700662-5b03bdcf3017'} alt={gig.title} className="w-full h-full object-cover rounded-md" />
-                      <Badge variant="secondary" className="absolute top-2 right-2 bg-roman-500 text-white text-xs px-2 py-1">{
-                        categories.find(cat => cat.id == gig.category)?.name || gig.category
-                      }</Badge>
-                    </div>
-                    <CardHeader className="pb-1 pt-3 px-0">
-                      <CardTitle className="text-base font-semibold text-neutral-900 h-10 overflow-hidden leading-tight">{gig.title}</CardTitle>
-                    </CardHeader>
-                    <CardContent className="flex-grow px-0">
-                      <div className="flex items-center justify-center text-xs text-neutral-900/80 mb-1">
-                        <Star className="h-3 w-3 text-warning-500 mr-1" />
-                        {gig.rating} ({gig.reviewCount} تقييمات)
+              featuredGigs.map((gig, index) => {
+                // Find category name from gig.category object if present
+                let categoryName = gig.category && gig.category.name ? gig.category.name : null;
+                if (!categoryName) {
+                  const categoryObj = categories.find(cat => cat.id === (gig.category_id || gig.category?.id || gig.category));
+                  categoryName = categoryObj ? categoryObj.name : (gig.category_id || gig.category?.id || gig.category);
+                }
+
+                return (
+                  <motion.div
+                    key={gig.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: index * 0.1 }}
+                  >
+                    <Card className="overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 flex flex-col h-62 card-hover border-roman-500/20" dir="rtl">
+                      <div className="relative h-56">
+                        <img 
+                          src={gig.images && gig.images.length > 0 
+                            ? gig.images[0] 
+                            : "https://images.unsplash.com/photo-1680188700662-5b03bdcf3017"} 
+                          alt={gig.title} 
+                          className="w-full h-full object-cover" 
+                        />
+                        <div className="absolute top-2 right-2 flex flex-col gap-1">
+                          <Badge variant="secondary" className="bg-roman-500 text-white">{categoryName}</Badge>
+                        </div>
+                        <div className="absolute top-2 left-2">
+                          <WishlistButton productId={gig.id} size="md" />
+                        </div>
+                        <div className="absolute bottom-2 right-2 flex flex-col gap-1">
+                          <Badge variant="outline" className={`text-xs ${gig.type === 'gig' ? 'bg-warning-500/50 text-white border-warning-500' : 'bg-blue-100 text-blue-600 border-blue-300'}`}>
+                            {gig.type === 'gig' ? 'خدمة مخصصة' : 'منتج جاهز'}
+                          </Badge>
+                        </div>
                       </div>
-                      <p className="text-base font-bold text-roman-500 mb-1">{gig.price} جنيه</p>
-                    </CardContent>
-                    <CardFooter className="px-0 pt-2">
-                      <Button asChild className="w-full bg-warning-500 hover:bg-warning-500/90 text-xs py-2">
-                        <Link to={`/gigs/${gig.id}`}>
-                          عرض التفاصيل
-                          <ArrowRight className="mr-2 h-3 w-3" />
-                        </Link>
-                      </Button>
-                    </CardFooter>
-                  </Card>
-                </motion.div>
-              ))
+                      <CardHeader className="pb-2 text-right p-2">
+                        <CardTitle className="text-sm font-semibold text-neutral-900 overflow-hidden relative group cursor-pointer">
+                          <div 
+                            className={`whitespace-nowrap transition-all duration-300 hover:scale-105 hover:text-roman-500 ${gig.title.length > 25 ? 'animate-scroll' : ''}`}
+                            style={{ animationDuration: `${Math.max(3, gig.title.length * 0.2)}s` }}
+                          >
+                            {gig.title}
+                          </div>
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="flex-grow text-right p-2">
+                        <div className="flex items-center justify-between text-xs mb-2">
+                          <div className="flex items-center text-neutral-900/70">
+                            <Star className="h-3 w-3 text-warning-500 ml-1" />
+                            <span className="whitespace-nowrap">{gig.rating} ({gig.reviewCount})</span>
+                          </div>
+                          <p className="text-sm font-bold text-roman-500 whitespace-nowrap">{gig.price} ج</p>
+                        </div>
+                      </CardContent>
+                      <CardFooter className="flex justify-start p-2">
+                        <Button asChild className="w-full bg-roman-500 hover:bg-roman-500/90 text-white text-xs">
+                          <Link to={`/gigs/${gig.id}`} className="whitespace-nowrap">
+                            عرض التفاصيل
+                            <ArrowLeft className="ml-2 h-3 w-3" />
+                          </Link>
+                        </Button>
+                      </CardFooter>
+                    </Card>
+                  </motion.div>
+                );
+              })
             )}
           </div>
           <div className="text-center mt-12">

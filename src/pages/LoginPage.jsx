@@ -139,7 +139,7 @@ const LoginPage = () => {
                   هل نسيت كلمة المرور؟
                 </Link>
               </div>
-              <Button type="submit" className="w-full bg-warning-500 hover:bg-warning-500/90 text-white text-lg py-3" disabled={isLoading}>
+              <Button type="submit" className="w-full bg-roman-500 hover:bg-roman-500/90 text-white text-lg py-3" disabled={isLoading}>
                 {isLoading ? 'جاري تسجيل الدخول...' : 'تسجيل الدخول'}
               </Button>
             </form>

@@ -29,6 +29,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'broadcast.auth' => \App\Http\Middleware\BroadcastAuth::class,
             'delivery.auth' => \App\Http\Middleware\DeliveryAuth::class,
+            'optional.auth' => \App\Http\Middleware\OptionalAuth::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

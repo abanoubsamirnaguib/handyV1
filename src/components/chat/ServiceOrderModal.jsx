@@ -24,11 +24,16 @@ const ServiceOrderModal = ({ isOpen, onClose, sellerId, sellerName, sellerAvatar
     delivery_address: '',
     service_requirements: '',
     deposit_amount: '',
-    payment_method: 'bank_transfer'
+    payment_method: 'bank_transfer',
+    city_id: ''
   });
   
   const [depositImage, setDepositImage] = useState(null);
   const [depositImagePreview, setDepositImagePreview] = useState(null);
+
+  // Cities
+  const [cities, setCities] = useState([]);
+  const [citiesLoading, setCitiesLoading] = useState(false);
 
   // Load seller services
   useEffect(() => {
@@ -39,6 +44,8 @@ const ServiceOrderModal = ({ isOpen, onClose, sellerId, sellerName, sellerAvatar
       } else {
         loadSellerServices();
       }
+      // Also load cities for selection
+      loadCities();
     }
   }, [isOpen, sellerId, preloadedServices]);
 
@@ -56,6 +63,19 @@ const ServiceOrderModal = ({ isOpen, onClose, sellerId, sellerName, sellerAvatar
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadCities = async () => {
+    try {
+      setCitiesLoading(true);
+      const data = await api.getCities();
+      const list = data?.data || data || [];
+      setCities(Array.isArray(list) ? list : []);
+    } catch (e) {
+      console.error('Failed to load cities', e);
+    } finally {
+      setCitiesLoading(false);
     }
   };
 
@@ -99,6 +119,17 @@ const ServiceOrderModal = ({ isOpen, onClose, sellerId, sellerName, sellerAvatar
       return;
     }
     
+    // التحقق من أن العربون لا يتجاوز 80% من قيمة الخدمة
+    const maxDepositAmount = selectedService.price * 0.8;
+    if (parseFloat(formData.deposit_amount) > maxDepositAmount) {
+      toast({
+        variant: "destructive",
+        title: "خطأ في قيمة العربون",
+        description: `قيمة العربون لا يمكن أن تتجاوز 80% من قيمة الخدمة (${maxDepositAmount.toFixed(2)} جنيه)`
+      });
+      return;
+    }
+    
     if (!depositImage) {
       toast({
         variant: "destructive",
@@ -124,6 +155,7 @@ const ServiceOrderModal = ({ isOpen, onClose, sellerId, sellerName, sellerAvatar
       formDataToSend.append('requires_deposit', 'true');
       formDataToSend.append('is_service_order', 'true');
       formDataToSend.append('total_price', selectedService.price);
+      if (formData.city_id) formDataToSend.append('city_id', formData.city_id);
       
       const response = await api.createServiceOrder(formDataToSend);
       
@@ -140,7 +172,8 @@ const ServiceOrderModal = ({ isOpen, onClose, sellerId, sellerName, sellerAvatar
         delivery_address: '',
         service_requirements: '',
         deposit_amount: '',
-        payment_method: 'bank_transfer'
+        payment_method: 'bank_transfer',
+        city_id: ''
       });
       setSelectedService(null);
       setDepositImage(null);
@@ -329,11 +362,18 @@ const ServiceOrderModal = ({ isOpen, onClose, sellerId, sellerName, sellerAvatar
                     <Input
                       type="number"
                       step="0.01"
+                      min="1"
+                      max={selectedService ? selectedService.price * 0.8 : 0}
                       value={formData.deposit_amount}
                       onChange={(e) => handleInputChange('deposit_amount', e.target.value)}
                       placeholder="أدخل قيمة العربون"
                       required
                     />
+                    {selectedService && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        الحد الأقصى للعربون: {(selectedService.price * 0.8).toFixed(2)} جنيه (80% من قيمة الخدمة)
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-2">طريقة الدفع</label>
@@ -383,6 +423,28 @@ const ServiceOrderModal = ({ isOpen, onClose, sellerId, sellerName, sellerAvatar
                 </div>
               </div>
 
+              {/* City selection */}
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  <MapPin className="w-4 h-4 inline mr-1" />
+                  المدينة
+                </label>
+                <select 
+                  value={formData.city_id}
+                  onChange={(e) => handleInputChange('city_id', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  disabled={citiesLoading}
+                  required
+                >
+                  <option value="">{citiesLoading ? 'جاري التحميل...' : 'اختر المدينة'}</option>
+                  {cities.map((city) => (
+                    <option key={city.id} value={city.id}>
+                      {city.name} — رسوم التوصيل: {Number(city.delivery_fee || 0)} ج.م
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               {/* Submit Button */}
               <div className="flex justify-end space-x-3 rtl:space-x-reverse">
                 <Button
@@ -413,4 +475,4 @@ const ServiceOrderModal = ({ isOpen, onClose, sellerId, sellerName, sellerAvatar
   );
 };
 
-export default ServiceOrderModal; 
+export default ServiceOrderModal;

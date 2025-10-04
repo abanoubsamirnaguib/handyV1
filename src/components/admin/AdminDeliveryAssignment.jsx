@@ -126,15 +126,28 @@ const AdminDeliveryAssignment = () => {
   const handleAssignDelivery = async () => {
     if (!selectedOrder || !selectedDeliveryPerson) return;
 
+    // تحقق من حالة الطلب: إذا كان خدمة ويحتاج عربون ولم يتم دفع باقي المبلغ النهائي
+    if (
+      selectedOrder.is_service_order &&
+      selectedOrder.requires_deposit &&
+      selectedOrder.deposit_status === 'paid' &&
+      !selectedOrder.remaining_payment_proof // لم يرفع صورة باقي المبلغ
+    ) {
+      toast({
+        variant: "destructive",
+        title: "لا يمكن تعيين موظف التسليم",
+        description: "المبلغ النهائي للطلب لم يتم دفعه بعد من قبل العميل."
+      });
+      return;
+    }
+
     try {
       setIsAssigning(true);
       const response = await adminApi.assignDeliveryPerson(selectedOrder.id, selectedDeliveryPerson);
-      
       toast({
         title: "تم التعيين بنجاح",
         description: response.message
       });
-
       setShowDeliveryDialog(false);
       setSelectedDeliveryPerson('');
       setSelectedOrder(null);

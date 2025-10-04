@@ -176,7 +176,7 @@ class AdminController extends Controller
 
     public function getOrders(Request $request)
     {
-        $query = Order::with(['user', 'seller.user', 'items.product', 'adminApprover', 'deliveryPerson']);
+        $query = Order::with(['user', 'seller.user', 'items.product', 'adminApprover', 'deliveryPerson', 'history.actionUser', 'city']);
 
         // Search functionality
         if ($request->filled('search')) {
@@ -244,29 +244,17 @@ class AdminController extends Controller
     {
         $order = Order::findOrFail($id);
         
-        if ($order->status !== 'pending_admin_approval') {
+        // استخدام الطريقة الجديدة من النموذج للتحقق من إمكانية الموافقة
+        if (!$order->canBeApprovedByAdmin()) {
             return response()->json([
-                'message' => 'Order cannot be approved in current status'
+                'message' => 'لا يمكن الموافقة على هذا الطلب في الوقت الحالي'
             ], 400);
         }
 
-        $order->update([
-            'status' => 'admin_approved',
-            'payment_status' => 'paid',
-            'admin_approved_at' => now(),
-            'admin_approved_by' => auth()->id(),
-            'admin_notes' => $request->input('notes', '')
-        ]);
+        // استخدام الطريقة الجديدة من النموذج للموافقة
+        $order->approveByAdmin(auth()->id(), $request->input('notes', ''));
 
-        // Create order history entry
-        $order->history()->create([
-            'status' => 'admin_approved',
-            'notes' => $request->input('notes', ''),
-            'changed_by' => auth()->id(),
-            'changed_at' => now()
-        ]);
-
-        return new OrderResource($order->load(['user', 'seller.user', 'items.product', 'adminApprover']));
+        return new OrderResource($order->fresh()->load(['user', 'seller.user', 'items.product', 'adminApprover']));
     }
 
     /**

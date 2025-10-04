@@ -97,7 +97,7 @@ const Navbar = () => {
             <Link to="/about-us" className={`px-3 py-2 text-sm font-medium hover:text-roman-500 transition-colors ${
               isActiveLink('/about-us') ? 'text-roman-500 border-b-2 border-roman-500 font-semibold' : ''
             }`}>
-              من نحن
+              من نحن / تواصل معنا
             </Link>
             <Link to="/announcements" className={`px-3 py-2 text-sm font-medium hover:text-roman-500 transition-colors ${
               isActiveLink('/announcements') ? 'text-roman-500 border-b-2 border-roman-500 font-semibold' : ''
@@ -108,11 +108,6 @@ const Navbar = () => {
               isActiveLink('/policy') ? 'text-roman-500 border-b-2 border-roman-500 font-semibold' : ''
             }`}>
               السياسات
-            </Link>
-            <Link to="/contact-us" className={`px-3 py-2 text-sm font-medium hover:text-roman-500 transition-colors ${
-              isActiveLink('/contact-us') ? 'text-roman-500 border-b-2 border-roman-500 font-semibold' : ''
-            }`}>
-              تواصل معنا
             </Link>
             {user && (
               <>
@@ -269,17 +264,12 @@ const Navbar = () => {
               <Link to="/about-us" className={`px-3 py-2 text-sm font-medium hover:text-primary transition-colors ${
                 isActiveLink('/about-us') ? 'text-roman-500 bg-roman-500/10 rounded-md font-semibold' : ''
               }`} onClick={toggleMenu}>
-                من نحن
+                من نحن / تواصل معنا
               </Link>
               <Link to="/announcements" className={`px-3 py-2 text-sm font-medium hover:text-primary transition-colors ${
                 isActiveLink('/announcements') ? 'text-roman-500 bg-roman-500/10 rounded-md font-semibold' : ''
               }`} onClick={toggleMenu}>
                 الإعلانات
-              </Link>
-              <Link to="/contact-us" className={`px-3 py-2 text-sm font-medium hover:text-primary transition-colors ${
-                isActiveLink('/contact-us') ? 'text-roman-500 bg-roman-500/10 rounded-md font-semibold' : ''
-              }`} onClick={toggleMenu}>
-                تواصل معنا
               </Link>
               <Link to="/policy" className={`px-3 py-2 text-sm font-medium hover:text-primary transition-colors ${
                 isActiveLink('/policy') ? 'text-roman-500 bg-roman-500/10 rounded-md font-semibold' : ''

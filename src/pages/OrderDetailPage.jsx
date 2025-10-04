@@ -39,6 +39,7 @@ const OrderDetailPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
   const [paymentProofFile, setPaymentProofFile] = useState(null);
+  const [remainingPaymentProofFile, setRemainingPaymentProofFile] = useState(null);
   const [deliveryAddress, setDeliveryAddress] = useState('');
   const [notes, setNotes] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
@@ -156,6 +157,41 @@ const OrderDetailPage = () => {
         variant: "destructive",
         title: "خطأ في رفع الإيصال",
         description: "حدث خطأ أثناء رفع إيصال الدفع. يرجى المحاولة مرة أخرى.",
+      });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleRemainingPaymentProofUpload = async () => {
+    if (!remainingPaymentProofFile) {
+      toast({
+        variant: "destructive",
+        title: "لم يتم اختيار ملف",
+        description: "يرجى اختيار صورة إثبات دفع باقي المبلغ أولاً.",
+      });
+      return;
+    }
+
+    setIsUpdating(true);
+    try {
+      const formData = new FormData();
+      formData.append('payment_proof', remainingPaymentProofFile);
+      formData.append('payment_type', 'remaining');
+      
+      await api.uploadPaymentProof(orderId, formData);
+      toast({
+        title: "تم رفع إثبات دفع باقي المبلغ",
+        description: "تم رفع إثبات دفع باقي المبلغ بنجاح. سيتم مراجعته من قبل الإدارة.",
+      });
+      setRemainingPaymentProofFile(null);
+      loadOrder(); // Reload order to get updated status
+    } catch (error) {
+      console.error('Error uploading remaining payment proof:', error);
+      toast({
+        variant: "destructive",
+        title: "خطأ في رفع الإثبات",
+        description: "حدث خطأ أثناء رفع إثبات دفع باقي المبلغ. يرجى المحاولة مرة أخرى.",
       });
     } finally {
       setIsUpdating(false);
@@ -727,7 +763,9 @@ const OrderDetailPage = () => {
           {/* Customer Actions */}
           {isCustomer && (
             <>
-              {order.status === 'pending' && !order.payment_proof && (
+              {order.status === 'pending' && 
+               !order.payment_proof && 
+               !(order.is_service_order && order.requires_deposit) && ( // لا تظهر للطلبات التي تتطلب عربون
                 <div className="space-y-3">
                   <Label>رفع إيصال الدفع</Label>
                   <Input
@@ -743,6 +781,65 @@ const OrderDetailPage = () => {
                     {isUpdating ? <Loader2 className="h-4 w-4 animate-spin ml-2" /> : <Upload className="h-4 w-4 ml-2" />}
                     رفع إيصال الدفع
                   </Button>
+                </div>
+              )}
+
+              {/* رفع صورة باقي المبلغ للطلبات التي تتطلب عربون */}
+              {order.is_service_order && 
+               order.requires_deposit && 
+               order.deposit_status === 'paid' && 
+               !order.remaining_payment_proof &&
+               ['admin_approved', 'seller_approved', 'in_progress', 'work_completed', 'ready_for_delivery', 'out_for_delivery', 'delivered'].includes(order.status) && (
+                <div className="space-y-3">
+                  <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <h4 className="font-semibold text-blue-800 mb-2">دفع باقي المبلغ</h4>
+                    <p className="text-sm text-blue-700 mb-2">
+                      تم دفع العربون ({order.deposit_amount} جنيه). 
+                      المبلغ المتبقي: {order.total_amount - order.deposit_amount} جنيه
+                    </p>
+                    <p className="text-xs text-blue-600">
+                      يمكنك دفع باقي المبلغ ورفع إثبات الدفع في أي مرحلة من مراحل الطلب
+                    </p>
+                  </div>
+                  <Label>رفع إثبات دفع باقي المبلغ</Label>
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setRemainingPaymentProofFile(e.target.files[0])}
+                  />
+                  <Button 
+                    onClick={handleRemainingPaymentProofUpload}
+                    disabled={isUpdating || !remainingPaymentProofFile}
+                    className="w-full bg-green-600 hover:bg-green-700"
+                  >
+                    {isUpdating ? <Loader2 className="h-4 w-4 animate-spin ml-2" /> : <Upload className="h-4 w-4 ml-2" />}
+                    رفع إثبات دفع باقي المبلغ
+                  </Button>
+                </div>
+              )}
+
+              {/* عرض حالة رفع صورة باقي المبلغ */}
+              {order.is_service_order && 
+               order.requires_deposit && 
+               order.deposit_status === 'paid' && 
+               order.remaining_payment_proof && (
+                <div className="space-y-3">
+                  <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <h4 className="font-semibold text-green-800 mb-2">✅ تم رفع إثبات دفع باقي المبلغ</h4>
+                    <p className="text-sm text-green-700 mb-2">
+                      تم رفع إثبات دفع المبلغ المتبقي ({order.total_amount - order.deposit_amount} جنيه) بنجاح
+                    </p>
+                    {order.status === 'pending' && (
+                      <p className="text-xs text-green-600 font-medium">
+                        ⏳ ينتظر مراجعة الإدارة
+                      </p>
+                    )}
+                    {order.status !== 'pending' && (
+                      <p className="text-xs text-green-600 font-medium">
+                        ✅ تم اعتماد الدفع من قبل الإدارة
+                      </p>
+                    )}
+                  </div>
                 </div>
               )}
 
@@ -1168,6 +1265,26 @@ const OrderDetailPage = () => {
                             className="max-w-full h-auto rounded-lg shadow-md cursor-pointer hover:shadow-lg transition-shadow duration-300"
                             onClick={() => window.open(order.deposit_image, '_blank')}
                           />
+                        </div>
+                      )}
+                      
+                      {/* Remaining Payment Proof Image */}
+                      {order.is_service_order && order.remaining_payment_proof && (
+                        <div>
+                          <span className="text-sm text-gray-600 mb-2 block">صورة إيصال باقي المبلغ:</span>
+                          <img 
+                            src={order.remaining_payment_proof} 
+                            alt="إيصال باقي المبلغ" 
+                            className="max-w-full h-auto rounded-lg shadow-md cursor-pointer hover:shadow-lg transition-shadow duration-300"
+                            onClick={() => window.open(order.remaining_payment_proof, '_blank')}
+                          />
+                          {order.status === 'pending' && order.remaining_payment_proof && (
+                            <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded">
+                              <p className="text-xs text-yellow-800">
+                                تم رفع إثبات دفع باقي المبلغ وينتظر مراجعة الإدارة
+                              </p>
+                            </div>
+                          )}
                         </div>
                       )}
                       

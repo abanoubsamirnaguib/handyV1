@@ -32,7 +32,6 @@ import EmailVerificationPage from '@/pages/EmailVerificationPage.jsx';
 import NotFoundPage from '@/pages/NotFoundPage.jsx';
 import AdminDashboardPage from '@/pages/AdminDashboardPage.jsx';
 import NotificationsPage from '@/pages/NotificationsPage.jsx';
-import ContactUsPage from '@/pages/ContactUsPage.jsx';
 import AboutUsPage from '@/pages/AboutUsPage.jsx';
 import PolicyPage from '@/pages/PolicyPage.jsx';
 import AnnouncementsPage from '@/pages/AnnouncementsPage.jsx';
@@ -62,10 +61,12 @@ import AdminUsers from '@/components/admin/AdminUsers';
 import AdminMessages from '@/components/admin/AdminMessages';
 import AdminSettings from '@/components/admin/AdminSettings';
 import AdminDelivery from '@/components/admin/AdminDelivery';
-import AdminDeliveryOrders from '@/components/admin/AdminDeliveryOrders';
+import AdminDeliveryAssignment from '@/components/admin/AdminDeliveryAssignment';
 import AdminWithdrawals from '@/components/admin/AdminWithdrawals';
 import AdminContactUs from '@/components/admin/AdminContactUs';
 import AdminAnnouncements from '@/components/admin/AdminAnnouncements';
+import AdminCities from '@/components/admin/AdminCities';
+import AdminPlatformProfits from '@/components/admin/AdminPlatformProfits';
 
 import './styles/rtl-dropdown.css'; // Import our RTL dropdown styles
 
@@ -82,7 +83,7 @@ function App() {
                 <Route path="explore" element={<ExplorePage />} />
                 <Route path="gigs/:id" element={<GigDetailsPage />} />
                 <Route path="sellers/:id" element={<SellerProfilePage />} />
-                <Route path="contact-us" element={<ContactUsPage />} />
+                <Route path="contact-us" element={<Navigate to="/about-us" replace />} />
                 <Route path="about-us" element={<AboutUsPage />} />
                 <Route path="policy" element={<PolicyPage />} />
                 <Route path="announcements" element={<AnnouncementsPage />} />
@@ -192,11 +193,13 @@ function App() {
                 <Route path="sellers" element={<AdminSellers />} />
                 <Route path="users" element={<AdminUsers />} />
                 <Route path="delivery" element={<AdminDelivery />} />
-                <Route path="delivery-orders" element={<AdminDeliveryOrders />} />
+                <Route path="delivery-orders" element={<AdminDeliveryAssignment />} />
                 <Route path="withdrawals" element={<AdminWithdrawals />} />
                 <Route path="messages" element={<AdminMessages />} />
                 <Route path="contact-us" element={<AdminContactUs />} />
                 <Route path="announcements" element={<AdminAnnouncements />} />
+                <Route path="cities" element={<AdminCities />} />
+                <Route path="platform-profits" element={<AdminPlatformProfits />} />
                 <Route path="settings" element={<AdminSettings />} />
               </Route>
               

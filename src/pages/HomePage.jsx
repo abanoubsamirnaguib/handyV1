@@ -30,6 +30,17 @@ const HomePage = () => {
   const [showAllCategories, setShowAllCategories] = useState(false);
   const [categoriesPerRow, setCategoriesPerRow] = useState(window.innerWidth < 640 ? 4 : window.innerWidth < 1024 ? 6 : 8);
 
+  // Handle wishlist changes
+  const handleWishlistChange = (productId, isInWishlist) => {
+    setFeaturedGigs(prevGigs => 
+      prevGigs.map(gig => 
+        gig.id === productId 
+          ? { ...gig, in_wishlist: isInWishlist }
+          : gig
+      )
+    );
+  };
+
   // Helper to get full image URL
   const getImageUrl = (imagePath) => {
     if (!imagePath) return null;
@@ -108,6 +119,7 @@ const HomePage = () => {
                 rating: prod.rating || 0,
                 reviewCount: prod.reviewCount || prod.review_count || 0,
                 sellerId: prod.sellerId || prod.seller_id || prod.seller?.id,
+                in_wishlist: prod.in_wishlist || false, // Preserve wishlist status
               }))
             : [];
           setFeaturedGigs(normalized);
@@ -464,7 +476,7 @@ const HomePage = () => {
                           <Badge variant="secondary" className="bg-roman-500 text-white">{categoryName}</Badge>
                         </div>
                         <div className="absolute top-2 left-2">
-                          <WishlistButton productId={gig.id} size="md" />
+                          <WishlistButton productId={gig.id} inWishlist={gig.in_wishlist} onWishlistChange={handleWishlistChange} size="md" />
                         </div>
                         <div className="absolute bottom-2 right-2 flex flex-col gap-1">
                           <Badge variant="outline" className={`text-xs ${gig.type === 'gig' ? 'bg-warning-500/50 text-white border-warning-500' : 'bg-blue-100 text-blue-600 border-blue-300'}`}>

@@ -82,6 +82,9 @@ export const api = {
   
   // Categories
   getCategories: () => apiFetch('listcategories'),
+
+  // Public Cities (for checkout city selection)
+  getCities: () => apiFetch('cities'),
   
   // Sellers
   getSeller: (sellerId) => apiFetch(`listsellers/${sellerId}`),
@@ -200,9 +203,16 @@ export const api = {
     apiFetch(`orders/${orderId}`, { method: 'DELETE' }),
 
   // Order workflow functions
-  uploadPaymentProof: (orderId, imageFile) => {
-    const formData = new FormData();
-    formData.append('payment_proof', imageFile);
+  uploadPaymentProof: (orderId, imageFileOrFormData) => {
+    let formData;
+    
+    // Check if it's already FormData (for remaining payment) or a file
+    if (imageFileOrFormData instanceof FormData) {
+      formData = imageFileOrFormData;
+    } else {
+      formData = new FormData();
+      formData.append('payment_proof', imageFileOrFormData);
+    }
     
     return apiFormFetch(`orders/${orderId}/upload-payment-proof`, {
       method: 'POST',
@@ -434,6 +444,11 @@ export const adminApi = {
       method: 'POST',
       body: JSON.stringify({ notes }),
     }),
+  adminUpdateOrderStatus: (orderId, status, notes = '') => 
+    apiFetch(`admin/orders/${orderId}/update-status`, {
+      method: 'POST',
+      body: JSON.stringify({ status, notes }),
+    }),
   getPendingApprovalOrders: () => apiFetch('orders/pending-approval'),
 
   // Delivery Personnel Management
@@ -566,6 +581,30 @@ export const adminApi = {
     apiFetch(`admin/announcements/${id}`, { method: 'DELETE' }),
   toggleAnnouncementStatus: (id) => 
     apiFetch(`admin/announcements/${id}/toggle-status`, { method: 'POST' }),
+  
+  // Admin Cities management
+  getCities: (params = {}) => {
+    const searchParams = new URLSearchParams(params);
+    return apiFetch(`admin/cities?${searchParams}`);
+  },
+  createCity: (cityData) => 
+    apiFetch('admin/cities', {
+      method: 'POST',
+      body: JSON.stringify(cityData),
+    }),
+  updateCity: (cityId, cityData) => 
+    apiFetch(`admin/cities/${cityId}`, {
+      method: 'PUT',
+      body: JSON.stringify(cityData),
+    }),
+  deleteCity: (cityId) => 
+    apiFetch(`admin/cities/${cityId}`, { method: 'DELETE' }),
+
+  // Platform profits (admin)
+  getPlatformProfits: (params = {}) => {
+    const searchParams = new URLSearchParams(params);
+    return apiFetch(`admin/platform-profits?${searchParams}`);
+  },
 };
 
 // Seller API for product/gig CRUD

@@ -53,15 +53,17 @@ class DeliveryPersonnel extends Authenticatable
     // الطلبات المطلوب استلامها
     public function ordersToPickup()
     {
-        return $this->hasMany(Order::class, 'delivery_person_id')
-            ->where('status', 'ready_for_delivery');
+        return $this->hasMany(Order::class, 'pickup_person_id')
+            ->where('status', 'ready_for_delivery')
+            ->whereNull('delivery_picked_up_at'); // لم يتم الاستلام بعد
     }
 
     // الطلبات المطلوب تسليمها
     public function ordersToDeliver()
     {
         return $this->hasMany(Order::class, 'delivery_person_id')
-            ->where('status', 'out_for_delivery');
+            ->where('status', 'out_for_delivery')
+            ->whereNotNull('delivery_picked_up_at'); // تم الاستلام من البائع
     }
 
     // الطلبات المكتملة

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Bell, Check, Trash2, Package, MessageSquare, Star, DollarSign, Loader2, RefreshCw } from 'lucide-react';
 import { useNotifications } from '@/contexts/NotificationContext';
+import { useNavigate } from 'react-router-dom';
 
 const NotificationsPage = () => {
   const { 
@@ -16,6 +17,7 @@ const NotificationsPage = () => {
   
   const [filter, setFilter] = useState('all');
   const [refreshing, setRefreshing] = useState(false);
+  const navigate = useNavigate();
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -41,6 +43,34 @@ const NotificationsPage = () => {
       payment: DollarSign
     };
     return icons[type] || Bell;
+  };
+
+  const handleNotificationClick = (notification) => {
+    // Mark the notification as read when clicked
+    if (!notification.read) {
+      markAsRead(notification.id);
+    }
+    
+    // Navigate based on notification type and data
+    switch (notification.type) {
+      case 'order':
+        navigate(`/orders/${notification.data?.orderId || ''}`);
+        break;
+      case 'message':
+        navigate(`/messages/${notification.data?.conversationId || ''}`);
+        break;
+      case 'review':
+        navigate(`/products/${notification.data?.productId || ''}#reviews`);
+        break;
+      case 'payment':
+        navigate(`/dashboard/earnings`);
+        break;
+      default:
+        // If no specific route is defined, use the link property if available
+        if (notification.data?.link) {
+          navigate(notification.data.link);
+        }
+    }
   };
 
   const filteredNotifications = notifications.filter(notif => {
@@ -147,15 +177,21 @@ const NotificationsPage = () => {
                   key={notification.id}
                   className={`bg-white rounded-lg border p-4 transition-all hover:shadow-md ${
                     !notification.read ? 'border-r-4 border-r-warning-500' : 'border-gray-200'
-                  }`}
+                  } cursor-pointer`}
                 >
                   <div className="flex items-start gap-3">
-                    <div className={`p-2 rounded-lg ${getTypeColor(notification.type)}`}>
+                    <div 
+                      className={`p-2 rounded-lg ${getTypeColor(notification.type)}`}
+                      onClick={() => handleNotificationClick(notification)}
+                    >
                       <IconComponent className="w-5 h-5" />
                     </div>
                     
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between mb-1">
+                      <div 
+                        className="flex items-start justify-between mb-1"
+                        onClick={() => handleNotificationClick(notification)}
+                      >
                         <h3 className={`font-medium ${!notification.read ? 'text-neutral-900' : 'text-gray-700'}`}>
                           {notification.title}
                         </h3>
@@ -163,14 +199,20 @@ const NotificationsPage = () => {
                           {notification.time}
                         </span>
                       </div>
-                      <p className="text-sm text-gray-600 mb-3">
+                      <p 
+                        className="text-sm text-gray-600 mb-3 cursor-pointer"
+                        onClick={() => handleNotificationClick(notification)}
+                      >
                         {notification.message}
                       </p>
                       
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
                         {!notification.read && (
                           <button
-                            onClick={() => markAsRead(notification.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              markAsRead(notification.id);
+                            }}
                             className="flex items-center gap-1 text-xs text-warning-500 hover:text-warning-500/80"
                           >
                             <Check className="w-3 h-3" />
@@ -178,7 +220,10 @@ const NotificationsPage = () => {
                           </button>
                         )}
                         <button
-                          onClick={() => deleteNotification(notification.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteNotification(notification.id);
+                          }}
                           className="flex items-center gap-1 text-xs text-red-500 hover:text-red-600"
                         >
                           <Trash2 className="w-3 h-3" />

@@ -18,7 +18,8 @@ import {
   Truck,
   DollarSign,
   HelpCircle,
-  Megaphone
+  Megaphone,
+  MapPin
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
@@ -42,6 +43,8 @@ const AdminSidebar = () => {
     { path: '/admin/products', label: 'المنتجات', icon: PackageOpen },
     { path: '/admin/sellers', label: 'البائعين', icon: UserCheck },
     { path: '/admin/users', label: 'المستخدمين', icon: Users },
+    { path: '/admin/cities', label: 'المدن', icon: MapPin },
+    { path: '/admin/platform-profits', label: 'أرباح المنصة', icon: DollarSign },
     { path: '/admin/delivery', label: 'موظفي التوصيل', icon: Truck },
     { path: '/admin/delivery-orders', label: 'توزيع الطلبات', icon: PackageOpen },
     { path: '/admin/withdrawals', label: 'طلبات السحب', icon: DollarSign },
@@ -149,6 +152,8 @@ const AdminLayout = () => {
     { path: '/admin/products', label: 'المنتجات', icon: PackageOpen },
     { path: '/admin/sellers', label: 'البائعين', icon: UserCheck },
     { path: '/admin/users', label: 'المستخدمين', icon: Users },
+    { path: '/admin/cities', label: 'المدن', icon: MapPin },
+    { path: '/admin/platform-profits', label: 'أرباح المنصة', icon: DollarSign },
     { path: '/admin/delivery', label: 'موظفي التوصيل', icon: Truck },
     { path: '/admin/delivery-orders', label: 'توزيع الطلبات', icon: PackageOpen },
     { path: '/admin/withdrawals', label: 'طلبات السحب', icon: DollarSign },

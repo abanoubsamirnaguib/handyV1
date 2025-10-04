@@ -14,12 +14,13 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use App\Models\Notification;
 use App\Services\NotificationService;
+use App\Models\City;
 
 class OrderCrudController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Order::with(['user', 'seller', 'items.product', 'adminApprover', 'deliveryPerson']);
+        $query = Order::with(['user', 'seller', 'items.product', 'adminApprover', 'deliveryPerson', 'city', 'history.actionUser']);
         
         // فلترة حسب المستخدم
         if ($request->has('user_orders')) {
@@ -74,10 +75,11 @@ class OrderCrudController extends Controller
                 'customer_phone' => 'required|string|max:20',
                 'delivery_address' => 'required|string',
                 'service_requirements' => 'nullable|string',
-                'deposit_amount' => 'required|numeric|min:1',
+                'deposit_amount' => 'required|numeric|min:1|max:' . ($request->total_price * 0.8),
                 'payment_method' => 'required|in:cash_on_delivery,bank_transfer,credit_card,vodafone_cash,instapay',
                 'deposit_image' => 'required|image|max:2048',
                 'total_price' => 'required|numeric|min:1',
+                'city_id' => 'required|exists:cities,id',
             ]);
         } else {
             $validated = $request->validate([
@@ -90,6 +92,7 @@ class OrderCrudController extends Controller
                 'payment_method' => 'required|in:cash_on_delivery,bank_transfer,credit_card,vodafone_cash,instapay',
                 'requirements' => 'nullable|string',
                 'payment_proof' => 'nullable|image|max:2048', // صورة إثبات الدفع
+                'city_id' => 'required|exists:cities,id',
             ]);
         }
 
@@ -107,6 +110,12 @@ class OrderCrudController extends Controller
                 // Verify service belongs to seller
                 if ($service->seller_id != $validated['seller_id']) {
                     throw new \Exception('الخدمة لا تنتمي لهذا البائع');
+                }
+                
+                // التحقق من أن العربون لا يتجاوز 80% من قيمة المنتج
+                $maxDepositAmount = $validated['total_price'] * 0.8;
+                if ($validated['deposit_amount'] > $maxDepositAmount) {
+                    throw new \Exception('قيمة العربون لا يمكن أن تتجاوز 80% من قيمة المنتج الأصلي');
                 }
                 
                 // Upload deposit image
@@ -133,6 +142,7 @@ class OrderCrudController extends Controller
                     'deposit_image' => $depositImagePath,
                     'is_service_order' => true,
                     'service_requirements' => $validated['service_requirements'] ?? null,
+                    'city_id' => $validated['city_id'],
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
@@ -206,6 +216,7 @@ class OrderCrudController extends Controller
                     'requirements' => $validated['requirements'] ?? null,
                     'payment_proof' => $paymentProofPath,
                     'is_service_order' => false,
+                    'city_id' => $validated['city_id'],
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
@@ -231,12 +242,21 @@ class OrderCrudController extends Controller
                 $order->addToHistory('pending', Auth::id(), 'order_created', 'تم إنشاء الطلب');
             }
             
+            // بعد إنشاء الطلب، تعيين delivery_fee و commission percent من المدينة
+            $city = City::find($order->city_id);
+            if ($city) {
+                $order->delivery_fee = $city->delivery_fee;
+                $order->platform_commission_percent = $city->platform_commission_percent;
+                $order->buyer_total = round(($order->total_price ?? 0) + ($order->delivery_fee ?? 0), 2);
+                $order->save();
+            }
+            
             // تسجيل ID الطلب للتحقق
             \Log::info('Order created with ID: ' . $order->id);
             
             DB::commit();
             
-            $order->load(['user', 'seller', 'items.product']);
+            $order->load(['user', 'seller', 'items.product', 'city']);
             
             // تسجيل البيانات المرجعة للتحقق
             \Log::info('Returning order data: ', $order->toArray());
@@ -296,7 +316,8 @@ class OrderCrudController extends Controller
                 'items.product.images',
                 'adminApprover',
                 'deliveryPerson',
-                'history.actionUser'
+                'history.actionUser',
+                'city'
             ])->findOrFail($id);
             
             // التحقق من صلاحية الوصول للطلب
@@ -653,7 +674,8 @@ class OrderCrudController extends Controller
     public function uploadPaymentProof(Request $request, $id)
     {
         $request->validate([
-            'payment_proof' => 'required|image|max:2048'
+            'payment_proof' => 'required|image|max:2048',
+            'payment_type' => 'nullable|in:regular,remaining' // نوع الدفع: عادي أو باقي المبلغ
         ]);
         
         $order = Order::findOrFail($id);
@@ -663,23 +685,70 @@ class OrderCrudController extends Controller
             return response()->json(['message' => 'غير مصرح لك بهذا الإجراء'], 403);
         }
         
+        $paymentType = $request->input('payment_type', 'regular');
+        
         try {
-            // حذف إثبات الدفع القديم إذا وجد
-            if ($order->payment_proof) {
-                Storage::disk('public')->delete($order->payment_proof);
+            if ($paymentType === 'remaining') {
+                // رفع صورة إثبات دفع باقي المبلغ
+                
+                // التحقق من أن الطلب يتطلب عربون وتم دفع العربون
+                if (!$order->requires_deposit || !$order->hasDepositPaid()) {
+                    return response()->json(['message' => 'هذا الطلب لا يتطلب دفع باقي المبلغ'], 400);
+                }
+                
+                // التحقق من أن رفع صورة باقي المبلغ مسموح في الحالة الحالية
+                if (!$order->canUploadRemainingPayment()) {
+                    return response()->json(['message' => 'لا يمكن رفع صورة باقي المبلغ في الحالة الحالية للطلب'], 400);
+                }
+                
+                // التحقق من أنه لم يرفع صورة باقي المبلغ من قبل
+                if ($order->remaining_payment_proof) {
+                    return response()->json(['message' => 'تم رفع صورة إثبات باقي المبلغ مسبقاً'], 400);
+                }
+                
+                // حذف الصورة القديمة إذا وجدت
+                if ($order->remaining_payment_proof) {
+                    Storage::disk('public')->delete($order->remaining_payment_proof);
+                }
+                
+                // رفع الصورة الجديدة
+                $paymentProofPath = $request->file('payment_proof')->store('remaining_payment_proofs', 'public');
+                
+                // حفظ الحالة الحالية قبل تغييرها
+                $currentStatus = $order->status;
+                
+                $order->update([
+                    'remaining_payment_proof' => $paymentProofPath,
+                    'previous_status' => $currentStatus, // حفظ الحالة السابقة
+                    'status' => 'pending', // إرجاع الطلب لحالة بانتظار موافقة الإدارة
+                    'payment_status' => 'pending' // تغيير حالة الدفع لبانتظار الموافقة
+                ]);
+                
+                return response()->json([
+                    'message' => 'تم رفع إثبات دفع باقي المبلغ بنجاح وسيتم مراجعته من قبل الإدارة',
+                    'remaining_payment_proof_url' => asset('storage/' . $paymentProofPath)
+                ]);
+                
+            } else {
+                // رفع صورة إثبات الدفع العادي
+                
+                // حذف إثبات الدفع القديم إذا وجد
+                if ($order->payment_proof) {
+                    Storage::disk('public')->delete($order->payment_proof);
+                }
+                
+                // رفع إثبات الدفع الجديد
+                $paymentProofPath = $request->file('payment_proof')->store('payment_proofs', 'public');
+                
+                $order->update([
+                    'payment_proof' => $paymentProofPath
+                ]);
+                
+                return response()->json([
+                    'message' => 'تم رفع إثبات الدفع بنجاح',
+                    'payment_proof_url' => asset('storage/' . $paymentProofPath)
+                ]);
             }
-            
-            // رفع إثبات الدفع الجديد
-            $paymentProofPath = $request->file('payment_proof')->store('payment_proofs', 'public');
-            
-            $order->update([
-                'payment_proof' => $paymentProofPath
-            ]);
-            
-            return response()->json([
-                'message' => 'تم رفع إثبات الدفع بنجاح',
-                'payment_proof_url' => Storage::disk('public')->url($paymentProofPath)
-            ]);
         } catch (\Exception $e) {
             return response()->json(['message' => 'خطأ في رفع إثبات الدفع'], 500);
         }
@@ -752,5 +821,107 @@ class OrderCrudController extends Controller
             'was_updated' => $isLate && !$wasLate,
             'order' => new OrderResource($order->fresh())
         ]);
+    }
+
+    // تحديث حالة الطلب يدوياً من قبل الأدمن
+    public function adminUpdateStatus(Request $request, $id)
+    {
+        // التحقق من أن المستخدم أدمن
+        if (Auth::user()->role !== 'admin') {
+            return response()->json([
+                'message' => 'غير مصرح لك بهذا الإجراء. الصلاحية مطلوبة: مدير'
+            ], 403);
+        }
+
+        $request->validate([
+            'status' => 'required|in:pending,admin_approved,seller_approved,in_progress,ready_for_delivery,out_for_delivery,delivered,completed,cancelled,suspended',
+            'notes' => 'nullable|string|max:1000'
+        ]);
+
+        try {
+            $order = Order::findOrFail($id);
+            $oldStatus = $order->status;
+            $newStatus = $request->status;
+            $notes = $request->notes;
+            $adminId = Auth::id();
+
+            // Update order status
+            $order->update([
+                'status' => $newStatus,
+                'updated_at' => now()
+            ]);
+
+            // Record in order history
+            $noteText = $notes ? "تم تغيير الحالة من '{$this->getStatusInArabic($oldStatus)}' إلى '{$this->getStatusInArabic($newStatus)}'. ملاحظات: {$notes}" : "تم تغيير الحالة من '{$this->getStatusInArabic($oldStatus)}' إلى '{$this->getStatusInArabic($newStatus)}'.";
+            
+            $order->history()->create([
+                'status' => $newStatus,
+                'action_by' => $adminId,
+                'action_type' => 'status_changed_by_admin',
+                'note' => $noteText,
+                'created_at' => now()
+            ]);
+
+            // Send notifications to buyer and seller
+            $buyerMessage = "تم تحديث حالة طلبك رقم {$order->id} إلى: " . $this->getStatusInArabic($newStatus);
+            if ($notes) {
+                $buyerMessage .= "\nملاحظات: " . $notes;
+            }
+
+            Notification::create([
+                'user_id' => $order->user_id,
+                'notification_type' => 'order_status_changed',
+                'message' => $buyerMessage,
+                'is_read' => false,
+                'link' => '/orders/' . $order->id,
+                'created_at' => now(),
+            ]);
+
+            if ($order->seller && $order->seller->user_id) {
+                $sellerMessage = "تم تحديث حالة الطلب رقم {$order->id} إلى: " . $this->getStatusInArabic($newStatus);
+                if ($notes) {
+                    $sellerMessage .= "\nملاحظات: " . $notes;
+                }
+
+                Notification::create([
+                    'user_id' => $order->seller->user_id,
+                    'notification_type' => 'order_status_changed',
+                    'message' => $sellerMessage,
+                    'is_read' => false,
+                    'link' => '/orders/' . $order->id,
+                    'created_at' => now(),
+                ]);
+            }
+
+            return response()->json([
+                'message' => 'تم تحديث حالة الطلب بنجاح',
+                'order' => new OrderResource($order->fresh())
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Error updating order status by admin: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'حدث خطأ أثناء تحديث حالة الطلب: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // Helper method to get status in Arabic
+    private function getStatusInArabic($status)
+    {
+        $statusMap = [
+            'pending' => 'بانتظار المراجعة',
+            'admin_approved' => 'معتمد من الإدارة',
+            'seller_approved' => 'مقبول من البائع',
+            'in_progress' => 'جاري العمل',
+            'ready_for_delivery' => 'جاهز للتوصيل',
+            'out_for_delivery' => 'في الطريق',
+            'delivered' => 'تم التوصيل',
+            'completed' => 'مكتمل',
+            'cancelled' => 'ملغى',
+            'suspended' => 'معلق'
+        ];
+
+        return $statusMap[$status] ?? $status;
     }
 }

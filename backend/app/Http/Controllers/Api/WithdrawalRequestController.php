@@ -41,7 +41,7 @@ class WithdrawalRequestController extends Controller
                     'admin_notes' => $request->admin_notes,
                     'rejection_reason' => $request->rejection_reason,
                     'created_at' => $request->created_at->format('Y-m-d H:i'),
-                    'processed_at' => $request->processed_at ? $request->processed_at->format('Y-m-d H:i') : null,
+                    'processed_at' => $request->processed_at instanceof \DateTime ? $request->processed_at->format('Y-m-d H:i') : null,
                 ];
             })
         ]);
@@ -208,7 +208,7 @@ class WithdrawalRequestController extends Controller
                     'rejection_reason' => $request->rejection_reason,
                     'processed_by' => $request->processedBy ? $request->processedBy->name : null,
                     'created_at' => $request->created_at->format('Y-m-d H:i'),
-                    'processed_at' => $request->processed_at ? $request->processed_at->format('Y-m-d H:i') : null,
+                    'processed_at' => $request->processed_at instanceof \DateTime ? $request->processed_at->format('Y-m-d H:i') : null,
                 ];
             })
         ]);
@@ -232,7 +232,7 @@ class WithdrawalRequestController extends Controller
                 'withdrawal_request' => [
                     'id' => $withdrawalRequest->id,
                     'status' => $withdrawalRequest->getStatusLabel(),
-                    'processed_at' => $withdrawalRequest->processed_at->format('Y-m-d H:i'),
+                    'processed_at' => $withdrawalRequest->processed_at instanceof \DateTime ? $withdrawalRequest->processed_at->format('Y-m-d H:i') : null,
                 ]
             ]);
         } catch (\Exception $e) {
@@ -267,7 +267,7 @@ class WithdrawalRequestController extends Controller
                     'id' => $withdrawalRequest->id,
                     'status' => $withdrawalRequest->getStatusLabel(),
                     'rejection_reason' => $withdrawalRequest->rejection_reason,
-                    'processed_at' => $withdrawalRequest->processed_at->format('Y-m-d H:i'),
+                    'processed_at' => $withdrawalRequest->processed_at instanceof \DateTime ? $withdrawalRequest->processed_at->format('Y-m-d H:i') : null,
                 ]
             ]);
         } catch (\Exception $e) {
@@ -364,4 +364,4 @@ class WithdrawalRequestController extends Controller
             return response()->json(['error' => 'حدث خطأ في تحديث الإعدادات'], 500);
         }
     }
-} 
+}

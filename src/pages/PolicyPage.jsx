@@ -439,7 +439,7 @@ const PolicyPage = () => {
         </p>
         <Button 
           className="bg-roman-500 hover:bg-roman-500/90 text-white px-8 py-3"
-          onClick={() => window.location.href = '/contact-us'}
+          onClick={() => window.location.href = '/about-us'}
         >
           <MessageSquare className="ml-2 h-5 w-5" />
           تواصل معنا

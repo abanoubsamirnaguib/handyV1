@@ -38,6 +38,17 @@ const GigDetailsPage = () => {
   const [isInWishlist, setIsInWishlist] = useState(false);
   const [wishlistLoading, setWishlistLoading] = useState(false);
 
+  // Handle wishlist changes for related products
+  const handleWishlistChange = (productId, isInWishlist) => {
+    setRelatedGigs(prevGigs => 
+      prevGigs.map(gig => 
+        gig.id === productId 
+          ? { ...gig, in_wishlist: isInWishlist }
+          : gig
+      )
+    );
+  };
+
   useEffect(() => {
     setLoading(true);
     setError(null);
@@ -108,6 +119,7 @@ const GigDetailsPage = () => {
               category: prod.category,
               rating: prod.rating || 0,
               reviewCount: prod.reviewCount || prod.review_count || 0,
+              in_wishlist: prod.in_wishlist || false, // Preserve wishlist status
             })));
           } else {
             setRelatedGigs([]);
@@ -508,7 +520,7 @@ const GigDetailsPage = () => {
                       />
                       <Badge variant="secondary" className="absolute top-2 right-2 bg-roman-500 text-white">{relatedGig.category?.name}</Badge>
                       <div className="absolute top-2 left-2">
-                        <WishlistButton productId={relatedGig.id} size="md" />
+                        <WishlistButton productId={relatedGig.id} inWishlist={relatedGig.in_wishlist} onWishlistChange={handleWishlistChange} size="md" />
                       </div>
                     </div>
                     <CardHeader className="pb-1">

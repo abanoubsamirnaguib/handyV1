@@ -44,6 +44,12 @@ class PaymentController extends Controller
             return response()->json(['error' => 'El depósito ya ha sido pagado'], 400);
         }
 
+        // التحقق من أن العربون لا يتجاوز 80% من قيمة المنتج
+        $maxDepositAmount = $order->total_price * 0.8;
+        if ($request->amount > $maxDepositAmount) {
+            return response()->json(['error' => 'قيمة العربون لا يمكن أن تتجاوز 80% من قيمة المنتج الأصلي'], 400);
+        }
+
         try {
             // En una aplicación real, aquí se procesaría el pago con un gateway de pago
             // Simulamos que el pago fue exitoso

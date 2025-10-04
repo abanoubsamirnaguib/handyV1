@@ -24,19 +24,41 @@ const CheckoutPage = () => {
     customer_phone: '',
     delivery_address: '',
     payment_method: 'cash_on_delivery',
-    requirements: ''
+    requirements: '',
+    city_id: ''
   });
 
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const [paymentProofFile, setPaymentProofFile] = useState(null);
 
-  // Redirect to cart if no items
+  // Cities state
+  const [cities, setCities] = useState([]);
+  const [citiesLoading, setCitiesLoading] = useState(false);
+
+  // Redirect to cart if no items and load cities
   React.useEffect(() => {
     if (cart.length === 0) {
       navigate('/cart');
     }
   }, [cart, navigate]);
+
+  React.useEffect(() => {
+    const loadCities = async () => {
+      try {
+        setCitiesLoading(true);
+        const data = await api.getCities();
+        const list = data?.data || data || [];
+        setCities(Array.isArray(list) ? list : []);
+      } catch (e) {
+        // silent fail; UI will prompt to select city later
+        console.error('Failed to load cities', e);
+      } finally {
+        setCitiesLoading(false);
+      }
+    };
+    loadCities();
+  }, []);
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
@@ -74,6 +96,10 @@ const CheckoutPage = () => {
       newErrors.payment_method = 'طريقة الدفع مطلوبة';
     }
 
+    if (!formData.city_id) {
+      newErrors.city_id = 'المدينة مطلوبة';
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -91,7 +117,6 @@ const CheckoutPage = () => {
     setIsLoading(true);
 
     try {
-      // تحويل عناصر السلة إلى التنسيق المطلوب للباك إند
       const cartItems = cart.map(item => ({
         product_id: item.id,
         quantity: item.quantity
@@ -100,24 +125,18 @@ const CheckoutPage = () => {
       let response;
       
       if (paymentProofFile) {
-        // إنشاء FormData لإرسال الملفات
         const formDataToSend = new FormData();
-        
-        // إضافة بيانات الطلب
         formDataToSend.append('cart_items', JSON.stringify(cartItems));
         Object.keys(formData).forEach(key => {
-          if (formData[key]) {
+          if (formData[key] !== undefined && formData[key] !== null && formData[key] !== '') {
             formDataToSend.append(key, formData[key]);
           }
         });
-        
-        // إضافة صورة إثبات الدفع
         formDataToSend.append('payment_proof', paymentProofFile);
 
         console.log('Creating order with payment proof file');
         response = await api.createOrderWithFiles(formDataToSend);
       } else {
-        // إنشاء الطلب بدون ملفات
         const orderData = {
           cart_items: cartItems,
           ...formData
@@ -182,6 +201,12 @@ const CheckoutPage = () => {
       setIsLoading(false);
     }
   };
+
+  // Derived amounts
+  const baseTotal = getCartTotal();
+  const selectedCity = cities.find(c => String(c.id) === String(formData.city_id));
+  const deliveryFee = selectedCity ? Number(selectedCity.delivery_fee || 0) : 0;
+  const grandTotal = baseTotal + deliveryFee;
 
   if (cart.length === 0) {
     return null; // Will redirect via useEffect
@@ -290,6 +315,33 @@ const CheckoutPage = () => {
                   )}
                 </div>
 
+                {/* City */}
+                <div className="space-y-2">
+                  <Label className="text-neutral-900 flex items-center">
+                    <MapPin className="ml-2 h-4 w-4 text-roman-500" />
+                    المدينة *
+                  </Label>
+                  <Select
+                    value={String(formData.city_id || '')}
+                    onValueChange={(value) => handleInputChange('city_id', value)}
+                    disabled={citiesLoading}
+                  >
+                    <SelectTrigger className="border-roman-500/30">
+                      <SelectValue placeholder={citiesLoading ? 'جاري التحميل...' : 'اختر المدينة'} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {cities.map((city) => (
+                        <SelectItem key={city.id} value={String(city.id)}>
+                          {city.name} — رسوم التوصيل: {Number(city.delivery_fee || 0)} ج.م
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {errors.city_id && (
+                    <p className="text-red-500 text-sm">{errors.city_id}</p>
+                  )}
+                </div>
+
                 {/* Requirements */}
                 <div className="space-y-2">
                   <Label htmlFor="requirements" className="text-neutral-900 flex items-center">
@@ -368,16 +420,18 @@ const CheckoutPage = () => {
                 
                 <div className="flex justify-between text-gray-700">
                   <span>المجموع الفرعي</span>
-                  <span>{getCartTotal()} جنيه</span>
+                  <span>{baseTotal} جنيه</span>
                 </div>
                 <div className="flex justify-between text-gray-700">
                   <span>الشحن</span>
-                  <span className="text-green-600">مجاني</span>
+                  <span className={selectedCity ? '' : 'text-amber-600'}>
+                    {selectedCity ? `${deliveryFee} جنيه` : 'اختر المدينة لاحتساب الشحن'}
+                  </span>
                 </div>
                 <Separator />
                 <div className="flex justify-between text-xl font-bold text-gray-800">
                   <span>الإجمالي</span>
-                  <span>{getCartTotal()} جنيه</span>
+                  <span>{grandTotal} جنيه</span>
                 </div>
               </CardContent>
               <CardContent className="pt-0">
@@ -405,4 +459,4 @@ const CheckoutPage = () => {
   );
 };
 
-export default CheckoutPage; 
+export default CheckoutPage;

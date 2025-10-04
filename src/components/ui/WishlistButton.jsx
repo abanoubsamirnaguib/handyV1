@@ -4,18 +4,24 @@ import { api } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from './use-toast';
 
-const WishlistButton = ({ productId, className = "", size = "md" }) => {
+const WishlistButton = ({ productId, inWishlist = false, onWishlistChange, className = "", size = "md" }) => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [isInWishlist, setIsInWishlist] = useState(false);
+  const [isInWishlist, setIsInWishlist] = useState(inWishlist);
   const [wishlistLoading, setWishlistLoading] = useState(false);
 
-  // Check if product is in wishlist when component mounts
+
+  // Update local state when inWishlist prop changes
   useEffect(() => {
-    if (user && productId) {
+    setIsInWishlist(inWishlist);
+  }, [inWishlist]);
+
+  // Only check wishlist status if inWishlist prop is not provided (fallback for backward compatibility)
+  useEffect(() => {
+    if (user && productId && inWishlist === undefined) {
       checkWishlistStatus();
     }
-  }, [productId, user]);
+  }, [productId, user, inWishlist]);
 
   const checkWishlistStatus = async () => {
     try {
@@ -46,7 +52,14 @@ const WishlistButton = ({ productId, className = "", size = "md" }) => {
       const response = await api.toggleWishlist(productId);
       
       if (response.success) {
-        setIsInWishlist(response.action === 'added');
+        const newWishlistStatus = response.action === 'added';
+        setIsInWishlist(newWishlistStatus);
+        
+        // Notify parent component of the change
+        if (onWishlistChange) {
+          onWishlistChange(productId, newWishlistStatus);
+        }
+        
         toast({
           title: response.action === 'added' ? "تم إضافة المنتج" : "تم إزالة المنتج",
           description: response.action === 'added' 

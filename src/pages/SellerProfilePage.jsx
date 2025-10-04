@@ -37,6 +37,17 @@ const SellerProfilePage = () => {
   const { startConversation, setActiveConversation } = useChat();
   const { toast } = useToast();
 
+  // Handle wishlist changes
+  const handleWishlistChange = (productId, isInWishlist) => {
+    setSellerGigs(prevGigs => 
+      prevGigs.map(gig => 
+        gig.id === productId 
+          ? { ...gig, in_wishlist: isInWishlist }
+          : gig
+      )
+    );
+  };
+
   useEffect(() => {
     // Fetch seller data from backend API
     const fetchSellerData = async () => {
@@ -79,7 +90,8 @@ const SellerProfilePage = () => {
             rating: product.rating || 0,
             reviewCount: product.review_count || 0,
             images: Array.isArray(product.images) ? product.images.map(img => img.url || img.image_url || img) : [],
-            description: product.description || ''
+            description: product.description || '',
+            in_wishlist: product.in_wishlist || false, // Preserve wishlist status
           }));
           setSellerGigs(gigsData);
         } else {
@@ -331,7 +343,7 @@ const SellerProfilePage = () => {
                       />
                       <Badge variant="secondary" className="absolute top-2 right-2 bg-roman-500 text-white">{gig.category}</Badge>
                       <div className="absolute top-2 left-2">
-                        <WishlistButton productId={gig.id} size="md" />
+                        <WishlistButton productId={gig.id} inWishlist={gig.in_wishlist} onWishlistChange={handleWishlistChange} size="md" />
                       </div>
                     </div>
                     <CardHeader className="pb-2">

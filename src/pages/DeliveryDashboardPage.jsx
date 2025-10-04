@@ -47,6 +47,13 @@ const DeliveryDashboardPage = () => {
     fetchSuspendedOrders(); // جلب الطلبات المعلقة
   }, [token, navigate]);
 
+  // When orders change, store them in localStorage
+  useEffect(() => {
+    if (orders.length > 0) {
+      localStorage.setItem('delivery_orders', JSON.stringify(orders));
+    }
+  }, [orders]);
+
   const fetchDashboardData = async () => {
     try {
       const data = await deliveryApi.getProfile();
@@ -69,9 +76,39 @@ const DeliveryDashboardPage = () => {
 
   const fetchOrders = async () => {
     try {
+      // First check if we have any cached data in localStorage
+      const cachedOrders = localStorage.getItem('delivery_orders');
+      
       const data = await deliveryApi.myOrders();
       if (data.success) {
-        setOrders(data.data);
+        // If we have data from the API
+        const apiOrders = data.data;
+        
+        // If we have cached orders, merge the delivery_picked_up_at and delivered_at properties
+        // to ensure orders that were marked as picked up/delivered on this device remain filtered
+        if (cachedOrders) {
+          try {
+            const parsedCache = JSON.parse(cachedOrders);
+            const mergedOrders = apiOrders.map(apiOrder => {
+              const cachedOrder = parsedCache.find(order => order.id === apiOrder.id);
+              if (cachedOrder) {
+                return {
+                  ...apiOrder,
+                  delivery_picked_up_at: apiOrder.delivery_picked_up_at || cachedOrder.delivery_picked_up_at,
+                  delivered_at: apiOrder.delivered_at || cachedOrder.delivered_at
+                };
+              }
+              return apiOrder;
+            });
+            setOrders(mergedOrders);
+          } catch (e) {
+            console.error('Error parsing cached orders:', e);
+            setOrders(apiOrders);
+          }
+        } else {
+          // No cache, just use API data
+          setOrders(apiOrders);
+        }
       }
     } catch (error) {
       console.error('Error fetching orders:', error);
@@ -117,7 +154,14 @@ const DeliveryDashboardPage = () => {
           title: 'تم الاستلام بنجاح',
           description: 'تم استلام الطلب من البائع بنجاح',
         });
-        fetchOrders();
+        // Update the orders list by marking this order as picked up
+        setOrders(prevOrders => 
+          prevOrders.map(order => 
+            order.id === orderId 
+              ? { ...order, delivery_picked_up_at: new Date().toISOString() } 
+              : order
+          )
+        );
       } else {
         toast({
           title: 'خطأ',
@@ -146,7 +190,17 @@ const DeliveryDashboardPage = () => {
           title: 'تم التسليم بنجاح',
           description: 'تم تسليم الطلب للعميل بنجاح',
         });
-        fetchOrders();
+        // Update the orders list by marking this order as delivered
+        setOrders(prevOrders => 
+          prevOrders.map(order => 
+            order.id === orderId 
+              ? { 
+                  ...order, 
+                  delivered_at: new Date().toISOString()
+                } 
+              : order
+          )
+        );
       } else {
         toast({
           title: 'خطأ',
@@ -194,6 +248,16 @@ const DeliveryDashboardPage = () => {
   };
 
   const getOrdersByStatus = (status) => {
+    if (status === 'ready_for_delivery') {
+      // فقط الطلبات التي بحالة "ready_for_delivery" وليس لها delivery_picked_up_at
+      return orders.filter(order => order.status === status && !order.delivery_picked_up_at);
+    } else if (status === 'out_for_delivery') {
+      // الطلبات في حالة out_for_delivery أو (ready_for_delivery لكن تم استلامها بالفعل) ولم يتم تسليمها بعد
+      return orders.filter(order => 
+        (order.status === status || (order.status === 'ready_for_delivery' && order.delivery_picked_up_at)) && 
+        !order.delivered_at
+      );
+    }
     return orders.filter(order => order.status === status);
   };
 

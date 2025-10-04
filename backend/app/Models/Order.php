@@ -3,6 +3,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\PlatformProfit;
 
 class Order extends Model
 {
@@ -26,6 +27,8 @@ class Order extends Model
         'deposit_status',
         'deposit_notes',
         'deposit_image',
+        'previous_status',
+        'remaining_payment_proof',
         'is_service_order',
         'service_requirements',
         'chat_conversation_id',
@@ -55,6 +58,11 @@ class Order extends Model
         'late_reason',
         'created_at',
         'updated_at',
+        'city_id',
+        'platform_commission_percent',
+        'platform_commission_amount',
+        'buyer_total',
+        'seller_net_amount',
     ];
     
     protected $dates = [
@@ -124,6 +132,11 @@ class Order extends Model
         return $this->hasMany(OrderHistory::class);
     }
     
+    public function city()
+    {
+        return $this->belongsTo(City::class);
+    }
+    
     public function isPending()
     {
         return $this->status === 'pending';
@@ -176,7 +189,16 @@ class Order extends Model
     
     public function canBeApprovedByAdmin()
     {
-        return $this->isPending() && $this->payment_proof;
+        // للطلبات العادية: يجب أن تكون pending ولها payment_proof أو cash_on_delivery
+        $regularCondition = $this->isPending() && ($this->payment_method === 'cash_on_delivery' || $this->payment_proof);
+        
+        // للطلبات التي تحتوي على عربون: يجب أن تكون pending ولها deposit_image
+        $depositCondition = $this->isPending() && $this->is_service_order && $this->deposit_image;
+        
+        // للطلبات التي رفع فيها المشتري صورة باقي المبلغ: يجب أن تكون pending ولها remaining_payment_proof
+        $remainingPaymentCondition = $this->isPending() && $this->is_service_order && $this->remaining_payment_proof;
+        
+        return $regularCondition || $depositCondition || $remainingPaymentCondition;
     }
     
     public function canBeApprovedBySeller()
@@ -225,12 +247,25 @@ class Order extends Model
             throw new \Exception('لا يمكن الموافقة على هذا الطلب في الوقت الحالي');
         }
         
-        $this->update([
-            'status' => 'admin_approved',
-            'admin_approved_at' => now(),
-            'admin_approved_by' => $adminId,
-            'admin_notes' => $notes
-        ]);
+        // إذا كان طلب خدمة ولديه صورة باقي المبلغ، نرجع للحالة السابقة
+        if ($this->is_service_order && $this->remaining_payment_proof && $this->previous_status) {
+            $this->update([
+                'status' => $this->previous_status, // الرجوع للحالة السابقة
+                'admin_approved_at' => now(),
+                'admin_approved_by' => $adminId,
+                'admin_notes' => $notes,
+                'payment_status' => 'paid', // تأكيد أن الدفع النهائي تم
+                'previous_status' => null // مسح الحالة السابقة
+            ]);
+        } else {
+            // الموافقة العادية (على العربون أو الطلبات العادية)
+            $this->update([
+                'status' => 'admin_approved',
+                'admin_approved_at' => now(),
+                'admin_approved_by' => $adminId,
+                'admin_notes' => $notes
+            ]);
+        }
         
         $this->addToHistory('admin_approved', $adminId, 'admin_approval', $notes);
     }
@@ -297,23 +332,14 @@ class Order extends Model
             throw new \Exception('لا يمكن استلام هذا الطلب في الوقت الحالي');
         }
         
-        // إذا كان الشخص نفسه معين للاستلام والتسليم، نقوم بالتحويل لـ out_for_delivery
-        // إذا كان معين فقط للاستلام، نبقي الطلب ready_for_delivery مع تسجيل الاستلام
-        if ($this->pickup_person_id == $deliveryPersonId && $this->delivery_person_id == $deliveryPersonId) {
-            $this->update([
-                'status' => 'out_for_delivery',
-                'delivery_picked_up_at' => now(),
-                'pickup_notes' => $notes
-            ]);
-            $this->addToHistory('out_for_delivery', $deliveryPersonId, 'picked_up_by_delivery', $notes);
-        } else {
-            // الاستلام فقط - الطلب يبقى ready_for_delivery لتعيين موظف التسليم
-            $this->update([
-                'delivery_picked_up_at' => now(),
-                'pickup_notes' => $notes
-            ]);
-            $this->addToHistory('ready_for_delivery', $deliveryPersonId, 'picked_up_by_delivery', $notes);
-        }
+        // بعد الاستلام من البائع، تتغير حالة الطلب إلى "out_for_delivery" في جميع الحالات
+        $this->update([
+            'status' => 'out_for_delivery',
+            'delivery_picked_up_at' => now(),
+            'pickup_notes' => $notes
+        ]);
+        
+        $this->addToHistory('out_for_delivery', null, 'picked_up_by_delivery', $notes ? $notes . ' بواسطة الدليفري' : 'تم الاستلام بواسطة الدليفري');
     }
     
     public function markAsDelivered($notes = null)
@@ -328,7 +354,7 @@ class Order extends Model
             'delivery_notes' => $this->delivery_notes . ($notes ? "\n" . $notes : '')
         ]);
         
-        $this->addToHistory('delivered', $this->delivery_person_id, 'delivered', $notes);
+        $this->addToHistory('delivered', null, 'delivered', $notes ? $notes . ' بواسطة الدليفري' : 'تم التسليم بواسطة الدليفري');
     }
     
     public function markAsCompleted()
@@ -337,13 +363,43 @@ class Order extends Model
             throw new \Exception('لا يمكن إكمال هذا الطلب في الوقت الحالي');
         }
         
+        // Calculate commission based on base price (before delivery)
+        $basePrice = $this->total_price; // existing total_price is base subtotal
+        $commissionPercent = $this->platform_commission_percent ?? optional($this->city)->platform_commission_percent ?? 0;
+        $commissionAmount = round(($commissionPercent / 100) * $basePrice, 2);
+        
+        // Buyer total = base + delivery fee
+        $deliveryFee = $this->delivery_fee ?? 0;
+        $buyerTotal = round($basePrice + $deliveryFee, 2);
+        
+        // Seller net = base - commission (delivery fee goes to platform/delivery, not seller)
+        $sellerNet = round($basePrice - $commissionAmount, 2);
+        
         $this->update([
             'status' => 'completed',
-            'completed_at' => now()
+            'completed_at' => now(),
+            'platform_commission_percent' => $commissionPercent,
+            'platform_commission_amount' => $commissionAmount,
+            'buyer_total' => $buyerTotal,
+            'seller_net_amount' => $sellerNet,
         ]);
         
-        // Transfer money to seller's wallet
-        $this->seller->addToWallet($this->total_price);
+        // Record platform profit row
+        try {
+            PlatformProfit::create([
+                'order_id' => $this->id,
+                'city_id' => $this->city_id,
+                'seller_id' => $this->seller_id,
+                'amount' => $commissionAmount,
+                'commission_percent' => $commissionPercent,
+                'calculated_on' => now(),
+            ]);
+        } catch (\Throwable $e) {
+            // ignore and continue
+        }
+        
+        // Transfer money to seller's wallet: seller gets net amount
+        $this->seller->addToWallet($sellerNet);
         
         $this->addToHistory('completed', $this->user_id, 'order_completed');
     }
@@ -369,7 +425,7 @@ class Order extends Model
             'suspension_reason' => $reason
         ]);
         
-        $this->addToHistory('suspended', $deliveryPersonId, 'order_suspended', $reason);
+        $this->addToHistory('suspended', null, 'order_suspended', $reason . ' بواسطة الدليفري');
     }
     
     public function addToHistory($status, $actionBy, $actionType, $note = null)
@@ -395,6 +451,37 @@ class Order extends Model
         }
         
         return $this->total_price - $this->deposit_amount;
+    }
+    
+    public function hasRemainingPaymentPaid()
+    {
+        // إذا كان هناك صورة إثبات دفع باقي المبلغ وتم اعتماد الطلب من الأدمن مرة أخرى
+        return $this->remaining_payment_proof && $this->payment_status === 'paid';
+    }
+    
+    public function isFullyPaid()
+    {
+        if (!$this->requires_deposit) {
+            return $this->payment_status === 'paid';
+        }
+        
+        return $this->hasDepositPaid() && $this->hasRemainingPaymentPaid();
+    }
+    
+    public function canUploadRemainingPayment()
+    {
+        return $this->requires_deposit && 
+               $this->hasDepositPaid() && 
+               !$this->remaining_payment_proof &&  // لم يرفع صورة باقي المبلغ بعد
+               in_array($this->status, [
+                   'admin_approved', 
+                   'seller_approved', 
+                   'in_progress', 
+                   'work_completed',
+                   'ready_for_delivery',
+                   'out_for_delivery',
+                   'delivered'
+               ]);
     }
     
     public function getStatusLabel()
@@ -455,7 +542,7 @@ class Order extends Model
             'delivery_scheduled_at' => now()
         ]);
 
-        $this->addToHistory('assigned_to_delivery', $deliveryPersonId, 'assigned_to_delivery', 'تم تعيين الطلب للدليفري');
+        $this->addToHistory('assigned_to_delivery', null, 'assigned_to_delivery', 'تم تعيين الطلب للدليفري بواسطة الأدمن');
     }
 
     // التحقق من تأخير الطلب

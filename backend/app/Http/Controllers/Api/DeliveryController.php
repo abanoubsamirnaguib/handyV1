@@ -182,14 +182,19 @@ class DeliveryController extends Controller
         $query = Order::with(['user', 'seller.user', 'items.product'])
             ->where('delivery_person_id', $deliveryPerson->id)
             ->where('status', 'out_for_delivery')
-            ->whereNotNull('delivery_picked_up_at'); // تم الاستلام وجاهز للتسليم
+            ->whereNotNull('delivery_picked_up_at'); // تم الاستلام من البائع
 
         // فلترة حسب تاريخ الاستلام أو التسليم المطلوب
         if ($request->has('date')) {
-            $query->whereDate('delivery_picked_up_at', $request->date);
+            $query->where(function($q) use ($request) {
+                $q->whereDate('delivery_picked_up_at', $request->date)
+                  ->orWhereDate('work_completed_at', $request->date);
+            });
         }
 
-        $orders = $query->orderBy('delivery_picked_up_at', 'asc')->get();
+        $orders = $query->orderBy('work_completed_at', 'asc')
+                       ->orderBy('delivery_picked_up_at', 'asc')
+                       ->get();
 
         return response()->json([
             'success' => true,
@@ -287,7 +292,7 @@ class DeliveryController extends Controller
                 'delivered_at' => now(),
             ]);
 
-            $order->addToHistory('delivered', $deliveryPerson->id, 'delivery', 'تم تسليم الطلب للعميل');
+            $order->addToHistory('delivered', null, 'delivery', 'تم تسليم الطلب للعميل بواسطة الدليفري');
 
             // إضافة ربح للدليفري عن التسليم
             DeliveryEarning::createEarning(
@@ -319,7 +324,7 @@ class DeliveryController extends Controller
         $order = Order::with(['user', 'seller.user', 'items.product'])
             ->findOrFail($orderId);
 
-        if ($order->delivery_person_id !== $deliveryPerson->id) {
+        if ($order->delivery_person_id !== $deliveryPerson->id && $order->pickup_person_id !== $deliveryPerson->id) {
             return response()->json([
                 'success' => false,
                 'message' => 'هذا الطلب غير مخصص لك'
@@ -338,11 +343,23 @@ class DeliveryController extends Controller
         $deliveryPerson = Auth::guard('delivery')->user();
         $deliveryPerson->updateLastSeen();
 
-        $orders = Order::with(['user', 'seller.user', 'items.product'])
+        // طلبات الاستلام: الطلبات التي لم يتم استلامها بعد وهو مسؤول عن استلامها
+        $pickupOrders = Order::with(['user', 'seller.user', 'items.product'])
+            ->where('pickup_person_id', $deliveryPerson->id)
+            ->where('status', 'ready_for_delivery')
+            ->whereNull('delivery_picked_up_at')
+            ->orderBy('delivery_scheduled_at', 'asc');
+
+        // طلبات التسليم: الطلبات التي تم استلامها وهو مسؤول عن تسليمها
+        $deliveryOrders = Order::with(['user', 'seller.user', 'items.product'])
             ->where('delivery_person_id', $deliveryPerson->id)
-            ->whereIn('status', ['ready_for_delivery', 'out_for_delivery'])
-            ->orderBy('delivery_scheduled_at', 'asc')
-            ->get();
+            ->where('status', 'out_for_delivery')
+            ->whereNotNull('delivery_picked_up_at')
+            ->whereNull('delivered_at')
+            ->orderBy('delivery_picked_up_at', 'asc');
+
+        // دمج النتائج
+        $orders = $pickupOrders->get()->merge($deliveryOrders->get());
 
         return response()->json([
             'success' => true,

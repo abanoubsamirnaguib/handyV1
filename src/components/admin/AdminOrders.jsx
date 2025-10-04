@@ -93,6 +93,11 @@ const AdminOrders = () => {
   const [approvalNotes, setApprovalNotes] = useState('');
   const [rejectionReason, setRejectionReason] = useState('');
   
+  // Status update states
+  const [selectedStatusOrder, setSelectedStatusOrder] = useState(null);
+  const [newStatus, setNewStatus] = useState('');
+  const [statusUpdateNotes, setStatusUpdateNotes] = useState('');
+  
   // Filters
   const [filters, setFilters] = useState({
     search: '',
@@ -208,6 +213,56 @@ const AdminOrders = () => {
     } finally {
       setIsUpdating(false);
     }
+  };
+
+  const handleUpdateOrderStatus = async (orderId) => {
+    if (!newStatus) {
+      toast({
+        variant: "destructive",
+        title: "الحالة الجديدة مطلوبة",
+        description: "يرجى اختيار الحالة الجديدة للطلب.",
+      });
+      return;
+    }
+
+    setIsUpdating(true);
+    try {
+      await adminApi.adminUpdateOrderStatus(orderId, newStatus, statusUpdateNotes);
+      toast({
+        title: "تم تحديث حالة الطلب",
+        description: "تم تحديث حالة الطلب بنجاح وإشعار الأطراف المعنية.",
+      });
+      setNewStatus('');
+      setStatusUpdateNotes('');
+      setSelectedStatusOrder(null);
+      loadOrders(filters, statusFilter, paymentFilter);
+    } catch (error) {
+      console.error('Error updating order status:', error);
+      toast({
+        variant: "destructive",
+        title: "خطأ في تحديث حالة الطلب",
+        description: "حدث خطأ أثناء تحديث حالة الطلب.",
+      });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  // Helper function to get status in Arabic
+  const getStatusInArabic = (status) => {
+    const statusMap = {
+      'pending': 'بانتظار المراجعة',
+      'admin_approved': 'معتمد من الإدارة',
+      'seller_approved': 'مقبول من البائع',
+      'in_progress': 'جاري العمل',
+      'ready_for_delivery': 'جاهز للتوصيل',
+      'out_for_delivery': 'في الطريق',
+      'delivered': 'تم التوصيل',
+      'completed': 'مكتمل',
+      'cancelled': 'ملغى',
+      'suspended': 'معلق'
+    };
+    return statusMap[status] || status;
   };
 
   const getStatusBadge = (status) => {
@@ -451,10 +506,40 @@ const AdminOrders = () => {
                   </p>
                 </div>
                 <img 
-                  src={order.deposit_image} 
+                  src={order.deposit_image_url || order.deposit_image} 
                   alt="إيصال العربون" 
                   className="max-w-full h-auto rounded-md border cursor-pointer"
-                  onClick={() => window.open(order.deposit_image, '_blank')}
+                  onClick={() => window.open(order.deposit_image_url || order.deposit_image, '_blank')}
+                />
+              </div>
+            )}
+
+            {/* Remaining Payment Proof for Service Orders */}
+            {order.is_service_order && order.remaining_payment_proof && (
+              <div>
+                <h4 className="font-semibold mb-2 flex items-center">
+                  <CreditCard className="h-4 w-4 ml-2 text-blue-600" />
+                  إيصال باقي المبلغ (طلب خدمة)
+                </h4>
+                <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg mb-3">
+                  <div className="flex items-center mb-2">
+                    <div className="w-3 h-3 bg-blue-500 rounded-full ml-2"></div>
+                    <span className="font-medium text-blue-800">تم رفع إثبات دفع باقي المبلغ</span>
+                  </div>
+                  <p className="text-sm text-blue-700">
+                    المبلغ المتبقي: {order.total_amount - order.deposit_amount} جنيه
+                  </p>
+                  {order.status === 'pending' && order.remaining_payment_proof && (
+                    <p className="text-xs text-blue-600 mt-1 font-medium">
+                      ⏳ ينتظر مراجعة الإدارة
+                    </p>
+                  )}
+                </div>
+                <img 
+                  src={order.remaining_payment_proof_url || order.remaining_payment_proof} 
+                  alt="إيصال باقي المبلغ" 
+                  className="max-w-full h-auto rounded-md border cursor-pointer"
+                  onClick={() => window.open(order.remaining_payment_proof_url || order.remaining_payment_proof, '_blank')}
                 />
               </div>
             )}
@@ -502,7 +587,7 @@ const AdminOrders = () => {
             ) : null}
 
             {/* Timeline */}
-            {order.timeline && order.timeline.length > 0 && (
+            {((order.history && order.history.length > 0) || (order.timeline && order.timeline.length > 0)) && (
               <div>
                 <h4 className="font-semibold mb-3 flex items-center">
                   <Calendar className="h-4 w-4 ml-2 text-roman-500" />
@@ -513,7 +598,7 @@ const AdminOrders = () => {
                   <div className="absolute right-6 top-0 bottom-0 w-0.5 bg-roman-500/30"></div>
                   
                   <div className="space-y-4">
-                    {order.timeline.map((event, index) => (
+                    {(order.history || order.timeline || []).map((event, index) => (
                       <motion.div 
                         key={index} 
                         className="relative flex items-start space-x-3 space-x-reverse"
@@ -528,14 +613,26 @@ const AdminOrders = () => {
                         </div>
                         <div className="flex-1 bg-gray-50 p-3 rounded-lg shadow-sm border border-gray-100 min-w-0">
                           <h5 className="font-medium text-gray-800 mb-1 text-sm">
-                            {event.action_type_ar || event.label}
+                            {event.action_type_ar || event.action_type_label || event.label}
                           </h5>
                           <p className="text-xs text-gray-600 mb-1">
                             {new Date(event.created_at || event.date).toLocaleString('ar-EG')}
                           </p>
-                          {event.notes && (
+                          {/* عرض اسم من قام بالتغيير */}
+                          {event.action_user && event.action_user.name && event.action_user.name.trim() !== '' && (
+                            <p className="text-xs text-green-600 mb-1">
+                              بواسطة: {event.action_user.name}
+                            </p>
+                          )}
+                          {/* عرض تغيير الحالة إذا كان متاحاً */}
+                          {event.old_status && event.new_status && (
+                            <p className="text-xs text-blue-600 mb-1">
+                              من "{getStatusInArabic(event.old_status)}" إلى "{getStatusInArabic(event.new_status)}"
+                            </p>
+                          )}
+                          {(event.notes || event.note) && (
                             <p className="text-xs text-gray-700 bg-blue-50 p-2 rounded-md border-r-2 border-blue-400 mt-2">
-                              {event.notes}
+                              {event.notes || event.note}
                             </p>
                           )}
                         </div>
@@ -549,8 +646,28 @@ const AdminOrders = () => {
         </div>
 
         {/* Action Buttons */}
-        {order.status === 'pending' && (order.payment_proof || order.payment_method === 'cash_on_delivery') && (
+        {order.status === 'pending' && (
+          order.payment_proof || 
+          order.payment_method === 'cash_on_delivery' || 
+          order.deposit_image ||
+          order.remaining_payment_proof
+        ) && (
           <div className="space-y-3 mt-6">
+            {/* Special note for deposit orders */}
+            {order.is_service_order && order.deposit_image && !order.remaining_payment_proof && (
+              <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                <div className="flex items-center">
+                  <CreditCard className="h-4 w-4 ml-2 text-green-600" />
+                  <span className="text-sm font-medium text-green-800">
+                    طلب بعربون - المرحلة الأولى
+                  </span>
+                </div>
+                <p className="text-xs text-green-700 mt-1">
+                  تم دفع عربون بقيمة {order.deposit_amount} جنيه من إجمالي {order.total_amount} جنيه
+                </p>
+              </div>
+            )}
+            
             {/* Special note for cash on delivery orders */}
             {order.payment_method === 'cash_on_delivery' && (
               <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
@@ -562,6 +679,21 @@ const AdminOrders = () => {
                 </div>
                 <p className="text-xs text-amber-700 mt-1">
                   يرجى التأكد من صحة بيانات الطلب قبل الاعتماد
+                </p>
+              </div>
+            )}
+            
+            {/* Special note for remaining payment proof */}
+            {order.is_service_order && order.remaining_payment_proof && (
+              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-center">
+                  <CreditCard className="h-4 w-4 ml-2 text-blue-600" />
+                  <span className="text-sm font-medium text-blue-800">
+                    تم رفع إثبات دفع باقي المبلغ
+                  </span>
+                </div>
+                <p className="text-xs text-blue-700 mt-1">
+                  يرجى مراجعة صورة إثبات دفع باقي المبلغ قبل الاعتماد
                 </p>
               </div>
             )}
@@ -583,6 +715,16 @@ const AdminOrders = () => {
                     <AlertDialogTitle>اعتماد الطلب</AlertDialogTitle>
                     <AlertDialogDescription>
                       هل أنت متأكد من رغبتك في اعتماد طلب رقم {order.id}؟
+                      {order.deposit_image && !order.remaining_payment_proof && (
+                        <span className="block mt-2 text-green-600 font-medium">
+                          ملاحظة: هذا طلب بعربون - تم دفع {order.deposit_amount} جنيه من أصل {order.total_amount} جنيه
+                        </span>
+                      )}
+                      {order.remaining_payment_proof && (
+                        <span className="block mt-2 text-blue-600 font-medium">
+                          ملاحظة: تم رفع إثبات دفع باقي المبلغ - سيتم اعتبار الطلب مدفوع بالكامل
+                        </span>
+                      )}
                       {order.payment_method === 'cash_on_delivery' && (
                         <span className="block mt-2 text-amber-600 font-medium">
                           ملاحظة: هذا طلب دفع عند الاستلام
@@ -595,9 +737,14 @@ const AdminOrders = () => {
                     <Textarea
                       value={approvalNotes}
                       onChange={(e) => setApprovalNotes(e.target.value)}
-                      placeholder={order.payment_method === 'cash_on_delivery' 
-                        ? "أدخل أي ملاحظات للبائع حول طلب الدفع عند الاستلام..."
-                        : "أدخل أي ملاحظات للبائع..."
+                      placeholder={
+                        order.deposit_image && !order.remaining_payment_proof 
+                          ? "أدخل ملاحظات للبائع حول اعتماد العربون..." 
+                          : order.remaining_payment_proof 
+                            ? "أدخل ملاحظات للبائع حول اعتماد الدفع النهائي..."
+                            : order.payment_method === 'cash_on_delivery' 
+                              ? "أدخل أي ملاحظات للبائع حول طلب الدفع عند الاستلام..."
+                              : "أدخل أي ملاحظات للبائع..."
                       }
                     />
                   </div>
@@ -872,35 +1019,185 @@ const AdminOrders = () => {
                     <div className="flex flex-col gap-2">
                       <OrderDetailDialog order={order} />
                       
-                      {order.status === 'pending' && (order.payment_proof || order.payment_method === 'cash_on_delivery') && (
+                      {/* Update Status Button */}
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            className="w-full border-blue-200 hover:bg-blue-50"
+                            onClick={() => setSelectedStatusOrder(order)}
+                          >
+                            <Timer className="h-4 w-4 ml-1" />
+                            تحديث الحالة
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>تحديث حالة الطلب</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              تحديث حالة الطلب رقم {order.id} من "{getStatusInArabic(order.status)}" إلى حالة جديدة
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <div className="space-y-4">
+                            <div>
+                              <Label>الحالة الجديدة *</Label>
+                              <RTLSelect value={newStatus} onValueChange={setNewStatus}>
+                                <RTLSelectTrigger>
+                                  <RTLSelectValue placeholder="اختر الحالة الجديدة" />
+                                </RTLSelectTrigger>
+                                <RTLSelectContent>
+                                  <RTLSelectItem value="pending">بانتظار المراجعة</RTLSelectItem>
+                                  <RTLSelectItem value="admin_approved">معتمد من الإدارة</RTLSelectItem>
+                                  <RTLSelectItem value="seller_approved">مقبول من البائع</RTLSelectItem>
+                                  <RTLSelectItem value="in_progress">جاري العمل</RTLSelectItem>
+                                  <RTLSelectItem value="ready_for_delivery">جاهز للتوصيل</RTLSelectItem>
+                                  <RTLSelectItem value="out_for_delivery">في الطريق</RTLSelectItem>
+                                  <RTLSelectItem value="delivered">تم التوصيل</RTLSelectItem>
+                                  <RTLSelectItem value="completed">مكتمل</RTLSelectItem>
+                                  <RTLSelectItem value="cancelled">ملغى</RTLSelectItem>
+                                  <RTLSelectItem value="suspended">معلق</RTLSelectItem>
+                                </RTLSelectContent>
+                              </RTLSelect>
+                            </div>
+                            <div>
+                              <Label>ملاحظات التحديث (اختيارية)</Label>
+                              <Textarea
+                                value={statusUpdateNotes}
+                                onChange={(e) => setStatusUpdateNotes(e.target.value)}
+                                placeholder="أدخل أي ملاحظات حول تحديث الحالة..."
+                                rows={3}
+                              />
+                            </div>
+                          </div>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel onClick={() => {
+                              setNewStatus('');
+                              setStatusUpdateNotes('');
+                              setSelectedStatusOrder(null);
+                            }}>إلغاء</AlertDialogCancel>
+                            <AlertDialogAction 
+                              onClick={() => handleUpdateOrderStatus(order.id)}
+                              disabled={isUpdating || !newStatus}
+                              className="bg-blue-600 hover:bg-blue-700"
+                            >
+                              {isUpdating ? <Loader2 className="h-4 w-4 animate-spin ml-2" /> : null}
+                              تحديث الحالة
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                      
+                      {order.status === 'pending' && (
+                        order.payment_proof || 
+                        order.payment_method === 'cash_on_delivery' || 
+                        order.deposit_image || 
+                        order.remaining_payment_proof
+                      ) && (
                         <div className="flex gap-2">
-                          <Button 
-                            size="sm" 
-                            className="flex-1 bg-green-600 hover:bg-green-700"
-                            onClick={() => {
-                              setSelectedOrder(order);
-                              // Trigger approval dialog
-                            }}
-                          >
-                            <CheckCircle className="h-4 w-4 ml-1" />
-                            اعتماد
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            variant="destructive" 
-                            className="flex-1"
-                            onClick={() => {
-                              setSelectedOrder(order);
-                              // Trigger rejection dialog
-                            }}
-                          >
-                            <AlertTriangle className="h-4 w-4 ml-1" />
-                            رفض
-                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button 
+                                size="sm" 
+                                className="flex-1 bg-green-600 hover:bg-green-700"
+                                onClick={() => setSelectedOrder(order)}
+                              >
+                                <CheckCircle className="h-4 w-4 ml-1" />
+                                اعتماد
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>اعتماد الطلب</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  هل أنت متأكد من رغبتك في اعتماد طلب رقم {order.id}؟
+                                  {order.deposit_image && (
+                                    <span className="block mt-2 text-blue-600 font-medium">
+                                      ملاحظة: هذا طلب بعربون
+                                    </span>
+                                  )}
+                                  {order.remaining_payment_proof && (
+                                    <span className="block mt-2 text-green-600 font-medium">
+                                      ملاحظة: تم رفع إثبات دفع باقي المبلغ
+                                    </span>
+                                  )}
+                                  {order.payment_method === 'cash_on_delivery' && (
+                                    <span className="block mt-2 text-amber-600 font-medium">
+                                      ملاحظة: هذا طلب دفع عند الاستلام
+                                    </span>
+                                  )}
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <div className="my-4">
+                                <Label>ملاحظات الاعتماد (اختيارية)</Label>
+                                <Textarea
+                                  value={approvalNotes}
+                                  onChange={(e) => setApprovalNotes(e.target.value)}
+                                  placeholder="أدخل أي ملاحظات للبائع..."
+                                />
+                              </div>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>إلغاء</AlertDialogCancel>
+                                <AlertDialogAction 
+                                  onClick={() => handleApproveOrder(order.id)}
+                                  disabled={isUpdating}
+                                  className="bg-green-600 hover:bg-green-700"
+                                >
+                                  {isUpdating ? <Loader2 className="h-4 w-4 animate-spin ml-2" /> : null}
+                                  اعتماد الطلب
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button 
+                                size="sm" 
+                                variant="destructive" 
+                                className="flex-1"
+                                onClick={() => setSelectedOrder(order)}
+                              >
+                                <AlertTriangle className="h-4 w-4 ml-1" />
+                                رفض
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>رفض الطلب</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  هل أنت متأكد من رغبتك في رفض طلب رقم {order.id}؟
+                                  سيتم إشعار العميل بالرفض.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <div className="my-4">
+                                <Label>سبب الرفض (مطلوب)</Label>
+                                <Textarea
+                                  value={rejectionReason}
+                                  onChange={(e) => setRejectionReason(e.target.value)}
+                                  placeholder="أدخل سبب رفض الطلب..."
+                                />
+                              </div>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>إلغاء</AlertDialogCancel>
+                                <AlertDialogAction 
+                                  onClick={() => handleRejectOrder(order.id)}
+                                  disabled={isUpdating || !rejectionReason.trim()}
+                                  className="bg-red-600 hover:bg-red-700"
+                                >
+                                  {isUpdating ? <Loader2 className="h-4 w-4 animate-spin ml-2" /> : null}
+                                  رفض الطلب
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         </div>
                       )}
 
-                      {order.status === 'pending' && !order.payment_proof && order.payment_method !== 'cash_on_delivery' && (
+                      {order.status === 'pending' && 
+                        !order.payment_proof && 
+                        !order.deposit_image && 
+                        !order.remaining_payment_proof && 
+                        order.payment_method !== 'cash_on_delivery' && (
                         <Badge variant="outline" className="bg-amber-50 text-amber-800 text-center">
                           بانتظار إيصال الدفع
                         </Badge>

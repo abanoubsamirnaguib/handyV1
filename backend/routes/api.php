@@ -36,26 +36,28 @@ use App\Http\Controllers\Api\WithdrawalRequestController;
 use App\Http\Controllers\Api\ContactController;
 use App\Http\Controllers\Api\AnnouncementController;
 use App\Http\Controllers\Api\AdminAnnouncementController;
+use App\Http\Controllers\Api\CityCrudController;
+use App\Http\Controllers\Api\PlatformProfitController;
 
 
 Broadcast::routes(['middleware' => ['broadcast.auth']]);
 
 Route::prefix('listsellers')->group(function () {
-    Route::get('{id}', [SellerController::class, 'show']);
-    Route::get('{id}/products', [SellerController::class, 'products']);
+    Route::get('{id}', [SellerController::class, 'show'])->middleware('optional.auth');
+    Route::get('{id}/products', [SellerController::class, 'products'])->middleware('optional.auth');
 });
 
 Route::prefix('Listpoducts')->group(function () {
-    Route::get('{id}', [ProductController::class, 'show']);
+    Route::get('{id}', [ProductController::class, 'show'])->middleware('optional.auth');
     Route::get('{id}/reviews', [ProductController::class, 'reviews']);
-    Route::get('{id}/related', [ProductController::class, 'relatedProducts']); // Related gigs endpoint
+    Route::get('{id}/related', [ProductController::class, 'relatedProducts'])->middleware('optional.auth'); // Related gigs endpoint
 });
 
 // Seller services endpoint (takes user ID, finds seller internally)
-Route::get('users/{userId}/services', [ProductController::class, 'getSellerServices']);
+Route::get('users/{userId}/services', [ProductController::class, 'getSellerServices'])->middleware('optional.auth');
 
 Route::get('listcategories', [CategoryController::class, 'index']);
-Route::get('TopProducts', [ProductController::class, 'TopProducts']);
+Route::get('TopProducts', [ProductController::class, 'TopProducts'])->middleware('optional.auth');
 Route::get('sellers/search', [SellerController::class, 'search']);
 Route::get('sellers/top', [SellerController::class, 'topSellers']);
 
@@ -84,7 +86,7 @@ Route::post('reset-password', [AuthController::class, 'resetPassword']);
 Route::get('users/{id}', [UserCrudController::class, 'show']);  // Keep this one public for displaying profiles
 
 // Add explore routes for minimal product/seller data
-Route::get('explore/products', [ExploreController::class, 'products']);
+Route::get('explore/products', [ExploreController::class, 'products'])->middleware('optional.auth');
 Route::get('explore/sellers', [ExploreController::class, 'sellers']);
 
 // Public review endpoints - allow guests to view reviews
@@ -101,6 +103,9 @@ Route::prefix('announcements')->group(function () {
 
 // Public About Us Statistics
 Route::get('about-us/stats', [AdminController::class, 'getAboutUsStats']);
+
+// Public Cities list (for checkout selection)
+Route::get('cities', [CityCrudController::class, 'index']);
 
 // Protected Routes with middleware 
 Route::middleware(['auth:sanctum'])->group(function () {
@@ -247,6 +252,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('orders/pending', [AdminController::class, 'getPendingOrders']);
         Route::post('orders/{id}/approve', [AdminController::class, 'approveOrder']);
         Route::post('orders/{id}/reject', [AdminController::class, 'rejectOrder']);
+        Route::post('orders/{id}/update-status', [OrderCrudController::class, 'adminUpdateStatus']);
         
         // Delivery Personnel Management
         Route::apiResource('delivery-personnel', DeliveryPersonnelCrudController::class);
@@ -296,6 +302,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
             Route::delete('{id}', [AdminAnnouncementController::class, 'destroy']); // حذف الإعلان
             Route::post('{id}/toggle-status', [AdminAnnouncementController::class, 'toggleStatus']); // تغيير حالة الإعلان
         });
+        
+        // City CRUD for admin
+        Route::apiResource('cities', CityCrudController::class);
+
+        // Platform profits (admin dashboard)
+        Route::get('platform-profits', [PlatformProfitController::class, 'index']);
     });
     
     // Product CRUD for sellers (gigs/products)

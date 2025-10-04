@@ -62,7 +62,7 @@ const Footer = () => {
                 <Link to="/policy" className="text-neutral-200 hover:text-roman-500 transition-colors">السياسات</Link>
               </li>
               <li>
-                <Link to="/contact-us" className="text-neutral-200 hover:text-roman-500 transition-colors">اتصل بنا</Link>
+                <Link to="/about-us" className="text-neutral-200 hover:text-roman-500 transition-colors">اتصل بنا</Link>
               </li>
             </ul>
           </div>
@@ -116,7 +116,7 @@ const Footer = () => {
             <div className="flex space-x-6 space-x-reverse mt-4 md:mt-0">
               <Link to="/policy" className="hover:text-roman-500 transition-colors">شروط الاستخدام</Link>
               <Link to="/about-us" className="hover:text-roman-500 transition-colors">من نحن</Link>
-              <Link to="/contact-us" className="hover:text-roman-500 transition-colors">تواصل معنا</Link>
+              <Link to="/about-us" className="hover:text-roman-500 transition-colors">تواصل معنا</Link>
             </div>
           </div>
         </div>

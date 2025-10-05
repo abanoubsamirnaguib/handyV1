@@ -324,6 +324,11 @@ class Order extends Model
         ]);
         
         $this->addToHistory('ready_for_delivery', $this->seller->user_id, 'work_completed');
+        
+        // إرسال إشعار للمشتري إذا كان هناك مبلغ متبقي للدفع
+        if ($this->requires_deposit && $this->hasDepositPaid() && !$this->hasRemainingPaymentPaid()) {
+            $this->notifyBuyerToPayRemaining();
+        }
     }
     
     public function pickUpByDelivery($deliveryPersonId, $notes = null)
@@ -437,6 +442,87 @@ class Order extends Model
             'note' => $note,
             'created_at' => now()
         ]);
+    }
+    
+    /**
+     * إرسال إشعار للمشتري لدفع باقي المبلغ
+     */
+    public function notifyBuyerToPayRemaining()
+    {
+        $remainingAmount = $this->getRemainingAmount();
+        $message = "تم إكمال العمل على طلبك #{$this->id}. يجب دفع باقي المبلغ ({$remainingAmount} جنيه) خلال 48 ساعة وإلا سيتم تحويل العربون للبائع وإلغاء الطلب.";
+        
+        \App\Services\NotificationService::create(
+            $this->user_id,
+            'payment_reminder',
+            $message,
+            "/orders/{$this->id}"
+        );
+        
+        // تحديد وقت انتهاء صلاحية الدفع (48 ساعة) باستخدام completion_deadline
+        $this->update([
+            'completion_deadline' => now()->addHours(48)
+        ]);
+    }
+    
+    /**
+     * التحقق من انتهاء مهلة الدفع وتطبيق العواقب
+     */
+    public function checkPaymentDeadlineExpired()
+    {
+        // التحقق من أن الطلب يتطلب دفع متبقي وأن المهلة انتهت
+        if ($this->requires_deposit && 
+            $this->hasDepositPaid() && 
+            !$this->hasRemainingPaymentPaid() && 
+            $this->completion_deadline && 
+            now()->isAfter($this->completion_deadline) &&
+            $this->status === 'ready_for_delivery') {
+            
+            // تحويل العربون للبائع
+            $this->forfeitDepositToSeller();
+            
+            // تعليق الطلب
+            $this->update([
+                'status' => 'suspended',
+                'suspended_at' => now(),
+                'suspension_reason' => 'عدم دفع باقي المبلغ خلال المهلة المحددة - تم تحويل العربون للبائع'
+            ]);
+            
+            $this->addToHistory('suspended', null, 'payment_deadline_expired', 'تم تعليق الطلب لعدم دفع باقي المبلغ خلال 48 ساعة');
+            
+            // إرسال إشعارات
+            \App\Services\NotificationService::create(
+                $this->user_id,
+                'order_suspended',
+                "تم تعليق طلبك #{$this->id} وتحويل العربون للبائع بسبب عدم دفع باقي المبلغ خلال المهلة المحددة.",
+                "/orders/{$this->id}"
+            );
+            
+            \App\Services\NotificationService::create(
+                $this->seller->user_id,
+                'deposit_transferred',
+                "تم تحويل العربون من الطلب #{$this->id} إلى محفظتك بسبب عدم دفع العميل باقي المبلغ.",
+                "/orders/{$this->id}"
+            );
+            
+            return true;
+        }
+        
+        return false;
+    }
+    
+    /**
+     * تحويل العربون للبائع
+     */
+    private function forfeitDepositToSeller()
+    {
+        if ($this->deposit_amount > 0) {
+            // إضافة العربون لمحفظة البائع
+            $this->seller->addToWallet($this->deposit_amount);
+            
+            // تسجيل العملية في تاريخ الطلب
+            $this->addToHistory('deposit_transferred', null, 'deposit_forfeiture', "تم تحويل العربون ({$this->deposit_amount} جنيه) للبائع");
+        }
     }
     
     public function hasDepositPaid()

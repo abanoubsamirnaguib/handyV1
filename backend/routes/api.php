@@ -71,7 +71,6 @@ Route::get('debug/order-test', function() {
 });
 
 // Authentication - public routes
-Route::post('register', [AuthController::class, 'register']);
 Route::post('register-with-verification', [AuthController::class, 'registerWithEmailVerification']);
 Route::post('login', [AuthController::class, 'login']);
 

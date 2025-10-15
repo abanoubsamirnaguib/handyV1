@@ -28,6 +28,23 @@ class NotificationService
     }
 
     /**
+     * Create a welcome notification for new user
+     */
+    public static function welcome(int $userId, string $userName, bool $isSeller = false): Notification
+    {
+        $message = $isSeller 
+            ? "مرحباً {$userName}! 🎉 نحن سعداء بانضمامك كبائع. يمكنك الآن البدء في عرض منتجاتك وخدماتك!"
+            : "مرحباً {$userName}! 🎉 نحن سعداء بانضمامك إلى بازار. ابدأ الآن في استكشاف المنتجات والخدمات المميزة!";
+        
+        return self::create(
+            userId: $userId,
+            type: 'system',
+            message: $message,
+            link: '/dashboard'
+        );
+    }
+
+    /**
      * Create an order notification
      */
     public static function orderCreated(int $userId, int $orderId): Notification

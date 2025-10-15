@@ -337,7 +337,7 @@ const HomePage = () => {
       </section>
 
       {/* Categories Section */}
-      <section className="py-12 md:py-16 bg-neutral-100">
+      <section className="py-12 md:py-16 bg-white">
         <div className="container mx-auto px-4">
           <motion.h2 
             className="text-2xl md:text-3xl font-bold text-center mb-8 md:mb-12 text-neutral-900"
@@ -646,7 +646,7 @@ const HomePage = () => {
       </section>
 
       {/* Top Sellers Section */}
-      <section className="py-16 bg-neutral-100">
+      <section className="py-16 bg-roman-400/10">
         <div className="container mx-auto px-4">
           <motion.h2 
             className="text-3xl font-bold text-center mb-12 text-neutral-900"

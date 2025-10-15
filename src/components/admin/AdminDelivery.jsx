@@ -18,7 +18,6 @@ import {
   Eye,
   EyeOff,
   Loader2,
-  MapPin,
   Calendar,
   Clock,
   UserPlus,
@@ -86,7 +85,6 @@ const AdminDelivery = () => {
     name: '',
     email: '',
     phone: '',
-    address: '',
   });
 
   useEffect(() => {
@@ -157,7 +155,7 @@ const AdminDelivery = () => {
       
       setIsDialogOpen(false);
       setEditingPersonnel(null);
-      setFormData({ name: '', email: '', phone: '', address: '' });
+      setFormData({ name: '', email: '', phone: '' });
       fetchDeliveryPersonnel();
     } catch (error) {
       console.error('Error saving delivery personnel:', error);
@@ -175,7 +173,6 @@ const AdminDelivery = () => {
       name: personnel.name,
       email: personnel.email,
       phone: personnel.phone,
-      address: personnel.address || ''
     });
     setIsDialogOpen(true);
   };
@@ -271,7 +268,7 @@ const AdminDelivery = () => {
             <Button 
               onClick={() => {
                 setEditingPersonnel(null);
-                setFormData({ name: '', email: '', phone: '', address: '' });
+                setFormData({ name: '', email: '', phone: '' });
               }}
             >
               <UserPlus className="h-4 w-4 mr-2" />
@@ -322,16 +319,6 @@ const AdminDelivery = () => {
                   value={formData.phone}
                   onChange={handleInputChange}
                   required
-                  className="mt-1"
-                />
-              </div>
-              <div>
-                <Label htmlFor="address">العنوان</Label>
-                <Input
-                  id="address"
-                  name="address"
-                  value={formData.address}
-                  onChange={handleInputChange}
                   className="mt-1"
                 />
               </div>
@@ -435,18 +422,6 @@ const AdminDelivery = () => {
                   <div className="flex items-center gap-2">
                     <Phone className="h-4 w-4 text-gray-500" />
                     <span className="text-sm">{personnel.phone}</span>
-                  </div>
-                  {personnel.address && (
-                    <div className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4 text-gray-500" />
-                      <span className="text-sm">{personnel.address}</span>
-                    </div>
-                  )}
-                  <div className="flex items-center gap-2">
-                    <Package className="h-4 w-4 text-gray-500" />
-                    <span className="text-sm">
-                      {personnel.orders_count || 0} طلبات مسلمة
-                    </span>
                   </div>
                 </div>
               </CardContent>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Star, MapPin, CalendarDays, Edit3, PlusCircle, MessageSquare, Briefcase, Award, Users, Phone, X, Crop } from 'lucide-react';
+import { Star, MapPin, CalendarDays, Edit3, PlusCircle, MessageSquare, Briefcase, Award, Users, Phone, X, Crop, Share2 } from 'lucide-react';
 import ReactCrop, { centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import { Button } from '@/components/ui/button';
@@ -34,10 +34,39 @@ const ProfilePage = () => {
   const [crop, setCrop] = useState();
   const [completedCrop, setCompletedCrop] = useState();
   const [showCropModal, setShowCropModal] = useState(false);
+  const [showShareToast, setShowShareToast] = useState(false);
   const imgRef = useRef(null);
   const canvasRef = useRef(null);
 
   const isOwnProfile = !id || id === 'me' || (user && user.id === id);
+
+  // Handle share profile link
+  const handleShare = async () => {
+    // Generate the correct seller URL format regardless of current URL
+    const baseUrl = window.location.origin;
+    // Use the real user ID instead of 'me' for sharing
+    const shareUrl = `${baseUrl}/sellers/${profileData?.id || user?.id}`;
+    
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: profileData?.name,
+          text: profileData?.bio || "تفقد ملفي الشخصي على بازار",
+          url: shareUrl,
+        });
+      } else {
+        await navigator.clipboard.writeText(shareUrl);
+        setShowShareToast(true);
+        setTimeout(() => setShowShareToast(false), 3000);
+        toast({
+          title: "تم نسخ الرابط",
+          description: "تم نسخ رابط الملف الشخصي إلى الحافظة"
+        });
+      }
+    } catch (error) {
+      console.error('Error sharing:', error);
+    }
+  };
 
   // Add a dependency array tracking variable to prevent multiple fetches
   const [fetchCounter, setFetchCounter] = useState(0);
@@ -538,15 +567,20 @@ const ProfilePage = () => {
                 )}
               </div>
               <div className="mt-4 md:mt-0 md:mr-auto flex space-x-2 space-x-reverse">
-                {isOwnProfile ? (
-                  <Button onClick={() => setIsEditing(!isEditing)} variant="outline" className="border-primary text-primary hover:bg-primary hover:text-white">
-                    <Edit3 className="ml-2 h-4 w-4" /> {isEditing ? 'إلغاء التعديل' : 'تعديل الملف الشخصي'}
+                <div className="flex gap-2">
+                  {isOwnProfile ? (
+                    <Button onClick={() => setIsEditing(!isEditing)} variant="outline" className="border-primary text-primary hover:bg-primary hover:text-white">
+                      <Edit3 className="ml-2 h-4 w-4" /> {isEditing ? 'إلغاء التعديل' : 'تعديل الملف الشخصي'}
+                    </Button>
+                  ) : (
+                    <Button onClick={handleContactSeller} className="bg-roman-500 hover:bg-roman-500/90 text-white">
+                      <MessageSquare className="ml-2 h-4 w-4" /> تواصل
+                    </Button>
+                  )}
+                  <Button onClick={handleShare} variant="outline" className="px-3">
+                    <Share2 className="h-4 w-4" />
                   </Button>
-                ) : (
-                  <Button onClick={handleContactSeller} className="bg-roman-500 hover:bg-roman-500/90 text-white">
-                    <MessageSquare className="ml-2 h-4 w-4" /> تواصل
-                  </Button>
-                )}
+                </div>
               </div>
             </div>
           </CardContent>

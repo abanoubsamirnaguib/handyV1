@@ -21,7 +21,7 @@ class PaymentController extends Controller
         $validator = Validator::make($request->all(), [
             'order_id' => 'required|exists:orders,id',
             'amount' => 'required|numeric|min:1',
-            'payment_method' => 'required|in:credit_card,bank_transfer,wallet',
+            'payment_method' => 'required|in:cash_on_delivery,vodafone_cash,instapay,bank_transfer,credit_card',
             'conversation_id' => 'required|string',
             'product_id' => 'required|exists:products,id',
         ]);
@@ -107,7 +107,7 @@ class PaymentController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'order_id' => 'required|exists:orders,id',
-            'payment_method' => 'required|in:credit_card,bank_transfer,wallet',
+            'payment_method' => 'required|in:cash_on_delivery,vodafone_cash,instapay,bank_transfer,credit_card',
         ]);
 
         if ($validator->fails()) {

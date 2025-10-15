@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Star, ShoppingCart, MessageSquare, Heart, ChevronLeft, ChevronRight, CheckCircle, ShieldCheck, Truck } from 'lucide-react';
+import { Star, ShoppingCart, MessageSquare, Heart, ChevronLeft, ChevronRight, CheckCircle, ShieldCheck, Truck, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -37,6 +37,31 @@ const GigDetailsPage = () => {
   const [error, setError] = useState(null);
   const [isInWishlist, setIsInWishlist] = useState(false);
   const [wishlistLoading, setWishlistLoading] = useState(false);
+  const [showShareToast, setShowShareToast] = useState(false);
+
+  // Handle share link functionality
+  const handleShare = async () => {
+    const currentUrl = window.location.href;
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: gig?.title,
+          text: gig?.description,
+          url: currentUrl,
+        });
+      } else {
+        await navigator.clipboard.writeText(currentUrl);
+        setShowShareToast(true);
+        setTimeout(() => setShowShareToast(false), 3000);
+        toast({
+          title: "تم نسخ الرابط",
+          description: "تم نسخ رابط المنتج إلى الحافظة"
+        });
+      }
+    } catch (error) {
+      console.error('Error sharing:', error);
+    }
+  };
 
   // Handle wishlist changes for related products
   const handleWishlistChange = (productId, isInWishlist) => {
@@ -372,34 +397,47 @@ const GigDetailsPage = () => {
               />
             </div>
             <div className="flex flex-col sm:flex-row gap-3">
-              {gig.type === 'gig' ? (
-                <Button size="lg" onClick={handleContactSeller} className="bg-roman-500 hover:bg-roman-500/90 text-white flex-1">
-                  <MessageSquare className="ml-2 h-5 w-5" /> تواصل مع البائع
+              <div className="flex gap-2 flex-1">
+                {gig.type === 'gig' ? (
+                  <Button size="lg" onClick={handleContactSeller} className="bg-roman-500 hover:bg-roman-500/90 text-white flex-1">
+                    <MessageSquare className="ml-2 h-5 w-5" /> تواصل مع البائع
+                  </Button>
+                ) : (
+                  <Button size="lg" onClick={handleAddToCart} className="bg-roman-500 hover:bg-roman-500/90 text-white flex-1">
+                    <ShoppingCart className="ml-2 h-5 w-5" /> أضف إلى السلة
+                  </Button>
+                )}
+              </div>
+              <div className="flex gap-2">
+                <Button 
+                  size="lg" 
+                  variant="outline" 
+                  onClick={handleToggleWishlist}
+                  disabled={wishlistLoading}
+                  className={`border-roman-500/50 hover:bg-roman-500 hover:text-white ${
+                    isInWishlist 
+                      ? 'bg-roman-500 text-white border-roman-500 hover:bg-roman-500/90' 
+                      : 'text-roman-500'
+                  }`}
+                >
+                  <Heart className={`ml-2 h-5 w-5 ${isInWishlist ? 'fill-current' : ''}`} /> 
+                  {wishlistLoading 
+                    ? 'جاري التحديث...' 
+                    : isInWishlist 
+                      ? 'إزالة من المفضلة' 
+                      : 'أضف إلى المفضلة'
+                  }
                 </Button>
-              ) : (
-                <Button size="lg" onClick={handleAddToCart} className="bg-roman-500 hover:bg-roman-500/90 text-white flex-1">
-                  <ShoppingCart className="ml-2 h-5 w-5" /> أضف إلى السلة
+                <Button
+                  size="lg"
+                  variant="outline"
+                  onClick={handleShare}
+                  className="px-4 border-roman-500/50 hover:bg-roman-500 hover:text-white"
+                >
+                  <Share2 className="h-5 w-5" />
                 </Button>
-              )}
-              <Button 
-                size="lg" 
-                variant="outline" 
-                onClick={handleToggleWishlist}
-                disabled={wishlistLoading}
-                className={`border-roman-500/50 hover:bg-roman-500 hover:text-white flex-1 ${
-                  isInWishlist 
-                    ? 'bg-roman-500 text-white border-roman-500 hover:bg-roman-500/90' 
-                    : 'text-roman-500'
-                }`}
-              >
-                <Heart className={`ml-2 h-5 w-5 ${isInWishlist ? 'fill-current' : ''}`} /> 
-                {wishlistLoading 
-                  ? 'جاري التحديث...' 
-                  : isInWishlist 
-                    ? 'إزالة من المفضلة' 
-                    : 'أضف إلى المفضلة'
-                }
-              </Button>
+              </div>
+
             </div>            <div className="grid grid-cols-2 gap-4 text-sm text-neutral-900/80">
                 <div className="flex items-center"><ShieldCheck className="h-5 w-5 text-roman-500 ml-2" /> دفع آمن ومضمون</div>
                 <div className="flex items-center"><Truck className="h-5 w-5 text-roman-500 ml-2" /> شحن لجميع المحافظات</div>

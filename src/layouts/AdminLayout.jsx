@@ -22,11 +22,13 @@ import {
   MapPin
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { Separator } from '@/components/ui/separator';
 import { SidebarProvider, useSidebar } from '@/contexts/SidebarContext';
 import { usePageNavigation } from '@/hooks/usePageNavigation';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
+import { useAdminStats } from '@/hooks/useAdminStats';
 import '@/components/dashboard/sidebar.css';
 
 const AdminSidebar = () => {
@@ -35,10 +37,16 @@ const AdminSidebar = () => {
   const { isSidebarOpen, toggleSidebar, isMobile, isMobileMenuOpen } = useSidebar();
   // Use our custom hook for navigation
   const location = usePageNavigation();
+  const { stats } = useAdminStats();
 
   const adminLinks = [
     { path: '/admin/dashboard', label: 'لوحة التحكم', icon: LayoutDashboard },
-    { path: '/admin/orders', label: 'الطلبات', icon: ShoppingBag },
+    { 
+      path: '/admin/orders', 
+      label: 'الطلبات', 
+      icon: ShoppingBag,
+      badge: stats?.pending_orders > 0 ? stats.pending_orders : null
+    },
     { path: '/admin/categories', label: 'التصنيفات', icon: Tag },
     { path: '/admin/products', label: 'المنتجات', icon: PackageOpen },
     { path: '/admin/sellers', label: 'البائعين', icon: UserCheck },
@@ -104,15 +112,31 @@ const AdminSidebar = () => {
                   variant={location.pathname === link.path ? 'subtle' : 'ghost'}
                   className={`w-full justify-${isSidebarOpen || isMobile ? 'start' : 'center'} text-right px-3 py-2 ${
                     location.pathname === link.path ? 'bg-blue-600/10 text-blue-600 font-medium' : 'hover:bg-gray-100 hover:text-blue-600 text-sm font-medium'
-                  } transition-all duration-200`}
+                  } transition-all duration-200 relative`}
                   onClick={() => {
                     navigate(link.path);
                     if (isMobile) toggleSidebar();
                   }}                >                  <link.icon className={`${isSidebarOpen || isMobile ? 'ml-2' : ''} h-4 w-4`} />
                   {(isSidebarOpen || isMobile) && (
-                    <span className="text-neutral-900">
+                    <span className="text-neutral-900 flex-1">
                       {link.label}
                     </span>
+                  )}
+                  {link.badge && (isSidebarOpen || isMobile) && (
+                    <Badge 
+                      variant="destructive" 
+                      className="ml-2 min-w-[20px] h-5 text-xs px-1.5 animate-pulse"
+                    >
+                      {link.badge}
+                    </Badge>
+                  )}
+                  {link.badge && (!isSidebarOpen && !isMobile) && (
+                    <Badge 
+                      variant="destructive" 
+                      className="absolute -top-1 -left-1 min-w-[18px] h-[18px] text-[10px] px-1 animate-pulse"
+                    >
+                      {link.badge}
+                    </Badge>
                   )}
                 </Button>
               ))}
@@ -143,11 +167,17 @@ const AdminLayout = () => {
   const { logout } = useAuth();
   const { isSidebarOpen, toggleSidebar, isMobile, isMobileMenuOpen, closeMobileSidebar } = useSidebar();
   const scrollRef = useScrollToTop();
+  const { stats } = useAdminStats();
 
   // Admin navigation links
   const adminLinks = [
     { path: '/admin/dashboard', label: 'لوحة التحكم', icon: LayoutDashboard },
-    { path: '/admin/orders', label: 'الطلبات', icon: ShoppingBag },
+    { 
+      path: '/admin/orders', 
+      label: 'الطلبات', 
+      icon: ShoppingBag,
+      badge: stats?.pending_orders > 0 ? stats.pending_orders : null
+    },
     { path: '/admin/categories', label: 'التصنيفات', icon: Tag },
     { path: '/admin/products', label: 'المنتجات', icon: PackageOpen },
     { path: '/admin/sellers', label: 'البائعين', icon: UserCheck },
@@ -196,15 +226,25 @@ const AdminLayout = () => {
                   <Link 
                     key={link.path}
                     to={link.path}
-                    className={`px-3 py-2 text-sm font-medium flex items-center ${
+                    className={`px-3 py-2 text-sm font-medium flex items-center justify-between ${
                       location.pathname === link.path 
                         ? 'text-blue-600' 
                         : 'hover:text-blue-600'
                     }`}
                     onClick={() => toggleSidebar()}
                   >
-                    <link.icon className="ml-2 h-4 w-4" />
-                    {link.label}
+                    <div className="flex items-center">
+                      <link.icon className="ml-2 h-4 w-4" />
+                      {link.label}
+                    </div>
+                    {link.badge && (
+                      <Badge 
+                        variant="destructive" 
+                        className="min-w-[20px] h-5 text-xs px-1.5 animate-pulse"
+                      >
+                        {link.badge}
+                      </Badge>
+                    )}
                   </Link>
                 ))}
                 <Separator className="my-2" />

@@ -24,6 +24,7 @@ class AdminController extends Controller
             'total_orders' => Order::count(),
             'active_users' => User::where('status', 'active')->count(),
             'pending_sellers' => User::whereHas('seller')->where('status', 'pending')->count(),
+            'pending_orders' => Order::where('status', 'pending')->count(),
         ];
 
         return response()->json($stats);
@@ -171,6 +172,21 @@ class AdminController extends Controller
             'status' => 'required|in:active,inactive,pending_review,rejected'
         ]);
         $product->update(['status' => $validated['status']]);
+
+        // إذا تم تفعيل المنتج، نرسل إشعارًا للبائع
+        if ($validated['status'] === 'active' && $product->seller && $product->seller->user_id) {
+            $message = $product->type === 'service' 
+                ? "تم تفعيل خدمتك: {$product->title}" 
+                : "تم تفعيل منتجك: {$product->title}";
+
+            \App\Services\NotificationService::create(
+                userId: $product->seller->user_id,
+                type: 'product_status',
+                message: $message,
+                link: '/dashboard/products/' . $product->id
+            );
+        }
+
         return new ProductResource($product);
     }
 

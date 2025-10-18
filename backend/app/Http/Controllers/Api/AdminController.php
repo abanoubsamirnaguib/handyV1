@@ -175,15 +175,10 @@ class AdminController extends Controller
 
         // إذا تم تفعيل المنتج، نرسل إشعارًا للبائع
         if ($validated['status'] === 'active' && $product->seller && $product->seller->user_id) {
-            $message = $product->type === 'service' 
-                ? "تم تفعيل خدمتك: {$product->title}" 
-                : "تم تفعيل منتجك: {$product->title}";
-
-            \App\Services\NotificationService::create(
+            \App\Services\NotificationService::productApproved(
                 userId: $product->seller->user_id,
-                type: 'product_status',
-                message: $message,
-                link: '/dashboard/products/' . $product->id
+                productTitle: $product->title,
+                productType: $product->type
             );
         }
 

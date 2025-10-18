@@ -1,0 +1,124 @@
+/* PWA Specific Styles */
+
+/* Install button animation with Roman colors */
+@keyframes pulse-gentle {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 4px 15px rgba(232, 88, 86, 0.2);
+  }
+  50% {
+    transform: scale(1.02);
+    box-shadow: 0 6px 20px rgba(232, 88, 86, 0.3);
+  }
+}
+
+.pwa-install-button {
+  animation: pulse-gentle 3s ease-in-out infinite;
+}
+
+.pwa-install-button:hover {
+  animation: none;
+  transform: scale(1.05);
+  transition: transform 0.2s ease;
+  box-shadow: 0 8px 25px rgba(232, 88, 86, 0.4);
+}
+
+/* Loading spinner for install button */
+.install-spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* PWA feature cards hover effect with Roman colors */
+.pwa-feature-card {
+  transition: all 0.3s ease;
+  border: 1px solid rgba(232, 88, 86, 0.1);
+  background: white;
+}
+
+.pwa-feature-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(232, 88, 86, 0.12);
+  border-color: rgba(232, 88, 86, 0.2);
+}
+
+/* Instructions modal backdrop */
+.pwa-modal-backdrop {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* Success checkmark animation with Roman colors */
+@keyframes checkmark-bounce {
+  0% {
+    transform: scale(0);
+  }
+  50% {
+    transform: scale(1.2);
+    color: #e85856;
+  }
+  100% {
+    transform: scale(1);
+    color: #e85856;
+  }
+}
+
+.success-checkmark {
+  animation: checkmark-bounce 0.6s ease-out;
+  color: #e85856;
+}
+
+/* Responsive improvements for PWA section */
+@media (max-width: 768px) {
+  .pwa-feature-grid {
+    gap: 1rem;
+  }
+  
+  .pwa-install-card {
+    margin: 0 1rem;
+    position: relative;
+    z-index: 1;
+  }
+}
+
+/* PWA section base styles */
+.pwa-install-section {
+  position: relative;
+  z-index: 1;
+}
+
+/* PWA Install card improvements */
+.pwa-install-card {
+  position: relative;
+  background: white;
+  z-index: 2;
+}
+
+/* Hide PWA section when app is already in standalone mode */
+@media all and (display-mode: standalone) {
+  .pwa-install-section {
+    display: none;
+  }
+}
+
+/* iOS Safari specific styles */
+@supports (-webkit-touch-callout: none) {
+  .pwa-ios-hint {
+    display: block;
+  }
+}
+
+/* Android Chrome specific styles */
+@media screen and (max-width: 767px) {
+  .pwa-android-hint {
+    display: block;
+  }
+}

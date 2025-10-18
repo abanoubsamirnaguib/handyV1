@@ -50,19 +50,19 @@ const Footer = () => {
             <h3 className="text-xl font-bold mb-4 text-white">روابط سريعة</h3>
             <ul className="space-y-2">
               <li>
-                <Link to="/" className="text-neutral-200 hover:text-roman-500 transition-colors">الرئيسية</Link>
+                <Link to="/" className="text-neutral-200 hover:text-neutral-900 transition-colors">الرئيسية</Link>
               </li>
               <li>
-                <Link to="/explore" className="text-neutral-200 hover:text-roman-500 transition-colors">استكشاف</Link>
+                <Link to="/explore" className="text-neutral-200 hover:text-neutral-900 transition-colors">استكشاف</Link>
               </li>
               <li>
-                <Link to="/about-us" className="text-neutral-200 hover:text-roman-500 transition-colors">من نحن</Link>
+                <Link to="/about-us" className="text-neutral-200 hover:text-neutral-900 transition-colors">من نحن</Link>
               </li>
               <li>
-                <Link to="/policy" className="text-neutral-200 hover:text-roman-500 transition-colors">السياسات</Link>
+                <Link to="/policy" className="text-neutral-200 hover:text-neutral-900 transition-colors">السياسات</Link>
               </li>
               <li>
-                <Link to="/about-us" className="text-neutral-200 hover:text-roman-500 transition-colors">اتصل بنا</Link>
+                <Link to="/announcements" className="text-neutral-200 hover:text-neutral-900 transition-colors">الإعلانات</Link>
               </li>
             </ul>
           </div>
@@ -72,7 +72,7 @@ const Footer = () => {
                 <ul className="space-y-2">
                   {categories.slice(0, Math.ceil(categories.length / 2)).map(cat => (
                   <li key={cat.id}>
-                    <Link to={`/explore?category=${cat.id}`} className="text-neutral-200 hover:text-roman-500 transition-colors">{cat.name}</Link>
+                    <Link to={`/explore?category=${cat.id}`} className="text-neutral-200 hover:text-neutral-900 transition-colors">{cat.name}</Link>
                   </li>
                   ))}
                 </ul>
@@ -84,7 +84,7 @@ const Footer = () => {
                 <ul className="space-y-2">
                   {categories.slice(Math.ceil(categories.length / 2)).map(cat => (
                   <li key={cat.id}>
-                    <Link to={`/explore?category=${cat.id}`} className="text-neutral-200 hover:text-roman-500 transition-colors">{cat.name}</Link>
+                    <Link to={`/explore?category=${cat.id}`} className="text-neutral-200 hover:text-neutral-900 transition-colors">{cat.name}</Link>
                   </li>
                   ))}
                 </ul>
@@ -114,9 +114,9 @@ const Footer = () => {
           <div className="flex flex-col md:flex-row justify-between items-center text-neutral-200">
             <p>© {new Date().getFullYear()} بازار. جميع الحقوق محفوظة.</p>
             <div className="flex space-x-6 space-x-reverse mt-4 md:mt-0">
-              <Link to="/policy" className="hover:text-roman-500 transition-colors">شروط الاستخدام</Link>
-              <Link to="/about-us" className="hover:text-roman-500 transition-colors">من نحن</Link>
-              <Link to="/about-us" className="hover:text-roman-500 transition-colors">تواصل معنا</Link>
+              <Link to="/policy" className="hover:text-neutral-900 transition-colors">شروط الاستخدام</Link>
+              <Link to="/about-us" className="hover:text-neutral-900 transition-colors">من نحن</Link>
+              <Link to="/about-us" className="hover:text-neutral-900 transition-colors">تواصل معنا</Link>
             </div>
           </div>
         </div>

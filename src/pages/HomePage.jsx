@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { api } from '@/lib/api';
 import WishlistButton from '@/components/ui/WishlistButton';
+import PWAInstallSection from '@/components/PWAInstallSection';
 
 const HomePage = () => {
   const navigate = useNavigate();
@@ -691,6 +692,9 @@ const HomePage = () => {
           </div>
         </div>
       </section>
+
+      {/* PWA Install Section */}
+      <PWAInstallSection />
 
       {/* Call to Action Section */}
       <section className="py-20 bg-neutral-100 text-white relative overflow-hidden">

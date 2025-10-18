@@ -104,11 +104,11 @@ const Navbar = () => {
             }`}>
               الإعلانات
             </Link>
-            <Link to="/policy" className={`px-3 py-2 text-sm font-medium hover:text-roman-500 transition-colors ${
+            {/* <Link to="/policy" className={`px-3 py-2 text-sm font-medium hover:text-roman-500 transition-colors ${
               isActiveLink('/policy') ? 'text-roman-500 border-b-2 border-roman-500 font-semibold' : ''
             }`}>
               السياسات
-            </Link>
+            </Link> */}
             {user && (
               <>
                 {user.role !== 'admin' && (

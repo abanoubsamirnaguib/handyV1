@@ -127,12 +127,14 @@ class ProductController extends Controller
         $product->seller_id = Auth::id();
         $product->status = 'pending_review';
         $product->save();
+        
         // Save tags
         if ($request->has('tags')) {
             foreach ($request->tags as $tag) {
                 $product->tags()->create(['tag_name' => $tag]);
             }
         }
+        
         // Save images
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $img) {
@@ -140,7 +142,22 @@ class ProductController extends Controller
                 $product->images()->create(['image_url' => $path]);
             }
         }
-        return response()->json(['message' => 'Product created', 'product' => $product->load(['images', 'tags'])], 201);
+
+        // إرسال إشعار للبائع بأن المنتج قيد المراجعة
+        $seller = \App\Models\Seller::find(Auth::id());
+        if ($seller && $seller->user_id) {
+            \App\Services\NotificationService::productPendingReview(
+                userId: $seller->user_id,
+                productTitle: $product->title,
+                productType: $product->type
+            );
+        }
+
+        return response()->json([
+            'message' => 'Product created successfully', 
+            'product' => $product->load(['images', 'tags']),
+            'notification' => 'تم إضافة المنتج بنجاح وهو الآن قيد المراجعة. سيتم تفعيله خلال 48-72 ساعة.'
+        ], 201);
     }
 
     /**

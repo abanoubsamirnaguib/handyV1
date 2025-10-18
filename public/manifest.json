@@ -1,15 +1,61 @@
 {
   "name": "بازار - منصة للمنتجات اليدوية",
   "short_name": "بازار",
-  "description": "منصة للمنتجات اليدوية والبائعين والمشترين",
+  "description": "منصة للمنتجات اليدوية والبائعين والمشترين - تسوق واعرض منتجاتك الحرفية",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#a2ae8d",
+  "theme_color": "#e85856",
   "lang": "ar",
   "dir": "rtl",
   "orientation": "portrait",
+  "categories": ["shopping", "lifestyle", "business"],
+  "screenshots": [
+    {
+      "src": "/Asset_9.svg",
+      "sizes": "1280x720",
+      "type": "image/svg+xml",
+      "form_factor": "wide"
+    },
+    {
+      "src": "/Asset_9.svg", 
+      "sizes": "750x1334",
+      "type": "image/svg+xml",
+      "form_factor": "narrow"
+    }
+  ],
   "icons": [
+    {
+      "src": "/Asset_9.svg",
+      "sizes": "72x72",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/Asset_9.svg",
+      "sizes": "96x96",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/Asset_9.svg",
+      "sizes": "128x128",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/Asset_9.svg",
+      "sizes": "144x144",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/Asset_9.svg",
+      "sizes": "152x152",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
     {
       "src": "/Asset_9.svg",
       "sizes": "192x192",
@@ -18,14 +64,15 @@
     },
     {
       "src": "/Asset_9.svg",
-      "sizes": "512x512",
+      "sizes": "384x384",
       "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "/Asset_9.svg",
-      "sizes": "144x144",
-      "type": "image/svg+xml"
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
     }
   ]
 }

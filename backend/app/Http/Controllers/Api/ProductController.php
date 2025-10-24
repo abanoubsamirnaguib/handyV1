@@ -39,7 +39,7 @@ class ProductController extends Controller
     public function index(Request $request)
     {
         $query = Product::with(['images', 'tags', 'category'])
-            ->where('seller_id', Auth::id());
+            ->where('seller_id', Auth::id()->seller_id);
         
         // Optional filtering
         if ($request->filled('status')) {
@@ -124,7 +124,7 @@ class ProductController extends Controller
             'images.*' => 'image|max:2048',
         ]);
         $product = new Product($validated);
-        $product->seller_id = Auth::id();
+        $product->seller_id = Auth::id()->seller_id;
         $product->status = 'pending_review';
         $product->save();
         
@@ -144,7 +144,7 @@ class ProductController extends Controller
         }
 
         // إرسال إشعار للبائع بأن المنتج قيد المراجعة
-        $seller = \App\Models\Seller::find(Auth::id());
+        $seller = \App\Models\Seller::find(Auth::id()->seller_id);
         if ($seller && $seller->user_id) {
             \App\Services\NotificationService::productPendingReview(
                 userId: $seller->user_id,
@@ -166,7 +166,7 @@ class ProductController extends Controller
     public function update(Request $request, $id)
     {
         $product = Product::findOrFail($id);
-        if ($product->seller_id !== Auth::id()) {
+        if ($product->seller_id !== Auth::id()->seller_id) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
         $validated = $request->validate([
@@ -239,7 +239,7 @@ class ProductController extends Controller
     public function destroy($id)
     {
         $product = Product::findOrFail($id);
-        if ($product->seller_id !== Auth::id()) {
+        if ($product->seller_id !== Auth::id()->seller_id) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 

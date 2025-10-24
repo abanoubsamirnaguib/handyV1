@@ -3,3 +3,4 @@ backend/vendor
 .htaccess
 .env
 .DS_Store
+node_modules.zip

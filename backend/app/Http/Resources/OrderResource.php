@@ -36,9 +36,9 @@ class OrderResource extends JsonResource
             'deposit_amount' => $this->deposit_amount,
             'deposit_status' => $this->deposit_status,
             'deposit_notes' => $this->deposit_notes,
-            'deposit_image' => $this->deposit_image, // return path only
+            'deposit_image' => $this->deposit_image ? asset('storage/' . $this->deposit_image) : null, // return path only
             'deposit_image_url' => $this->deposit_image ? asset('storage/' . $this->deposit_image) : null,
-            'remaining_payment_proof' => $this->remaining_payment_proof, // return path only
+            'remaining_payment_proof' => $this->remaining_payment_proof ? asset('storage/' . $this->remaining_payment_proof) : null, // return path only
             'remaining_payment_proof_url' => $this->remaining_payment_proof ? asset('storage/' . $this->remaining_payment_proof) : null,
             'is_service_order' => $this->is_service_order,
             'service_requirements' => $this->service_requirements,
@@ -46,8 +46,8 @@ class OrderResource extends JsonResource
             'conversation' => $this->whenLoaded('conversation'),
             
             // الحقول الجديدة
-            'payment_proof' => $this->payment_proof, // return path only
-            'payment_proof_path' => $this->payment_proof,
+            'payment_proof' => $this->payment_proof ? asset('storage/' . $this->payment_proof) : null, // return path only
+            'payment_proof_path' => $this->payment_proof ? asset('storage/' . $this->payment_proof) : nullp,
             'admin_approved_at' => $this->admin_approved_at,
             'admin_approved_by' => $this->admin_approved_by,
             'admin_approver' => new UserResource($this->whenLoaded('adminApprover')),

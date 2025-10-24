@@ -71,7 +71,7 @@ const Navbar = () => {
         <div className="flex items-center justify-between">
           <Link to="/" className="flex items-center space-x-2 space-x-reverse">
             <img 
-              src="/Asset_9.svg" 
+              src="/Asset_12.svg" 
               alt="بازار Logo" 
               className="h-8 w-8 object-contain"
             />

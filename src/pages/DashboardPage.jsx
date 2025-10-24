@@ -63,7 +63,7 @@ const DashboardSidebar = ({ user }) => {
             <div className="flex items-center justify-between mb-6 px-2">
               <Link to="/" className="flex items-center space-x-2 space-x-reverse">
               <img 
-                src="/Asset_5.svg" 
+                src="/Asset_12.svg" 
                 alt="بازار Logo" 
                 className={`h-6 w-6 object-contain ${!isSidebarOpen && !isMobile ? 'scale-010 opacity-0' : 'scale-100 opacity-100'} transition-all duration-300`}
               />

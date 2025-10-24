@@ -7,7 +7,13 @@ const CACHE_RESOURCES = [
   '/',
   '/offline.html',
   '/manifest.json',
-  '/Asset_9.svg',
+  '/favicon/favicon-16x16.png',
+  '/favicon/favicon-32x32.png',
+  '/favicon/android-chrome-192x192.png',
+  '/favicon/android-chrome-512x512.png',
+  '/favicon/apple-touch-icon.png',
+  '/favicon/favicon.ico',
+  '/Artboard 5.png',
   // Add other essential assets
 ];
 
@@ -134,8 +140,8 @@ self.addEventListener('push', (event) => {
   const title = data.title || 'بازار';
   const options = {
     body: data.body || 'لديك إشعار جديد',
-    icon: '/Asset_9.svg',
-    badge: '/Asset_9.svg',
+    icon: '/favicon/android-chrome-192x192.png',
+    badge: '/favicon/favicon-32x32.png',
     data: data.data || {},
     actions: data.actions || []
   };

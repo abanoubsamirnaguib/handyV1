@@ -20,7 +20,7 @@ const Footer = () => {
           <div>
             <div className="flex items-center mb-4">
               <img 
-                src="/Asset_9.svg" 
+                src="/Asset_12.svg" 
                 alt="بازار Logo" 
                 className="h-8 w-8 object-contain ml-2"
               />

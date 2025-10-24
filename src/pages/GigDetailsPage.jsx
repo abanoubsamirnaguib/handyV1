@@ -385,17 +385,19 @@ const GigDetailsPage = () => {
             
             <div className="text-3xl font-bold text-roman-500">{gig.price} جنيه</div>
 
-            <div className="flex items-center space-x-3 space-x-reverse">
-              <Label htmlFor="quantity" className="text-neutral-900">الكمية:</Label>
-              <Input 
-                type="number" 
-                id="quantity" 
-                value={quantity} 
-                onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value)))} 
-                min="1" 
-                className="w-20 text-center border-roman-500/30 focus:border-roman-500 focus:ring-roman-500/20"
-              />
-            </div>
+            {gig.type !== 'gig' && (
+              <div className="flex items-center space-x-3 space-x-reverse">
+                <Label htmlFor="quantity" className="text-neutral-900">الكمية:</Label>
+                <Input 
+                  type="number" 
+                  id="quantity" 
+                  value={quantity} 
+                  onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value)))} 
+                  min="1" 
+                  className="w-20 text-center border-roman-500/30 focus:border-roman-500 focus:ring-roman-500/20"
+                />
+              </div>
+            )}
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="flex gap-2 flex-1">
                 {gig.type === 'gig' ? (

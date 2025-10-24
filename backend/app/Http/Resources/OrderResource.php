@@ -47,7 +47,7 @@ class OrderResource extends JsonResource
             
             // الحقول الجديدة
             'payment_proof' => $this->payment_proof ? asset('storage/' . $this->payment_proof) : null, // return path only
-            'payment_proof_path' => $this->payment_proof ? asset('storage/' . $this->payment_proof) : nullp,
+            'payment_proof_path' => $this->payment_proof ? asset('storage/' . $this->payment_proof) : null,
             'admin_approved_at' => $this->admin_approved_at,
             'admin_approved_by' => $this->admin_approved_by,
             'admin_approver' => new UserResource($this->whenLoaded('adminApprover')),

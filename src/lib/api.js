@@ -460,7 +460,7 @@ export const adminApi = {
     apiFetch(`categories/${categoryId}`, { method: 'DELETE' }),
 
   // Admin order management
-  getOrders: (params = {}) => {
+  getOrders: (params = {}) => { 
     const searchParams = new URLSearchParams(params);
     return apiFetch(`admin/orders?${searchParams}`);
   },

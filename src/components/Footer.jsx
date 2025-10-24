@@ -13,26 +13,33 @@ const Footer = () => {
   }, []);
 
   return (
-    <footer className="bg-olivePrimary text-white md:block hidden">
+    <footer className="bg-roman-500 text-white md:block hidden">
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
           {/* About */}
           <div>
-            <h3 className="text-xl font-bold mb-4 text-lightBeige">بازار</h3>
-            <p className="text-lightBeige/80 mb-4">
+            <div className="flex items-center mb-4">
+              <img 
+                src="/Asset_12.svg" 
+                alt="بازار Logo" 
+                className="h-8 w-8 object-contain ml-2"
+              />
+              <h3 className="text-xl font-bold text-white">بازار</h3>
+            </div>
+            <p className="text-neutral-100 mb-4">
               منصة تجمع الحرفيين والمبدعين في مكان واحد، لعرض منتجاتهم اليدوية الفريدة والتواصل مع العملاء مباشرة.
             </p>
             <div className="flex space-x-4 space-x-reverse">
-              <a href="#" className="text-lightBeige/70 hover:text-burntOrange transition-colors">
+              <a href="#" className="text-neutral-200 hover:text-roman-500 transition-colors">
                 <Facebook size={20} />
               </a>
-              <a href="#" className="text-lightBeige/70 hover:text-burntOrange transition-colors">
+              <a href="#" className="text-neutral-200 hover:text-roman-500 transition-colors">
                 <Instagram size={20} />
               </a>
-              <a href="#" className="text-lightBeige/70 hover:text-burntOrange transition-colors">
+              <a href="#" className="text-neutral-200 hover:text-roman-500 transition-colors">
                 <Twitter size={20} />
               </a>
-              <a href="#" className="text-lightBeige/70 hover:text-burntOrange transition-colors">
+              <a href="#" className="text-neutral-200 hover:text-roman-500 transition-colors">
                 <Youtube size={20} />
               </a>
             </div>
@@ -40,32 +47,32 @@ const Footer = () => {
 
           {/* Quick Links */}
           <div>
-            <h3 className="text-xl font-bold mb-4 text-lightBeige">روابط سريعة</h3>
+            <h3 className="text-xl font-bold mb-4 text-white">روابط سريعة</h3>
             <ul className="space-y-2">
               <li>
-                <Link to="/" className="text-lightBeige/70 hover:text-burntOrange transition-colors">الرئيسية</Link>
+                <Link to="/" className="text-neutral-200 hover:text-neutral-900 transition-colors">الرئيسية</Link>
               </li>
               <li>
-                <Link to="/explore" className="text-lightBeige/70 hover:text-burntOrange transition-colors">استكشاف</Link>
+                <Link to="/explore" className="text-neutral-200 hover:text-neutral-900 transition-colors">استكشاف</Link>
               </li>
               <li>
-                <Link to="/about-us" className="text-lightBeige/70 hover:text-burntOrange transition-colors">من نحن</Link>
+                <Link to="/about-us" className="text-neutral-200 hover:text-neutral-900 transition-colors">من نحن</Link>
               </li>
               <li>
-                <Link to="/policy" className="text-lightBeige/70 hover:text-burntOrange transition-colors">السياسات</Link>
+                <Link to="/policy" className="text-neutral-200 hover:text-neutral-900 transition-colors">السياسات</Link>
               </li>
               <li>
-                <Link to="/contact-us" className="text-lightBeige/70 hover:text-burntOrange transition-colors">اتصل بنا</Link>
+                <Link to="/announcements" className="text-neutral-200 hover:text-neutral-900 transition-colors">الإعلانات</Link>
               </li>
             </ul>
           </div>
 
                 <div>
-                <h3 className="text-xl font-bold mb-4 text-lightBeige">التصنيفات</h3>
+                <h3 className="text-xl font-bold mb-4 text-white">التصنيفات</h3>
                 <ul className="space-y-2">
                   {categories.slice(0, Math.ceil(categories.length / 2)).map(cat => (
                   <li key={cat.id}>
-                    <Link to={`/explore?category=${cat.id}`} className="text-lightBeige/70 hover:text-burntOrange transition-colors">{cat.name}</Link>
+                    <Link to={`/explore?category=${cat.id}`} className="text-neutral-200 hover:text-neutral-900 transition-colors">{cat.name}</Link>
                   </li>
                   ))}
                 </ul>
@@ -73,11 +80,11 @@ const Footer = () => {
 
                 {/* More Categories */}
                 <div>
-                <h3 className="text-xl font-bold mb-4 text-lightBeige">المزيد من التصنيفات</h3>
+                <h3 className="text-xl font-bold mb-4 text-white">المزيد من التصنيفات</h3>
                 <ul className="space-y-2">
                   {categories.slice(Math.ceil(categories.length / 2)).map(cat => (
                   <li key={cat.id}>
-                    <Link to={`/explore?category=${cat.id}`} className="text-lightBeige/70 hover:text-burntOrange transition-colors">{cat.name}</Link>
+                    <Link to={`/explore?category=${cat.id}`} className="text-neutral-200 hover:text-neutral-900 transition-colors">{cat.name}</Link>
                   </li>
                   ))}
                 </ul>
@@ -85,31 +92,31 @@ const Footer = () => {
 
                 {/* Contact */}
           <div>
-            <h3 className="text-xl font-bold mb-4 text-lightBeige">اتصل بنا</h3>
+            <h3 className="text-xl font-bold mb-4 text-white">اتصل بنا</h3>
             <ul className="space-y-3">
               <li className="flex items-center space-x-3 space-x-reverse">
-                <MapPin size={18} className="text-burntOrange" />
-                <span className="text-lightBeige/70">شارع الحرفيين، القاهرة، مصر</span>
+                <MapPin size={18} className="text-roman-500" />
+                <span className="text-neutral-200">شارع الحرفيين، القاهرة، مصر</span>
               </li>
               <li className="flex items-center space-x-3 space-x-reverse">
-                <Phone size={18} className="text-burntOrange" />
-                <span className="text-lightBeige/70">+20 123 456 7890</span>
+                <Phone size={18} className="text-roman-500" />
+                <span className="text-neutral-200">+20 123 456 7890</span>
               </li>
               <li className="flex items-center space-x-3 space-x-reverse">
-                <Mail size={18} className="text-burntOrange" />
-                <span className="text-lightBeige/70">info@herafty.com</span>
+                <Mail size={18} className="text-roman-500" />
+                <span className="text-neutral-200">info@herafty.com</span>
               </li>
             </ul>
           </div>
         </div>
 
-        <div className="border-t border-lightBeige/20 mt-10 pt-6">
-          <div className="flex flex-col md:flex-row justify-between items-center text-lightBeige/60">
+        <div className="border-t border-neutral-300 mt-10 pt-6">
+          <div className="flex flex-col md:flex-row justify-between items-center text-neutral-200">
             <p>© {new Date().getFullYear()} بازار. جميع الحقوق محفوظة.</p>
             <div className="flex space-x-6 space-x-reverse mt-4 md:mt-0">
-              <Link to="/policy" className="hover:text-burntOrange transition-colors">شروط الاستخدام</Link>
-              <Link to="/about-us" className="hover:text-burntOrange transition-colors">من نحن</Link>
-              <Link to="/contact-us" className="hover:text-burntOrange transition-colors">تواصل معنا</Link>
+              <Link to="/policy" className="hover:text-neutral-900 transition-colors">شروط الاستخدام</Link>
+              <Link to="/about-us" className="hover:text-neutral-900 transition-colors">من نحن</Link>
+              <Link to="/about-us" className="hover:text-neutral-900 transition-colors">تواصل معنا</Link>
             </div>
           </div>
         </div>

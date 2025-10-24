@@ -49,24 +49,56 @@ module.exports = {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))',
 				},
-				// Custom colors from the palette with 60-30-10 rule
-				// 60% - Primary colors
-				olivePrimary: '#859569',  // Primary olive green
-				lightBeige: '#EFEDE6',    // Primary very light beige
-				
-				// 30% - Secondary colors
-				burntOrange: '#E18562',   // Secondary burnt orange
-				lightGreen: '#D0E0BF',    // Secondary light green
-				
-				// 10% - Accent & Supporting colors
-				creamyBeige: '#F7EAC8',   // Supporting creamy beige
-				lightBrownGray: '#B2AD9A', // Supporting light brown-gray
-				darkBrown: '#6F5C4E',     // Supporting dark brown
-				paleGreen: '#E6F0DC',     // Supporting pale green
-				darkOlive: '#524F39',     // Supporting dark olive
-				palePink: '#F5DAC6',      // Supporting pale pink
-				brightOrange: '#F15A46',  // Accent bright orange
-				peachOrange: '#F6906A',   // Accent peach orange
+				// Roman Color Palette
+				roman: {
+					50: '#fdf3f3',
+					100: '#fde3e3',
+					200: '#fbcecd',
+					300: '#f8aaa9',
+					400: '#f17a78',
+					500: '#e85856',  // Main Primary Color
+					600: '#d3312f',
+					700: '#b12624',
+					800: '#932321',
+					900: '#7a2322',
+					950: '#420e0d',
+				},
+				// Neutral Colors
+				neutral: {
+					100: '#feefd7',
+					200: '#f7f2ee',
+					300: '#ced6bf',
+					400: '#cce4e6',
+					900: '#2e2e2f',
+				},
+				// Success Colors (Swamp Green)
+				success: {
+					50: '#f4f5f0',
+					100: '#e6e9de',
+					200: '#ced6c0',
+					300: '#a3b18a',
+					400: '#93a279',
+					500: '#75875b',
+					600: '#5b6a46',
+					700: '#475239',
+					800: '#3b4331',
+					900: '#343b2c',
+					950: '#1a1e15',
+				},
+				// Warning Colors (Chardonnay)
+				warning: {
+					50: '#fef8ee',
+					100: '#feefd6',
+					200: '#fbdcad',
+					300: '#f9c784',
+					400: '#f59e42',
+					500: '#f1811e',
+					600: '#e36713',
+					700: '#bc4e12',
+					800: '#953e17',
+					900: '#783516',
+					950: '#411809',
+				},
 			},
 			borderRadius: {
 				lg: 'var(--radius)',

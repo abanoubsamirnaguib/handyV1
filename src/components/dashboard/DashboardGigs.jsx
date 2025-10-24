@@ -267,7 +267,7 @@ const DashboardGigs = () => {
               : 'اختر فلتر مختلف لعرض الخدمات المتاحة.'}
           </p>
           {userGigs.length === 0 && (
-            <Button onClick={() => navigate('/dashboard/gigs/new')} className="mt-6 bg-olivePrimary hover:bg-olivePrimary/90 text-white">
+            <Button onClick={() => navigate('/dashboard/gigs/new')} className="mt-6 bg-roman-500 hover:bg-roman-500/90 text-white">
               <PlusCircle className="ml-2 h-4 w-4" /> أضف خدمتك الأولى
             </Button>
           )}
@@ -280,7 +280,7 @@ const DashboardGigs = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
-            >              <Card className="shadow-lg hover:shadow-xl transition-shadow flex flex-col h-full border-lightBeige/50">
+            >              <Card className="shadow-lg hover:shadow-xl transition-shadow flex flex-col h-full border-neutral-300">
                 <div className="relative h-48">
                   <img 
                     src={(() => {
@@ -313,7 +313,7 @@ const DashboardGigs = () => {
                     alt={gig.title} 
                     className="w-full h-full object-cover" 
                   />
-                  <Badge variant="secondary" className="absolute top-2 right-2 bg-olivePrimary text-white">
+                  <Badge variant="secondary" className="absolute top-2 right-2 bg-roman-500 text-white">
                     {gig.category_name || gig.category || 'غير محدد'}
                   </Badge>
                   <Badge 

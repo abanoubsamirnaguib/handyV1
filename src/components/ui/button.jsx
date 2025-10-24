@@ -8,16 +8,16 @@ const buttonVariants = cva(
 	{
 		variants: {
 			variant: {
-				default: 'bg-olivePrimary text-white hover:bg-olivePrimary/90', // Primary (60%)
-				destructive: 'bg-brightOrange text-white hover:bg-brightOrange/90', // Accent (10%)
+				default: 'bg-roman-500 text-white hover:bg-roman-500/90', // Primary (60%)
+				destructive: 'bg-warning-500 text-white hover:bg-warning-600', // Accent (10%)
 				outline:
-          'border border-olivePrimary/30 bg-background text-darkOlive hover:bg-lightGreen/30 hover:text-olivePrimary hover:border-olivePrimary',
+          'border border-roman-500/30 bg-background text-neutral-900 hover:bg-success-100/30 hover:text-roman-500 hover:border-roman-500',
 				secondary:
-          'bg-lightGreen text-darkOlive hover:bg-lightGreen/80', // Secondary (30%)
-				ghost: 'hover:bg-lightGreen hover:text-olivePrimary', // Secondary (30%)
-				link: 'text-burntOrange underline-offset-4 hover:underline', // Secondary (30%)
-				accent: 'bg-burntOrange text-white hover:bg-burntOrange/90', // Secondary (30%)
-				neutral: 'bg-lightBrownGray text-white hover:bg-lightBrownGray/90', // Supporting color
+          'bg-success-100 text-neutral-900 hover:bg-success-100/80', // Secondary (30%)
+				ghost: 'hover:bg-success-100 hover:text-roman-500', // Secondary (30%)
+				link: 'text-warning-500 underline-offset-4 hover:underline', // Secondary (30%)
+				accent: 'bg-roman-500 text-white hover:bg-roman-500/90', // Secondary (30%)
+				neutral: 'bg-neutral-500 text-white hover:bg-neutral-600', // Supporting color
 			},
 			size: {
 				default: 'h-10 px-4 py-2',

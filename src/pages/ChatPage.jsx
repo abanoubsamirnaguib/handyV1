@@ -330,7 +330,7 @@ const ChatPage = () => {
       
       {/* Sidebar: Conversations List */}
       <aside 
-        className={`w-full md:w-1/3 lg:w-1/4 border-l bg-lightBeige p-4 flex flex-col ${activeConversation && 'hidden md:flex'}`}
+        className={`w-full md:w-1/3 lg:w-1/4 border-l bg-neutral-100 p-4 flex flex-col ${activeConversation && 'hidden md:flex'}`}
         style={{ height: '100%', overflowY: 'auto' }}
       >
         <div className="flex items-center justify-between mb-4">

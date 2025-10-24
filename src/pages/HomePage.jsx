@@ -1,13 +1,15 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Search, ArrowRight, Star, TrendingUp, Shield, Clock, Palette, HandMetal, Gift, Shirt, Image, Utensils, AlertCircle, CheckCircle, Info, AlertTriangle, Calendar, Megaphone } from 'lucide-react';
+import { Search, ArrowRight, Star, TrendingUp, Shield, Clock, Palette, HandMetal, Gift, Shirt, Image, Utensils, AlertCircle, CheckCircle, Info, AlertTriangle, Calendar, Megaphone, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { api } from '@/lib/api';
+import WishlistButton from '@/components/ui/WishlistButton';
+import PWAInstallSection from '@/components/PWAInstallSection';
 
 const HomePage = () => {
   const navigate = useNavigate();
@@ -28,6 +30,17 @@ const HomePage = () => {
   const [categoriesError, setCategoriesError] = useState(null);
   const [showAllCategories, setShowAllCategories] = useState(false);
   const [categoriesPerRow, setCategoriesPerRow] = useState(window.innerWidth < 640 ? 4 : window.innerWidth < 1024 ? 6 : 8);
+
+  // Handle wishlist changes
+  const handleWishlistChange = (productId, isInWishlist) => {
+    setFeaturedGigs(prevGigs => 
+      prevGigs.map(gig => 
+        gig.id === productId 
+          ? { ...gig, in_wishlist: isInWishlist }
+          : gig
+      )
+    );
+  };
 
   // Helper to get full image URL
   const getImageUrl = (imagePath) => {
@@ -107,6 +120,7 @@ const HomePage = () => {
                 rating: prod.rating || 0,
                 reviewCount: prod.reviewCount || prod.review_count || 0,
                 sellerId: prod.sellerId || prod.seller_id || prod.seller?.id,
+                in_wishlist: prod.in_wishlist || false, // Preserve wishlist status
               }))
             : [];
           setFeaturedGigs(normalized);
@@ -233,27 +247,27 @@ const HomePage = () => {
   const getAnnouncementIcon = (type) => {
     const iconSize = 24;
     switch (type) {
-      case 'info': return <Info size={iconSize} className="text-darkOlive" />;
-      case 'warning': return <AlertTriangle size={iconSize} className="text-darkBrown" />;
-      case 'success': return <CheckCircle size={iconSize} className="text-olivePrimary" />;
-      case 'error': return <AlertCircle size={iconSize} className="text-brightOrange" />;
-      default: return <Info size={iconSize} className="text-darkOlive" />;
+      case 'info': return <Info size={iconSize} className="text-neutral-900" />;
+      case 'warning': return <AlertTriangle size={iconSize} className="text-neutral-900" />;
+      case 'success': return <CheckCircle size={iconSize} className="text-roman-500" />;
+      case 'error': return <AlertCircle size={iconSize} className="text-roman-600" />;
+      default: return <Info size={iconSize} className="text-neutral-900" />;
     }
   };
 
   const getAnnouncementTypeColor = (type) => {
     switch (type) {
-      case 'info': return 'bg-lightGreen text-darkOlive';
-      case 'warning': return 'bg-palePink text-darkBrown';
-      case 'success': return 'bg-paleGreen text-olivePrimary';
-      case 'error': return 'bg-peachOrange/20 text-brightOrange';
-      default: return 'bg-lightGreen text-darkOlive';
+      case 'info': return 'bg-success-100 text-neutral-900';
+      case 'warning': return 'bg-neutral-100 text-neutral-900';
+      case 'success': return 'bg-success-100 text-roman-500';
+      case 'error': return 'bg-roman-100 text-roman-600';
+      default: return 'bg-success-100 text-neutral-900';
     }
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-lightBeige">
-        <section className="relative bg-olivePrimary text-white py-20 md:py-32 overflow-hidden flex items-center justify-center min-h-[90vh]">
+    <div className="flex flex-col min-h-screen bg-neutral-100">
+        <section className="relative bg-roman-500 text-white py-20 md:py-32 overflow-hidden flex items-center justify-center min-h-[90vh]">
           <video
             className="absolute inset-0 w-screen h-screen object-cover z-0"
             style={{
@@ -284,46 +298,59 @@ const HomePage = () => {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8 }}
           >
-            <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
-              اكتشف <span className="text-creamyBeige">إبداعات</span> الحرفيين
-            </h1>
-            <p className="text-lg md:text-xl mb-8 text-lightBeige">
+            <div className="flex items-center justify-center mb-6">
+              <h1 className="text-4xl md:text-6xl font-bold leading-tight">
+                اكتشف <span className="text-neutral-100">إبداعات</span> الحرفيين
+              </h1>
+            </div>
+            <p className="text-lg md:text-xl mb-8 text-neutral-100">
               منصتك الأولى للعثور على منتجات يدوية فريدة ومصنوعة بحب وشغف.
             </p>
-            <Button
-              size="lg"
-              className="bg-burntOrange hover:bg-burntOrange/90 text-white px-8 py-3 text-lg"
-              onClick={() => {
-                  const isLoggedIn = !!localStorage.getItem('token');
-                  if (isLoggedIn) {
-                    navigate('/dashboard');
-                  } else {
-                    navigate('/register');
-                  }
-                }}
+            <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
+              <Button
+                size="lg"
+                className="bg-roman-500 hover:bg-roman-500/90 text-white px-8 py-3 text-lg"
+                onClick={() => {
+                    const isLoggedIn = !!localStorage.getItem('token');
+                    if (isLoggedIn) {
+                      navigate('/dashboard');
+                    } else {
+                      navigate('/register');
+                    }
+                  }}
+                >
+                  ابدا معنا
+                  <ArrowRight className="mr-2 h-5 w-5" />
+                </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-2 border-white text-neutral-500 hover:bg-white hover:text-roman-500 px-8 py-3 text-lg transition-all duration-300"
+                onClick={() => navigate('/explore')}
               >
-                ابدا معنا
-                <ArrowRight className="mr-2 h-5 w-5" />
+                اكتشف إبداعات الحرفيين
+                <ArrowLeft className="mr-2 h-5 w-5" />
               </Button>
+            </div>
             </motion.div>
           </div>
         </div>
       </section>
 
       {/* Categories Section */}
-      <section className="py-12 md:py-16 bg-lightBeige">
+      <section className="py-12 md:py-16 bg-white">
         <div className="container mx-auto px-4">
           <motion.h2 
-            className="text-2xl md:text-3xl font-bold text-center mb-8 md:mb-12 text-darkOlive"
+            className="text-2xl md:text-3xl font-bold text-center mb-8 md:mb-12 text-neutral-900"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            تصفح <span className="text-olivePrimary">أبرز التصنيفات</span>
+            تصفح <span className="text-roman-500">أبرز التصنيفات</span>
           </motion.h2>
           <div className="relative">
             {loadingCategories ? (
-              <div className="w-full text-center text-darkOlive/60 py-8">
+              <div className="w-full text-center text-neutral-900/60 py-8">
                 <div className="animate-pulse">جاري التحميل...</div>
               </div>
             ) : categoriesError ? (
@@ -331,7 +358,7 @@ const HomePage = () => {
                 {categoriesError}
               </div>
             ) : categories.length === 0 ? (
-              <div className="w-full text-center text-darkOlive/60 py-8">لا توجد تصنيفات متاحة</div>
+              <div className="w-full text-center text-neutral-900/60 py-8">لا توجد تصنيفات متاحة</div>
             ) : (
               <>
                 <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-4 md:gap-6 lg:gap-8 px-2 py-4">
@@ -350,7 +377,7 @@ const HomePage = () => {
                         <div className="flex flex-col items-center">
                           {/* Modern circular container for icon or image */}
                           <div className="relative mb-3 md:mb-4">
-                            <div className="w-16 h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 rounded-full bg-gradient-to-br from-olivePrimary/10 to-olivePrimary/20 flex items-center justify-center border-2 border-olivePrimary/30 group-hover:border-olivePrimary/60 transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg backdrop-blur-sm overflow-hidden">
+                            <div className="w-16 h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 rounded-full bg-gradient-to-br from-roman-100 to-roman-200 flex items-center justify-center border-2 border-roman-500/30 group-hover:border-roman-500/60 transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg backdrop-blur-sm overflow-hidden">
                               {category.image ? (
                                 <img 
                                   src={getImageUrl(category.image)} 
@@ -358,24 +385,24 @@ const HomePage = () => {
                                   className="w-full h-full object-cover rounded-full"
                                 />
                               ) : (
-                                <div className="w-8 h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 flex items-center justify-center text-olivePrimary group-hover:text-olivePrimary/80 transition-colors duration-300">
+                                <div className="w-8 h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 flex items-center justify-center text-roman-500 group-hover:text-roman-500/80 transition-colors duration-300">
                                   {getCategoryIcon(category.icon)}
                                 </div>
                               )}
                               {/* Decorative ring */}
-                              <div className="absolute inset-0 rounded-full border border-olivePrimary/20 animate-pulse"></div>
+                              <div className="absolute inset-0 rounded-full border border-roman-500/20 animate-pulse"></div>
                             </div>
                             {/* Glow effect */}
-                            <div className="absolute inset-0 rounded-full bg-olivePrimary/10 blur-xl opacity-0 group-hover:opacity-30 transition-opacity duration-300"></div>
+                            <div className="absolute inset-0 rounded-full bg-roman-500/10 blur-xl opacity-0 group-hover:opacity-30 transition-opacity duration-300"></div>
                           </div>
                           
                           {/* Category name */}
-                          <h3 className="font-semibold text-center text-sm md:text-base text-darkOlive group-hover:text-olivePrimary transition-colors duration-300 leading-tight px-2">
+                          <h3 className="font-semibold text-center text-sm md:text-base text-neutral-900 group-hover:text-roman-500 transition-colors duration-300 leading-tight px-2">
                             {category.name}
                           </h3>
                           
                           {/* Hover indicator */}
-                          <div className="w-0 group-hover:w-8 h-0.5 bg-olivePrimary mt-2 transition-all duration-300 rounded-full"></div>
+                          <div className="w-0 group-hover:w-8 h-0.5 bg-roman-500 mt-2 transition-all duration-300 rounded-full"></div>
                         </div>
                       </Link>
                     </motion.div>
@@ -388,7 +415,7 @@ const HomePage = () => {
                     <Button
                       variant="outline"
                       onClick={() => setShowAllCategories(!showAllCategories)}
-                      className="border-olivePrimary text-olivePrimary hover:bg-olivePrimary hover:text-white px-6 py-2"
+                      className="border-roman-500 text-roman-500 hover:bg-roman-500 hover:text-white px-6 py-2"
                     >
                       {showAllCategories ? 'عرض أقل' : 'عرض المزيد'}
                       <ArrowRight className={`mr-2 h-4 w-4 transition-transform duration-300 ${showAllCategories ? 'rotate-90' : ''}`} />
@@ -404,63 +431,95 @@ const HomePage = () => {
       </section>
 
       {/* Featured Gigs Section */}
-      <section className="py-16 bg-paleGreen">
+      <section className="py-16 bg-roman-400/10">
         <div className="container mx-auto px-4">
           <motion.h2 
-            className="text-3xl font-bold text-center mb-12 text-darkOlive"
+            className="text-3xl font-bold text-center mb-12 text-neutral-900"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            منتجات <span className="text-olivePrimary">مميزة</span>
+            منتجات <span className="text-roman-500">مميزة</span>
           </motion.h2>
-          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-2">
             {loadingFeatured ? (
-              <div className="col-span-8 text-center text-darkOlive/60 py-8">جاري التحميل...</div>
+              <div className="col-span-8 text-center text-neutral-900/60 py-8">جاري التحميل...</div>
             ) : featuredError ? (
               <div className="col-span-8 text-center text-red-600 py-8">{featuredError}</div>
             ) : featuredGigs.length === 0 ? (
-              <div className="col-span-8 text-center text-darkOlive/60 py-8">لا توجد منتجات مميزة متاحة</div>
+              <div className="col-span-8 text-center text-neutral-900/60 py-8">لا توجد منتجات مميزة متاحة</div>
             ) : (
-              featuredGigs.map((gig, index) => (
-                <motion.div
-                  key={gig.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
-                >
-                  <Card className="overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 flex flex-col h-full card-hover border-olivePrimary/20 text-center p-4">
-                    <div className="relative h-40 md:h-44 lg:h-48 flex items-center justify-center">
-                      <img src={gig.images.length > 0 ? gig.images[0] : 'https://images.unsplash.com/photo-1680188700662-5b03bdcf3017'} alt={gig.title} className="w-full h-full object-cover rounded-md" />
-                      <Badge variant="secondary" className="absolute top-2 right-2 bg-olivePrimary text-white text-xs px-2 py-1">{
-                        categories.find(cat => cat.id == gig.category)?.name || gig.category
-                      }</Badge>
-                    </div>
-                    <CardHeader className="pb-1 pt-3 px-0">
-                      <CardTitle className="text-base font-semibold text-darkOlive h-10 overflow-hidden leading-tight">{gig.title}</CardTitle>
-                    </CardHeader>
-                    <CardContent className="flex-grow px-0">
-                      <div className="flex items-center justify-center text-xs text-darkOlive/80 mb-1">
-                        <Star className="h-3 w-3 text-burntOrange mr-1" />
-                        {gig.rating} ({gig.reviewCount} تقييمات)
+              featuredGigs.map((gig, index) => {
+                // Find category name from gig.category object if present
+                let categoryName = gig.category && gig.category.name ? gig.category.name : null;
+                if (!categoryName) {
+                  const categoryObj = categories.find(cat => cat.id === (gig.category_id || gig.category?.id || gig.category));
+                  categoryName = categoryObj ? categoryObj.name : (gig.category_id || gig.category?.id || gig.category);
+                }
+
+                return (
+                  <motion.div
+                    key={gig.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: index * 0.1 }}
+                  >
+                    <Card className="overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 flex flex-col h-62 card-hover border-roman-500/20" dir="rtl">
+                      <div className="relative h-56">
+                        <img 
+                          src={gig.images && gig.images.length > 0 
+                            ? gig.images[0] 
+                            : "https://images.unsplash.com/photo-1680188700662-5b03bdcf3017"} 
+                          alt={gig.title} 
+                          className="w-full h-full object-cover" 
+                        />
+                        <div className="absolute top-2 right-2 flex flex-col gap-1">
+                          <Badge variant="secondary" className="bg-roman-500 text-white">{categoryName}</Badge>
+                        </div>
+                        <div className="absolute top-2 left-2">
+                          <WishlistButton productId={gig.id} inWishlist={gig.in_wishlist} onWishlistChange={handleWishlistChange} size="md" />
+                        </div>
+                        <div className="absolute bottom-2 right-2 flex flex-col gap-1">
+                          <Badge variant="outline" className={`text-xs ${gig.type === 'gig' ? 'bg-warning-500/50 text-white border-warning-500' : 'bg-blue-100 text-blue-600 border-blue-300'}`}>
+                            {gig.type === 'gig' ? 'خدمة مخصصة' : 'منتج جاهز'}
+                          </Badge>
+                        </div>
                       </div>
-                      <p className="text-base font-bold text-olivePrimary mb-1">{gig.price} جنيه</p>
-                    </CardContent>
-                    <CardFooter className="px-0 pt-2">
-                      <Button asChild className="w-full bg-burntOrange hover:bg-burntOrange/90 text-xs py-2">
-                        <Link to={`/gigs/${gig.id}`}>
-                          عرض التفاصيل
-                          <ArrowRight className="mr-2 h-3 w-3" />
-                        </Link>
-                      </Button>
-                    </CardFooter>
-                  </Card>
-                </motion.div>
-              ))
+                      <CardHeader className="pb-2 text-right p-2">
+                        <CardTitle className="text-sm font-semibold text-neutral-900 overflow-hidden relative group cursor-pointer">
+                          <div 
+                            className={`whitespace-nowrap transition-all duration-300 hover:scale-105 hover:text-roman-500 ${gig.title.length > 25 ? 'animate-scroll' : ''}`}
+                            style={{ animationDuration: `${Math.max(3, gig.title.length * 0.2)}s` }}
+                          >
+                            {gig.title}
+                          </div>
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="flex-grow text-right p-2">
+                        <div className="flex items-center justify-between text-xs mb-2">
+                          <div className="flex items-center text-neutral-900/70">
+                            <Star className="h-3 w-3 text-warning-500 ml-1" />
+                            <span className="whitespace-nowrap">{gig.rating} ({gig.reviewCount})</span>
+                          </div>
+                          <p className="text-sm font-bold text-roman-500 whitespace-nowrap">{gig.price} ج</p>
+                        </div>
+                      </CardContent>
+                      <CardFooter className="flex justify-start p-2">
+                        <Button asChild className="w-full bg-roman-500 hover:bg-roman-500/90 text-white text-xs">
+                          <Link to={`/gigs/${gig.id}`} className="whitespace-nowrap">
+                            عرض التفاصيل
+                            <ArrowLeft className="ml-2 h-3 w-3" />
+                          </Link>
+                        </Button>
+                      </CardFooter>
+                    </Card>
+                  </motion.div>
+                );
+              })
             )}
           </div>
           <div className="text-center mt-12">
-            <Button asChild variant="outline" size="lg" className="border-olivePrimary text-olivePrimary hover:bg-olivePrimary hover:text-white">
+            <Button asChild variant="outline" size="lg" className="border-roman-500 text-roman-500 hover:bg-roman-500 hover:text-white">
               <Link to="/explore">
                 استكشف المزيد
                 <ArrowRight className="mr-2 h-4 w-4" />
@@ -472,7 +531,7 @@ const HomePage = () => {
 
       {/* Latest Announcements Section */}
       {!loadingAnnouncements && !announcementsError && latestAnnouncements.length > 0 && (
-        <section className="py-16 bg-gradient-to-r from-creamyBeige to-paleGreen">
+        <section className="py-16 bg-gradient-to-r from-neutral-100 to-success-100">
           <div className="container mx-auto px-4">
             <motion.div 
               className="text-center mb-12"
@@ -480,11 +539,11 @@ const HomePage = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
-              <h2 className="text-3xl font-bold mb-4 text-darkOlive">
-                <Megaphone className="inline-block mr-2 text-olivePrimary" size={32} />
-                آخر <span className="text-olivePrimary">الإعلانات</span>
+              <h2 className="text-3xl font-bold mb-4 text-neutral-900">
+                <Megaphone className="inline-block mr-2 text-roman-500" size={32} />
+                آخر <span className="text-roman-500">الإعلانات</span>
               </h2>
-              <p className="text-darkOlive/70">اطلع على أحدث الأخبار والتحديثات المهمة</p>
+              <p className="text-neutral-900/70">اطلع على أحدث الأخبار والتحديثات المهمة</p>
             </motion.div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -495,7 +554,7 @@ const HomePage = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, delay: index * 0.1 }}
                 >
-                  <Card className="h-full hover:shadow-lg transition-shadow duration-300 border-l-4 border-l-olivePrimary bg-white/90 backdrop-blur-sm">
+                  <Card className="h-full hover:shadow-lg transition-shadow duration-300 border-l-4 border-l-roman-500 bg-white/90 backdrop-blur-sm">
                     <CardHeader className="pb-3">
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex items-center gap-2">
@@ -506,17 +565,17 @@ const HomePage = () => {
                              announcement.type === 'success' ? 'نجاح' : 'تنبيه'}
                           </Badge>
                         </div>
-                        <div className="text-xs text-lightBrownGray flex items-center">
-                          <Calendar className="h-3 w-3 mr-1 text-olivePrimary" />
+                        <div className="text-xs text-neutral-400 flex items-center">
+                          <Calendar className="h-3 w-3 mr-1 text-roman-500" />
                           {new Date(announcement.created_at).toLocaleDateString('ar-EG')}
                         </div>
                       </div>
-                      <CardTitle className="text-lg font-semibold text-darkOlive leading-tight">
+                      <CardTitle className="text-lg font-semibold text-neutral-900 leading-tight">
                         {announcement.title}
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="pt-0">
-                      <p className="text-darkOlive/80 leading-relaxed line-clamp-3">
+                      <p className="text-neutral-900/80 leading-relaxed line-clamp-3">
                         {announcement.content}
                       </p>
                       {announcement.image && (
@@ -530,7 +589,7 @@ const HomePage = () => {
                       )}
                     </CardContent>
                     <CardFooter className="pt-2">
-                      <Button asChild variant="outline" size="sm" className="w-full text-olivePrimary border-olivePrimary hover:bg-olivePrimary hover:text-white">
+                      <Button asChild variant="outline" size="sm" className="w-full text-roman-500 border-roman-500 hover:bg-roman-500 hover:text-white">
                         <Link to={`/announcements#${announcement.id}`}>
                           اقرأ المزيد
                           <ArrowRight className="mr-2 h-3 w-3" />
@@ -543,7 +602,7 @@ const HomePage = () => {
             </div>
             
             <div className="text-center mt-8">
-              <Button asChild variant="outline" size="lg" className="border-olivePrimary text-olivePrimary hover:bg-olivePrimary hover:text-white">
+              <Button asChild variant="outline" size="lg" className="border-roman-500 text-roman-500 hover:bg-roman-500 hover:text-white">
                 <Link to="/announcements">
                   عرض جميع الإعلانات
                   <ArrowRight className="mr-2 h-4 w-4" />
@@ -558,18 +617,18 @@ const HomePage = () => {
       <section className="py-16 bg-white">
         <div className="container mx-auto px-4">
           <motion.h2 
-            className="text-3xl font-bold text-center mb-12 text-darkOlive"
+            className="text-3xl font-bold text-center mb-12 text-neutral-900"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            كيف تعمل <span className="text-olivePrimary">منصتنا؟</span>
+            كيف تعمل <span className="text-roman-500">منصتنا؟</span>
           </motion.h2>
           <div className="grid md:grid-cols-3 gap-8 text-center">
             {[
-              { icon: <Search size={48} className="text-olivePrimary mx-auto mb-4" />, title: "اكتشف", description: "تصفح آلاف المنتجات اليدوية الفريدة من مختلف الحرفيين." },
-              { icon: <HandMetal size={48} className="text-olivePrimary mx-auto mb-4" />, title: "اطلب", description: "اختر المنتج الذي يعجبك وقم بطلبه بسهولة وأمان." },
-              { icon: <Gift size={48} className="text-olivePrimary mx-auto mb-4" />, title: "استلم", description: "استلم تحفتك الفنية المصنوعة يدويًا واستمتع بها." },
+              { icon: <Search size={48} className="text-roman-500 mx-auto mb-4" />, title: "اكتشف", description: "تصفح آلاف المنتجات اليدوية الفريدة من مختلف الحرفيين." },
+              { icon: <HandMetal size={48} className="text-roman-500 mx-auto mb-4" />, title: "اطلب", description: "اختر المنتج الذي يعجبك وقم بطلبه بسهولة وأمان." },
+              { icon: <Gift size={48} className="text-roman-500 mx-auto mb-4" />, title: "استلم", description: "استلم تحفتك الفنية المصنوعة يدويًا واستمتع بها." },
             ].map((step, index) => (
               <motion.div
                 key={index}
@@ -579,8 +638,8 @@ const HomePage = () => {
                 transition={{ duration: 0.5, delay: index * 0.2 }}
               >
                 {step.icon}
-                <h3 className="text-xl font-semibold mb-2 text-darkOlive">{step.title}</h3>
-                <p className="text-darkOlive/70">{step.description}</p>
+                <h3 className="text-xl font-semibold mb-2 text-neutral-900">{step.title}</h3>
+                <p className="text-neutral-900/70">{step.description}</p>
               </motion.div>
             ))}
           </div>
@@ -588,23 +647,23 @@ const HomePage = () => {
       </section>
 
       {/* Top Sellers Section */}
-      <section className="py-16 bg-creamyBeige">
+      <section className="py-16 bg-roman-400/10">
         <div className="container mx-auto px-4">
           <motion.h2 
-            className="text-3xl font-bold text-center mb-12 text-darkOlive"
+            className="text-3xl font-bold text-center mb-12 text-neutral-900"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            تعرف على <span className="text-olivePrimary">أفضل الحرفيين</span>
+            تعرف على <span className="text-roman-500">أفضل الحرفيين</span>
           </motion.h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {loadingSellers ? (
-              <div className="col-span-3 text-center text-darkOlive/60 py-8">جاري التحميل...</div>
+              <div className="col-span-3 text-center text-neutral-900/60 py-8">جاري التحميل...</div>
             ) : sellersError ? (
               <div className="col-span-3 text-center text-red-600 py-8">{sellersError}</div>
             ) : topSellers.length === 0 ? (
-              <div className="col-span-3 text-center text-darkOlive/60 py-8">لا يوجد حرفيون مميزون حالياً</div>
+              <div className="col-span-3 text-center text-neutral-900/60 py-8">لا يوجد حرفيون مميزون حالياً</div>
             ) : (
               topSellers.map((seller, index) => (
                 <motion.div
@@ -613,17 +672,17 @@ const HomePage = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, delay: index * 0.15 }}
                 >
-                  <Card className="text-center p-6 shadow-lg hover:shadow-xl transition-shadow duration-300 card-hover border-olivePrimary/20">
-                    <Avatar className="w-24 h-24 mx-auto mb-4 border-4 border-olivePrimary">
+                  <Card className="text-center p-6 shadow-lg hover:shadow-xl transition-shadow duration-300 card-hover border-roman-500/20">
+                    <Avatar className="w-24 h-24 mx-auto mb-4 border-4 border-roman-500">
                       <AvatarImage src={seller.avatar} alt={seller.name} />
                       <AvatarFallback>{seller.name.charAt(0)}</AvatarFallback>
                     </Avatar>
-                    <h3 className="text-xl font-semibold text-darkOlive mb-1">{seller.name}</h3>
-                    <p className="text-sm text-darkOlive/60 mb-2">{Array.isArray(seller.skills) ? seller.skills.slice(0,2).join('، ') : ''}</p>
-                    <div className="flex justify-center items-center text-burntOrange mb-3">
+                    <h3 className="text-xl font-semibold text-neutral-900 mb-1">{seller.name}</h3>
+                    <p className="text-sm text-neutral-900/60 mb-2">{Array.isArray(seller.skills) ? seller.skills.slice(0,2).join('، ') : ''}</p>
+                    <div className="flex justify-center items-center text-warning-500 mb-3">
                       <Star size={16} className="mr-1" /> {seller.rating} ({seller.reviewCount} تقييمات)
                     </div>
-                    <Button asChild variant="outline" className="border-olivePrimary text-olivePrimary hover:bg-olivePrimary hover:text-white">
+                    <Button asChild variant="outline" className="border-roman-500 text-roman-500 hover:bg-roman-500 hover:text-white">
                       <Link to={`/profile/${seller.id}`}>عرض الملف الشخصي</Link>
                     </Button>
                   </Card>
@@ -634,8 +693,11 @@ const HomePage = () => {
         </div>
       </section>
 
+      {/* PWA Install Section */}
+      <PWAInstallSection />
+
       {/* Call to Action Section */}
-      <section className="py-20 bg-creamyBeige text-white relative overflow-hidden">
+      <section className="py-20 bg-neutral-100 text-white relative overflow-hidden">
         {/* Modern blurred background shape */}
         <div
           className="absolute inset-0 w-full h-full z-0"
@@ -659,7 +721,7 @@ const HomePage = () => {
             هل أنت حرفي موهوب؟
           </motion.h2>
           <motion.p 
-            className="text-lg md:text-xl mb-8 text-lightBeige"
+            className="text-lg md:text-xl mb-8 text-neutral-100"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.2 }}
@@ -671,7 +733,7 @@ const HomePage = () => {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.7, delay: 0.4 }}
           >
-            <Button size="lg" className="bg-olivePrimary hover:bg-olivePrimary/90 text-white px-8 py-3 text-lg" onClick={() => navigate('/register?role=seller')}>
+            <Button size="lg" className="bg-roman-500 hover:bg-roman-500/90 text-white px-8 py-3 text-lg" onClick={() => navigate('/register?role=seller')}>
               ابدأ البيع الآن
               <ArrowRight className="mr-2 h-5 w-5" />
             </Button>

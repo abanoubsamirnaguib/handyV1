@@ -144,7 +144,7 @@ const CreateGigPage = () => {
     }
     setLoading(true);
     try {
-      const newGig = await sellerApi.createProduct({
+      const response = await sellerApi.createProduct({
         title: gigData.title,
         description: gigData.description,
         price: gigData.price,
@@ -155,7 +155,14 @@ const CreateGigPage = () => {
         images: gigData.images,
       });
       
-      toast({ title: "تم إنشاء الخدمة بنجاح!", description: `خدمة "${gigData.title}" أصبحت جاهزة.` });
+      const newGig = response.product || response;
+      const notificationMessage = response.notification || `خدمة "${gigData.title}" أصبحت جاهزة.`;
+      
+      toast({ 
+        title: "تم إنشاء الخدمة بنجاح!", 
+        description: notificationMessage,
+        duration: 6000 // عرض الرسالة لمدة أطول
+      });
       
       // Update local gigs list
       setSellerGigs(prev => [newGig, ...prev]);

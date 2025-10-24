@@ -75,7 +75,7 @@ class DeliveryPersonnelCrudController extends Controller
                     'name' => $deliveryPerson->name,
                     'email' => $deliveryPerson->email,
                     'password' => $password,
-                    'login_url' => url('/delivery')
+                    'login_url' => env('FRONT_URL', url('/')) . '/delivery'
                 ],
                 'emails.delivery-account-created'
             );
@@ -324,7 +324,7 @@ class DeliveryPersonnelCrudController extends Controller
 
             $order->addToHistory(
                 'assigned_to_pickup', 
-                $pickupPerson->id, 
+                Auth::id(), 
                 'assigned_to_pickup', 
                 'تم تعيين موظف الاستلام من قبل الأدمن'
             );
@@ -382,7 +382,7 @@ class DeliveryPersonnelCrudController extends Controller
 
             $order->addToHistory(
                 'assigned_to_delivery', 
-                $deliveryPerson->id, 
+                Auth::id(), 
                 'assigned_to_delivery', 
                 'تم تعيين موظف التسليم من قبل الأدمن'
             );
@@ -449,7 +449,7 @@ class DeliveryPersonnelCrudController extends Controller
 
                 $order->addToHistory(
                     'assigned_to_delivery', 
-                    $deliveryPerson->id, 
+                    Auth::id(), 
                     'assigned_to_delivery', 
                     'تم تعيين الطلب للدليفري من قبل الأدمن'
                 );

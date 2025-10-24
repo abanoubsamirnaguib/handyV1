@@ -2,13 +2,16 @@
 namespace App\Http\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Support\Facades\Storage;
 
 class OrderResource extends JsonResource
 {
     public function toArray($request)
     {
-        return [
+        $user = $request->user();
+        $isAdmin = $user && ($user->role === 'admin');
+        $isSellerOwner = $user && $user->seller && ($user->seller->id === $this->seller_id);
+
+        $base = [
             'id' => $this->id,
             'user' => new UserResource(resource: $this->whenLoaded('user')),
             'seller' => new SellerResource($this->whenLoaded('seller')),
@@ -18,7 +21,7 @@ class OrderResource extends JsonResource
             'status_ar' => $this->getStatusLabel(), // For OrderDetailPage compatibility
             'next_action' => $this->getNextAction(),
             'total_price' => $this->total_price,
-            'total_amount' => $this->total_price, // For AdminOrders compatibility
+            'total_amount' => ($this->buyer_total ?? ($this->total_price + ($this->delivery_fee ?? 0))), // For AdminOrders compatibility
             'order_date' => $this->order_date,
             'delivery_date' => $this->delivery_date,
             'expected_delivery_date' => $this->delivery_date, // For OrderDetailPage compatibility
@@ -33,15 +36,18 @@ class OrderResource extends JsonResource
             'deposit_amount' => $this->deposit_amount,
             'deposit_status' => $this->deposit_status,
             'deposit_notes' => $this->deposit_notes,
-            'deposit_image' => $this->deposit_image ? Storage::disk('public')->url($this->deposit_image) : null,
+            'deposit_image' => $this->deposit_image ? asset('storage/' . $this->deposit_image) : null, // return path only
+            'deposit_image_url' => $this->deposit_image ? asset('storage/' . $this->deposit_image) : null,
+            'remaining_payment_proof' => $this->remaining_payment_proof ? asset('storage/' . $this->remaining_payment_proof) : null, // return path only
+            'remaining_payment_proof_url' => $this->remaining_payment_proof ? asset('storage/' . $this->remaining_payment_proof) : null,
             'is_service_order' => $this->is_service_order,
             'service_requirements' => $this->service_requirements,
             'chat_conversation_id' => $this->chat_conversation_id,
             'conversation' => $this->whenLoaded('conversation'),
             
             // الحقول الجديدة
-            'payment_proof' => $this->payment_proof ? Storage::disk('public')->url($this->payment_proof) : null,
-            'payment_proof_path' => $this->payment_proof,
+            'payment_proof' => $this->payment_proof ? asset('storage/' . $this->payment_proof) : null, // return path only
+            'payment_proof_path' => $this->payment_proof ? asset('storage/' . $this->payment_proof) : null,
             'admin_approved_at' => $this->admin_approved_at,
             'admin_approved_by' => $this->admin_approved_by,
             'admin_approver' => new UserResource($this->whenLoaded('adminApprover')),
@@ -82,7 +88,21 @@ class OrderResource extends JsonResource
             
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
+            
+            // المدينة والعمولة
+            'city_id' => $this->city_id,
+            'city' => $this->relationLoaded('city') ? new CityResource($this->city) : null,
+            'delivery_fee' => $this->delivery_fee,
+            'buyer_total' => $this->buyer_total ?? ($this->total_price + ($this->delivery_fee ?? 0)),
         ];
+
+        if ($isAdmin || $isSellerOwner) {
+            $base['platform_commission_percent'] = $this->platform_commission_percent;
+            $base['platform_commission_amount'] = $this->platform_commission_amount;
+            $base['seller_net_amount'] = $this->seller_net_amount;
+        }
+
+        return $base;
     }
     
     private function getTimeline()

@@ -380,15 +380,15 @@ const PolicyPage = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: index * 0.1 }}
           >
-            <Card className="border-lightBeige/50 shadow-md hover:shadow-lg transition-shadow">
+            <Card className="border-neutral-200/50 shadow-md hover:shadow-lg transition-shadow">
               <CardHeader>
                 <CardTitle 
                   className="flex items-center justify-between cursor-pointer"
                   onClick={() => toggleSection(policy.id)}
                 >
                   <div className="flex items-center space-x-3 space-x-reverse">
-                                      <div className="bg-olivePrimary/10 rounded-lg p-2">
-                    <policy.icon className="h-6 w-6 text-olivePrimary" />
+                                      <div className="bg-roman-500/10 rounded-lg p-2">
+                    <policy.icon className="h-6 w-6 text-roman-500" />
                     </div>
                     <span className="text-xl font-bold text-gray-800">{policy.title}</span>
                   </div>
@@ -426,20 +426,20 @@ const PolicyPage = () => {
 
       {/* Contact Section */}
       <motion.div 
-        className="mt-12 bg-gradient-to-r from-olivePrimary/5 to-burntOrange/5 rounded-2xl p-8 text-center"
+        className="mt-12 bg-gradient-to-r from-roman-500/5 to-warning-500/5 rounded-2xl p-8 text-center"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.8 }}
       >
-        <Gavel className="h-12 w-12 text-olivePrimary mx-auto mb-4" />
+        <Gavel className="h-12 w-12 text-roman-500 mx-auto mb-4" />
         <h3 className="text-2xl font-bold text-gray-800 mb-4">لديك استفسار حول السياسات؟</h3>
         <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
           إذا كان لديك أي استفسار حول هذه السياسات أو تحتاج إلى توضيح أي نقطة، 
           لا تتردد في التواصل مع فريق الدعم الفني.
         </p>
         <Button 
-          className="bg-olivePrimary hover:bg-olivePrimary/90 text-white px-8 py-3"
-          onClick={() => window.location.href = '/contact-us'}
+          className="bg-roman-500 hover:bg-roman-500/90 text-white px-8 py-3"
+          onClick={() => window.location.href = '/about-us'}
         >
           <MessageSquare className="ml-2 h-5 w-5" />
           تواصل معنا

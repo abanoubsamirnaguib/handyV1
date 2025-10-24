@@ -35,6 +35,9 @@ class NotificationCrudController extends Controller
             'review' => 'تقييم جديد',
             'payment' => 'دفعة مستلمة',
             'system' => 'إشعار النظام',
+            'product_pending' => 'منتج قيد المراجعة',
+            'product_approved' => 'تم تفعيل المنتج',
+            'product_status' => 'حالة المنتج',
         ];
         return $titles[$type] ?? 'إشعار';
     }

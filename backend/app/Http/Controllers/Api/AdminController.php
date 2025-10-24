@@ -24,6 +24,7 @@ class AdminController extends Controller
             'total_orders' => Order::count(),
             'active_users' => User::where('status', 'active')->count(),
             'pending_sellers' => User::whereHas('seller')->where('status', 'pending')->count(),
+            'pending_orders' => Order::where('status', 'pending')->count(),
         ];
 
         return response()->json($stats);
@@ -171,12 +172,22 @@ class AdminController extends Controller
             'status' => 'required|in:active,inactive,pending_review,rejected'
         ]);
         $product->update(['status' => $validated['status']]);
+
+        // إذا تم تفعيل المنتج، نرسل إشعارًا للبائع
+        if ($validated['status'] === 'active' && $product->seller && $product->seller->user_id) {
+            \App\Services\NotificationService::productApproved(
+                userId: $product->seller->user_id,
+                productTitle: $product->title,
+                productType: $product->type
+            );
+        }
+
         return new ProductResource($product);
     }
 
     public function getOrders(Request $request)
     {
-        $query = Order::with(['user', 'seller.user', 'items.product', 'adminApprover', 'deliveryPerson']);
+        $query = Order::with(['user', 'seller.user', 'items.product', 'adminApprover', 'deliveryPerson', 'history.actionUser', 'city']);
 
         // Search functionality
         if ($request->filled('search')) {
@@ -244,29 +255,17 @@ class AdminController extends Controller
     {
         $order = Order::findOrFail($id);
         
-        if ($order->status !== 'pending_admin_approval') {
+        // استخدام الطريقة الجديدة من النموذج للتحقق من إمكانية الموافقة
+        if (!$order->canBeApprovedByAdmin()) {
             return response()->json([
-                'message' => 'Order cannot be approved in current status'
+                'message' => 'لا يمكن الموافقة على هذا الطلب في الوقت الحالي'
             ], 400);
         }
 
-        $order->update([
-            'status' => 'admin_approved',
-            'payment_status' => 'paid',
-            'admin_approved_at' => now(),
-            'admin_approved_by' => auth()->id(),
-            'admin_notes' => $request->input('notes', '')
-        ]);
+        // استخدام الطريقة الجديدة من النموذج للموافقة
+        $order->approveByAdmin(auth()->id(), $request->input('notes', ''));
 
-        // Create order history entry
-        $order->history()->create([
-            'status' => 'admin_approved',
-            'notes' => $request->input('notes', ''),
-            'changed_by' => auth()->id(),
-            'changed_at' => now()
-        ]);
-
-        return new OrderResource($order->load(['user', 'seller.user', 'items.product', 'adminApprover']));
+        return new OrderResource($order->fresh()->load(['user', 'seller.user', 'items.product', 'adminApprover']));
     }
 
     /**

@@ -28,6 +28,23 @@ class NotificationService
     }
 
     /**
+     * Create a welcome notification for new user
+     */
+    public static function welcome(int $userId, string $userName, bool $isSeller = false): Notification
+    {
+        $message = $isSeller 
+            ? "مرحباً {$userName}! 🎉 نحن سعداء بانضمامك كبائع. يمكنك الآن البدء في عرض منتجاتك وخدماتك!"
+            : "مرحباً {$userName}! 🎉 نحن سعداء بانضمامك إلى بازار. ابدأ الآن في استكشاف المنتجات والخدمات المميزة!";
+        
+        return self::create(
+            userId: $userId,
+            type: 'system',
+            message: $message,
+            link: '/dashboard'
+        );
+    }
+
+    /**
      * Create an order notification
      */
     public static function orderCreated(int $userId, int $orderId): Notification
@@ -37,6 +54,39 @@ class NotificationService
             type: 'order',
             message: "تم إنشاء طلب جديد برقم #{$orderId}",
             link: "/orders/{$orderId}"
+        );
+    }
+
+    /**
+     * Create a product pending review notification
+     */
+    public static function productPendingReview(int $userId, string $productTitle, string $productType = 'منتج'): Notification
+    {
+        $typeText = $productType === 'gig' ? 'خدمة' : 'منتج';
+        $message = "تم إضافة {$typeText} بعنوان \"{$productTitle}\". 
+الآن قيد المراجعة لدى الإدارة، وعادةً ما تستغرق الموافقة والنشر حوالي 48–72 ساعة.";
+        
+        return self::create(
+            userId: $userId,
+            type: 'product_pending',
+            message: $message,
+            link: '/dashboard/gigs'
+        );
+    }
+
+    /**
+     * Create a product approved notification
+     */
+    public static function productApproved(int $userId, string $productTitle, string $productType = 'منتج'): Notification
+    {
+        $typeText = $productType === 'gig' ? 'خدمتك' : 'منتجك';
+        $message = "🎉 تم تفعيل {$typeText}: \"{$productTitle}\" وأصبح متاحاً للعملاء الآن!";
+        
+        return self::create(
+            userId: $userId,
+            type: 'product_approved',
+            message: $message,
+            link: '/dashboard/gigs'
         );
     }
 

@@ -46,14 +46,14 @@ const DashboardSidebar = ({ user }) => {
           animate={{ width: isMobile ? '16rem' : (isSidebarOpen ? '16rem' : '5rem'), x: 0 }}
           exit={{ width: 0, x: -250 }}
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          className={`bg-background/95 backdrop-blur-md border-l border-olivePrimary/20 flex flex-col z-40 ${
+          className={`bg-background/95 backdrop-blur-md border-l border-roman-500/20 flex flex-col z-40 ${
             isMobile ? 'fixed top-0 right-0 h-screen shadow-lg' : 'h-screen sticky top-0'
           } ${isSidebarOpen ? 'sidebar-expanded' : 'sidebar-collapsed'}`}
         >
           {isMobile && (
             <button 
               onClick={toggleSidebar} 
-              className="absolute top-4 left-4 p-1 rounded-full bg-lightGreen/60 text-darkOlive hover:bg-lightGreen/80"
+              className="absolute top-4 left-4 p-1 rounded-full bg-success-100/60 text-neutral-900 hover:bg-success-100/80"
             >
               <X size={20} />
             </button>
@@ -61,10 +61,15 @@ const DashboardSidebar = ({ user }) => {
 
           <div className="p-4 space-y-4 overflow-y-auto flex-grow">
             <div className="flex items-center justify-between mb-6 px-2">
-              <Link to="/" className="flex items-center">
+              <Link to="/" className="flex items-center space-x-2 space-x-reverse">
+              <img 
+                src="/Asset_12.svg" 
+                alt="بازار Logo" 
+                className={`h-6 w-6 object-contain ${!isSidebarOpen && !isMobile ? 'scale-010 opacity-0' : 'scale-100 opacity-100'} transition-all duration-300`}
+              />
                 <motion.div
                   whileHover={{ scale: 1.05 }}
-                  className={`text-xl font-bold text-olivePrimary ${!isSidebarOpen && !isMobile ? 'scale-0 w-0 opacity-0' : 'scale-100 opacity-100'} transition-all duration-300`}
+                  className={`text-xl font-bold text-roman-500 ${!isSidebarOpen && !isMobile ? 'scale-0 w-0 opacity-0' : 'scale-100 opacity-100'} transition-all duration-300`}
                 >
                   بازار
                 </motion.div>
@@ -72,7 +77,7 @@ const DashboardSidebar = ({ user }) => {
               {!isMobile && (
                 <button 
                   onClick={toggleSidebar} 
-                  className="p-1 rounded-full bg-lightGreen/60 text-olivePrimary hover:bg-lightGreen/80 transition-colors duration-200"
+                  className="p-1 rounded-full bg-success-100/60 text-roman-500 hover:bg-success-100/80 transition-colors duration-200"
                 >
                   <ChevronLeft size={20} className={`sidebar-icon ${!isSidebarOpen ? 'sidebar-icon-rotated' : ''}`} />
                 </button>
@@ -82,8 +87,8 @@ const DashboardSidebar = ({ user }) => {
                 variant="ghost"
                 className={`w-full justify-start text-right px-3 py-2 transition-all duration-200 ${
                   isDashboardRoot 
-                    ? 'bg-olivePrimary/10 text-olivePrimary font-medium' 
-                    : 'hover:bg-lightGreen/50 hover:text-olivePrimary'
+                    ? 'bg-roman-500/10 text-roman-500 font-medium' 
+                    : 'hover:bg-success-100/50 hover:text-roman-500'
                 }`}
                 onClick={() => {
                   navigate('/dashboard');
@@ -91,7 +96,7 @@ const DashboardSidebar = ({ user }) => {
                 }}
               >
                 <LayoutDashboard className="ml-2 h-5 w-5" />
-                <span className="text-lg font-semibold text-olivePrimary">
+                <span className="text-lg font-semibold text-roman-500">
                   لوحة التحكم
                 </span>
               </Button>
@@ -105,13 +110,13 @@ const DashboardSidebar = ({ user }) => {
                   size="sm"
                   className={`p-2 transition-all duration-200 ${
                     isDashboardRoot 
-                      ? 'bg-olivePrimary/10 text-olivePrimary' 
-                      : 'hover:bg-lightGreen/50 hover:text-olivePrimary'
+                      ? 'bg-roman-500/10 text-roman-500' 
+                      : 'hover:bg-success-100/50 hover:text-roman-500'
                   }`}
                   onClick={() => navigate('/dashboard')}
                   title="لوحة التحكم"
                 >
-                  <LayoutDashboard className="h-5 w-5 text-olivePrimary" />
+                  <LayoutDashboard className="h-5 w-5 text-roman-500" />
                 </Button>
               </div>
             )}
@@ -122,7 +127,7 @@ const DashboardSidebar = ({ user }) => {
                   key={link.path}
                   variant={location.pathname.startsWith(link.path) ? 'subtle' : 'ghost'}
                   className={`w-full justify-${isSidebarOpen || isMobile ? 'start' : 'center'} text-right px-3 py-2 ${
-                    location.pathname.startsWith(link.path) ? 'bg-olivePrimary/10 text-olivePrimary font-medium' : 'hover:bg-lightGreen/50 hover:text-olivePrimary text-sm font-medium'
+                    location.pathname.startsWith(link.path) ? 'bg-roman-500/10 text-roman-500 font-medium' : 'hover:bg-success-100/50 hover:text-roman-500 text-sm font-medium'
                   } transition-all duration-200`}
                   onClick={() => {
                     navigate(link.path);
@@ -131,7 +136,7 @@ const DashboardSidebar = ({ user }) => {
                 >
                   <link.icon className={`${isSidebarOpen || isMobile ? 'ml-2' : ''} h-4 w-4`} />
                   {(isSidebarOpen || isMobile) && (
-                    <span className="text-darkOlive">
+                    <span className="text-neutral-900">
                       {link.label}
                     </span>
                   )}
@@ -161,18 +166,18 @@ const DashboardSidebar = ({ user }) => {
 
 const DashboardCard = ({ title, description, link, icon: Icon }) => (
   <motion.div whileHover={{ y: -5 }} className="h-full">
-    <Card className="h-full shadow-lg hover:shadow-xl transition-shadow duration-300 border-olivePrimary/20 flex flex-col">
+    <Card className="h-full shadow-lg hover:shadow-xl transition-shadow duration-300 border-roman-500/20 flex flex-col">
       <CardHeader className="flex-row items-center space-x-4 pb-2">
-        <div className="p-3 rounded-full bg-olivePrimary/10 text-olivePrimary">
+        <div className="p-3 rounded-full bg-roman-500/10 text-roman-500">
           <Icon className="h-6 w-6" />
         </div>
-        <CardTitle className="text-xl text-darkOlive">{title}</CardTitle>
+        <CardTitle className="text-xl text-neutral-900">{title}</CardTitle>
       </CardHeader>
       <CardContent className="flex-grow">
-        <p className="text-sm text-darkOlive/70">{description}</p>
+        <p className="text-sm text-neutral-900/70">{description}</p>
       </CardContent>
       <CardFooter>
-        <Button asChild variant="outline" className="w-full border-olivePrimary text-olivePrimary hover:bg-olivePrimary hover:text-white">
+        <Button asChild variant="outline" className="w-full border-roman-500 text-roman-500 hover:bg-roman-500 hover:text-white">
           <Link to={link}>الانتقال</Link>
         </Button>
       </CardFooter>
@@ -183,8 +188,8 @@ const DashboardCard = ({ title, description, link, icon: Icon }) => (
 const DashboardHome = ({ user }) => (
   <div className="p-8">
     <RoleSwitcher />
-    <h1 className="text-3xl font-bold text-darkOlive mb-6">مرحباً بك في لوحة التحكم، {user.name}!</h1>
-    <p className="text-darkOlive/70 mb-8">
+    <h1 className="text-3xl font-bold text-neutral-900 mb-6">مرحباً بك في لوحة التحكم، {user.name}!</h1>
+    <p className="text-neutral-900/70 mb-8">
       هنا يمكنك إدارة {user.active_role === 'seller' ? 'خدماتك وطلباتك وأرباحك' : 'طلباتك ورسائلك وإعدادات حسابك'}.
       استخدم القائمة الجانبية للتنقل.
     </p>
@@ -240,14 +245,14 @@ const DashboardContent = ({ user }) => {
           !isMobile ? (isSidebarOpen ? 'dashboard-content-expanded' : 'dashboard-content-collapsed') : 'dashboard-content'
         }`}
       >      {isMobile && (
-        <div className="mobile-header p-4 flex justify-between items-center bg-background/95 backdrop-blur-md border-b border-olivePrimary/20">
+        <div className="mobile-header p-4 flex justify-between items-center bg-background/95 backdrop-blur-md border-b border-roman-500/20">
           <div className="flex items-center">
             <Button
               variant="ghost"
               className={`px-2 py-1 transition-all duration-200 ${
                 isDashboardRoot 
-                  ? 'bg-olivePrimary/10 text-olivePrimary font-medium' 
-                  : 'hover:bg-lightGreen/50 hover:text-olivePrimary'
+                  ? 'bg-roman-500/10 text-roman-500 font-medium' 
+                  : 'hover:bg-success-100/50 hover:text-roman-500'
               }`}
               onClick={() => {
                 navigate('/dashboard');
@@ -255,14 +260,14 @@ const DashboardContent = ({ user }) => {
               }}
             >
               <LayoutDashboard className="ml-2 h-5 w-5" />
-              <span className="text-lg font-semibold text-olivePrimary">لوحة التحكم</span>
+              <span className="text-lg font-semibold text-roman-500">لوحة التحكم</span>
             </Button>
           </div>
           <Button 
             variant="ghost" 
             size="sm" 
             onClick={() => toggleSidebar()}
-            className="text-olivePrimary hover:bg-lightGreen/50"
+            className="text-roman-500 hover:bg-success-100/50"
           >
             {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </Button>
@@ -274,7 +279,7 @@ const DashboardContent = ({ user }) => {
           animate={{ opacity: 1, height: 'auto' }}
           exit={{ opacity: 0, height: 0 }}
           transition={{ duration: 0.2 }}
-          className="w-full bg-background/95 backdrop-blur-md border-b border-olivePrimary/20"
+          className="w-full bg-background/95 backdrop-blur-md border-b border-roman-500/20"
         >
           <div className="p-4">
             <nav className="flex flex-col space-y-2">
@@ -284,8 +289,8 @@ const DashboardContent = ({ user }) => {
                   to={link.path}
                   className={`px-3 py-2 text-sm font-medium flex items-center ${
                     location.pathname.startsWith(link.path) 
-                      ? 'text-olivePrimary' 
-                      : 'hover:text-olivePrimary'
+                      ? 'text-roman-500' 
+                      : 'hover:text-roman-500'
                   }`}
                   onClick={() => toggleSidebar()}
                 >
@@ -299,7 +304,7 @@ const DashboardContent = ({ user }) => {
                   logout();
                   navigate('/');
                 }}
-                className="px-3 py-2 text-sm font-medium text-burntOrange hover:text-burntOrange/90 flex items-center text-right w-full"
+                className="px-3 py-2 text-sm font-medium text-warning-500 hover:text-warning-500/90 flex items-center text-right w-full"
               >
                 <LogOut className="ml-2 h-4 w-4" />
                 تسجيل الخروج

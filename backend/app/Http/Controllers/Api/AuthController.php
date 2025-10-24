@@ -5,6 +5,8 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Otp;
 use App\Services\EmailService;
+use App\Services\NotificationService;
+use App\Traits\EmailTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
@@ -14,87 +16,7 @@ use Exception;
 
 class AuthController extends Controller
 {
-    public function register(Request $request)
-    {
-        try {
-            Log::info('Registration attempt started', ['email' => $request->input('email')]);
-            
-            $validated = $request->validate([
-                'name' => 'required|string|max:100',
-                'email' => 'required|email|unique:users,email',
-                'password' => 'required|string|min:6',
-                'role' => 'in:admin,seller,buyer',
-                'is_seller' => 'boolean',
-                'is_buyer' => 'boolean',
-            ]);
-            
-            // Set default dual role values
-            $isSeller = $validated['is_seller'] ?? ($validated['role'] === 'seller');
-            $isBuyer = $validated['is_buyer'] ?? ($validated['role'] === 'buyer' || $validated['role'] === null);
-            $activeRole = $validated['role'] === 'seller' ? 'seller' : 'buyer';
-            
-            $user = User::create([
-                'name' => $validated['name'],
-                'email' => $validated['email'],
-                'password' => Hash::make($validated['password']),
-                'role' => $validated['role'] ?? 'buyer',
-                'active_role' => $activeRole,
-                'is_seller' => $isSeller,
-                'is_buyer' => $isBuyer,
-                'status' => 'active',
-            ]);
-            
-            // Create seller profile if user is or can be a seller
-            if ($isSeller) {
-                $seller = \App\Models\Seller::create([
-                    'user_id' => $user->id,
-                    'member_since' => now(),
-                ]);
-                
-                // Create seller skills if provided in the request
-                if ($request->has('skills') && is_array($request->skills)) {
-                    foreach ($request->skills as $skill) {
-                        \App\Models\SellerSkill::create([
-                            'seller_id' => $seller->id,
-                            'skill_name' => $skill,
-                            'created_at' => now(),
-                        ]);
-                    }
-                }
-            }
-            
-            // Create a token immediately so the user doesn't have to log in separately
-            $token = $user->createToken('api-token')->plainTextToken;
-            
-            // Load seller relationship with skills if user is a seller
-            if ($user->active_role === 'seller' || $user->is_seller) {
-                $user->load('seller.skills');
-            }
-            
-            Log::info('Registration successful', ['user_id' => $user->id]);
-            
-            return response()->json([
-                'message' => 'User registered successfully',
-                'user' => new \App\Http\Resources\UserResource($user),
-                'token' => $token
-            ], 201);
-        } catch (ValidationException $e) {
-            Log::error('Registration validation error', ['errors' => $e->errors()]);
-            return response()->json([
-                'message' => 'Validation failed',
-                'errors' => $e->errors()
-            ], 422);
-        } catch (Exception $e) {
-            Log::error('Registration error: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString(),
-                'request' => $request->all()
-            ]);
-            return response()->json([
-                'message' => 'Registration failed',
-                'error' => config('app.debug') ? $e->getMessage() : 'Internal server error'
-            ], 500);
-        }
-    }
+    use EmailTrait;
 
     public function login(Request $request)
     {
@@ -616,6 +538,37 @@ class AuthController extends Controller
             // Load seller relationship with skills if user is a seller
             if ($user->active_role === 'seller' || $user->is_seller) {
                 $user->load('seller.skills');
+            }
+            
+            // Send welcome notification
+            try {
+                NotificationService::welcome($user->id, $user->name, $isSeller);
+            } catch (Exception $notifError) {
+                Log::warning('Failed to send welcome notification', [
+                    'user_id' => $user->id,
+                    'error' => $notifError->getMessage()
+                ]);
+            }
+            
+            // Send welcome email
+            try {
+                $dashboardUrl = env('FRONTEND_URL', 'http://localhost:5173') . '/dashboard';
+                
+                self::sendMail(
+                    subject: 'مرحباً بك في بازار!',
+                    to: $user->email,
+                    data: [
+                        'name' => $user->name,
+                        'is_seller' => $isSeller,
+                        'dashboard_url' => $dashboardUrl,
+                    ],
+                    viewPath: 'emails.welcome'
+                );
+            } catch (Exception $emailError) {
+                Log::warning('Failed to send welcome email', [
+                    'user_id' => $user->id,
+                    'error' => $emailError->getMessage()
+                ]);
             }
             
             Log::info('Registration with email verification successful', ['user_id' => $user->id]);

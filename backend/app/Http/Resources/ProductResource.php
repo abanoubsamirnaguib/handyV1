@@ -2,11 +2,21 @@
 namespace App\Http\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
+use App\Models\WishlistItem;
+use Illuminate\Support\Facades\Auth;
 
 class ProductResource extends JsonResource
 {
     public function toArray($request)
     {
+        // Check if product is in user's wishlist if user is authenticated
+        $inWishlist = false;
+        
+        if (Auth::check()) {
+            $userId = Auth::id();
+            $inWishlist = WishlistItem::isInWishlist($userId, $this->id);
+        }
+
         return [
             'id' => $this->id,
             'title' => $this->title,
@@ -29,6 +39,7 @@ class ProductResource extends JsonResource
             'type' => $this->type,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
+            'in_wishlist' => $inWishlist,
         ];
     }
 }

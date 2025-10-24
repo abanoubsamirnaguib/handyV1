@@ -49,16 +49,16 @@ const AdminAnnouncements = () => {
   });
 
   const typeOptions = [
-    { value: 'info', label: 'معلومات', color: 'bg-lightGreen text-darkOlive', icon: Info },
-    { value: 'warning', label: 'تحذير', color: 'bg-palePink text-darkBrown', icon: AlertTriangle },
-    { value: 'success', label: 'إنجاز', color: 'bg-paleGreen text-olivePrimary', icon: CheckCircle },
-    { value: 'error', label: 'خطأ', color: 'bg-peachOrange/20 text-brightOrange', icon: AlertCircle }
+    { value: 'info', label: 'معلومات', color: 'bg-success-100 text-neutral-900', icon: Info },
+    { value: 'warning', label: 'تحذير', color: 'bg-warning-100 text-warning-700', icon: AlertTriangle },
+    { value: 'success', label: 'إنجاز', color: 'bg-success-200 text-roman-500', icon: CheckCircle },
+    { value: 'error', label: 'خطأ', color: 'bg-warning-500/20 text-warning-500', icon: AlertCircle }
   ];
 
   const priorityOptions = [
-    { value: 'low', label: 'منخفضة', color: 'bg-lightBrownGray/20 text-darkBrown' },
-    { value: 'medium', label: 'متوسطة', color: 'bg-lightGreen text-olivePrimary' },
-    { value: 'high', label: 'عالية', color: 'bg-peachOrange/20 text-brightOrange' }
+    { value: 'low', label: 'منخفضة', color: 'bg-neutral-500/20 text-neutral-700' },
+    { value: 'medium', label: 'متوسطة', color: 'bg-success-100 text-roman-500' },
+    { value: 'high', label: 'عالية', color: 'bg-warning-500/20 text-warning-500' }
   ];
 
   useEffect(() => {

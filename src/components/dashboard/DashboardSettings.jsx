@@ -303,7 +303,7 @@ const DashboardSettings = () => {
             </div>
           )}
           
-          <Button type="submit" className="bg-burntOrange hover:bg-burntOrange/90 text-white">
+          <Button type="submit" className="bg-roman-500 hover:bg-roman-500/90 text-white">
             <Save className="ml-2 h-4 w-4" /> حفظ تغييرات الملف الشخصي
           </Button>
         </form>

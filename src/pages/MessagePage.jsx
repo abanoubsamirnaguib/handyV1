@@ -151,10 +151,10 @@ const MessagePage = () => {  const { id } = useParams();
             <ArrowRight className="h-5 w-5" />
           </Button>
           <h1 className="text-2xl font-bold">محادثة مع {seller.name}</h1>
-        </div>        <Card className="border-lightBeige/50 mb-6">
-          <CardHeader className="bg-lightBeige/20 pb-3">
+        </div>        <Card className="border-neutral-200/50 mb-6">
+          <CardHeader className="bg-neutral-100/20 pb-3">
             <div className="flex items-center">
-              <div className="h-10 w-10 rounded-full bg-olivePrimary flex items-center justify-center text-white font-bold ml-3 relative">
+              <div className="h-10 w-10 rounded-full bg-roman-500 flex items-center justify-center text-white font-bold ml-3 relative">
                 {seller.name.charAt(0)}
                 {isUserOnline(seller.last_seen) && (
                   <span className="absolute bottom-0 right-0 h-3 w-3 bg-green-500 rounded-full border-2 border-white"></span>
@@ -170,8 +170,8 @@ const MessagePage = () => {  const { id } = useParams();
           </CardHeader>          <CardContent className="p-0">
             <div className="h-[400px] overflow-y-auto p-4">
               {!activeConversation || !messages[activeConversation] || messages[activeConversation].length === 0 ? (
-                <div className="h-full flex flex-col items-center justify-center text-center p-6">                  <div className="w-16 h-16 rounded-full bg-lightBeige/50 flex items-center justify-center mb-4">
-                    <Send className="h-8 w-8 text-olivePrimary" />
+                <div className="h-full flex flex-col items-center justify-center text-center p-6">                  <div className="w-16 h-16 rounded-full bg-neutral-100/50 flex items-center justify-center mb-4">
+                    <Send className="h-8 w-8 text-roman-500" />
                   </div>
                   <h3 className="text-lg font-semibold mb-2">ابدأ محادثة جديدة</h3>
                   <p className="text-gray-500 max-w-md">
@@ -188,13 +188,13 @@ const MessagePage = () => {  const { id } = useParams();
                       <div 
                         className={`max-w-[70%] p-3 rounded-lg ${
                           msg.senderId === user.id 
-                            ? 'bg-olivePrimary text-white' 
+                            ? 'bg-roman-500 text-white' 
                             : 'bg-gray-100 text-gray-800'
                         }`}
                       >
                         <p dir="rtl">{msg.text}</p>
                         <p className={`text-xs mt-1 ${
-                          msg.senderId === user.id ? 'text-lightBeige' : 'text-gray-500'
+                          msg.senderId === user.id ? 'text-neutral-100' : 'text-gray-500'
                         }`}>
                           {new Date(msg.timestamp).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}
                         </p>
@@ -213,14 +213,14 @@ const MessagePage = () => {  const { id } = useParams();
                 placeholder="اكتب رسالتك هنا..." 
                 className="ml-2"
               />
-              <Button type="submit" className="bg-burntOrange hover:bg-burntOrange/90 text-white">
+              <Button type="submit" className="bg-roman-500 hover:bg-roman-500/90 text-white">
                 <Send className="h-4 w-4" />
               </Button>
             </form>
           </CardFooter>
         </Card>
 
-        <Card className="border-lightBeige/50">
+        <Card className="border-neutral-200/50">
           <CardHeader>
             <CardTitle className="text-xl">معلومات الحرفي</CardTitle>
           </CardHeader>
@@ -233,7 +233,7 @@ const MessagePage = () => {  const { id } = useParams();
               <h3 className="font-semibold mb-1">المهارات</h3>
               <div className="flex flex-wrap gap-2">
                 {seller.skills.map((skill, index) => (
-                  <span key={index} className="bg-lightGreen/20 text-darkOlive px-2 py-1 rounded-full text-sm">
+                  <span key={index} className="bg-success-100/20 text-neutral-900 px-2 py-1 rounded-full text-sm">
                     {skill}
                   </span>
                 ))}

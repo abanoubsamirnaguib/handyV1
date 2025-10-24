@@ -39,7 +39,7 @@ class ProductController extends Controller
     public function index(Request $request)
     {
         $query = Product::with(['images', 'tags', 'category'])
-            ->where('seller_id', Auth::id());
+            ->where('seller_id', Auth::user()->seller_id);
         
         // Optional filtering
         if ($request->filled('status')) {
@@ -124,15 +124,17 @@ class ProductController extends Controller
             'images.*' => 'image|max:2048',
         ]);
         $product = new Product($validated);
-        $product->seller_id = Auth::id();
+        $product->seller_id = Auth::user()->seller_id;
         $product->status = 'pending_review';
         $product->save();
+        
         // Save tags
         if ($request->has('tags')) {
             foreach ($request->tags as $tag) {
                 $product->tags()->create(['tag_name' => $tag]);
             }
         }
+        
         // Save images
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $img) {
@@ -140,7 +142,22 @@ class ProductController extends Controller
                 $product->images()->create(['image_url' => $path]);
             }
         }
-        return response()->json(['message' => 'Product created', 'product' => $product->load(['images', 'tags'])], 201);
+
+        // إرسال إشعار للبائع بأن المنتج قيد المراجعة
+        $seller = \App\Models\Seller::find(Auth::user()->seller_id);
+        if ($seller && $seller->user_id) {
+            \App\Services\NotificationService::productPendingReview(
+                userId: $seller->user_id,
+                productTitle: $product->title,
+                productType: $product->type
+            );
+        }
+
+        return response()->json([
+            'message' => 'Product created successfully', 
+            'product' => $product->load(['images', 'tags']),
+            'notification' => 'تم إضافة المنتج بنجاح وهو الآن قيد المراجعة. سيتم تفعيله خلال 48-72 ساعة.'
+        ], 201);
     }
 
     /**
@@ -149,7 +166,7 @@ class ProductController extends Controller
     public function update(Request $request, $id)
     {
         $product = Product::findOrFail($id);
-        if ($product->seller_id !== Auth::id()) {
+        if ($product->seller_id !== Auth::user()->seller_id) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
         $validated = $request->validate([
@@ -222,7 +239,7 @@ class ProductController extends Controller
     public function destroy($id)
     {
         $product = Product::findOrFail($id);
-        if ($product->seller_id !== Auth::id()) {
+        if ($product->seller_id !== Auth::user()->seller_id) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 

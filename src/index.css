@@ -3,99 +3,117 @@
 @tailwind utilities;
 
 :root {
-  /* Base colors (60% - Primary) */
-  --background: 55 10% 95%;  /* #EFEDE6 - light beige (primary) */
-  --foreground: 220 9% 24%;  /* #524F39 - dark olive (for text) */
+  /* Base colors - using Roman neutral palette */
+  --background: 39 14% 96%;  /* #feefd7 - neutral-100 */
+  --foreground: 0 6% 18%;    /* #2e2e2f - neutral-900 */
   
-  /* Card styling (60% - Primary) */
-  --card: 55 10% 95%;  /* #EFEDE6 - light beige */
-  --card-foreground: 82 18% 50%;  /* #859569 - olive green */
+  /* Card styling */
+  --card: 39 14% 96%;        /* #feefd7 - neutral-100 */
+  --card-foreground: 0 6% 18%; /* #2e2e2f - neutral-900 */
   
-  /* Popup/dialog styling (60% - Primary) */
-  --popover: 55 10% 95%;  /* #EFEDE6 - light beige */
-  --popover-foreground: 82 18% 50%;  /* #859569 - olive green */
+  /* Popup/dialog styling */
+  --popover: 39 14% 96%;     /* #feefd7 - neutral-100 */
+  --popover-foreground: 0 6% 18%; /* #2e2e2f - neutral-900 */
   
-  /* Main theme colors (60% - Primary) */
-  --primary: 82 18% 50%;  /* #859569 - olive green */
-  --primary-foreground: 0 0% 100%;  /* White text on primary */
+  /* Main theme colors - Roman Red */
+  --primary: 1 70% 62%;      /* #e85856 - roman-500 (main primary) */
+  --primary-foreground: 0 0% 100%; /* White text on primary */
   
-  /* Secondary elements (30% - Secondary) */
-  --secondary: 70 25% 85%;  /* #D0E0BF - very light green */
-  --secondary-foreground: 82 18% 50%;  /* #859569 - olive green */
+  /* Secondary elements - Success Green */
+  --secondary: 82 14% 85%;   /* #e6e9de - swamp-green-100 */
+  --secondary-foreground: 82 23% 42%; /* #5b6a46 - swamp-green-600 */
   
-  /* Accent colors (10% - Accent) */
-  --accent: 14 59% 63%;  /* #E18562 - burnt orange */
-  --accent-foreground: 0 0% 100%;  /* White text on accent */
+  /* Accent colors - Warning Orange */
+  --accent: 24 86% 53%;      /* #f1811e - chardonnay-500 */
+  --accent-foreground: 0 0% 100%; /* White text on accent */
   
-  /* Muted/subtle elements (Secondary) */
-  --muted: 51 12% 65%;  /* #B2AD9A - light brown-gray */
-  --muted-foreground: 38 17% 38%;  /* #6F5C4E - dark brown */
+  /* Muted/subtle elements */
+  --muted: 42 13% 87%;       /* #f7f2ee - neutral-200 */
+  --muted-foreground: 0 6% 18%; /* #2e2e2f - neutral-900 */
   
-  /* Destructive/error colors (Accent) */
-  --destructive: 7 84% 62%;  /* #F15A46 - bright orange */
-  --destructive-foreground: 0 0% 100%;  /* White text on destructive */
+  /* Destructive/error colors */
+  --destructive: 1 81% 55%;  /* #d3312f - destructive-600 */
+  --destructive-foreground: 0 0% 100%; /* White text on destructive */
   
   /* UI element styling */
-  --border: 51 12% 65%;  /* #B2AD9A - light brown-gray */
-  --input: 55 10% 95%;  /* #EFEDE6 - light beige */
-  --ring: 14 59% 63%;  /* #E18562 - burnt orange */
+  --border: 42 13% 87%;      /* #f7f2ee - neutral-200 */
+  --input: 42 13% 87%;       /* #f7f2ee - neutral-200 */
+  --ring: 1 70% 62%;         /* #e85856 - roman-500 */
   
   /* Other settings */
   --radius: 0.5rem;
   --navbar-height: 66px;
   
-  /* Custom olive theme colors - All palette colors */
-  --olivePrimary: 82 18% 50%;    /* #859569 - olive green (primary) */
-  --lightBeige: 55 10% 95%;      /* #EFEDE6 - light beige (primary) */
-  --burntOrange: 14 59% 63%;     /* #E18562 - burnt orange (secondary) */
-  --lightGreen: 70 25% 85%;      /* #D0E0BF - very light green (secondary) */
-  --creamyBeige: 45 66% 88%;     /* #F7EAC8 - creamy beige */
-  --lightBrownGray: 51 12% 65%;  /* #B2AD9A - light brown-gray */
-  --darkBrown: 38 17% 38%;       /* #6F5C4E - dark brown */
-  --paleGreen: 87 41% 90%;       /* #E6F0DC - pale green */
-  --darkOlive: 220 9% 24%;       /* #524F39 - dark olive */
-  --palePink: 28 68% 87%;        /* #F5DAC6 - pale pink */
-  --brightOrange: 7 84% 62%;     /* #F15A46 - bright orange (accent) */
-  --peachOrange: 19 86% 69%;     /* #F6906A - peach orange (accent) */
+  /* Roman color palette - Custom variables */
+  --roman-50: 0 14% 98%;     /* #fdf3f3 */
+  --roman-100: 0 14% 95%;    /* #fde3e3 */
+  --roman-200: 357 19% 89%;  /* #fbcecd */
+  --roman-300: 359 35% 81%;  /* #f8aaa9 */
+  --roman-400: 1 63% 71%;    /* #f17a78 */
+  --roman-500: 1 70% 62%;    /* #e85856 - Main Primary */
+  --roman-600: 1 67% 51%;    /* #d3312f */
+  --roman-700: 2 66% 42%;    /* #b12624 */
+  --roman-800: 1 60% 35%;    /* #932321 */
+  --roman-900: 1 53% 31%;    /* #7a2322 */
+  --roman-950: 5 67% 16%;    /* #420e0d */
+  
+  /* Neutral colors */
+  --neutral-100: 39 14% 96%; /* #feefd7 */
+  --neutral-200: 42 13% 87%; /* #f7f2ee */
+  --neutral-300: 68 16% 75%; /* #ced6bf */
+  --neutral-400: 184 17% 86%; /* #cce4e6 */
+  --neutral-900: 0 6% 18%;   /* #2e2e2f */
+  
+  /* Success colors - Swamp Green */
+  --success-50: 82 27% 95%;  /* #f4f5f0 */
+  --success-100: 82 14% 85%; /* #e6e9de */
+  --success-500: 82 21% 44%; /* #75875b */
+  --success-600: 82 23% 42%; /* #5b6a46 */
+  
+  /* Warning colors - Chardonnay */
+  --warning-50: 39 82% 97%;  /* #fef8ee */
+  --warning-100: 40 82% 92%; /* #feefd6 */
+  --warning-500: 24 86% 53%; /* #f1811e */
+  --warning-600: 25 82% 48%; /* #e36713 */
 }
 
 .dark {
-  /* Dark mode base colors (60% - Primary) */
-  --background: 220 9% 24%;  /* #524F39 - dark olive */
-  --foreground: 55 10% 95%;  /* #EFEDE6 - light beige (for text) */
+  /* Dark mode base colors */
+  --background: 0 6% 18%;    /* #2e2e2f - neutral-900 */
+  --foreground: 39 14% 96%;  /* #feefd7 - neutral-100 */
   
-  /* Card styling (60% - Primary) */
-  --card: 38 17% 38%;  /* #6F5C4E - dark brown */
-  --card-foreground: 55 10% 95%;  /* #EFEDE6 - light beige */
+  /* Card styling */
+  --card: 1 53% 31%;         /* #7a2322 - roman-900 */
+  --card-foreground: 39 14% 96%; /* #feefd7 - neutral-100 */
   
-  /* Popup/dialog styling (60% - Primary) */
-  --popover: 38 17% 38%;  /* #6F5C4E - dark brown */
-  --popover-foreground: 55 10% 95%;  /* #EFEDE6 - light beige */
+  /* Popup/dialog styling */
+  --popover: 1 53% 31%;      /* #7a2322 - roman-900 */
+  --popover-foreground: 39 14% 96%; /* #feefd7 - neutral-100 */
   
-  /* Main theme colors (60% - Primary) */
-  --primary: 82 18% 50%;  /* #859569 - olive green (stays the same) */
-  --primary-foreground: 55 10% 95%;  /* #EFEDE6 - light beige */
+  /* Main theme colors - Roman Red (stays vibrant in dark mode) */
+  --primary: 1 70% 62%;      /* #e85856 - roman-500 */
+  --primary-foreground: 0 0% 100%; /* White text on primary */
   
-  /* Secondary elements (30% - Secondary) */
-  --secondary: 70 25% 85%;  /* #D0E0BF - very light green */
-  --secondary-foreground: 38 17% 38%;  /* #6F5C4E - dark brown */
+  /* Secondary elements */
+  --secondary: 82 23% 42%;   /* #5b6a46 - swamp-green-600 */
+  --secondary-foreground: 82 14% 85%; /* #e6e9de - swamp-green-100 */
   
-  /* Accent colors (10% - Accent) */
-  --accent: 14 59% 63%;  /* #E18562 - burnt orange */
-  --accent-foreground: 0 0% 100%;  /* White text on accent */
+  /* Accent colors */
+  --accent: 24 86% 53%;      /* #f1811e - chardonnay-500 */
+  --accent-foreground: 0 0% 100%; /* White text on accent */
   
-  /* Muted/subtle elements (Secondary) */
-  --muted: 51 12% 65%;  /* #B2AD9A - light brown-gray */
-  --muted-foreground: 38 17% 38%;  /* #6F5C4E - dark brown */
+  /* Muted/subtle elements */
+  --muted: 1 60% 35%;        /* #932321 - roman-800 */
+  --muted-foreground: 39 14% 96%; /* #feefd7 - neutral-100 */
   
-  /* Destructive/error colors (Accent) */
-  --destructive: 7 84% 62%;  /* #F15A46 - bright orange */
-  --destructive-foreground: 0 0% 100%;  /* White text on destructive */
+  /* Destructive/error colors */
+  --destructive: 1 81% 55%;  /* #d3312f - destructive-600 */
+  --destructive-foreground: 0 0% 100%; /* White text on destructive */
   
   /* UI element styling */
-  --border: 51 12% 65%;  /* #B2AD9A - light brown-gray */
-  --input: 38 17% 38%;  /* #6F5C4E - dark brown */
-  --ring: 14 59% 63%;  /* #E18562 - burnt orange */
+  --border: 1 60% 35%;       /* #932321 - roman-800 */
+  --input: 1 60% 35%;        /* #932321 - roman-800 */
+  --ring: 1 70% 62%;         /* #e85856 - roman-500 */
 }
 
 * {
@@ -115,17 +133,17 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: hsl(var(--secondary));
+  background: hsl(var(--neutral-200));
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: hsl(var(--primary) / 0.7);
+  background: hsl(var(--roman-500) / 0.7);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--accent));
+  background: hsl(var(--roman-600));
 }
 
 /* Animation Classes */
@@ -141,6 +159,14 @@ body {
   animation: bounce 1s infinite;
 }
 
+.animate-scroll {
+  animation: scroll 8s linear infinite;
+}
+
+.animate-scroll:hover {
+  animation-play-state: paused;
+}
+
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -154,6 +180,15 @@ body {
 @keyframes bounce {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-10px); }
+}
+
+@keyframes scroll {
+  0% { 
+    transform: translateX(-100%); 
+  }
+  100% { 
+    transform: translateX(100%); 
+  }
 }
 
 /* Custom Utilities */
@@ -229,12 +264,12 @@ html[dir="rtl"] .ltr-icon {
 }
 
 .sidebar-item:hover {
-  background-color: rgba(133, 149, 105, 0.1); /* Light olive green background - primary */
+  background-color: rgba(232, 88, 86, 0.1); /* Light roman red background - primary */
 }
 
 .sidebar-item:focus {
   outline: none;
-  box-shadow: 0 0 0 2px rgba(133, 149, 105, 0.3); /* Olive green shadow - primary */
+  box-shadow: 0 0 0 2px rgba(232, 88, 86, 0.3); /* Roman red shadow - primary */
 }
 
 /* Mobile Menu Trigger */
@@ -246,7 +281,7 @@ html[dir="rtl"] .ltr-icon {
 }
 
 .menu-trigger:hover {
-  background-color: rgba(133, 149, 105, 0.1); /* Light olive green background - primary */
+  background-color: rgba(232, 88, 86, 0.1); /* Light roman red background - primary */
 }
 
 .menu-trigger:focus {
@@ -336,4 +371,36 @@ html[dir="rtl"] .ltr-icon {
   .crop-container {
     max-height: 50vh;
   }
+}
+
+/* Scrollbar hide utility */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* Internet Explorer 10+ */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Safari and Chrome */
+}
+
+/* Ensure input borders are always visible */
+input, textarea, select {
+  @apply border-gray-300;
+}
+
+input:focus, textarea:focus, select:focus {
+  border-color: hsl(var(--primary));
+  box-shadow: 0 0 0 2px hsl(var(--ring) / 0.2);
+  outline: none;
+}
+
+/* Override any background styling that might hide inputs */
+.bg-background input,
+.bg-lightBeige input {
+  @apply bg-white border-gray-300;
+}
+
+.bg-background textarea,
+.bg-lightBeige textarea {
+  @apply bg-white border-gray-300;
 }

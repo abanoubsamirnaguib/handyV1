@@ -5,8 +5,10 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Product;
 use App\Models\Seller;
+use App\Models\WishlistItem;
 use App\Http\Resources\ProductResource;
 use App\Http\Resources\SellerResource;
+use Illuminate\Support\Facades\Auth;
 
 class ExploreController extends Controller
 {
@@ -47,8 +49,24 @@ class ExploreController extends Controller
             ->with(['images:id,product_id,image_url', 'category:id,name', 'seller:id'])
             ->limit(40)
             ->get();
+        
+        // Get user's wishlist status for all products if user is authenticated
+        $wishlistStatuses = [];
+        
+        if (Auth::check()) {
+            $userId = Auth::id();
+            $productIds = $products->pluck('id')->toArray();
+            
+            $wishlistItems = WishlistItem::where('user_id', $userId)
+                ->whereIn('product_id', $productIds)
+                ->pluck('product_id')
+                ->toArray();
+            
+            // Create a lookup array for quick access
+            $wishlistStatuses = array_fill_keys($wishlistItems, true);
+        }
         return response()->json([
-            'data' => $products->map(function($p) {
+            'data' => $products->map(function($p) use ($wishlistStatuses) {
                 return [
                     'id' => $p->id,
                     'title' => $p->title,
@@ -63,6 +81,7 @@ class ExploreController extends Controller
                     'featured' => $p->featured,
                     'status' => $p->status,
                     'type' => $p->type ?? 'product', // Default to 'product' if type is null
+                    'in_wishlist' => isset($wishlistStatuses[$p->id]) ? true : false,
                 ];
             })
         ]);

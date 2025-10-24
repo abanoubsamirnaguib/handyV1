@@ -33,6 +33,11 @@ class OrderRequest extends FormRequest
                 'seller_notes' => 'nullable|string',
                 'delivery_notes' => 'nullable|string',
                 'delivery_person_id' => 'nullable|exists:users,id',
+                'city_id' => 'nullable|exists:cities,id',
+                'platform_commission_percent' => 'nullable|numeric|min:0|max:100',
+                'platform_commission_amount' => 'nullable|numeric|min:0',
+                'buyer_total' => 'nullable|numeric|min:0',
+                'seller_net_amount' => 'nullable|numeric|min:0',
             ];
         }
         // PATCH/PUT (update)
@@ -57,6 +62,11 @@ class OrderRequest extends FormRequest
             'seller_notes' => 'nullable|string',
             'delivery_notes' => 'nullable|string',
             'delivery_person_id' => 'nullable|exists:users,id',
+            'city_id' => 'nullable|exists:cities,id',
+            'platform_commission_percent' => 'nullable|numeric|min:0|max:100',
+            'platform_commission_amount' => 'nullable|numeric|min:0',
+            'buyer_total' => 'nullable|numeric|min:0',
+            'seller_net_amount' => 'nullable|numeric|min:0',
         ];
     }
 }

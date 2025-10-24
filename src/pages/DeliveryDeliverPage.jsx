@@ -74,6 +74,24 @@ const DeliveryDeliverPage = () => {
           title: 'تم التسليم بنجاح',
           description: 'تم تسليم الطلب للعميل بنجاح',
         });
+        
+        // Let's update the localStorage to indicate this order is delivered
+        // so it doesn't show in the delivery list when returning to dashboard
+        try {
+          const currentOrders = JSON.parse(localStorage.getItem('delivery_orders') || '[]');
+          const updatedOrders = currentOrders.map(order => 
+            order.id === parseInt(orderId) 
+              ? { 
+                  ...order, 
+                  delivered_at: new Date().toISOString()
+                } 
+              : order
+          );
+          localStorage.setItem('delivery_orders', JSON.stringify(updatedOrders));
+        } catch (e) {
+          console.error('Error updating local orders:', e);
+        }
+        
         navigate('/delivery/dashboard');
       } else {
         setError(data.message || 'فشل في تسليم الطلب');

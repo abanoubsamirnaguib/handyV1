@@ -219,7 +219,7 @@ const DashboardOrders = () => {
           <AlertTriangle className="h-24 w-24 text-red-300 mx-auto mb-6" />
           <h2 className="text-2xl font-semibold text-gray-700 mb-2">خطأ في تحميل الطلبات</h2>
           <p className="text-gray-500 mb-4">{error}</p>
-          <Button onClick={loadOrders} className="bg-olivePrimary hover:bg-olivePrimary/90">
+          <Button onClick={loadOrders} className="bg-roman-500 hover:bg-roman-500/90">
             <RefreshCw className="ml-2 h-4 w-4" />
             إعادة المحاولة
           </Button>
@@ -235,14 +235,14 @@ const DashboardOrders = () => {
         animate={{ opacity: 1, y: 0 }}
       >
         {/* Header Section */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 border border-olivePrimary/20">
+        <div className="bg-white rounded-2xl shadow-lg p-6 border border-roman-500/20">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center space-x-4">
-              <div className="w-16 h-16 bg-olivePrimary rounded-full flex items-center justify-center shadow-lg">
+              <div className="w-16 h-16 bg-roman-500 rounded-full flex items-center justify-center shadow-lg">
                 <ShoppingBag className="h-8 w-8 text-white" />
               </div>
               <div>
-                <h1 className="text-4xl font-bold text-olivePrimary">
+                <h1 className="text-4xl font-bold text-roman-500">
                   {user?.active_role === 'seller' ? 'الطلبات الواردة' : 'طلباتي'}
                 </h1>
                 <p className="text-gray-600 mt-1">
@@ -252,7 +252,7 @@ const DashboardOrders = () => {
             </div>
             <Button 
               onClick={loadOrders} 
-              className="bg-olivePrimary hover:bg-olivePrimary/90 text-white shadow-lg hover:shadow-xl transition-all duration-300"
+              className="bg-roman-500 hover:bg-roman-500/90 text-white shadow-lg hover:shadow-xl transition-all duration-300"
             >
               <RefreshCw className="ml-2 h-4 w-4" />
               تحديث الطلبات
@@ -273,7 +273,7 @@ const DashboardOrders = () => {
               {user?.active_role === 'seller' ? 'لم تتلق أي طلبات جديدة بعد.' : 'لم تقم بأي طلبات بعد. ابدأ التصفح!'}
             </p>
             {user?.active_role === 'buyer' && (
-              <Button asChild className="mt-6 bg-olivePrimary hover:bg-olivePrimary/90 text-white">
+              <Button asChild className="mt-6 bg-roman-500 hover:bg-roman-500/90 text-white">
                 <Link to="/explore">استكشف المنتجات</Link>
               </Button>
             )}
@@ -290,7 +290,7 @@ const DashboardOrders = () => {
                 <Card className="flex flex-col h-full bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100 hover:shadow-2xl hover:-translate-y-1 transition-all duration-300">
                   <CardHeader className="p-5 bg-gray-50 border-b border-gray-100">
                     <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg font-bold text-olivePrimary">
+                      <CardTitle className="text-lg font-bold text-roman-500">
                         طلب رقم #{order.id}
                       </CardTitle>
                       <div className="flex items-center gap-2">
@@ -387,7 +387,7 @@ const DashboardOrders = () => {
                       {/* Total Price */}
                       <div className="flex items-center justify-between font-bold text-lg">
                         <span className="text-gray-800">الإجمالي</span>
-                        <span className="text-olivePrimary">{order.total_price} EGP</span>
+                        <span className="text-roman-500">{order.total_price} EGP</span>
                       </div>
                       
                        <div className="flex items-center justify-between text-sm">
@@ -399,7 +399,7 @@ const DashboardOrders = () => {
 
                   <CardFooter className="flex-col items-stretch gap-2 pt-4 bg-gray-50 border-t border-gray-100 p-4">
                     <div className="flex gap-2">
-                      <Button asChild variant="outline" size="sm" className="flex-grow hover:bg-olivePrimary hover:text-white transition-colors">
+                      <Button asChild variant="outline" size="sm" className="flex-grow hover:bg-roman-500 hover:text-white transition-colors">
                         <Link to={`/orders/${order.id}`} className="flex items-center">
                           <Eye className="ml-2 h-4 w-4" />
                           التفاصيل

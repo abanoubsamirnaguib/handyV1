@@ -109,6 +109,17 @@ const DepositPaymentButton = ({
       return;
     }
     
+    // التحقق من أن العربون لا يتجاوز 80% من قيمة المنتج
+    const maxDepositAmount = productPrice * 0.8;
+    if (depositAmount > maxDepositAmount) {
+      toast({
+        title: "خطأ في قيمة العربون",
+        description: `قيمة العربون لا يمكن أن تتجاوز 80% من قيمة المنتج (${maxDepositAmount.toFixed(2)} ريال)`,
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setIsSubmitting(true);
     
     try {
@@ -207,11 +218,14 @@ const DepositPaymentButton = ({
                     id="depositAmount"
                     type="number"
                     min={1}
-                    max={productPrice}
+                    max={Math.round(productPrice * 0.8)}
                     value={depositAmount}
                     onChange={(e) => setDepositAmount(parseFloat(e.target.value) || 0)}
                     className="w-full"
                   />
+                  <p className="text-xs text-gray-500 mt-1">
+                    الحد الأقصى للعربون: {Math.round(productPrice * 0.8)} ريال (80% من قيمة المنتج)
+                  </p>
                 </div>
               </>
             )}

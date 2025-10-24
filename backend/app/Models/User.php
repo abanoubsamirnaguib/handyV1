@@ -186,4 +186,12 @@ class User extends Authenticatable
         }
         return [];
     }
+
+    /**
+     * Get the seller ID for users that have a seller profile
+     */
+    public function getSellerIdAttribute()
+    {
+        return $this->seller ? $this->seller->id : null;
+    }
 }

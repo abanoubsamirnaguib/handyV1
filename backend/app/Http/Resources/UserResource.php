@@ -20,6 +20,8 @@ class UserResource extends JsonResource
             'bio' => $this->bio,
             'location' => $this->location,
             'phone' => $this->phone,
+            'seller_id' => $this->seller_id, // ID from sellers table (null if not a seller)
+            'buyer_wallet_balance' => $this->buyer_wallet_balance,
         ];
         if ($this->active_role === 'seller') {
             $data['skills'] = $this->skills;

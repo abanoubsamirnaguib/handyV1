@@ -20,8 +20,14 @@ class OrderResource extends JsonResource
             'status_label' => $this->getStatusLabel(),
             'status_ar' => $this->getStatusLabel(), // For OrderDetailPage compatibility
             'next_action' => $this->getNextAction(),
-            'total_price' => $this->total_price,
-            'total_amount' => ($this->buyer_total ?? ($this->total_price + ($this->delivery_fee ?? 0))), // For AdminOrders compatibility
+            'total_price' => $this->getFinalPrice(),
+            'buyer_proposed_price' => $this->buyer_proposed_price,
+            'original_service_price' => $this->original_service_price,
+            'price_approval_status' => $this->price_approval_status,
+            'price_approved_at' => $this->price_approved_at,
+            'price_approval_notes' => $this->price_approval_notes,
+            'final_price' => $this->getFinalPrice(),
+            'total_amount' => $this->getFinalPrice() + ($this->delivery_fee ?? 0), // For AdminOrders compatibility
             'order_date' => $this->order_date,
             'delivery_date' => $this->delivery_date,
             'expected_delivery_date' => $this->delivery_date, // For OrderDetailPage compatibility

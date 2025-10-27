@@ -129,6 +129,7 @@ const GigDetailsPage = () => {
             location: sellerData.location || sellerData.user?.location || '',
             memberSince: sellerData.member_since || sellerData.memberSince || '',
             completedOrders: sellerData.completed_orders || sellerData.completedOrders || 0,
+            user: sellerData.user,
           });
         }
         // Fetch related gigs from backend
@@ -248,17 +249,18 @@ const GigDetailsPage = () => {
   };
 
   const handleContactSeller = async () => {
+    console.log('seller',seller);
     if (!user) {
       toast({ variant: "destructive", title: "يرجى تسجيل الدخول", description: "يجب عليك تسجيل الدخول أولاً للتواصل مع البائع." });
       navigate('/login');
       return;
     }
-    if (user.id === seller.id) {
+    if (user.id === seller.user?.id) {
       toast({ variant: "destructive", title: "لا يمكن مراسلة نفسك", description: "لا يمكنك بدء محادثة مع نفسك." });
       return;
     }
     try {
-      const conversationId = await startConversation(seller);
+      const conversationId = await startConversation(seller.user);
       setActiveConversation(conversationId);
       navigate('/chat');
     } catch (error) {

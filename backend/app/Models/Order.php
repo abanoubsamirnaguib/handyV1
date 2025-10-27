@@ -14,6 +14,11 @@ class Order extends Model
         'seller_id',
         'status',
         'total_price',
+        'buyer_proposed_price',
+        'original_service_price',
+        'price_approval_status',
+        'price_approved_at',
+        'price_approval_notes',
         'order_date',
         'delivery_date',
         'requirements',
@@ -70,6 +75,7 @@ class Order extends Model
         'delivery_date',
         'admin_approved_at',
         'seller_approved_at',
+        'price_approved_at',
         'work_started_at',
         'work_completed_at',
         'delivery_scheduled_at',
@@ -189,6 +195,11 @@ class Order extends Model
     
     public function canBeApprovedByAdmin()
     {
+        // إذا كان الطلب يحتاج موافقة البائع على السعر، لا يمكن للأدمن الموافقة عليه
+        if ($this->isPendingSellerPriceApproval()) {
+            return false;
+        }
+        
         // للطلبات العادية: يجب أن تكون pending ولها payment_proof أو cash_on_delivery
         $regularCondition = $this->isPending() && ($this->payment_method === 'cash_on_delivery' || $this->payment_proof);
         
@@ -676,5 +687,115 @@ class Order extends Model
             'hours' => $now->diffInHours($deadline) % 24,
             'total_hours' => $now->diffInHours($deadline)
         ];
+    }
+    
+    // ==================== Price Negotiation Methods ====================
+    
+    /**
+     * التحقق من أن الطلب في انتظار موافقة البائع على السعر المقترح
+     */
+    public function isPendingSellerPriceApproval()
+    {
+        return $this->price_approval_status === 'pending_approval' && 
+               $this->buyer_proposed_price !== null;
+    }
+    
+    /**
+     * التحقق من أن البائع وافق على السعر المقترح
+     */
+    public function isPriceApprovedBySeller()
+    {
+        return $this->price_approval_status === 'approved';
+    }
+    
+    /**
+     * التحقق من أن البائع رفض السعر المقترح
+     */
+    public function isPriceRejectedBySeller()
+    {
+        return $this->price_approval_status === 'rejected';
+    }
+    
+    /**
+     * موافقة البائع على السعر المقترح
+     */
+    public function approveProposedPrice($notes = null)
+    {
+        if (!$this->isPendingSellerPriceApproval()) {
+            throw new \Exception('لا يوجد سعر مقترح في انتظار الموافقة');
+        }
+        
+        // تحديث السعر الكلي بالسعر المقترح
+        $this->update([
+            'total_price' => $this->buyer_proposed_price,
+            'price_approval_status' => 'approved',
+            'price_approved_at' => now(),
+            'price_approval_notes' => $notes
+        ]);
+        
+        // تحديث سعر العنصر في order_items أيضاً
+        $this->items()->first()->update([
+            'price' => $this->buyer_proposed_price,
+            'subtotal' => $this->buyer_proposed_price
+        ]);
+        
+        $this->addToHistory('price_approved', $this->seller->user_id, 'seller_price_approval', 
+            $notes ? "وافق البائع على السعر المقترح: {$this->buyer_proposed_price} ج.م. {$notes}" 
+                   : "وافق البائع على السعر المقترح: {$this->buyer_proposed_price} ج.م");
+    }
+    
+    /**
+     * رفض البائع للسعر المقترح
+     */
+    public function rejectProposedPrice($reason = null)
+    {
+        if (!$this->isPendingSellerPriceApproval()) {
+            throw new \Exception('لا يوجد سعر مقترح في انتظار الموافقة');
+        }
+        // Refund deposit to buyer if paid
+        if ($this->requires_deposit && $this->hasDepositPaid() && $this->deposit_amount > 0) {
+            try {
+                $this->user->addToBuyerWallet($this->deposit_amount);
+                $this->addToHistory('refunded', $this->seller->user_id, 'deposit_refunded', 'تم رد العربون إلى محفظة المشتري بعد رفض السعر المقترح');
+                $this->update(['deposit_status' => 'refunded']);
+            } catch (\Throwable $e) {
+                // continue updating status even if refund log fails
+            }
+        }
+
+        $this->update([
+            'price_approval_status' => 'rejected',
+            'price_approved_at' => now(),
+            'price_approval_notes' => $reason,
+            'status' => 'cancelled'
+        ]);
+        
+        $this->addToHistory('price_rejected', $this->seller->user_id, 'seller_price_rejection', 
+            $reason ? "رفض البائع السعر المقترح: {$reason}" 
+                    : "رفض البائع السعر المقترح");
+    }
+    
+    /**
+     * الحصول على السعر الفعلي المعتمد
+     */
+    public function getFinalPrice()
+    {
+        // إذا كان هناك سعر مقترح وتمت الموافقة عليه
+        if ($this->buyer_proposed_price && $this->isPriceApprovedBySeller()) {
+            return $this->buyer_proposed_price;
+        }
+        
+        // السعر الأصلي
+        return $this->total_price;
+    }
+    
+    /**
+     * التحقق من أن الخدمة قابلة للتفاوض (السعر الأصلي 0)
+     */
+    public function isNegotiableService()
+    {
+        return $this->is_service_order && 
+               $this->original_service_price !== null && 
+               $this->original_service_price == 0;
     }
 }

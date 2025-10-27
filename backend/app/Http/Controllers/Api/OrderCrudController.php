@@ -70,7 +70,7 @@ class OrderCrudController extends Controller
         if ($isServiceOrder) {
             $validated = $request->validate([
                 'service_id' => 'required|exists:products,id',
-                'seller_id' => 'required|exists:sellers,id',
+                'seller_id' => 'required|exists:Users,id',
                 'customer_name' => 'required|string|max:100',
                 'customer_phone' => 'required|string|max:20',
                 'delivery_address' => 'required|string',
@@ -78,7 +78,8 @@ class OrderCrudController extends Controller
                 'deposit_amount' => 'required|numeric|min:1|max:' . ($request->total_price * 0.8),
                 'payment_method' => 'required|in:cash_on_delivery,bank_transfer,credit_card,vodafone_cash,instapay',
                 'deposit_image' => 'required|image|max:2048',
-                'total_price' => 'required|numeric|min:1',
+                'total_price' => 'required|numeric|min:0',
+                'buyer_proposed_price' => 'nullable|numeric|min:1',
                 'city_id' => 'required|exists:cities,id',
             ]);
         } else {
@@ -107,13 +108,33 @@ class OrderCrudController extends Controller
                 // Handle service order
                 $service = \App\Models\Product::findOrFail($validated['service_id']);
                 
+                // Convert user_id to seller_id from sellers table
+                // The request might send either user_id or seller_id, we need to get the actual seller.id
+                $user = \App\Models\User::findOrFail($validated['seller_id']);
+                if (!$user->seller) {
+                    throw new \Exception('المستخدم المحدد ليس بائعاً');
+                }
+                $seller_id = $user->seller->id;
+                
                 // Verify service belongs to seller
-                if ($service->seller_id != $validated['seller_id']) {
+                if ($service->seller_id != $seller_id) {
                     throw new \Exception('الخدمة لا تنتمي لهذا البائع');
                 }
                 
+                // تحديد السعر الفعلي المستخدم
+                $hasBuyerProposedPrice = isset($validated['buyer_proposed_price']) && 
+                                         $validated['buyer_proposed_price'] > 0 &&
+                                         $validated['buyer_proposed_price'] != $validated['total_price'];
+                
+                $finalPrice = $hasBuyerProposedPrice ? $validated['buyer_proposed_price'] : $validated['total_price'];
+                
+                // إذا السعر الأصلي 0 ولا يوجد سعر مقترح، نرفض الطلب
+                if ($validated['total_price'] == 0 && !$hasBuyerProposedPrice) {
+                    throw new \Exception('يجب إدخال سعر مقترح للخدمات القابلة للتفاوض');
+                }
+                
                 // التحقق من أن العربون لا يتجاوز 80% من قيمة المنتج
-                $maxDepositAmount = $validated['total_price'] * 0.8;
+                $maxDepositAmount = $finalPrice * 0.8;
                 if ($validated['deposit_amount'] > $maxDepositAmount) {
                     throw new \Exception('قيمة العربون لا يمكن أن تتجاوز 80% من قيمة المنتج الأصلي');
                 }
@@ -125,11 +146,12 @@ class OrderCrudController extends Controller
                 }
                 
                 // Create service order
-                $order = Order::create([
+                $orderData = [
                     'user_id' => Auth::id(),
-                    'seller_id' => $validated['seller_id'],
+                    'seller_id' => $seller_id,
                     'status' => 'pending',
-                    'total_price' => $validated['total_price'],
+                    'total_price' => $validated['total_price'], // السعر الأصلي
+                    'original_service_price' => $service->price, // حفظ سعر الخدمة الأصلي
                     'order_date' => now(),
                     'customer_name' => $validated['customer_name'],
                     'customer_phone' => $validated['customer_phone'],
@@ -145,7 +167,15 @@ class OrderCrudController extends Controller
                     'city_id' => $validated['city_id'],
                     'created_at' => now(),
                     'updated_at' => now(),
-                ]);
+                ];
+                
+                // إذا كان هناك سعر مقترح من المشتري، نضيفه ونضع حالة انتظار موافقة البائع
+                if ($hasBuyerProposedPrice) {
+                    $orderData['buyer_proposed_price'] = $validated['buyer_proposed_price'];
+                    $orderData['price_approval_status'] = 'pending_approval';
+                }
+                
+                $order = Order::create($orderData);
                 
                 // Add service as order item
                 OrderItem::create([
@@ -158,15 +188,31 @@ class OrderCrudController extends Controller
                 ]);
                 
                 // Add order history
-                $order->addToHistory('pending', Auth::id(), 'service_order_created', 'تم إنشاء طلب خدمة مع دفع العربون');
+                if ($hasBuyerProposedPrice) {
+                    $order->addToHistory('pending', Auth::id(), 'service_order_created', 
+                        "تم إنشاء طلب خدمة مع دفع العربون - السعر المقترح: {$validated['buyer_proposed_price']} ج.م (في انتظار موافقة البائع)");
+                } else {
+                    $order->addToHistory('pending', Auth::id(), 'service_order_created', 'تم إنشاء طلب خدمة مع دفع العربون');
+                }
                 
-                // Send deposit notification to seller
-                if ($order->seller && $order->seller->user_id && $order->deposit_status === 'paid') {
-                    NotificationService::depositReceived(
-                        $order->seller->user_id,
-                        $order->deposit_amount,
-                        $order->id
-                    );
+                // Send notification to seller
+                if ($order->seller && $order->seller->user_id) {
+                    if ($hasBuyerProposedPrice) {
+                        // إشعار بطلب جديد يحتوي على سعر مقترح
+                        NotificationService::create(
+                            $order->seller->user_id,
+                            'new_price_proposal',
+                            "طلب خدمة جديد #{$order->id} يحتوي على سعر مقترح {$validated['buyer_proposed_price']} ج.م (السعر الأصلي: {$validated['total_price']} ج.م). يرجى مراجعة الطلب والموافقة على السعر.",
+                            "/orders/{$order->id}"
+                        );
+                    } else {
+                        // إشعار عادي بدفع عربون
+                        NotificationService::depositReceived(
+                            $order->seller->user_id,
+                            $order->deposit_amount,
+                            $order->id
+                        );
+                    }
                 }
                 
             } else {
@@ -461,6 +507,91 @@ class OrderCrudController extends Controller
         }
     }
     
+    // موافقة البائع على السعر المقترح
+    public function approveProposedPrice(Request $request, $id)
+    {
+        $request->validate([
+            'notes' => 'nullable|string|max:500'
+        ]);
+        
+        $order = Order::findOrFail($id);
+        
+        // التحقق من أن البائع يملك هذا الطلب
+        if ($order->seller->user_id !== Auth::id()) {
+            return response()->json(['message' => 'غير مصرح لك بهذا الإجراء'], 403);
+        }
+        
+        try {
+            $order->approveProposedPrice($request->notes);
+            
+            // إرسال إشعار للمشتري
+            Notification::create([
+                'user_id' => $order->user_id,
+                'notification_type' => 'price_approved',
+                'message' => "وافق البائع على السعر المقترح ({$order->buyer_proposed_price} ج.م) للطلب #{$order->id}. الطلب الآن قيد مراجعة الإدارة.",
+                'is_read' => false,
+                'link' => '/orders/' . $order->id,
+                'created_at' => now(),
+            ]);
+            
+            // إرسال إشعار للإدارة
+            $admins = \App\Models\User::where('role', 'admin')->get();
+            foreach ($admins as $admin) {
+                Notification::create([
+                    'user_id' => $admin->id,
+                    'notification_type' => 'order_pending_admin',
+                    'message' => "طلب خدمة جديد #{$order->id} بسعر متفاوض عليه ({$order->buyer_proposed_price} ج.م) في انتظار موافقتك.",
+                    'is_read' => false,
+                    'link' => '/orders/' . $order->id,
+                    'created_at' => now(),
+                ]);
+            }
+            
+            return response()->json([
+                'message' => 'تمت الموافقة على السعر المقترح بنجاح',
+                'order' => new OrderResource($order->fresh())
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['message' => $e->getMessage()], 400);
+        }
+    }
+    
+    // رفض البائع للسعر المقترح
+    public function rejectProposedPrice(Request $request, $id)
+    {
+        $request->validate([
+            'reason' => 'nullable|string|max:500'
+        ]);
+        
+        $order = Order::findOrFail($id);
+        
+        // التحقق من أن البائع يملك هذا الطلب
+        if ($order->seller->user_id !== Auth::id()) {
+            return response()->json(['message' => 'غير مصرح لك بهذا الإجراء'], 403);
+        }
+        
+        try {
+            $order->rejectProposedPrice($request->reason);
+            
+            // إرسال إشعار للمشتري
+            Notification::create([
+                'user_id' => $order->user_id,
+                'notification_type' => 'price_rejected',
+                'message' => "رفض البائع السعر المقترح للطلب #{$order->id}. يمكنك إنشاء طلب جديد بسعر آخر." . ($request->reason ? " السبب: {$request->reason}" : ""),
+                'is_read' => false,
+                'link' => '/orders/' . $order->id,
+                'created_at' => now(),
+            ]);
+            
+            return response()->json([
+                'message' => 'تم رفض السعر المقترح وإلغاء الطلب',
+                'order' => new OrderResource($order->fresh())
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['message' => $e->getMessage()], 400);
+        }
+    }
+    
     // بدء العمل على الطلب
     public function startWork($id)
     {
@@ -644,6 +775,29 @@ class OrderCrudController extends Controller
         // Seller and Admin can cancel anytime (based on current logic)
 
         try {
+            // إرجاع العربون للطلبات التي تتطلب عربون
+            if ($order->requires_deposit && $order->hasDepositPaid()) {
+                $wasAdminApproved = !is_null($order->admin_approved_at) || in_array($order->status, [
+                    'admin_approved', 'seller_approved', 'in_progress', 'ready_for_delivery', 'out_for_delivery', 'delivered'
+                ]);
+                if($wasAdminApproved) {
+                    $order->user->addToBuyerWallet($order->deposit_amount);
+                    $order->addToHistory('refunded', Auth::id(), 'deposit_refunded', 'تم رد العربون إلى محفظة المشتري بسبب الإلغاء');
+                    $order->update(['deposit_status' => 'refunded']);
+                }
+            }
+            
+            // إرجاع المبلغ الكامل للطلبات العادية (غير الخدمات) التي دفع فيها المشتري والإدارة وافقت
+            if (!$order->is_service_order && 
+                $order->payment_method !== 'cash_on_delivery' && 
+                !is_null($order->admin_approved_at)) {
+                
+                // إرجاع فقط تمن المنتج بدون مصاريف التوصيل
+                $refundAmount = $order->total_price;
+                $order->user->addToBuyerWallet($refundAmount);
+                $order->addToHistory('refunded', Auth::id(), 'order_refunded', "تم رد المبلغ ({$refundAmount} جنيه) إلى محفظة المشتري بسبب الإلغاء (بدون مصاريف التوصيل)");
+            }
+            
             $order->cancel(Auth::id(), $request->input('reason'));
             // Notify buyer and seller
             Notification::create([
@@ -845,11 +999,32 @@ class OrderCrudController extends Controller
             $notes = $request->notes;
             $adminId = Auth::id();
 
-            // Update order status
+            // Update order status (and refund deposit if cancelling)
             $order->update([
                 'status' => $newStatus,
                 'updated_at' => now()
             ]);
+
+            // معالجة الإرجاع عند الإلغاء
+            if ($newStatus === 'cancelled') {
+                // إرجاع العربون للطلبات التي تتطلب عربون
+                if ($order->requires_deposit && $order->hasDepositPaid() && $order->deposit_amount > 0) {
+                    $order->user->addToBuyerWallet($order->deposit_amount);
+                    $order->update(['deposit_status' => 'refunded']);
+                    $order->addToHistory('refunded', $adminId, 'deposit_refunded', 'تم رد العربون إلى محفظة المشتري بعد إلغاء الطلب بواسطة الأدمن');
+                }
+                
+                // إرجاع المبلغ الكامل للطلبات العادية (غير الخدمات) التي دفع فيها المشتري والإدارة وافقت
+                if (!$order->is_service_order && 
+                    $order->payment_method !== 'cash_on_delivery' && 
+                    !is_null($order->admin_approved_at)) {
+                    
+                    // إرجاع فقط تمن المنتج بدون مصاريف التوصيل
+                    $refundAmount = $order->total_price;
+                    $order->user->addToBuyerWallet($refundAmount);
+                    $order->addToHistory('refunded', $adminId, 'order_refunded', "تم رد المبلغ ({$refundAmount} جنيه) إلى محفظة المشتري بعد إلغاء الطلب بواسطة الأدمن (بدون مصاريف التوصيل)");
+                }
+            }
 
             // Record in order history
             $noteText = $notes ? "تم تغيير الحالة من '{$this->getStatusInArabic($oldStatus)}' إلى '{$this->getStatusInArabic($newStatus)}'. ملاحظات: {$notes}" : "تم تغيير الحالة من '{$this->getStatusInArabic($oldStatus)}' إلى '{$this->getStatusInArabic($newStatus)}'.";

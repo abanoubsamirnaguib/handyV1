@@ -23,6 +23,7 @@ const DashboardSidebar = ({ user }) => {
   const buyerLinks = [
     { path: '/dashboard/orders', label: 'طلباتي', icon: ShoppingBag },
     { path: '/wishlist', label: 'قائمة الأمنيات', icon: Heart },
+    { path: '/dashboard/wallet', label: 'محفظتي', icon: DollarSign },
     { path: '/dashboard/messages', label: 'الرسائل', icon: MessageCircle },
     { path: '/dashboard/settings', label: 'إعدادات الحساب', icon: Settings },
   ];
@@ -224,6 +225,7 @@ const DashboardContent = ({ user }) => {
   const buyerLinks = [
     { path: '/dashboard/orders', label: 'طلباتي', icon: ShoppingBag },
     { path: '/wishlist', label: 'قائمة الأمنيات', icon: Heart },
+    { path: '/dashboard/wallet', label: 'محفظتي', icon: DollarSign },
     { path: '/dashboard/messages', label: 'الرسائل', icon: MessageCircle },
     { path: '/dashboard/settings', label: 'إعدادات الحساب', icon: Settings },
   ];

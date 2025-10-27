@@ -346,8 +346,26 @@ const AdminOrders = () => {
                 </div>
                 <div className="flex justify-between">
                   <span>المبلغ الإجمالي:</span>
-                  <span className="font-semibold">{order.total_amount} جنيه</span>
+                  <span className="font-semibold">
+                    {order.buyer_proposed_price && order.price_approval_status === 'approved' 
+                      ? `${order.buyer_proposed_price} جنيه (سعر متفاوض عليه)`
+                      : `${order.total_amount} جنيه`
+                    }
+                  </span>
                 </div>
+                {/* عرض تفاصيل السعر المقترح */}
+                {order.buyer_proposed_price && order.price_approval_status === 'approved' && (
+                  <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-sm">
+                    <div className="flex justify-between text-xs text-gray-600">
+                      <span>السعر الأصلي:</span>
+                      <span className="line-through">{order.original_service_price} جنيه</span>
+                    </div>
+                    <div className="flex justify-between text-blue-700 font-semibold">
+                      <span>السعر المتفق عليه:</span>
+                      <span>{order.buyer_proposed_price} جنيه</span>
+                    </div>
+                  </div>
+                )}
                 <div className="flex justify-between">
                   <span>طريقة الدفع:</span>
                   <div className="flex items-center gap-2">
@@ -480,6 +498,14 @@ const AdminOrders = () => {
                       <p className="text-xs text-gray-600">
                         {item.quantity} × {item.price} = {item.total} جنيه
                       </p>
+                      {/* عرض معلومات السعر المقترح إذا كان موجود */}
+                      {order.buyer_proposed_price && order.price_approval_status === 'approved' && (
+                        <div className="mt-1 text-xs text-blue-600">
+                          <span className="line-through text-gray-500">السعر الأصلي: {order.original_service_price} ج.م</span>
+                          <br />
+                          <span className="font-semibold">السعر المتفق عليه: {order.buyer_proposed_price} ج.م</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}

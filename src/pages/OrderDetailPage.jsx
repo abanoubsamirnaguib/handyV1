@@ -366,6 +366,59 @@ const OrderDetailPage = () => {
       setIsUpdating(false);
     }
   };
+  
+  const handleApprovePriceProposal = async () => {
+    setIsUpdating(true);
+    try {
+      await sellerApi.approveProposedPrice(orderId, notes);
+      toast({
+        title: "تمت الموافقة على السعر",
+        description: "تمت الموافقة على السعر المقترح. الطلب الآن في انتظار مراجعة الإدارة.",
+      });
+      setNotes('');
+      loadOrder();
+    } catch (error) {
+      console.error('Error approving price:', error);
+      toast({
+        variant: "destructive",
+        title: "خطأ في الموافقة",
+        description: error.message || "حدث خطأ أثناء الموافقة على السعر.",
+      });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+  
+  const handleRejectPriceProposal = async () => {
+    if (!notes.trim()) {
+      toast({
+        variant: "destructive",
+        title: "يرجى إدخال سبب الرفض",
+        description: "يجب كتابة سبب رفض السعر المقترح.",
+      });
+      return;
+    }
+    
+    setIsUpdating(true);
+    try {
+      await sellerApi.rejectProposedPrice(orderId, notes);
+      toast({
+        title: "تم رفض السعر",
+        description: "تم رفض السعر المقترح وإلغاء الطلب. يمكن للمشتري إنشاء طلب جديد بسعر آخر.",
+      });
+      setNotes('');
+      loadOrder();
+    } catch (error) {
+      console.error('Error rejecting price:', error);
+      toast({
+        variant: "destructive",
+        title: "خطأ في الرفض",
+        description: error.message || "حدث خطأ أثناء رفض السعر.",
+      });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
 
   const handlePickupDelivery = async () => {
     setIsUpdating(true);
@@ -750,7 +803,7 @@ const OrderDetailPage = () => {
     if (!order) return null;
 
     const isCustomer = user?.id === order.user.id;
-    const isSeller = user?.id === order.seller.id;
+    const isSeller = user?.id === order.seller.user?.id;
     const isAdmin = user?.role === 'super_admin';
     const isDelivery = user?.role === 'delivery';
     
@@ -843,7 +896,10 @@ const OrderDetailPage = () => {
                 </div>
               )}
 
-              {(order.status === 'pending' || order.status === 'admin_approved') && (
+              {(order.status === 'pending' || 
+                order.status === 'admin_approved' || 
+                order.status === 'seller_approved' ||
+                order.status === 'in_progress') && (
                 <div className="space-y-3">
                   <Label>عنوان التوصيل</Label>
                   <Textarea
@@ -904,6 +960,55 @@ const OrderDetailPage = () => {
           {/* Seller Actions */}
           {isSeller && (
             <>
+              {/* Price Approval Actions */}
+              {order.price_approval_status === 'pending_approval' && order.buyer_proposed_price && (
+                <div className="space-y-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <div className="flex items-center gap-2 text-yellow-800">
+                    <AlertCircle className="h-5 w-5" />
+                    <h4 className="font-semibold">يرجى مراجعة السعر المقترح</h4>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <p className="text-sm text-gray-700">
+                      <span className="font-medium">السعر الأصلي:</span> {order.original_service_price} ج.م
+                    </p>
+                    <p className="text-sm text-gray-700">
+                      <span className="font-medium">السعر المقترح من المشتري:</span> {order.buyer_proposed_price} ج.م
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <Label>ملاحظات (اختياري)</Label>
+                    <Textarea
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                      placeholder="أدخل ملاحظاتك على السعر..."
+                      className="mt-2"
+                    />
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    <Button 
+                      onClick={handleApprovePriceProposal}
+                      disabled={isUpdating}
+                      className="flex-1 bg-green-600 hover:bg-green-700"
+                    >
+                      {isUpdating ? <Loader2 className="h-4 w-4 animate-spin ml-2" /> : <Check className="h-4 w-4 ml-2" />}
+                      الموافقة على السعر
+                    </Button>
+                    <Button 
+                      onClick={handleRejectPriceProposal}
+                      disabled={isUpdating}
+                      variant="destructive"
+                      className="flex-1"
+                    >
+                      {isUpdating ? <Loader2 className="h-4 w-4 animate-spin ml-2" /> : <X className="h-4 w-4 ml-2" />}
+                      رفض السعر
+                    </Button>
+                  </div>
+                </div>
+              )}
+              
               {order.status === 'admin_approved' && (
                 <div className="space-y-4">
                   <div>
@@ -947,7 +1052,7 @@ const OrderDetailPage = () => {
                     className="w-full bg-green-600 hover:bg-green-700"
                   >
                     {isUpdating ? <Loader2 className="h-4 w-4 animate-spin ml-2" /> : <Check className="h-4 w-4 ml-2" />}
-                    قبول الطلب وبدء العمل
+                    قبول الطلب
                   </Button>
                 </div>
               )}
@@ -1014,7 +1119,7 @@ const OrderDetailPage = () => {
           {/* Cancel Order - Available for certain roles and statuses */}
           {((isCustomer && ['pending', 'admin_approved'].includes(order.status)) ||
             (isAdmin && ['pending', 'admin_approved', 'seller_approved'].includes(order.status)) ||
-            (isSeller && ['admin_approved', 'seller_approved'].includes(order.status))) && (
+            (isSeller && ['admin_approved'].includes(order.status))) && (
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button variant="destructive" className="w-full">
@@ -1189,15 +1294,99 @@ const OrderDetailPage = () => {
                       </motion.div>
                     ))}                  </div>
                   <div className="bg-gray-50 p-6">
-                    <div className="flex justify-between items-center">
-                      <span className="text-xl font-bold text-gray-800">الإجمالي الكلي</span>
-                      <span className="text-3xl font-bold text-roman-500">
-                        {order.total_price} جنيه
-                      </span>
+                    {/* إذا كان هناك سعر مقترح */}
+                    {order.buyer_proposed_price && (
+                      <div className="space-y-2 mb-4 pb-4 border-b border-gray-200">
+                        <div className="flex justify-between items-center text-sm text-gray-600">
+                          <span>السعر الأصلي:</span>
+                          <span className="line-through">{order.original_service_price} جنيه</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="font-semibold text-gray-700">السعر المقترح:</span>
+                          <span className="text-xl font-bold text-blue-600">{order.buyer_proposed_price} جنيه</span>
+                        </div>
+                        {order.price_approval_status === 'pending_approval' && (
+                          <div className="flex items-center gap-2 text-yellow-600 text-xs mt-2 bg-yellow-50 p-2 rounded">
+                            <AlertCircle className="h-4 w-4" />
+                            <span>في انتظار موافقة البائع على السعر</span>
+                          </div>
+                        )}
+                        {order.price_approval_status === 'approved' && (
+                          <div className="flex items-center gap-2 text-green-600 text-xs mt-2 bg-green-50 p-2 rounded">
+                            <CheckCircle className="h-4 w-4" />
+                            <span>تمت الموافقة على السعر المقترح</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    
+                    {/* عرض التفاصيل المالية */}
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center text-gray-700">
+                        <span>المجموع الفرعي:</span>
+                        <span className="font-semibold">{order.total_price} جنيه</span>
+                      </div>
+                      
+                      {/* عرض مصاريف التوصيل إذا كانت موجودة */}
+                      {order.delivery_fee && order.delivery_fee > 0 && (
+                        <div className="flex justify-between items-center text-gray-700">
+                          <span>مصاريف التوصيل:</span>
+                          <span className="font-semibold text-orange-600">{order.delivery_fee} جنيه</span>
+                        </div>
+                      )}
+                      
+                      {/* عرض العربون للطلبات التي تتطلب عربون */}
+                      {order.is_service_order && order.requires_deposit && (
+                        <>
+                          <div className="flex justify-between items-center text-gray-700">
+                            <span>قيمة العربون:</span>
+                            <span className="font-semibold text-blue-600">{order.deposit_amount} جنيه</span>
+                          </div>
+                          <div className="flex justify-between items-center text-gray-700">
+                            <span>المبلغ المتبقي:</span>
+                            <span className="font-semibold text-green-600">{order.total_amount - order.deposit_amount} جنيه</span>
+                          </div>
+                        </>
+                      )}
+                      
+                      <Separator className="my-4" />
+                      
+                      <div className="flex justify-between items-center">
+                        <span className="text-2xl font-bold text-gray-800">المبلغ النهائي:</span>
+                        <span className="text-3xl font-bold text-roman-500">
+                          {order.buyer_total || (order.total_price + (order.delivery_fee || 0))} جنيه
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </CardContent>
-              </Card>              {/* Payment Information Card */}
+              </Card>
+
+              {/* Delivery Details Card */}
+              {(order.city || order.delivery_fee) && (
+                <Card className="border-0 shadow-lg">
+                  <CardHeader className="bg-roman-500 text-white">
+                    <CardTitle className="flex items-center text-xl">
+                      <Truck className="h-6 w-6 ml-2" />
+                      تفاصيل التوصيل
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-6 space-y-4">
+                    {order.city && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-600">المدينة:</span>
+                        <span className="font-semibold text-gray-800">{order.city.name}</span>
+                      </div>
+                    )}
+                    {order.delivery_fee && order.delivery_fee > 0 && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-600">تكلفة التوصيل:</span>
+                        <span className="font-semibold text-orange-600">{order.delivery_fee} جنيه</span>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}              {/* Payment Information Card */}
               <Card className="border-0 shadow-lg">
                 <CardHeader className="bg-roman-500 text-white">
                   <CardTitle className="flex items-center text-xl">

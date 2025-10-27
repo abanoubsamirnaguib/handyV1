@@ -62,8 +62,16 @@ const MessagePage = () => {  const { id } = useParams();
       return `آخر ظهور أمس ${lastSeenDate.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' })}`;
     }
     
-    // Otherwise show date
-    return `آخر ظهور ${lastSeenDate.toLocaleDateString('ar-SA')}`;
+    // Otherwise show date - using Gregorian calendar with Arabic numerals
+    const options = { 
+      year: 'numeric', 
+      month: '2-digit', 
+      day: '2-digit',
+      calendar: 'gregory',
+      numberingSystem: 'arabext' // Using extended Arabic-Indic numerals
+    };
+    const gregorianDate = lastSeenDate.toLocaleDateString('ar-SA', options);
+    return `آخر ظهور ${gregorianDate}`;
   };
 
   useEffect(() => {

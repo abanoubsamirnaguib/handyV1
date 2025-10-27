@@ -16,6 +16,7 @@ class OrderItemResource extends JsonResource
             'price' => $this->price,
             'subtotal' => $this->subtotal,
             'total' => $this->subtotal, // For AdminOrders compatibility
+            'original_price' => $this->original_price,
             'created_at' => $this->created_at,
         ];
     }

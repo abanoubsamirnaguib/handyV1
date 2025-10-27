@@ -62,7 +62,8 @@ const SellerProfilePage = () => {
         }
         // Transform API response to match component's expected structure
         const sellerData = {
-          id: sellerResponse.id,
+          id: sellerResponse.id, // This is seller.id from sellers table
+          user_id: sellerResponse.user?.id, // This is user.id from users table
           name: sellerResponse.user?.name || 'بدون اسم',
           email: sellerResponse.user?.email || '',
           bio: sellerResponse.bio || 'لا يوجد وصف',
@@ -75,7 +76,8 @@ const SellerProfilePage = () => {
           responseTime: sellerResponse.response_time || 'غير محدد',
           avatar: sellerResponse.user?.avatar || '',
           cover_image: sellerResponse.user?.cover_image || '',
-          products: sellerResponse.products || []
+          products: sellerResponse.products || [],
+          user: sellerResponse.user // Keep the full user object for startConversation
         };
         setSeller(sellerData);
         // Fetch seller's products/gigs
@@ -168,7 +170,8 @@ const SellerProfilePage = () => {
       return;
     }
     
-    if (user.id === seller.id) {
+    // Compare user IDs, not seller ID with user ID
+    if (user.id === seller.user_id) {
       toast({ 
         variant: "destructive", 
         title: "لا يمكن مراسلة نفسك", 
@@ -178,8 +181,8 @@ const SellerProfilePage = () => {
     }
     
     try {
-      // Start a conversation with the seller
-      const conversationId = await startConversation(seller);
+      // Start a conversation with the seller - pass user object, not seller object
+      const conversationId = await startConversation(seller.user);
       setActiveConversation(conversationId);
       navigate('/chat');
     } catch (error) {

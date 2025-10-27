@@ -418,20 +418,42 @@ const CheckoutPage = () => {
                 
                 <Separator />
                 
-                <div className="flex justify-between text-gray-700">
-                  <span>المجموع الفرعي</span>
-                  <span>{baseTotal} جنيه</span>
-                </div>
-                <div className="flex justify-between text-gray-700">
-                  <span>الشحن</span>
-                  <span className={selectedCity ? '' : 'text-amber-600'}>
-                    {selectedCity ? `${deliveryFee} جنيه` : 'اختر المدينة لاحتساب الشحن'}
-                  </span>
-                </div>
-                <Separator />
-                <div className="flex justify-between text-xl font-bold text-gray-800">
-                  <span>الإجمالي</span>
-                  <span>{grandTotal} جنيه</span>
+                {/* Summary Details */}
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center text-gray-700">
+                    <span>المجموع الفرعي:</span>
+                    <span className="font-semibold">{baseTotal} جنيه</span>
+                  </div>
+                  
+                  <div className="flex justify-between items-center text-gray-700">
+                    <span>مصاريف التوصيل:</span>
+                    <span className={`font-semibold ${selectedCity ? 'text-orange-600' : 'text-amber-600'}`}>
+                      {selectedCity ? `${deliveryFee} جنيه` : 'اختر المدينة'}
+                    </span>
+                  </div>
+                  
+                  {selectedCity && (
+                    <div className="pt-2 border-t border-gray-200">
+                      <p className="text-xs text-gray-500 text-center">
+                        المدينة: {selectedCity.name}
+                      </p>
+                    </div>
+                  )}
+                  
+                  <Separator />
+                  
+                  <div className="flex justify-between items-center text-2xl font-bold text-gray-800">
+                    <span>المبلغ النهائي:</span>
+                    <span className="text-roman-500">{grandTotal} جنيه</span>
+                  </div>
+                  
+                  {selectedCity && (
+                    <div className="p-3 bg-blue-50 rounded-lg border-r-4 border-blue-400 mt-4">
+                      <p className="text-xs text-blue-700 text-center">
+                        💡 المبلغ النهائي يشمل قيمة المنتجات ومصاريف التوصيل ({deliveryFee} ج.م)
+                      </p>
+                    </div>
+                  )}
                 </div>
               </CardContent>
               <CardContent className="pt-0">

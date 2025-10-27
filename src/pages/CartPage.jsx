@@ -99,18 +99,28 @@ const CartPage = () => {
                   <CardTitle className="text-2xl text-primary">ملخص الطلب</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="flex justify-between text-gray-700">
-                    <span>المجموع الفرعي</span>
-                    <span>{getCartTotal()} جنيه</span>
-                  </div>
-                  <div className="flex justify-between text-gray-700">
-                    <span>الشحن</span>
-                    <span className="text-green-600">مجاني</span> {/* Placeholder */}
-                  </div>
-                  <Separator />
-                  <div className="flex justify-between text-xl font-bold text-gray-800">
-                    <span>الإجمالي</span>
-                    <span>{getCartTotal()} جنيه</span>
+                  <div className="space-y-3">
+                    <div className="flex justify-between text-gray-700">
+                      <span>المجموع الفرعي:</span>
+                      <span className="font-semibold">{getCartTotal()} جنيه</span>
+                    </div>
+                    <div className="flex justify-between text-gray-700">
+                      <span>مصاريف التوصيل:</span>
+                      <span className="text-orange-600 font-semibold">سيتم حسابه عند الطلب</span>
+                    </div>
+                    
+                    <Separator />
+                    
+                    <div className="flex justify-between text-xl font-bold text-gray-800">
+                      <span>الإجمالي المتوقع:</span>
+                      <span className="text-roman-500">{getCartTotal()} ج.م + مصاريف التوصيل</span>
+                    </div>
+                    
+                    <div className="p-3 bg-blue-50 rounded-lg border-r-4 border-blue-400 mt-4">
+                      <p className="text-xs text-blue-700 text-center">
+                        💡 تم إضافة مصاريف التوصيل عند اختيار المدينة في صفحة الإتمام
+                      </p>
+                    </div>
                   </div>
                 </CardContent>
                 <CardFooter className="flex flex-col gap-3">

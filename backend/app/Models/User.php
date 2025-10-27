@@ -29,6 +29,7 @@ class User extends Authenticatable
         'status',
         'bio',
         'location',
+        'buyer_wallet_balance',
         'avatar',
         'cover_image',
         'phone',
@@ -59,6 +60,7 @@ class User extends Authenticatable
             'is_buyer' => 'boolean',
             'email_verified' => 'boolean',
             'last_seen' => 'datetime',
+            'buyer_wallet_balance' => 'decimal:2',
         ];
     }
 
@@ -84,6 +86,20 @@ class User extends Authenticatable
     public function canActAsBuyer()
     {
         return $this->is_buyer || $this->role === 'buyer';
+    }
+
+    // Buyer wallet helpers
+    public function addToBuyerWallet(float $amount): void
+    {
+        $this->increment('buyer_wallet_balance', $amount);
+    }
+
+    public function deductFromBuyerWallet(float $amount): void
+    {
+        if ($this->buyer_wallet_balance < $amount) {
+            throw new \Exception('رصيد محفظة المشتري غير كافٍ');
+        }
+        $this->decrement('buyer_wallet_balance', $amount);
     }
 
     /**

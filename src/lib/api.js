@@ -337,6 +337,14 @@ export const api = {
     }),
   getEarningsSummary: () => apiFetch('earnings-summary'),
 
+  // Buyer withdrawals
+  getBuyerWithdrawals: () => apiFetch('buyer-withdrawals'),
+  createBuyerWithdrawalRequest: (data) => 
+    apiFetch('buyer-withdrawals', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
   // Reviews API functions
   getProductReviews: (productId) => apiFetch(`products/${productId}/reviews`),
   getSellerReviews: (sellerId) => apiFetch(`sellers/${sellerId}/reviews`),
@@ -730,6 +738,19 @@ export const sellerApi = {
       body: JSON.stringify(payload),
     });
   },
+  
+  // Price approval functions
+  approveProposedPrice: (orderId, notes = '') =>
+    apiFetch(`orders/${orderId}/approve-price`, {
+      method: 'POST',
+      body: JSON.stringify({ notes }),
+    }),
+  rejectProposedPrice: (orderId, reason = '') =>
+    apiFetch(`orders/${orderId}/reject-price`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    }),
+  
   startWork: (orderId, notes = '') => 
     apiFetch(`orders/${orderId}/start-work`, {
       method: 'POST',

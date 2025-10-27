@@ -36,7 +36,9 @@ return new class extends Migration
             'cancelled',
             'paid',
             'refunded',
-            'suspended'
+            'suspended',
+            'price_approved',
+            'price_rejected'
         ) DEFAULT 'pending'");
 
         // إضافة حقول جديدة لتتبع التعليق

@@ -295,6 +295,12 @@ const DashboardOrders = () => {
                       </CardTitle>
                       <div className="flex items-center gap-2">
                         <OrderStatusBadge status={order.status} statusLabel={order.status_label} />
+                        {order.price_approval_status === 'pending_approval' && (
+                          <Badge className="text-xs bg-yellow-100 text-yellow-700 border-yellow-300 animate-pulse">
+                            <AlertTriangle className="ml-1 h-3 w-3" />
+                            سعر مقترح
+                          </Badge>
+                        )}
                         {(order.is_late || order.time_remaining?.is_late) && (
                           <Badge variant="destructive" className="text-xs animate-pulse">
                             <AlertTriangle className="ml-1 h-3 w-3" />

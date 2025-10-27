@@ -131,6 +131,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
         
         // Seller actions  
         Route::post('{id}/seller-approve', [OrderCrudController::class, 'sellerApprove']);
+        Route::post('{id}/approve-price', [OrderCrudController::class, 'approveProposedPrice']);
+        Route::post('{id}/reject-price', [OrderCrudController::class, 'rejectProposedPrice']);
         Route::post('{id}/start-work', [OrderCrudController::class, 'startWork']);
         Route::post('{id}/complete-work', [OrderCrudController::class, 'completeWork']);
         
@@ -270,6 +272,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('withdrawal-requests/{id}/approve', [WithdrawalRequestController::class, 'approve']);
         Route::post('withdrawal-requests/{id}/reject', [WithdrawalRequestController::class, 'reject']);
         
+        // Buyer withdrawal management for admin
+        Route::get('buyer-withdrawal-requests', [\App\Http\Controllers\Api\BuyerWithdrawalRequestController::class, 'adminIndex']);
+        Route::post('buyer-withdrawal-requests/{id}/approve', [\App\Http\Controllers\Api\BuyerWithdrawalRequestController::class, 'approve']);
+        Route::post('buyer-withdrawal-requests/{id}/reject', [\App\Http\Controllers\Api\BuyerWithdrawalRequestController::class, 'reject']);
+        
         // Withdrawal settings management
         Route::get('withdrawal-settings', [WithdrawalRequestController::class, 'getWithdrawalSettings']);
         Route::post('withdrawal-settings', [WithdrawalRequestController::class, 'updateWithdrawalSettings']);
@@ -320,6 +327,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('withdrawals', [WithdrawalRequestController::class, 'index']);
     Route::post('withdrawals', [WithdrawalRequestController::class, 'store']);
     Route::get('earnings-summary', [WithdrawalRequestController::class, 'earningsSummary']);
+    
+    // Buyer withdrawal routes
+    Route::get('buyer-withdrawals', [\App\Http\Controllers\Api\BuyerWithdrawalRequestController::class, 'index']);
+    Route::post('buyer-withdrawals', [\App\Http\Controllers\Api\BuyerWithdrawalRequestController::class, 'store']);
 });
 
 // Delivery Personnel Routes (separate authentication)

@@ -81,7 +81,6 @@ const ChatPage = () => {
       setSellerServices(services);
     } catch (error) {
       console.error('Error loading seller services:', error);
-      setSellerServices([]);
     } finally {
       setLoadingServices(false);
     }
@@ -261,7 +260,6 @@ const ChatPage = () => {
 
   const currentConversationDetails = conversations.find(conv => conv.id === activeConversation);
   const currentMessages = messages[activeConversation] || [];
-
   const filteredConversations = conversations.filter(conv => 
     conv.participant.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -304,8 +302,16 @@ const ChatPage = () => {
       return `آخر ظهور أمس ${lastSeenDate.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' })}`;
     }
     
-    // Otherwise show date
-    return `آخر ظهور ${lastSeenDate.toLocaleDateString('ar-SA')}`;
+    // Otherwise show date - using Gregorian calendar with Arabic numerals
+    const options = { 
+      year: 'numeric', 
+      month: '2-digit', 
+      day: '2-digit',
+      calendar: 'gregory',
+      numberingSystem: 'arabext' // Using extended Arabic-Indic numerals
+    };
+    const gregorianDate = lastSeenDate.toLocaleDateString('ar-SA', options);
+    return `آخر ظهور ${gregorianDate}`;
   };
 
   // Debug output for online status
@@ -597,6 +603,7 @@ const ChatPage = () => {
         isOpen={showServiceModal}
         onClose={() => setShowServiceModal(false)}
         sellerId={currentConversationDetails?.participant?.id}
+        sellerUserId={currentConversationDetails?.participant?.id}
         sellerName={currentConversationDetails?.participant?.name}
         sellerAvatar={currentConversationDetails?.participant?.avatar}
         preloadedServices={sellerServices}

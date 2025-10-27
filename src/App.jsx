@@ -49,6 +49,7 @@ import DashboardGigs from '@/components/dashboard/DashboardGigs';
 import DashboardEarnings from '@/components/dashboard/DashboardEarnings';
 import DashboardMessages from '@/components/dashboard/DashboardMessages';
 import DashboardSettings from '@/components/dashboard/DashboardSettings';
+import DashboardBuyerWallet from '@/components/dashboard/DashboardBuyerWallet';
 import CreateGigPage from '@/components/dashboard/CreateGigPage';
 import EditGigPage from '@/components/dashboard/EditGigPage';
 
@@ -116,6 +117,7 @@ function App() {
                   <Route path="gigs/new" element={<CreateGigPage />} />
                   <Route path="gigs/edit/:gigId" element={<EditGigPage />} />
                   <Route path="earnings" element={<DashboardEarnings />} />
+                  <Route path="wallet" element={<DashboardBuyerWallet />} />
                   <Route path="messages" element={<DashboardMessages />} />
                   <Route path="settings" element={<DashboardSettings />} />
                 </Route>

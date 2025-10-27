@@ -10,12 +10,15 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/components/ui/use-toast';
 import { api } from '@/lib/api';
 
-const ServiceOrderModal = ({ isOpen, onClose, sellerId, sellerName, sellerAvatar, preloadedServices = [] }) => {
+const ServiceOrderModal = ({ isOpen, onClose, sellerId, sellerUserId, sellerName, sellerAvatar, preloadedServices = [] }) => {
   const { toast } = useToast();
   const [services, setServices] = useState(preloadedServices);
   const [selectedService, setSelectedService] = useState(null);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  
+  // Use sellerUserId for API calls (user_id), keep sellerId for compatibility
+  const sellerUserIdForApi = sellerUserId || sellerId;
   
   // Form data
   const [formData, setFormData] = useState({
@@ -30,6 +33,10 @@ const ServiceOrderModal = ({ isOpen, onClose, sellerId, sellerName, sellerAvatar
   
   const [depositImage, setDepositImage] = useState(null);
   const [depositImagePreview, setDepositImagePreview] = useState(null);
+  
+  // Price negotiation states
+  const [enablePriceChange, setEnablePriceChange] = useState(false);
+  const [proposedPrice, setProposedPrice] = useState('');
 
   // Cities
   const [cities, setCities] = useState([]);
@@ -37,7 +44,7 @@ const ServiceOrderModal = ({ isOpen, onClose, sellerId, sellerName, sellerAvatar
 
   // Load seller services
   useEffect(() => {
-    if (isOpen && sellerId) {
+    if (isOpen && sellerUserIdForApi) {
       // Use preloaded services if available, otherwise load from server
       if (preloadedServices && preloadedServices.length > 0) {
         setServices(preloadedServices);
@@ -47,12 +54,13 @@ const ServiceOrderModal = ({ isOpen, onClose, sellerId, sellerName, sellerAvatar
       // Also load cities for selection
       loadCities();
     }
-  }, [isOpen, sellerId, preloadedServices]);
+  }, [isOpen, sellerUserIdForApi, preloadedServices]);
 
   const loadSellerServices = async () => {
     try {
       setLoading(true);
-      const response = await api.getSellerServices(sellerId);
+      // getSellerServices expects user_id, not seller_id from sellers table
+      const response = await api.getSellerServices(sellerUserIdForApi);
       setServices(response);
     } catch (error) {
       console.error('Error loading services:', error);
@@ -142,9 +150,26 @@ const ServiceOrderModal = ({ isOpen, onClose, sellerId, sellerName, sellerAvatar
     try {
       setSubmitting(true);
       
+      // التحقق من السعر المقترح
+      // إذا السعر 0 أو تم تفعيل تغيير السعر، يجب إدخال سعر مقترح
+      if (selectedService.price === 0 || enablePriceChange) {
+        const proposedPriceValue = parseFloat(proposedPrice);
+        if (!proposedPrice || proposedPriceValue <= 0) {
+          toast({
+            variant: "destructive",
+            title: "خطأ",
+            description: "يرجى إدخال سعر مقترح صحيح"
+          });
+          setSubmitting(false);
+          return;
+        }
+      }
+      
       const formDataToSend = new FormData();
       formDataToSend.append('service_id', selectedService.id);
-      formDataToSend.append('seller_id', sellerId);
+      // Note: The backend expects seller_id parameter but validates it against users.id
+      // The backend will convert this user_id to actual seller.id from sellers table
+      formDataToSend.append('seller_id', sellerUserIdForApi);
       formDataToSend.append('customer_name', formData.customer_name);
       formDataToSend.append('customer_phone', formData.customer_phone);
       formDataToSend.append('delivery_address', formData.delivery_address);
@@ -155,13 +180,23 @@ const ServiceOrderModal = ({ isOpen, onClose, sellerId, sellerName, sellerAvatar
       formDataToSend.append('requires_deposit', 'true');
       formDataToSend.append('is_service_order', 'true');
       formDataToSend.append('total_price', selectedService.price);
+      
+      // إضافة السعر المقترح
+      // إذا السعر 0، يجب إرسال السعر المقترح دائماً
+      // إذا السعر > 0 وتم تفعيل تغيير السعر، نرسل السعر المقترح
+      if ((selectedService.price === 0 || enablePriceChange) && proposedPrice) {
+        formDataToSend.append('buyer_proposed_price', proposedPrice);
+      }
+      
       if (formData.city_id) formDataToSend.append('city_id', formData.city_id);
       
       const response = await api.createServiceOrder(formDataToSend);
       
       toast({
         title: "نجح",
-        description: "تم إرسال طلب الخدمة بنجاح"
+        description: enablePriceChange && proposedPrice 
+          ? "تم إرسال طلب الخدمة بنجاح. في انتظار موافقة البائع على السعر المقترح."
+          : "تم إرسال طلب الخدمة بنجاح"
       });
       onClose();
       
@@ -178,6 +213,8 @@ const ServiceOrderModal = ({ isOpen, onClose, sellerId, sellerName, sellerAvatar
       setSelectedService(null);
       setDepositImage(null);
       setDepositImagePreview(null);
+      setEnablePriceChange(false);
+      setProposedPrice('');
       
     } catch (error) {
       console.error('Error creating service order:', error);
@@ -279,9 +316,70 @@ const ServiceOrderModal = ({ isOpen, onClose, sellerId, sellerName, sellerAvatar
                       <p className="text-gray-600 text-sm mt-1">{selectedService.description}</p>
                     </div>
                     <div className="text-left rtl:text-right">
-                      <span className="text-xl font-bold text-primary">{selectedService.price} ج.م</span>
+                      <span className="text-xl font-bold text-primary">
+                        {selectedService.price > 0 ? `${selectedService.price} ج.م` : 'قابل للتفاوض'}
+                      </span>
                     </div>
                   </div>
+                  
+                  {/* Price Change Option */}
+                  {selectedService.price > 0 && (
+                    <div className="mt-3 p-3 bg-white rounded-lg">
+                      <label className="flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={enablePriceChange}
+                          onChange={(e) => setEnablePriceChange(e.target.checked)}
+                          className="form-checkbox h-4 w-4 text-blue-600 ml-2"
+                        />
+                        <span className="text-sm font-medium">تغيير السعر (بعد الاتفاق مع البائع)</span>
+                      </label>
+                      
+                      {enablePriceChange && (
+                        <div className="mt-2">
+                          <label className="block text-sm mb-1">السعر المقترح (ج.م)</label>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            min="1"
+                            value={proposedPrice}
+                            onChange={(e) => setProposedPrice(e.target.value)}
+                            placeholder={`السعر الأصلي: ${selectedService.price} ج.م`}
+                            className="w-full"
+                          />
+                          <p className="text-xs text-gray-500 mt-1">
+                            سيتم إرسال السعر المقترح للبائع للموافقة عليه قبل معالجة الطلب
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  
+                  {/* If service price is 0, require proposed price */}
+                  {selectedService.price === 0 && (
+                    <div className="mt-3 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                      <label className="block text-sm font-medium mb-2">
+                        <DollarSign className="w-4 h-4 inline ml-1" />
+                        السعر المقترح (ج.م)
+                      </label>
+                      <Input
+                        type="number"
+                        min="1"
+                        value={proposedPrice}
+                        onChange={(e) => setProposedPrice(e.target.value)}
+                        placeholder="أدخل السعر المتفق عليه مع البائع"
+                        required
+                        className="w-full"
+                      />
+                      <p className="text-xs text-blue-600 mt-1 flex items-center">
+                        <svg className="h-4 w-4 ml-1" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                        </svg>
+                        هذه الخدمة قابلة للتفاوض. يرجى إدخال السعر المتفق عليه مع البائع في الشات.
+                      </p>
+                    </div>
+                  )}
+                  
                   <Button 
                     type="button" 
                     variant="ghost" 
@@ -363,7 +461,15 @@ const ServiceOrderModal = ({ isOpen, onClose, sellerId, sellerName, sellerAvatar
                       type="number"
                       step="0.01"
                       min="1"
-                      max={selectedService ? selectedService.price * 0.8 : 0}
+                      max={selectedService ? (
+                        enablePriceChange && proposedPrice 
+                          ? parseFloat(proposedPrice) * 0.8 
+                          : selectedService.price > 0 
+                            ? selectedService.price * 0.8 
+                            : proposedPrice 
+                              ? parseFloat(proposedPrice) * 0.8 
+                              : 0
+                      ) : 0}
                       value={formData.deposit_amount}
                       onChange={(e) => handleInputChange('deposit_amount', e.target.value)}
                       placeholder="أدخل قيمة العربون"
@@ -371,7 +477,15 @@ const ServiceOrderModal = ({ isOpen, onClose, sellerId, sellerName, sellerAvatar
                     />
                     {selectedService && (
                       <p className="text-xs text-gray-500 mt-1">
-                        الحد الأقصى للعربون: {(selectedService.price * 0.8).toFixed(2)} جنيه (80% من قيمة الخدمة)
+                        الحد الأقصى للعربون: {(
+                          (enablePriceChange && proposedPrice 
+                            ? parseFloat(proposedPrice) 
+                            : selectedService.price > 0 
+                              ? selectedService.price 
+                              : proposedPrice 
+                                ? parseFloat(proposedPrice) 
+                                : 0) * 0.8
+                        ).toFixed(2)} جنيه (80% من قيمة الخدمة)
                       </p>
                     )}
                   </div>

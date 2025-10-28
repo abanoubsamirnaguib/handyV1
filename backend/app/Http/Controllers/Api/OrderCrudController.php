@@ -70,7 +70,7 @@ class OrderCrudController extends Controller
         if ($isServiceOrder) {
             $validated = $request->validate([
                 'service_id' => 'required|exists:products,id',
-                'seller_id' => 'required|exists:Users,id',
+                'seller_id' => 'required|exists:users,id',
                 'customer_name' => 'required|string|max:100',
                 'customer_phone' => 'required|string|max:20',
                 'delivery_address' => 'required|string',

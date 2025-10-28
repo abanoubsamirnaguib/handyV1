@@ -110,8 +110,28 @@ class BuyerWithdrawalRequestController extends Controller
             return response()->json(['error' => 'غير مصرح'], 403);
         }
 
-        $requests = BuyerWithdrawalRequest::orderBy('created_at', 'desc')->get();
-        return response()->json(['withdrawal_requests' => $requests]);
+        $requests = BuyerWithdrawalRequest::with(['user', 'processedBy'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json([
+            'withdrawal_requests' => $requests->map(function($request) {
+                return [
+                    'id' => $request->id,
+                    'user_name' => $request->user->name,
+                    'user_email' => $request->user->email,
+                    'amount' => $request->amount,
+                    'payment_method' => $request->payment_method,
+                    'payment_details' => $request->payment_details,
+                    'status' => $request->status,
+                    'admin_notes' => $request->admin_notes,
+                    'rejection_reason' => $request->rejection_reason,
+                    'processed_by' => $request->processedBy ? $request->processedBy->name : null,
+                    'created_at' => $request->created_at->format('Y-m-d H:i'),
+                    'processed_at' => $request->processed_at instanceof \DateTime ? $request->processed_at->format('Y-m-d H:i') : null,
+                ];
+            })
+        ]);
     }
 
     // Admin approve

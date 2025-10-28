@@ -552,7 +552,7 @@ export const adminApi = {
       }),
     }),
 
-  // Withdrawal requests management
+  // Withdrawal requests management (sellers)
   getWithdrawalRequests: () => apiFetch('admin/withdrawal-requests'),
   approveWithdrawalRequest: (requestId, data) => 
     apiFetch(`admin/withdrawal-requests/${requestId}/approve`, {
@@ -561,6 +561,19 @@ export const adminApi = {
     }),
   rejectWithdrawalRequest: (requestId, data) => 
     apiFetch(`admin/withdrawal-requests/${requestId}/reject`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  // Buyer withdrawal requests management
+  getBuyerWithdrawalRequests: () => apiFetch('admin/buyer-withdrawal-requests'),
+  approveBuyerWithdrawalRequest: (requestId, data) => 
+    apiFetch(`admin/buyer-withdrawal-requests/${requestId}/approve`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  rejectBuyerWithdrawalRequest: (requestId, data) => 
+    apiFetch(`admin/buyer-withdrawal-requests/${requestId}/reject`, {
       method: 'POST',
       body: JSON.stringify(data),
     }),

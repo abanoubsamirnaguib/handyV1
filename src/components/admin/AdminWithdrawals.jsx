@@ -26,9 +26,11 @@ import { adminApi } from '@/lib/api';
 const AdminWithdrawals = () => {
   const { toast } = useToast();
   const [withdrawalRequests, setWithdrawalRequests] = useState([]);
+  const [buyerWithdrawalRequests, setBuyerWithdrawalRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [filterType, setFilterType] = useState('all'); // 'all', 'seller', 'buyer'
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [showProcessDialog, setShowProcessDialog] = useState(false);
   const [actionType, setActionType] = useState(''); // 'approve' or 'reject'
@@ -41,8 +43,12 @@ const AdminWithdrawals = () => {
 
   const fetchWithdrawalRequests = async () => {
     try {
-      const response = await adminApi.getWithdrawalRequests();
-      setWithdrawalRequests(response.withdrawal_requests);
+      const [sellerResponse, buyerResponse] = await Promise.all([
+        adminApi.getWithdrawalRequests(),
+        adminApi.getBuyerWithdrawalRequests()
+      ]);
+      setWithdrawalRequests(sellerResponse.withdrawal_requests);
+      setBuyerWithdrawalRequests(buyerResponse.withdrawal_requests);
     } catch (error) {
       console.error('Error fetching withdrawal requests:', error);
       toast({
@@ -68,9 +74,16 @@ const AdminWithdrawals = () => {
     }
 
     try {
-      const response = actionType === 'approve' 
-        ? await adminApi.approveWithdrawalRequest(selectedRequest.id, { admin_notes: adminNotes })
-        : await adminApi.rejectWithdrawalRequest(selectedRequest.id, { rejection_reason: rejectionReason });
+      let response;
+      if (selectedRequest.type === 'buyer') {
+        response = actionType === 'approve' 
+          ? await adminApi.approveBuyerWithdrawalRequest(selectedRequest.id, { admin_notes: adminNotes })
+          : await adminApi.rejectBuyerWithdrawalRequest(selectedRequest.id, { rejection_reason: rejectionReason });
+      } else {
+        response = actionType === 'approve' 
+          ? await adminApi.approveWithdrawalRequest(selectedRequest.id, { admin_notes: adminNotes })
+          : await adminApi.rejectWithdrawalRequest(selectedRequest.id, { rejection_reason: rejectionReason });
+      }
       
       toast({
         title: "نجح",
@@ -137,19 +150,26 @@ const AdminWithdrawals = () => {
     }
   };
 
-  const filteredRequests = withdrawalRequests.filter(request => {
-    const matchesSearch = request.seller_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         request.seller_email.toLowerCase().includes(searchTerm.toLowerCase());
+  // دمج طلبات البائعين والمشترين مع إضافة نوع الطلب
+  const allRequests = [
+    ...withdrawalRequests.map(req => ({ ...req, type: 'seller', user_name: req.seller_name, user_email: req.seller_email })),
+    ...buyerWithdrawalRequests.map(req => ({ ...req, type: 'buyer', user_name: req.user_name, user_email: req.user_email }))
+  ];
+
+  const filteredRequests = allRequests.filter(request => {
+    const matchesSearch = request.user_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         request.user_email.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = filterStatus === 'all' || request.status === filterStatus;
-    return matchesSearch && matchesStatus;
+    const matchesType = filterType === 'all' || request.type === filterType;
+    return matchesSearch && matchesStatus && matchesType;
   });
 
   const stats = {
-    total: withdrawalRequests.length,
-    pending: withdrawalRequests.filter(r => r.status === 'pending').length,
-    approved: withdrawalRequests.filter(r => r.status === 'approved').length,
-    rejected: withdrawalRequests.filter(r => r.status === 'rejected').length,
-    totalAmount: withdrawalRequests
+    total: allRequests.length,
+    pending: allRequests.filter(r => r.status === 'pending').length,
+    approved: allRequests.filter(r => r.status === 'approved').length,
+    rejected: allRequests.filter(r => r.status === 'rejected').length,
+    totalAmount: allRequests
       .filter(r => r.status === 'approved')
       .reduce((sum, r) => sum + parseFloat(r.amount), 0)
   };
@@ -174,7 +194,7 @@ const AdminWithdrawals = () => {
       >
         <div>
           <h1 className="text-3xl font-bold text-gray-800">إدارة طلبات السحب</h1>
-          <p className="text-gray-500">راجع ووافق على طلبات سحب أرباح البائعين</p>
+          <p className="text-gray-500">راجع ووافق على طلبات سحب أرباح البائعين وأموال المشترين</p>
         </div>
       </motion.div>
 
@@ -235,6 +255,16 @@ const AdminWithdrawals = () => {
                 <SelectItem value="rejected">مرفوض</SelectItem>
               </SelectContent>
             </Select>
+            <Select value={filterType} onValueChange={setFilterType}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="فلترة بالنوع" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">جميع الأنواع</SelectItem>
+                <SelectItem value="seller">البائعين</SelectItem>
+                <SelectItem value="buyer">المشترين</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Withdrawal Requests Table */}
@@ -243,7 +273,8 @@ const AdminWithdrawals = () => {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b">
-                    <th className="text-right py-3 px-4">البائع</th>
+                    <th className="text-right py-3 px-4">المستخدم</th>
+                    <th className="text-right py-3 px-4">النوع</th>
                     <th className="text-right py-3 px-4">المبلغ</th>
                     <th className="text-right py-3 px-4">طريقة الدفع</th>
                     <th className="text-right py-3 px-4">تفاصيل الدفع</th>
@@ -254,15 +285,20 @@ const AdminWithdrawals = () => {
                 </thead>
                 <tbody>
                   {filteredRequests.map((request) => (
-                    <tr key={request.id} className="border-b hover:bg-gray-50">
+                    <tr key={`${request.type}-${request.id}`} className="border-b hover:bg-gray-50">
                       <td className="py-3 px-4">
                         <div className="flex items-center space-x-2">
                           <User className="h-4 w-4 text-gray-400" />
                           <div>
-                            <div className="font-medium">{request.seller_name}</div>
-                            <div className="text-gray-500 text-xs">{request.seller_email}</div>
+                            <div className="font-medium">{request.user_name}</div>
+                            <div className="text-gray-500 text-xs">{request.user_email}</div>
                           </div>
                         </div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <Badge className={request.type === 'seller' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'}>
+                          {request.type === 'seller' ? 'بائع' : 'مشتري'}
+                        </Badge>
                       </td>
                       <td className="py-3 px-4 font-bold text-green-600">{request.amount} جنيه</td>
                       <td className="py-3 px-4">{request.payment_method}</td>
@@ -347,7 +383,8 @@ const AdminWithdrawals = () => {
               <div className="bg-gray-50 p-4 rounded-lg">
                 <h3 className="font-medium mb-2">تفاصيل الطلب</h3>
                 <div className="space-y-1 text-sm">
-                  <p><strong>البائع:</strong> {selectedRequest.seller_name}</p>
+                  <p><strong>المستخدم:</strong> {selectedRequest.user_name}</p>
+                  <p><strong>النوع:</strong> {selectedRequest.type === 'seller' ? 'بائع' : 'مشتري'}</p>
                   <p><strong>المبلغ:</strong> {selectedRequest.amount} جنيه</p>
                   <p><strong>طريقة الدفع:</strong> {selectedRequest.payment_method}</p>
                   <p><strong>تفاصيل الدفع:</strong> {selectedRequest.payment_details}</p>

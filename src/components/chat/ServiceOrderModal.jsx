@@ -323,7 +323,7 @@ const ServiceOrderModal = ({ isOpen, onClose, sellerId, sellerUserId, sellerName
                   </div>
                   
                   {/* Price Change Option */}
-                  {selectedService.price > 0 && (
+                  {selectedService.price >= 0 && (
                     <div className="mt-3 p-3 bg-white rounded-lg">
                       <label className="flex items-center cursor-pointer">
                         <input

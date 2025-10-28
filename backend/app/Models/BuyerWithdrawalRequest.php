@@ -82,6 +82,28 @@ class BuyerWithdrawalRequest extends Model
             'rejection_reason' => $reason
         ]);
     }
+
+    public function getStatusLabel()
+    {
+        $labels = [
+            'pending' => 'قيد المراجعة',
+            'approved' => 'تم الموافقة',
+            'rejected' => 'مرفوض'
+        ];
+        return $labels[$this->status] ?? $this->status;
+    }
+
+    public function getPaymentMethodLabel()
+    {
+        $labels = [
+            'vodafone_cash' => 'فودافون كاش',
+            'instapay' => 'انستاباي',
+            'etisalat_cash' => 'اتصالات كاش',
+            'orange_cash' => 'أورانج كاش',
+            'bank_transfer' => 'تحويل بنكي'
+        ];
+        return $labels[$this->payment_method] ?? $this->payment_method;
+    }
 }
 
 

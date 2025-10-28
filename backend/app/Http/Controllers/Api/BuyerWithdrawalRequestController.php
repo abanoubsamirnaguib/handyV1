@@ -26,9 +26,9 @@ class BuyerWithdrawalRequestController extends Controller
                 return [
                     'id' => $request->id,
                     'amount' => $request->amount,
-                    'payment_method' => $request->payment_method,
+                    'payment_method' => $request->getPaymentMethodLabel(),
                     'payment_details' => $request->payment_details,
-                    'status' => $request->status,
+                    'status' => $request->getStatusLabel(),
                     'admin_notes' => $request->admin_notes,
                     'rejection_reason' => $request->rejection_reason,
                     'created_at' => $request->created_at->format('Y-m-d H:i'),

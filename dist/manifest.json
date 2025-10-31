@@ -2,7 +2,7 @@
   "name": "بازار - منصة للمنتجات اليدوية",
   "short_name": "بازار",
   "description": "منصة للمنتجات اليدوية والبائعين والمشترين - تسوق واعرض منتجاتك الحرفية",
-  "start_url": "/",
+  "start_url": "/explore",
   "scope": "/",
   "id": "/",
   "display": "standalone",
@@ -19,27 +19,27 @@
   },
   "screenshots": [
     {
-      "src": "/splash/android-splash-1080x1920.png",
+      "src": "/mockup/بازار-منصة-للمنتجات-اليدوية-10-19-2025_02_37_AM-portrait.png",
       "sizes": "1080x1920",
       "type": "image/png",
       "form_factor": "narrow",
       "label": "Splash Screen"
     },
     {
-      "src": "/splash/android-splash-1920x1080.png",
+      "src": "/mockup/بازار-منصة-للمنتجات-اليدوية-10-19-2025_02_37_AM-portrait.png",
       "sizes": "1920x1080",
       "type": "image/png",
       "form_factor": "wide",
       "label": "Splash Screen"
     },
     {
-      "src": "/Asset_12.svg",
+      "src": "/mockup/بازار-منصة-للمنتجات-اليدوية-10-19-2025_02_36_AM-portrait.png",
       "sizes": "1280x720",
       "type": "image/svg+xml",
       "form_factor": "wide"
     },
     {
-      "src": "/Asset_12.svg", 
+      "src": "/mockup/بازار-منصة-للمنتجات-اليدوية-10-19-2025_02_36_AM-portrait.png", 
       "sizes": "750x1334",
       "type": "image/svg+xml",
       "form_factor": "narrow"

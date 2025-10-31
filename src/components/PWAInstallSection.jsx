@@ -23,15 +23,15 @@ const PWAInstallSection = () => {
 
   const mockupGallery = [
     {
-      image: "/apple-iphone-15-black-mockup/بازار-منصة-للمنتجات-اليدوية-10-19-2025_02_36_AM-portrait.png",
+      image: "/mockup/بازار-منصة-للمنتجات-اليدوية-10-19-2025_02_36_AM-portrait.png",
       title: "تصفح المنتجات"
     },
     {
-      image: "/apple-iphone-15-black-mockup/بازار-منصة-للمنتجات-اليدوية-10-19-2025_02_37_AM-portrait.png",
+      image: "/mockup/بازار-منصة-للمنتجات-اليدوية-10-19-2025_02_37_AM-portrait.png",
       title: "تجربة الشراء"
     },
     {
-      image: "/apple-iphone-15-black-mockup/بازار-منصة-للمنتجات-اليدوية-10-19-2025_02_36_AM-left.png",
+      image: "/mockup/بازار-منصة-للمنتجات-اليدوية-10-19-2025_02_36_AM-left.png",
       title: "واجهة سهلة"
     }
   ];

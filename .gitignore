@@ -4,3 +4,8 @@ backend/vendor
 .env
 .DS_Store
 node_modules.zip
+package.json
+package-lock.json
+generate-splash-screens
+public/splash-previewer.html
+generate-splash-screens.js

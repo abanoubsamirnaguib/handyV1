@@ -52,6 +52,11 @@ class Product extends Model
         return $this->hasMany(Review::class)->where('status', 'published');
     }
 
+    public function orderItems()
+    {
+        return $this->hasMany(OrderItem::class);
+    }
+
     // Calculate average rating from reviews
     public function getAverageRating()
     {

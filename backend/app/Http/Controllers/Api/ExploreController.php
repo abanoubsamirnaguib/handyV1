@@ -5,6 +5,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Product;
 use App\Models\Seller;
+use App\Models\Order;
 use App\Models\WishlistItem;
 use App\Http\Resources\ProductResource;
 use App\Http\Resources\SellerResource;
@@ -47,6 +48,7 @@ class ExploreController extends Controller
         $query->where('status', 'active'); // Only active products
         $products = $query->select(['id','title','description','price','category_id','seller_id','rating','review_count','featured','status','type','created_at'])
             ->with(['images:id,product_id,image_url', 'category:id,name', 'seller:id'])
+            ->withCount('orderItems as orders_count')
             ->limit(40)
             ->get();
         
@@ -78,6 +80,7 @@ class ExploreController extends Controller
                     'images' => $p->images ? $p->images->map(fn($img) => ['url'=>$img->image_url])->values() : [],
                     'rating' => $p->rating,
                     'reviewCount' => $p->review_count,
+                    'ordersCount' => $p->orders_count ?? 0,
                     'featured' => $p->featured,
                     'status' => $p->status,
                     'type' => $p->type ?? 'product', // Default to 'product' if type is null
@@ -125,12 +128,22 @@ class ExploreController extends Controller
         $sellers = $query->select(['id','user_id','rating','review_count','completed_orders','member_since'])
             ->limit(20)
             ->get();
+        
+        // Get total orders count for each seller
+        $sellerIds = $sellers->pluck('id')->toArray();
+        $ordersCount = Order::whereIn('seller_id', $sellerIds)
+            ->selectRaw('seller_id, COUNT(*) as total_orders')
+            ->groupBy('seller_id')
+            ->pluck('total_orders', 'seller_id')
+            ->toArray();
+        
         return response()->json([
-            'data' => $sellers->map(function($s) {
+            'data' => $sellers->map(function($s) use ($ordersCount) {
                 return [
                     'id' => $s->id,
                     'name' => $s->user->name ?? '',
                     'avatar' => $s->user->avatar_url ?? '',
+                    'coverImage' => $s->user->cover_image_url ?? null,
                     'skills' => $s->skills ? $s->skills->pluck('skill_name') : [],
                     'rating' => $s->rating,
                     'reviewCount' => $s->review_count,
@@ -138,6 +151,7 @@ class ExploreController extends Controller
                     'location' => $s->user->location ?? '',
                     'memberSince' => $s->member_since,
                     'completedOrders' => $s->completed_orders,
+                    'ordersCount' => $ordersCount[$s->id] ?? 0,
                 ];
             })
         ]);

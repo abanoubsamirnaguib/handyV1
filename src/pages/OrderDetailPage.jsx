@@ -802,10 +802,44 @@ const OrderDetailPage = () => {
   const renderActionButtons = () => {
     if (!order) return null;
 
-    const isCustomer = user?.id === order.user.id;
-    const isSeller = user?.id === order.seller.user?.id;
+    const isCustomer = user?.id === order.user?.id;
+    const isSeller = user?.id === order.seller?.user?.id;
     const isAdmin = user?.role === 'super_admin';
     const isDelivery = user?.role === 'delivery';
+    
+    // Check if there are any actions available - if not, don't render the card
+    const hasCustomerActions = isCustomer && (
+      (order.status === 'pending' && !order.payment_proof && !(order.is_service_order && order.requires_deposit)) ||
+      (order.is_service_order && order.requires_deposit && order.deposit_status === 'paid' && !order.remaining_payment_proof && ['admin_approved', 'seller_approved', 'in_progress', 'work_completed', 'ready_for_delivery', 'out_for_delivery', 'delivered'].includes(order.status)) ||
+      (order.is_service_order && order.requires_deposit && order.deposit_status === 'paid' && order.remaining_payment_proof) ||
+      ['pending', 'admin_approved', 'seller_approved', 'in_progress'].includes(order.status) ||
+      order.status === 'delivered'
+    );
+    
+    const hasAdminActions = isAdmin && order.status === 'pending' && order.payment_proof;
+    
+    const hasSellerActions = isSeller && (
+      (order.price_approval_status === 'pending_approval' && order.buyer_proposed_price) ||
+      order.status === 'admin_approved' ||
+      order.status === 'seller_approved' ||
+      order.status === 'in_progress'
+    );
+    
+    const hasDeliveryActions = isDelivery && (
+      order.status === 'ready_for_delivery' ||
+      order.status === 'out_for_delivery'
+    );
+    
+    const hasCancelAction = (
+      (isCustomer && ['pending', 'admin_approved'].includes(order.status)) ||
+      (isAdmin && ['pending', 'admin_approved', 'seller_approved'].includes(order.status)) ||
+      (isSeller && ['admin_approved'].includes(order.status))
+    );
+    
+    const hasAnyActions = hasCustomerActions || hasAdminActions || hasSellerActions || hasDeliveryActions || hasCancelAction;
+    
+    // Don't render the card if there are no actions available
+    if (!hasAnyActions) return null;
     
     return (
       <Card className="mt-6">

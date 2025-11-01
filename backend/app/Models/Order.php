@@ -87,7 +87,11 @@ class Order extends Model
         'created_at',
         'updated_at',
     ];
-    
+    public $casts = [
+        'requires_deposit' => 'boolean',
+        'is_service_order' => 'boolean',
+        'is_late' => 'boolean',
+    ];
     public $timestamps = false;
 
     public function user()

@@ -318,7 +318,16 @@ const AdminOrders = () => {
     );
   };
 
-  const OrderDetailDialog = ({ order }) => (
+  const OrderDetailDialog = ({ order }) => {
+    // Check if there are any admin actions available for this order
+    const hasAdminActions = order.status === 'pending' && (
+      order.payment_proof || 
+      order.payment_method === 'cash_on_delivery' || 
+      order.deposit_image ||
+      order.remaining_payment_proof
+    );
+    
+    return (
     <Dialog>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
@@ -672,12 +681,7 @@ const AdminOrders = () => {
         </div>
 
         {/* Action Buttons */}
-        {order.status === 'pending' && (
-          order.payment_proof || 
-          order.payment_method === 'cash_on_delivery' || 
-          order.deposit_image ||
-          order.remaining_payment_proof
-        ) && (
+        {hasAdminActions && (
           <div className="space-y-3 mt-6">
             {/* Special note for deposit orders */}
             {order.is_service_order && order.deposit_image && !order.remaining_payment_proof && (
@@ -741,12 +745,12 @@ const AdminOrders = () => {
                     <AlertDialogTitle>اعتماد الطلب</AlertDialogTitle>
                     <AlertDialogDescription>
                       هل أنت متأكد من رغبتك في اعتماد طلب رقم {order.id}؟
-                      {order.deposit_image && !order.remaining_payment_proof && (
+                      {order.is_service_order && order.deposit_image && !order.remaining_payment_proof && (
                         <span className="block mt-2 text-green-600 font-medium">
                           ملاحظة: هذا طلب بعربون - تم دفع {order.deposit_amount} جنيه من أصل {order.total_amount} جنيه
                         </span>
                       )}
-                      {order.remaining_payment_proof && (
+                      {order.is_service_order && order.remaining_payment_proof && (
                         <span className="block mt-2 text-blue-600 font-medium">
                           ملاحظة: تم رفع إثبات دفع باقي المبلغ - سيتم اعتبار الطلب مدفوع بالكامل
                         </span>
@@ -840,6 +844,7 @@ const AdminOrders = () => {
       </DialogContent>
     </Dialog>
   );
+};
 
   if (isLoading) {
     return (
@@ -1114,6 +1119,7 @@ const AdminOrders = () => {
                         </AlertDialogContent>
                       </AlertDialog>
                       
+                      {/* Admin actions for pending orders */}
                       {order.status === 'pending' && (
                         order.payment_proof || 
                         order.payment_method === 'cash_on_delivery' || 

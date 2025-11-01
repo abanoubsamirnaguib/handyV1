@@ -51,7 +51,14 @@ const NotificationsPage = () => {
       markAsRead(notification.id);
     }
     
-    // Navigate based on notification type and data
+    // First, check if the notification has a link property (from database)
+    // This matches the behavior in Navbar
+    if (notification.link) {
+      navigate(notification.link);
+      return;
+    }
+    
+    // Fall back to navigation based on notification type and data
     switch (notification.type) {
       case 'order':
         navigate(`/orders/${notification.data?.orderId || ''}`);
@@ -66,7 +73,7 @@ const NotificationsPage = () => {
         navigate(`/dashboard/earnings`);
         break;
       default:
-        // If no specific route is defined, use the link property if available
+        // If no specific route is defined, use the link property from data if available
         if (notification.data?.link) {
           navigate(notification.data.link);
         }

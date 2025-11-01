@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Star, Filter, ArrowRight, ArrowLeft, ListFilter, LayoutGrid, X, MapPin, Search, Palette, HandMetal, Gift, Shirt, Image, Utensils, Sparkles, Home, Scissors, Wrench } from 'lucide-react';
+import { Star, Filter, ArrowRight, ListFilter, LayoutGrid, X, MapPin, Search, Palette, HandMetal, Gift, Shirt, Image, Utensils, Sparkles, Home, Scissors, Wrench } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -253,6 +253,7 @@ const ExplorePage = () => {
         category: categoryObj ? { id: categoryObj.id, name: categoryObj.name } : { id: categoryId, name: categoryId },
         rating: prod.rating || 0,
         reviewCount: prod.reviewCount || prod.review_count || 0,
+        ordersCount: prod.ordersCount || prod.orders_count || prod.order_count || 0,
         sellerId: prod.sellerId || prod.seller_id || prod.seller?.id,
         type: prod.type || 'product',
         in_wishlist: prod.in_wishlist || false, // Preserve wishlist status
@@ -264,9 +265,11 @@ const ExplorePage = () => {
       id: seller.id,
       name: seller.name || '',
       avatar: seller.avatar || '',
+      coverImage: seller.coverImage || seller.cover_image || null,
       skills: seller.skills || [],
       rating: seller.rating || 0,
       reviewCount: seller.reviewCount || seller.review_count || 0,
+      ordersCount: seller.ordersCount || seller.orders_count || 0,
       bio: seller.bio || '',
       location: seller.location || '',
       memberSince: seller.memberSince || '',
@@ -467,55 +470,52 @@ const ExplorePage = () => {
     }
 
     return (
-      <Card className="overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 flex flex-col h-62 card-hover border-roman-500/20" dir="rtl">
-        <div className="relative h-56">
-          <img 
-            src={gig.images && gig.images.length > 0 
-              ? gig.images[0] 
-              : "https://images.unsplash.com/photo-1680188700662-5b03bdcf3017"} 
-            alt={gig.title} 
-            className="w-full h-full object-cover" 
-          />
-          <div className="absolute top-2 right-2 flex flex-col gap-1">
-            <Badge variant="secondary" className="bg-roman-500 text-white">{categoryName}</Badge>
-          </div>
-          <div className="absolute top-2 left-2">
-            <WishlistButton productId={gig.id} inWishlist={gig.in_wishlist} onWishlistChange={handleWishlistChange} size="md" />
-          </div>
-          <div className="absolute bottom-2 right-2 flex flex-col gap-1">
-            <Badge variant="outline" className={`text-xs ${gig.type === 'gig' ? 'bg-warning-500/50 text-white border-warning-500' : 'bg-blue-100 text-blue-600 border-blue-300'}`}>
-              {gig.type === 'gig' ? 'خدمة مخصصة' : 'منتج جاهز'}
-            </Badge>
-          </div>
-        </div>
-        <CardHeader className="pb-2 text-right p-2">
-          <CardTitle className="text-sm font-semibold text-neutral-900 overflow-hidden relative group cursor-pointer">
-            <div 
-              className={`whitespace-nowrap transition-all duration-300 hover:scale-105 hover:text-roman-500 ${gig.title.length > 25 ? 'animate-scroll' : ''}`}
-              style={{ animationDuration: `${Math.max(3, gig.title.length * 0.2)}s` }}
-            >
-              {gig.title}
+      <Link to={`/gigs/${gig.id}`} className="block">
+        <Card className="overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 flex flex-col h-62 card-hover border-roman-500/20 cursor-pointer" dir="rtl">
+          <div className="relative h-56">
+            <img 
+              src={gig.images && gig.images.length > 0 
+                ? gig.images[0] 
+                : "https://images.unsplash.com/photo-1680188700662-5b03bdcf3017"} 
+              alt={gig.title} 
+              className="w-full h-full object-cover" 
+            />
+            <div className="absolute top-2 right-2 flex flex-col gap-1">
+              <Badge variant="secondary" className="bg-roman-500 text-white">{categoryName}</Badge>
             </div>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="flex-grow text-right p-2">
-          <div className="flex items-center justify-between text-xs mb-2">
-            <div className="flex items-center text-neutral-900/70">
-              <Star className="h-3 w-3 text-warning-500 ml-1" />
-              <span className="whitespace-nowrap">{gig.rating} ({gig.reviewCount})</span>
+            <div className="absolute top-2 left-2" onClick={(e) => e.stopPropagation()}>
+              <div onClick={(e) => e.preventDefault()}>
+                <WishlistButton productId={gig.id} inWishlist={gig.in_wishlist} onWishlistChange={handleWishlistChange} size="md" />
+              </div>
             </div>
-            <p className="text-sm font-bold text-roman-500 whitespace-nowrap">{gig.price} ج</p>
+            <div className="absolute bottom-2 right-2 flex flex-col gap-1">
+              <Badge variant="outline" className={`text-xs ${gig.type === 'gig' ? 'bg-warning-500/50 text-white border-warning-500' : 'bg-blue-100 text-blue-600 border-blue-300'}`}>
+                {gig.type === 'gig' ? 'خدمة مخصصة' : 'منتج جاهز'}
+              </Badge>
+            </div>
           </div>
-        </CardContent>
-        <CardFooter className="flex justify-start p-2">
-          <Button asChild className="w-full bg-roman-500 hover:bg-roman-500/90 text-white text-xs">
-            <Link to={`/gigs/${gig.id}`} className="whitespace-nowrap">
-              عرض التفاصيل
-              <ArrowLeft className="ml-2 h-3 w-3" />
-            </Link>
-          </Button>
-        </CardFooter>
-      </Card>
+          <CardHeader className="pb-2 text-right p-2">
+            <CardTitle className="text-sm font-semibold text-neutral-900 overflow-hidden relative group">
+              <div 
+                className={`whitespace-nowrap transition-all duration-300 hover:scale-105 hover:text-roman-500 ${gig.title.length > 25 ? 'animate-scroll' : ''}`}
+                style={{ animationDuration: `${Math.max(3, gig.title.length * 0.2)}s` }}
+              >
+                {gig.title}
+              </div>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex-grow text-right p-2">
+            <div className="flex items-center justify-between text-xs mb-2">
+              <div className="flex items-center text-neutral-900/70">
+                <Star className="h-3 w-3 text-warning-500 ml-1" />
+                <span className="whitespace-nowrap">{gig.rating} ({gig.ordersCount || 0} طلب)</span>
+                <span className="whitespace-nowrap"></span>
+              </div>
+              <p className="text-sm font-bold text-roman-500 whitespace-nowrap">{gig.price} ج</p>
+            </div>
+          </CardContent>
+        </Card>
+      </Link>
     );
   };
   const GigListItem = ({ gig }) => {
@@ -526,161 +526,174 @@ const ExplorePage = () => {
       categoryName = categoryObj ? categoryObj.name : (gig.category_id || gig.category?.id || gig.category);
     }
     
-    return (      <Card className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col md:flex-row card-hover border-roman-500/20 w-full" dir="rtl">
-        <div className="relative md:w-1/3 h-56 md:h-auto">
-          <img 
-            src={gig.images && gig.images.length > 0 
-              ? gig.images[0] 
-              : "https://images.unsplash.com/photo-1680188700662-5b03bdcf3017"} 
-            alt={gig.title} 
-            className="w-full h-full max-h-56 object-cover" 
-          />
-          <div className="absolute top-2 right-2 flex flex-col gap-1">
-            <Badge variant="secondary" className="bg-roman-500 text-white">{categoryName}</Badge>
-          </div>
-          <div className="absolute top-2 left-2">
-            <WishlistButton productId={gig.id} inWishlist={gig.in_wishlist} onWishlistChange={handleWishlistChange} size="md" />
-          </div>
-          <div className="absolute bottom-2 right-2 flex flex-col gap-1">
-          <Badge variant="outline" className={`text-xs ${gig.type === 'gig' ? 'bg-warning-500/50 text-warning-500 border-warning-500' : 'bg-blue-10 text-blue-600 border-blue-300'}`}>
-              {gig.type === 'gig' ? 'خدمة مخصصة' : 'منتج جاهز'}
-            </Badge>
-          </div>
-        </div>
-        <div className="md:w-2/3 flex flex-col">
-          <CardHeader className="pb-2 text-right">
-            <CardTitle className="text-lg font-semibold text-neutral-900 cursor-pointer transition-all duration-300 hover:scale-105 hover:text-roman-500">{gig.title}</CardTitle>
-          </CardHeader>
-          <CardContent className="flex-grow text-right">
-            <p className="text-sm text-neutral-900/70 mb-2 line-clamp-2">{gig.description}</p>
-            <div className="flex items-center text-sm text-neutral-900/70 mb-2">
-              <Star className="h-4 w-4 text-warning-500 ml-1" />
-              {gig.rating} ({gig.reviewCount} تقييمات)
+    return (
+      <Link to={`/gigs/${gig.id}`} className="block">
+        <Card className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col md:flex-row card-hover border-roman-500/20 w-full cursor-pointer" dir="rtl">
+          <div className="relative md:w-1/3 h-56 md:h-auto">
+            <img 
+              src={gig.images && gig.images.length > 0 
+                ? gig.images[0] 
+                : "https://images.unsplash.com/photo-1680188700662-5b03bdcf3017"} 
+              alt={gig.title} 
+              className="w-full h-full max-h-56 object-cover" 
+            />
+            <div className="absolute top-2 right-2 flex flex-col gap-1">
+              <Badge variant="secondary" className="bg-roman-500 text-white">{categoryName}</Badge>
             </div>
-            <p className="text-xl font-bold text-roman-500 mb-2">{gig.price} جنيه</p>
-          </CardContent>
-          <CardFooter className="flex">
-            <Button asChild className="w-full md:w-auto bg-roman-500 hover:bg-roman-500/90 text-white">
-              <Link to={`/gigs/${gig.id}`}>
-                عرض التفاصيل
-                <ArrowLeft className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-          </CardFooter>
-        </div>
-      </Card>
+            <div className="absolute top-2 left-2" onClick={(e) => e.stopPropagation()}>
+              <div onClick={(e) => e.preventDefault()}>
+                <WishlistButton productId={gig.id} inWishlist={gig.in_wishlist} onWishlistChange={handleWishlistChange} size="md" />
+              </div>
+            </div>
+            <div className="absolute bottom-2 right-2 flex flex-col gap-1">
+              <Badge variant="outline" className={`text-xs ${gig.type === 'gig' ? 'bg-warning-500/50 text-warning-500 border-warning-500' : 'bg-blue-10 text-blue-600 border-blue-300'}`}>
+                {gig.type === 'gig' ? 'خدمة مخصصة' : 'منتج جاهز'}
+              </Badge>
+            </div>
+          </div>
+          <div className="md:w-2/3 flex flex-col">
+            <CardHeader className="pb-2 text-right">
+              <CardTitle className="text-lg font-semibold text-neutral-900 transition-all duration-300 hover:scale-105 hover:text-roman-500">{gig.title}</CardTitle>
+            </CardHeader>
+            <CardContent className="flex-grow text-right">
+              <p className="text-sm text-neutral-900/70 mb-2 line-clamp-2">{gig.description}</p>
+              <div className="flex items-center text-sm text-neutral-900/70 mb-2">
+                <Star className="h-4 w-4 text-warning-500 ml-1" />
+                {gig.rating} ({gig.reviewCount} تقييمات) ({gig.ordersCount || 0} طلبات)
+              </div>
+              <p className="text-xl font-bold text-roman-500 mb-2">{gig.price} جنيه</p>
+            </CardContent>
+          </div>
+        </Card>
+      </Link>
     );
   };
   const SellerCard = ({ seller }) => {
     return (
-    <Card className="overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 flex flex-col h-62 card-hover border-roman-500/20" dir="rtl">
-      <div className="relative h-32 bg-roman-500 flex items-center justify-center">
-        {seller.avatar ? (
-          <img 
-            src={seller.avatar} 
-            alt={seller.name}
-            className="h-16 w-16 rounded-full object-cover border-2 border-white shadow-md"
-          />
-        ) : (
-          <div className="h-16 w-16 rounded-full bg-white flex items-center justify-center text-xl font-bold text-roman-500 shadow-md">
-            {seller.name.charAt(0)}
+      <Link to={`/sellers/${seller.id}`} className="block">
+        <Card className="overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 flex flex-col h-62 card-hover border-roman-500/20 cursor-pointer" dir="rtl">
+          <div className={`relative h-32 flex items-center justify-center ${seller.coverImage ? '' : 'bg-roman-500'}`}>
+            {seller.coverImage ? (
+              <img 
+                src={seller.coverImage} 
+                alt="Cover" 
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+            ) : null}
+            <div className="relative z-10">
+              {seller.avatar ? (
+                <img 
+                  src={seller.avatar} 
+                  alt={seller.name}
+                  className="h-16 w-16 rounded-full object-cover border-2 border-white shadow-md"
+                />
+              ) : (
+                <div className="h-16 w-16 rounded-full bg-white flex items-center justify-center text-xl font-bold text-roman-500 shadow-md">
+                  {seller.name.charAt(0)}
+                </div>
+              )}
+            </div>
           </div>
-        )}
-      </div>
-      <CardHeader className="pb-2 text-right p-2">
-        <CardTitle className="text-sm font-semibold text-neutral-900 overflow-hidden relative group cursor-pointer">
-          <div 
-            className={`whitespace-nowrap transition-all duration-300 hover:scale-105 hover:text-roman-500 ${seller.name.length > 25 ? 'animate-scroll' : ''}`}
-            style={{ animationDuration: `${Math.max(3, seller.name.length * 0.2)}s` }}
-          >
-            {seller.name}
-          </div>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="flex-grow text-right p-2">
-        <div className="flex items-center justify-between text-xs mb-2">
-          <div className="flex items-center text-neutral-900/70">
-            <Star className="h-3 w-3 text-warning-500 ml-1" />
-            <span className="whitespace-nowrap">{seller.rating} ({seller.reviewCount})</span>
-          </div>
-          <div className="flex items-center text-neutral-900/70">
-            <MapPin className="h-3 w-3 text-roman-500/60 ml-1" />
-            <span className="text-xs truncate max-w-20">{seller.location}</span>
-          </div>
-        </div>
-        <div className="mt-2 text-right">
-          {seller.skills.slice(0, 2).map((skill, index) => (
-            <Badge key={index} variant="outline" className="ml-1 mb-1 border-roman-500/30 bg-success-100/10 text-xs px-1 py-0">
-              {skill}
-            </Badge>
-          ))}
-        </div>
-      </CardContent>
-      <CardFooter className="flex gap-2 p-2">
-        <Button asChild className="w-full bg-roman-500 hover:bg-roman-500/90 text-white text-xs">
-          <Link to={`/sellers/${seller.id}`} className="whitespace-nowrap">
-            عرض الملف
-            <ArrowLeft className="ml-2 h-3 w-3" />
-          </Link>
-        </Button>
-      </CardFooter>
-    </Card>
+          <CardHeader className="pb-2 text-right p-2">
+            <CardTitle className="text-sm font-semibold text-neutral-900 overflow-hidden relative group">
+              <div 
+                className={`whitespace-nowrap transition-all duration-300 hover:scale-105 hover:text-roman-500 ${seller.name.length > 25 ? 'animate-scroll' : ''}`}
+                style={{ animationDuration: `${Math.max(3, seller.name.length * 0.2)}s` }}
+              >
+                {seller.name}
+              </div>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex-grow text-right p-2">
+            <div className="flex flex-col gap-1 text-xs mb-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center text-neutral-900/70">
+                  <Star className="h-3 w-3 text-warning-500 ml-1" />
+                  <span className="whitespace-nowrap">{seller.rating} ({seller.reviewCount || 0})</span>
+                </div>
+                <div className="flex items-center text-neutral-900/70">
+                  <MapPin className="h-3 w-3 text-roman-500/60 ml-1" />
+                  <span className="text-xs truncate max-w-20">{seller.location}</span>
+                </div>
+              </div>
+              <div className="flex items-center text-neutral-900/70">
+                <span className="text-xs">{seller.ordersCount || 0} طلبات</span>
+              </div>
+            </div>
+            <div className="mt-2 text-right">
+              {seller.skills.slice(0, 2).map((skill, index) => (
+                <Badge key={index} variant="outline" className="ml-1 mb-1 border-roman-500/30 bg-success-100/10 text-xs px-1 py-0">
+                  {skill}
+                </Badge>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </Link>
     );
   };
   const SellerListItem = ({ seller }) => {
     return (
-    <Card className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col md:flex-row card-hover border-roman-500/20 w-full" dir="rtl">
-      <div className="relative md:w-1/4 h-48 md:h-auto bg-roman-500 flex items-center justify-center">
-        {seller.avatar ? (
-          <img 
-            src={seller.avatar} 
-            alt={seller.name}
-            className="h-24 w-24 rounded-full object-cover border-4 border-white shadow-md"
-          />
-        ) : (
-          <div className="h-24 w-24 rounded-full bg-white flex items-center justify-center text-3xl font-bold text-roman-500 shadow-md">
-            {seller.name.charAt(0)}
-          </div>
-        )}
-      </div>
-      <div className="md:w-3/4 flex flex-col">
-        <CardHeader className="pb-2 text-right">
-          <CardTitle className="text-lg font-semibold text-neutral-900 cursor-pointer transition-all duration-300 hover:scale-105 hover:text-roman-500">{seller.name}</CardTitle>
-        </CardHeader>
-        <CardContent className="flex-grow text-right">
-          <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-2">
-            <div className="flex items-center text-sm text-neutral-900/70 mb-2 md:mb-0">
-              <MapPin className="h-4 w-4 text-roman-500/60 ml-1" />
-              <span>{seller.location}</span>
-            </div>
-            <div className="flex items-center text-sm text-neutral-900/70">
-              <Star className="h-4 w-4 text-warning-500 ml-1" />
-              {seller.rating} ({seller.reviewCount} تقييمات)
+      <Link to={`/sellers/${seller.id}`} className="block">
+        <Card className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col md:flex-row card-hover border-roman-500/20 w-full cursor-pointer" dir="rtl">
+          <div className={`relative md:w-1/4 h-48 md:h-auto flex items-center justify-center ${seller.coverImage ? '' : 'bg-roman-500'}`}>
+            {seller.coverImage ? (
+              <img 
+                src={seller.coverImage} 
+                alt="Cover" 
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+            ) : null}
+            <div className="relative z-10">
+              {seller.avatar ? (
+                <img 
+                  src={seller.avatar} 
+                  alt={seller.name}
+                  className="h-24 w-24 rounded-full object-cover border-4 border-white shadow-md"
+                />
+              ) : (
+                <div className="h-24 w-24 rounded-full bg-white flex items-center justify-center text-3xl font-bold text-roman-500 shadow-md">
+                  {seller.name.charAt(0)}
+                </div>
+              )}
             </div>
           </div>
-          <p className="text-sm text-neutral-900/70 mb-2">{seller.bio}</p>
-          <div className="mt-2">
-            {seller.skills.map((skill, index) => (
-              <Badge key={index} variant="outline" className="ml-1 mb-1 border-roman-500/30 text-neutral-900">
-                {skill}
-              </Badge>
-            ))}
-          </div>          
-          <div className="text-sm text-neutral-900/70 mt-2 text-right">
-            <span className="font-semibold">عضو منذ:</span> {new Date(seller.memberSince).toLocaleDateString('ar-EG')} <span className="mx-2">|</span> 
-            <span className="font-semibold">طلبات مكتملة:</span> {seller.completedOrders}
+          <div className="md:w-3/4 flex flex-col">
+            <CardHeader className="pb-2 text-right">
+              <CardTitle className="text-lg font-semibold text-neutral-900 transition-all duration-300 hover:scale-105 hover:text-roman-500">{seller.name}</CardTitle>
+            </CardHeader>
+            <CardContent className="flex-grow text-right">
+              <div className="flex flex-col md:flex-row md:justify-between md:items-start mb-2 gap-2">
+                <div className="flex items-center text-sm text-neutral-900/70">
+                  <MapPin className="h-4 w-4 text-roman-500/60 ml-1" />
+                  <span>{seller.location}</span>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-center text-sm text-neutral-900/70">
+                    <Star className="h-4 w-4 text-warning-500 ml-1" />
+                    {seller.rating} ({seller.reviewCount})
+                  </div>
+                  <div className="flex items-center text-sm text-neutral-900/70">
+                    <span>{seller.ordersCount || 0} طلبات</span>
+                  </div>
+                </div>
+              </div>
+              <p className="text-sm text-neutral-900/70 mb-2">{seller.bio}</p>
+              <div className="mt-2">
+                {seller.skills.map((skill, index) => (
+                  <Badge key={index} variant="outline" className="ml-1 mb-1 border-roman-500/30 text-neutral-900">
+                    {skill}
+                  </Badge>
+                ))}
+              </div>          
+              <div className="text-sm text-neutral-900/70 mt-2 text-right">
+                <span className="font-semibold">عضو منذ:</span> {new Date(seller.memberSince).toLocaleDateString('ar-EG')} <span className="mx-2">|</span> 
+                <span className="font-semibold">طلبات مكتملة:</span> {seller.completedOrders}
+              </div>
+            </CardContent>
           </div>
-        </CardContent>
-        <CardFooter className="flex flex-row-reverse">
-          <Button asChild className="bg-roman-500 hover:bg-roman-500/90 text-white">
-            <Link to={`/sellers/${seller.id}`}>
-              عرض الملف
-              <ArrowLeft className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
-        </CardFooter>
-      </div>
-    </Card>
+        </Card>
+      </Link>
     );
   };
   return (

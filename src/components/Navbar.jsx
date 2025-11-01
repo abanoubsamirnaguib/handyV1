@@ -297,16 +297,6 @@ const Navbar = () => {
               )}
               {user ? (
                 <>
-                  <Link to="/profile/me" className={`px-3 py-2 text-sm font-medium hover:text-primary transition-colors ${
-                    isActiveLink('/profile') ? 'text-roman-500 bg-roman-500/10 rounded-md font-semibold' : ''
-                  }`} onClick={toggleMenu}>
-                    الملف الشخصي
-                  </Link>
-                  <Link to="/chat" className={`px-3 py-2 text-sm font-medium hover:text-primary transition-colors ${
-                    isActiveLink('/chat') ? 'text-roman-500 bg-roman-500/10 rounded-md font-semibold' : ''
-                  }`} onClick={toggleMenu}>
-                    الرسائل
-                  </Link>
                   <Link to="/cart" className={`px-3 py-2 text-sm font-medium hover:text-primary transition-colors ${
                     isActiveLink('/cart') ? 'text-roman-500 bg-roman-500/10 rounded-md font-semibold' : ''
                   }`} onClick={toggleMenu}>

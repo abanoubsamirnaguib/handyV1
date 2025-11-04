@@ -150,6 +150,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
         
         // General actions
         Route::post('{id}/cancel', [OrderCrudController::class, 'cancelOrder']);
+        
+        // Dashboard statistics
+        Route::get('dashboard/stats', [OrderCrudController::class, 'getDashboardStats']);
     });
     
     // Category CRUD

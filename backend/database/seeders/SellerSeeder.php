@@ -20,7 +20,6 @@ class SellerSeeder extends Seeder
                 'rating' => 4.8,
                 'review_count' => 124,
                 'completed_orders' => 215,
-                'response_time' => '2 ساعة',
             ],
             [
                 'user_email' => 'mohammed@example.com',
@@ -30,7 +29,6 @@ class SellerSeeder extends Seeder
                 'rating' => 4.9,
                 'review_count' => 89,
                 'completed_orders' => 178,
-                'response_time' => '1 ساعة',
             ],
             [
                 'user_email' => 'fatima.seller@example.com',
@@ -40,7 +38,6 @@ class SellerSeeder extends Seeder
                 'rating' => 4.7,
                 'review_count' => 156,
                 'completed_orders' => 230,
-                'response_time' => '3 ساعة',
             ],
             [
                 'user_email' => 'ali.seller@example.com',
@@ -50,7 +47,6 @@ class SellerSeeder extends Seeder
                 'rating' => 4.6,
                 'review_count' => 78,
                 'completed_orders' => 145,
-                'response_time' => '4 ساعة',
             ],
             [
                 'user_email' => 'designer@example.com',
@@ -60,7 +56,6 @@ class SellerSeeder extends Seeder
                 'rating' => 4.8,
                 'review_count' => 95,
                 'completed_orders' => 167,
-                'response_time' => '3 ساعة',
             ],
             [
                 'user_email' => 'artist@example.com',
@@ -70,7 +65,6 @@ class SellerSeeder extends Seeder
                 'rating' => 4.7,
                 'review_count' => 88,
                 'completed_orders' => 142,
-                'response_time' => '4 ساعة',
             ],
             [
                 'user_email' => 'crochet@example.com',
@@ -80,7 +74,6 @@ class SellerSeeder extends Seeder
                 'rating' => 4.9,
                 'review_count' => 147,
                 'completed_orders' => 215,
-                'response_time' => '1 ساعة',
             ],
             [
                 'user_email' => 'architect@example.com',
@@ -90,7 +83,6 @@ class SellerSeeder extends Seeder
                 'rating' => 4.8,
                 'review_count' => 76,
                 'completed_orders' => 119,
-                'response_time' => '2 ساعة',
             ],
             [
                 'user_email' => 'accessories@example.com',
@@ -100,7 +92,6 @@ class SellerSeeder extends Seeder
                 'rating' => 4.7,
                 'review_count' => 108,
                 'completed_orders' => 187,
-                'response_time' => '2 ساعة',
             ],
         ];
         
@@ -125,7 +116,6 @@ class SellerSeeder extends Seeder
                     'rating' => $sellerData['rating'],
                     'review_count' => $sellerData['review_count'],
                     'completed_orders' => $sellerData['completed_orders'],
-                    'response_time' => $sellerData['response_time'],
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);

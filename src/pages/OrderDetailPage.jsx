@@ -53,12 +53,15 @@ const OrderDetailPage = () => {
   const [showReviewSection, setShowReviewSection] = useState(false);
   const [reviewRatings, setReviewRatings] = useState({});
   const [reviewComments, setReviewComments] = useState({});
+  const [reviewImages, setReviewImages] = useState({});
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   const [existingReviews, setExistingReviews] = useState([]);
   const [isLoadingReviews, setIsLoadingReviews] = useState(false);
   const [editingReview, setEditingReview] = useState(null);
   const [editRating, setEditRating] = useState(0);
   const [editComment, setEditComment] = useState('');
+  const [editImage, setEditImage] = useState(null);
+  const [editImagePreview, setEditImagePreview] = useState(null);
   const [isUpdatingReview, setIsUpdatingReview] = useState(false);
   const [isDeletingReview, setIsDeletingReview] = useState(false);
   const [reviewToDelete, setReviewToDelete] = useState(null);
@@ -535,12 +538,16 @@ const OrderDetailPage = () => {
     setEditingReview(review.id);
     setEditRating(review.rating);
     setEditComment(review.comment || '');
+    setEditImage(null);
+    setEditImagePreview(review.image || review.image_url || null);
   };
 
   const handleCancelEdit = () => {
     setEditingReview(null);
     setEditRating(0);
     setEditComment('');
+    setEditImage(null);
+    setEditImagePreview(null);
   };
 
   const handleUpdateReview = async (reviewId) => {
@@ -559,7 +566,7 @@ const OrderDetailPage = () => {
         rating: editRating,
         comment: editComment,
         status: 'published'
-      });
+      }, editImage, false);
 
       toast({
         title: "تم تحديث التقييم",
@@ -624,9 +631,19 @@ const OrderDetailPage = () => {
     }));
   };
 
+  const handleImageChange = (productId, file) => {
+    if (file) {
+      setReviewImages(prev => ({
+        ...prev,
+        [productId]: file
+      }));
+    }
+  };
+
   const handleSubmitReview = async (productId) => {
     const rating = reviewRatings[productId];
     const comment = reviewComments[productId] || '';
+    const imageFile = reviewImages[productId] || null;
 
     if (!rating || rating < 1 || rating > 5) {
       toast({
@@ -645,11 +662,28 @@ const OrderDetailPage = () => {
         rating,
         comment,
         status: 'published'
-      });
+      }, imageFile);
 
       toast({
         title: "تم إرسال التقييم",
         description: "شكراً لك على تقييم المنتج.",
+      });
+
+      // Clear the review data for this product
+      setReviewRatings(prev => {
+        const newRatings = { ...prev };
+        delete newRatings[productId];
+        return newRatings;
+      });
+      setReviewComments(prev => {
+        const newComments = { ...prev };
+        delete newComments[productId];
+        return newComments;
+      });
+      setReviewImages(prev => {
+        const newImages = { ...prev };
+        delete newImages[productId];
+        return newImages;
       });
 
       // Reload reviewable products to update the UI
@@ -1907,20 +1941,71 @@ const OrderDetailPage = () => {
                                 )}
                                 
                                 {editingReview === review.id ? (
-                                  <div className="mt-3">
-                                    <Label className="text-sm font-medium">التعليق (اختياري)</Label>
-                                    <Textarea
-                                      value={editComment}
-                                      onChange={(e) => setEditComment(e.target.value)}
-                                      placeholder="اكتب تعليقك على المنتج..."
-                                      className="mt-1"
-                                      rows={3}
-                                    />
+                                  <div className="mt-3 space-y-3">
+                                    <div>
+                                      <Label className="text-sm font-medium">التعليق (اختياري)</Label>
+                                      <Textarea
+                                        value={editComment}
+                                        onChange={(e) => setEditComment(e.target.value)}
+                                        placeholder="اكتب تعليقك على المنتج..."
+                                        className="mt-1"
+                                        rows={3}
+                                      />
+                                    </div>
+                                    <div>
+                                      <Label className="text-sm font-medium">صورة (اختياري)</Label>
+                                      <Input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={(e) => {
+                                          const file = e.target.files[0];
+                                          setEditImage(file);
+                                          if (file) {
+                                            setEditImagePreview(URL.createObjectURL(file));
+                                          }
+                                        }}
+                                        className="mt-1"
+                                      />
+                                      {editImagePreview && (
+                                        <div className="mt-2">
+                                          <img 
+                                            src={editImagePreview} 
+                                            alt="Preview" 
+                                            className="w-32 h-32 object-cover rounded-lg border"
+                                          />
+                                          <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => {
+                                              setEditImage(null);
+                                              setEditImagePreview(review.image || review.image_url || null);
+                                            }}
+                                            className="mt-2"
+                                          >
+                                            <X className="h-3 w-3 ml-1" />
+                                            إزالة الصورة
+                                          </Button>
+                                        </div>
+                                      )}
+                                    </div>
                                   </div>
                                 ) : (
-                                  review.comment && (
-                                    <p className="text-gray-700 leading-relaxed text-right">{review.comment}</p>
-                                  )
+                                  <>
+                                    {review.comment && (
+                                      <p className="text-gray-700 leading-relaxed text-right mb-2">{review.comment}</p>
+                                    )}
+                                    {(review.image || review.image_url) && (
+                                      <div className="mt-3">
+                                        <img 
+                                          src={review.image || review.image_url} 
+                                          alt="Review image" 
+                                          className="max-w-full h-auto rounded-lg shadow-md cursor-pointer hover:shadow-lg transition-shadow duration-300"
+                                          onClick={() => window.open(review.image || review.image_url, '_blank')}
+                                        />
+                                      </div>
+                                    )}
+                                  </>
                                 )}
                               </div>
                             </div>
@@ -1991,6 +2076,26 @@ const OrderDetailPage = () => {
                                   className="mt-1"
                                   rows={3}
                                 />
+                              </div>
+                              
+                              {/* Image Upload */}
+                              <div>
+                                <Label className="text-sm font-medium">صورة (اختياري)</Label>
+                                <Input
+                                  type="file"
+                                  accept="image/*"
+                                  onChange={(e) => handleImageChange(product.product_id, e.target.files[0])}
+                                  className="mt-1"
+                                />
+                                {reviewImages[product.product_id] && (
+                                  <div className="mt-2">
+                                    <img 
+                                      src={URL.createObjectURL(reviewImages[product.product_id])} 
+                                      alt="Preview" 
+                                      className="w-32 h-32 object-cover rounded-lg border"
+                                    />
+                                  </div>
+                                )}
                               </div>
                               
                               {/* Submit Button */}

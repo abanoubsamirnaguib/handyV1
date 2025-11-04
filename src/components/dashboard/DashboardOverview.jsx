@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { DollarSign, ShoppingBag, Users, BarChart3, MessageCircle } from 'lucide-react';
+import { DollarSign, ShoppingBag, Users, BarChart3, MessageCircle, Heart } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
-import { api } from '@/lib/api';
+import { api, sellerApi } from '@/lib/api';
 
 const StatCard = ({ title, value, icon, color, description, path }) => {
   const navigate = useNavigate();
@@ -40,12 +40,23 @@ const StatCard = ({ title, value, icon, color, description, path }) => {
 const DashboardOverview = () => {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState([]);
+  const [dashboardStats, setDashboardStats] = useState(null);
+  const [topProducts, setTopProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (user) {
       fetchNotifications();
+      fetchDashboardStats();
     }
   }, [user]);
+
+  // Fetch top products after dashboard stats are loaded (for sellers)
+  useEffect(() => {
+    if (user && dashboardStats) {
+      fetchTopProducts();
+    }
+  }, [user, dashboardStats]);
 
   const fetchNotifications = async () => {
     try {
@@ -56,59 +67,117 @@ const DashboardOverview = () => {
     }
   };
 
+  const fetchDashboardStats = async () => {
+    setLoading(true);
+    try {
+      const response = await api.getDashboardStats();
+      if (response.success && response.data) {
+        setDashboardStats(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching dashboard stats:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchTopProducts = async () => {
+    try {
+      if (user?.active_role === 'seller') {
+        // Use top-selling products from dashboard stats if available
+        if (dashboardStats?.top_selling_products && Array.isArray(dashboardStats.top_selling_products)) {
+          setTopProducts(dashboardStats.top_selling_products);
+        } else {
+          // Fallback: Fetch seller's products if stats not available
+          const response = await sellerApi.getSellerProducts();
+          let products = [];
+          if (response.data && Array.isArray(response.data)) {
+            products = response.data;
+          } else if (Array.isArray(response)) {
+            products = response;
+          } else if (response.data?.data && Array.isArray(response.data.data)) {
+            products = response.data.data;
+          }
+          setTopProducts(products.slice(0, 3));
+        }
+      } else {
+        // Fetch buyer's wishlist
+        const wishlist = await api.getWishlist();
+        const items = wishlist.data || wishlist;
+        const wishlistItems = Array.isArray(items) ? items : [];
+        const products = wishlistItems
+          .slice(0, 3)
+          .map(item => item.product || item)
+          .filter(Boolean);
+        setTopProducts(products);
+      }
+    } catch (error) {
+      console.error('Error fetching top products:', error);
+      setTopProducts([]);
+    }
+  };
+
   const stats = user?.active_role === 'seller' ? [
     { 
       title: "إجمالي الأرباح", 
-      value: "12,500 جنيه", 
+      value: dashboardStats?.total_earnings_formatted || "0 جنيه", 
       icon: DollarSign, 
       color: "green", 
-      description: "+15% عن الشهر الماضي",
+      description: dashboardStats?.new_orders_today_text || "جاري التحميل...",
       path: "/dashboard/earnings"
     },
     { 
       title: "الطلبات الجديدة", 
-      value: "32", 
+      value: dashboardStats?.new_orders?.toString() || "0", 
       icon: ShoppingBag, 
       color: "blue", 
-      description: "+5 طلبات اليوم",
+      description: dashboardStats?.new_orders_today_text || "جاري التحميل...",
       path: "/dashboard/orders"
     },
     { 
       title: "إجمالي الخدمات", 
-      value: "15", 
+      value: dashboardStats?.total_products?.toString() || "0", 
       icon: BarChart3, 
       color: "orange", 
-      description: "2 خدمة غير نشطة",
+      description: dashboardStats?.inactive_products_text || "جاري التحميل...",
       path: "/dashboard/gigs"
     },
     { 
       title: "العملاء النشطون", 
-      value: "120", 
+      value: dashboardStats?.active_customers?.toString() || "0", 
       icon: Users, 
       color: "purple", 
-      description: "متوسط تقييم 4.8",
+      description: dashboardStats?.average_rating_text || "جاري التحميل...",
       path: null // No specific page for this yet
     },
   ] : [
     { 
       title: "إجمالي الطلبات", 
-      value: "18", 
+      value: dashboardStats?.total_orders?.toString() || "0", 
       icon: ShoppingBag, 
       color: "blue", 
-      description: "3 طلبات قيد التنفيذ",
+      description: dashboardStats?.orders_in_progress_text || "جاري التحميل...",
       path: "/dashboard/orders"
     },
     { 
       title: "المبلغ المنفق", 
-      value: "4,200 جنيه", 
+      value: dashboardStats?.total_spent_formatted || "0 جنيه", 
       icon: DollarSign, 
       color: "green", 
-      description: "متوسط قيمة الطلب 233 جنيه",
+      description: dashboardStats?.average_order_value_text || "جاري التحميل...",
       path: null // No specific page for this yet
     },
     { 
+      title: "المنتجات المفضلة", 
+      value: dashboardStats?.favorite_products?.toString() || "0", 
+      icon: Heart, 
+      color: "red", 
+      description: "في قائمة المفضلة",
+      path: "/wishlist"
+    },
+    { 
       title: "البائعون المفضلون", 
-      value: "5", 
+      value: dashboardStats?.favorite_sellers?.toString() || "0", 
       icon: Users, 
       color: "purple", 
       description: "تواصل معهم الآن",
@@ -116,10 +185,10 @@ const DashboardOverview = () => {
     },
     { 
       title: "الرسائل غير المقروءة", 
-      value: "2", 
+      value: dashboardStats?.unread_messages?.toString() || "0", 
       icon: MessageCircle, 
       color: "orange", 
-      description: "من ليلى حسن وكريم محمود",
+      description: dashboardStats?.unread_messages_text || "لا توجد رسائل غير مقروءة",
       path: "/dashboard/messages"
     },
   ];
@@ -142,45 +211,7 @@ const DashboardOverview = () => {
 
       {/* Notifications Card */}
       <div className="grid gap-6 md:grid-cols-2">
-        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.1, duration: 0.5 }}>
-          <Card className="shadow-lg">
-            <CardHeader>
-              <CardTitle className="text-xl text-gray-700">الإشعارات الأخيرة</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {notifications.length === 0 ? (
-                <p className="text-gray-500 text-center py-4">لا توجد إشعارات لعرضها.</p>
-              ) : (
-                <ul className="space-y-3">
-                  {notifications.slice(0, 5).map((notif, idx) => (
-                    <li key={notif.id || idx} className={`p-3 rounded-lg ${!notif.is_read ? 'bg-gray-100 font-bold' : 'bg-gray-50'}`}>
-                      <div className="flex flex-col">
-                        <span className="text-sm">{notif.message}</span>
-                        <span className="text-xs text-gray-400 mt-1">{notif.created_at ? new Date(notif.created_at).toLocaleString('ar-EG') : ''}</span>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </CardContent>
-          </Card>
-        </motion.div>
-        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.3, duration: 0.5 }}>
-          <Card className="shadow-lg">
-            <CardHeader>
-              <CardTitle className="text-xl text-gray-700">{user?.active_role === 'seller' ? 'الخدمات الأكثر مبيعاً' : 'المنتجات المفضلة'}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-600">هنا ستظهر قائمة بالخدمات أو المنتجات.</p>
-              
-               <ul className="mt-4 space-y-2">
-                <li className="p-2 bg-gray-50 rounded-md">مجوهرات فضية مخصصة</li>
-                <li className="p-2 bg-gray-50 rounded-md">صناديق خشبية مزخرفة</li>
-                <li className="p-2 bg-gray-50 rounded-md">وسائد مطرزة يدوياً</li>
-              </ul>
-            </CardContent>
-          </Card>
-        </motion.div>
+      
       </div>
     </div>
   );

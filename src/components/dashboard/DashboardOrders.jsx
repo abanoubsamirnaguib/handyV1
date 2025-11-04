@@ -86,7 +86,7 @@ const DashboardOrders = () => {
   const [orders, setOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [actionLoading, setActionLoading] = useState(null);
+  const [activeTab, setActiveTab] = useState('active'); // 'active', 'completed', 'cancelled', 'all'
 
   useEffect(() => {
     loadOrders();
@@ -129,43 +129,6 @@ const DashboardOrders = () => {
     }
   };
 
-  const handleAction = async (orderId, action, successMessage) => {
-    setActionLoading(orderId);
-    try {
-      await action();
-      toast({
-        variant: "success",
-        title: "نجاح",
-        description: successMessage,
-      });
-      loadOrders(); // Refresh orders
-    } catch (error) {
-      console.error(`Error performing action on order ${orderId}:`, error);
-      toast({
-        variant: "destructive",
-        title: "خطأ",
-        description: error.message || "حدث خطأ غير متوقع.",
-      });
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
-  const handleSellerApprove = (orderId) => {
-    handleAction(orderId, () => sellerApi.approveOrder(orderId), "تمت الموافقة على الطلب بنجاح");
-  };
-
-  const handleStartWork = (orderId) => {
-    handleAction(orderId, () => sellerApi.startWork(orderId), "تم بدء العمل على الطلب");
-  };
-
-  const handleCompleteWork = (orderId) => {
-    handleAction(orderId, () => sellerApi.completeWork(orderId), "تم إكمال العمل على الطلب");
-  };
-
-  const handleCancelOrder = (orderId) => {
-    handleAction(orderId, () => api.cancelOrder(orderId, "تم الإلغاء بواسطة المستخدم"), "تم إلغاء الطلب بنجاح");
-  };
 
   const getPaymentMethodLabel = (method) => {
     const methods = {
@@ -186,6 +149,35 @@ const DashboardOrders = () => {
       day: 'numeric'
     });
   };
+
+  // Filter orders based on active tab
+  const getFilteredOrders = () => {
+    if (activeTab === 'all') return orders;
+    
+    if (activeTab === 'completed') {
+      return orders.filter(order => order.status === 'completed');
+    }
+    
+    if (activeTab === 'cancelled') {
+      return orders.filter(order => ['cancelled', 'rejected'].includes(order.status));
+    }
+    
+    // Active orders (everything except completed and cancelled)
+    return orders.filter(order => 
+      !['completed', 'cancelled', 'rejected'].includes(order.status)
+    );
+  };
+
+  const filteredOrders = getFilteredOrders();
+
+  // Count orders by category
+  const activeOrdersCount = orders.filter(order => 
+    !['completed', 'cancelled', 'rejected'].includes(order.status)
+  ).length;
+  const completedOrdersCount = orders.filter(order => order.status === 'completed').length;
+  const cancelledOrdersCount = orders.filter(order => 
+    ['cancelled', 'rejected'].includes(order.status)
+  ).length;
 
   if (isLoading) {
     return (
@@ -246,7 +238,7 @@ const DashboardOrders = () => {
                   {user?.active_role === 'seller' ? 'الطلبات الواردة' : 'طلباتي'}
                 </h1>
                 <p className="text-gray-600 mt-1">
-                  {orders.length} طلب إجمالي
+                  {orders.length} طلب إجمالي | {activeOrdersCount} نشط | {completedOrdersCount} مكتمل | {cancelledOrdersCount} ملغى
                 </p>
               </div>
             </div>
@@ -259,6 +251,44 @@ const DashboardOrders = () => {
             </Button>
           </div>
         </div>
+
+        {/* Tabs Section */}
+        {orders.length > 0 && (
+          <div className="bg-white rounded-2xl shadow-lg p-4 border border-roman-500/20">
+            <div className="flex flex-wrap gap-2 justify-center md:justify-start">
+              <Button
+                variant={activeTab === 'all' ? 'default' : 'outline'}
+                onClick={() => setActiveTab('all')}
+                className={activeTab === 'all' ? 'bg-roman-500 hover:bg-roman-500/90 text-white' : ''}
+              >
+                الكل ({orders.length})
+              </Button>
+              <Button
+                variant={activeTab === 'active' ? 'default' : 'outline'}
+                onClick={() => setActiveTab('active')}
+                className={activeTab === 'active' ? 'bg-blue-500 hover:bg-blue-600 text-white' : ''}
+              >
+                الطلبات النشطة ({activeOrdersCount})
+              </Button>
+              <Button
+                variant={activeTab === 'completed' ? 'default' : 'outline'}
+                onClick={() => setActiveTab('completed')}
+                className={activeTab === 'completed' ? 'bg-green-500 hover:bg-green-600 text-white' : ''}
+              >
+                الطلبات المكتملة ({completedOrdersCount})
+              </Button>
+              {cancelledOrdersCount > 0 && (
+                <Button
+                  variant={activeTab === 'cancelled' ? 'default' : 'outline'}
+                  onClick={() => setActiveTab('cancelled')}
+                  className={activeTab === 'cancelled' ? 'bg-red-500 hover:bg-red-600 text-white' : ''}
+                >
+                  الطلبات الملغاة ({cancelledOrdersCount})
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Content Section */}
         {orders.length === 0 ? (
@@ -278,17 +308,99 @@ const DashboardOrders = () => {
               </Button>
             )}
           </motion.div>
+        ) : filteredOrders.length === 0 ? (
+          <motion.div 
+            className="bg-white rounded-2xl shadow-lg p-12 text-center"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+          >
+            <ShoppingBag className="h-24 w-24 text-gray-300 mx-auto mb-6" />
+            <h2 className="text-2xl font-semibold text-gray-700 mb-2">
+              {activeTab === 'completed' ? 'لا توجد طلبات مكتملة' :
+               activeTab === 'cancelled' ? 'لا توجد طلبات ملغاة' :
+               'لا توجد طلبات نشطة'}
+            </h2>
+            <p className="text-gray-500">
+              {activeTab === 'completed' ? 'لم تكتمل أي طلبات بعد.' :
+               activeTab === 'cancelled' ? 'لا توجد طلبات ملغاة.' :
+               'لا توجد طلبات نشطة حالياً.'}
+            </p>
+          </motion.div>
         ) : (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {orders.map((order, index) => (
+          <>
+            {/* Section Header for Completed Orders */}
+            {activeTab === 'completed' && (
+              <motion.div 
+                className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl shadow-lg p-4 border-2 border-green-200"
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+              >
+                <div className="flex items-center gap-3">
+                  <CheckCircle className="h-6 w-6 text-green-600" />
+                  <div>
+                    <h2 className="text-xl font-bold text-green-800">الطلبات المكتملة</h2>
+                    <p className="text-sm text-green-600">جميع الطلبات التي تم إكمالها بنجاح ({completedOrdersCount} طلب)</p>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+            
+            {/* Section Header for Active Orders */}
+            {activeTab === 'active' && (
+              <motion.div 
+                className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl shadow-lg p-4 border-2 border-blue-200"
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+              >
+                <div className="flex items-center gap-3">
+                  <Clock className="h-6 w-6 text-blue-600" />
+                  <div>
+                    <h2 className="text-xl font-bold text-blue-800">الطلبات النشطة</h2>
+                    <p className="text-sm text-blue-600">الطلبات قيد التنفيذ والمعالجة ({activeOrdersCount} طلب)</p>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Section Header for Cancelled Orders */}
+            {activeTab === 'cancelled' && (
+              <motion.div 
+                className="bg-gradient-to-r from-red-50 to-pink-50 rounded-2xl shadow-lg p-4 border-2 border-red-200"
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+              >
+                <div className="flex items-center gap-3">
+                  <XCircle className="h-6 w-6 text-red-600" />
+                  <div>
+                    <h2 className="text-xl font-bold text-red-800">الطلبات الملغاة</h2>
+                    <p className="text-sm text-red-600">الطلبات التي تم إلغاؤها أو رفضها ({cancelledOrdersCount} طلب)</p>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {filteredOrders.map((order, index) => (
               <motion.div
                 key={order.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
               >
-                <Card className="flex flex-col h-full bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100 hover:shadow-2xl hover:-translate-y-1 transition-all duration-300">
-                  <CardHeader className="p-5 bg-gray-50 border-b border-gray-100">
+                <Card className={`flex flex-col h-full rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 ${
+                  order.status === 'completed' 
+                    ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-200' 
+                    : ['cancelled', 'rejected'].includes(order.status)
+                    ? 'bg-gradient-to-br from-red-50 to-pink-50 border-2 border-red-200'
+                    : 'bg-white border border-gray-100'
+                }`}>
+                  <CardHeader className={`p-5 border-b ${
+                    order.status === 'completed' 
+                      ? 'bg-green-100/50 border-green-200' 
+                      : ['cancelled', 'rejected'].includes(order.status)
+                      ? 'bg-red-100/50 border-red-200'
+                      : 'bg-gray-50 border-gray-100'
+                  }`}>
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-lg font-bold text-roman-500">
                         طلب رقم #{order.id}
@@ -403,50 +515,25 @@ const DashboardOrders = () => {
                     </div>
                   </CardContent>
 
-                  <CardFooter className="flex-col items-stretch gap-2 pt-4 bg-gray-50 border-t border-gray-100 p-4">
-                    <div className="flex gap-2">
-                      <Button asChild variant="outline" size="sm" className="flex-grow hover:bg-roman-500 hover:text-white transition-colors">
-                        <Link to={`/orders/${order.id}`} className="flex items-center">
-                          <Eye className="ml-2 h-4 w-4" />
-                          التفاصيل
-                        </Link>
-                      </Button>
-                    </div>
-
-                    <div className="mt-2 space-y-2">
-                      {/* Seller Actions */}
-                      {user?.active_role === 'seller' && (
-                        <>
-                          {order.status === 'admin_approved' && (
-                            <Button onClick={() => handleSellerApprove(order.id)} disabled={actionLoading === order.id} className="w-full bg-green-500 hover:bg-green-600 text-white">
-                              {actionLoading === order.id ? 'جاري الموافقة...' : 'الموافقة على الطلب'}
-                            </Button>
-                          )}
-                          {order.status === 'seller_approved' && (
-                            <Button onClick={() => handleStartWork(order.id)} disabled={actionLoading === order.id} className="w-full bg-blue-500 hover:bg-blue-600 text-white">
-                              {actionLoading === order.id ? 'جاري البدء...' : 'بدء العمل'}
-                            </Button>
-                          )}
-                          {order.status === 'in_progress' && (
-                            <Button onClick={() => handleCompleteWork(order.id)} disabled={actionLoading === order.id} className="w-full bg-purple-500 hover:bg-purple-600 text-white">
-                             {actionLoading === order.id ? 'جاري الإنهاء...' : 'إنهاء العمل'}
-                            </Button>
-                          )}
-                        </>
-                      )}
-
-                      {/* Buyer Actions */}
-                      {user?.active_role === 'buyer' && ['pending', 'admin_approved', 'seller_approved', 'in_progress'].includes(order.status) && (
-                         <Button onClick={() => handleCancelOrder(order.id)} disabled={actionLoading === order.id} variant="destructive" className="w-full">
-                          {actionLoading === order.id ? 'جاري الإلغاء...' : 'إلغاء الطلب'}
-                        </Button>
-                      )}
-                    </div>
+                  <CardFooter className={`flex-col items-stretch gap-2 pt-4 border-t p-4 ${
+                    order.status === 'completed' 
+                      ? 'bg-green-100/30 border-green-200' 
+                      : ['cancelled', 'rejected'].includes(order.status)
+                      ? 'bg-red-100/30 border-red-200'
+                      : 'bg-gray-50 border-gray-100'
+                  }`}>
+                    <Button asChild variant="outline" size="sm" className="w-full hover:bg-roman-500 hover:text-white transition-colors">
+                      <Link to={`/orders/${order.id}`} className="flex items-center justify-center">
+                        <Eye className="ml-2 h-4 w-4" />
+                        عرض التفاصيل
+                      </Link>
+                    </Button>
                   </CardFooter>
                 </Card>
               </motion.div>
             ))}
           </div>
+          </>
         )}
       </motion.div>
     </div>

@@ -20,7 +20,6 @@ class StoreSellerRequest extends FormRequest
             'rating' => 'nullable|numeric',
             'review_count' => 'nullable|integer',
             'completed_orders' => 'nullable|integer',
-            'response_time' => 'nullable|string',
         ];
     }
 }

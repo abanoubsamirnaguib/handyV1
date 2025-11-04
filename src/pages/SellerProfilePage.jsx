@@ -9,12 +9,11 @@ import {
   Clock, 
   Award, 
   Package,
-  ArrowRight, 
   Loader2, 
   MessageSquare 
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -73,7 +72,6 @@ const SellerProfilePage = () => {
           memberSince: sellerResponse.member_since || new Date().toISOString(),
           skills: Array.isArray(sellerResponse.skills) ? sellerResponse.skills : [],
           completedOrders: sellerResponse.completed_orders || 0,
-          responseTime: sellerResponse.response_time || 'غير محدد',
           avatar: sellerResponse.user?.avatar || '',
           cover_image: sellerResponse.user?.cover_image || '',
           products: sellerResponse.products || [],
@@ -282,15 +280,7 @@ const SellerProfilePage = () => {
               </div>
             </CardContent>
           </Card>
-          <Card className="border-neutral-200/50 bg-neutral-100/10">
-            <CardContent className="p-6 flex items-center">
-              <Clock className="h-10 w-10 text-success-500 ml-4" />
-              <div>
-                <p className="text-sm text-gray-500">وقت الاستجابة</p>
-                <p className="text-2xl font-bold">{seller.responseTime}</p>
-              </div>
-            </CardContent>
-          </Card>
+
           <Card className="border-neutral-200/50 bg-neutral-100/10">
             <CardContent className="p-6 flex items-center">
               <Award className="h-10 w-10 text-warning-500 ml-4" />
@@ -333,41 +323,37 @@ const SellerProfilePage = () => {
           <TabsContent value="products">
             <h2 className="text-2xl font-bold mb-6">منتجات الحرفي</h2>
             {sellerGigs.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8" dir="rtl">
                 {sellerGigs.map((gig) => (
-                  <Card key={gig.id} className="overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 flex flex-col h-full card-hover border-neutral-200/50">
-                    <div className="relative h-56">
-                      <img 
-                        src={gig.images && gig.images.length > 0 
-                          ? gig.images[0] 
-                          : "https://images.unsplash.com/photo-1680188700662-5b03bdcf3017"} 
-                        alt={gig.title} 
-                        className="w-full h-full object-cover" 
-                      />
-                      <Badge variant="secondary" className="absolute top-2 right-2 bg-roman-500 text-white">{gig.category}</Badge>
-                      <div className="absolute top-2 left-2">
-                        <WishlistButton productId={gig.id} inWishlist={gig.in_wishlist} onWishlistChange={handleWishlistChange} size="md" />
+                  <Link key={gig.id} to={`/gigs/${gig.id}`} className="block">
+                    <Card className="overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 flex flex-col h-full card-hover border-neutral-200/50 cursor-pointer" dir="rtl">
+                      <div className="relative h-56">
+                        <img 
+                          src={gig.images && gig.images.length > 0 
+                            ? gig.images[0] 
+                            : "https://images.unsplash.com/photo-1680188700662-5b03bdcf3017"} 
+                          alt={gig.title} 
+                          className="w-full h-full object-cover" 
+                        />
+                        <Badge variant="secondary" className="absolute top-2 right-2 bg-roman-500 text-white">{gig.category}</Badge>
+                        <div className="absolute top-2 left-2" onClick={(e) => e.stopPropagation()}>
+                          <div onClick={(e) => e.preventDefault()}>
+                            <WishlistButton productId={gig.id} inWishlist={gig.in_wishlist} onWishlistChange={handleWishlistChange} size="md" />
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-lg font-semibold text-gray-800 h-14 overflow-hidden">{gig.title}</CardTitle>
-                    </CardHeader>
-                    <CardContent className="flex-grow">
-                      <div className="flex items-center text-sm text-gray-600 mb-2">
-                        <Star className="h-4 w-4 text-yellow-500 mr-1" />
-                        {gig.rating} ({gig.reviewCount} تقييمات)
-                      </div>
-                      <p className="text-xl font-bold text-primary mb-2">{gig.price} جنيه</p>
-                    </CardContent>
-                    <CardFooter>
-                      <Button asChild className="w-full bg-roman-500 hover:bg-roman-500/90 text-white">
-                        <Link to={`/gigs/${gig.id}`}>
-                          عرض التفاصيل
-                          <ArrowRight className="mr-2 h-4 w-4" />
-                        </Link>
-                      </Button>
-                    </CardFooter>
-                  </Card>
+                      <CardHeader className="pb-2 text-right">
+                        <CardTitle className="text-lg font-semibold text-gray-800 h-14 overflow-hidden">{gig.title}</CardTitle>
+                      </CardHeader>
+                      <CardContent className="flex-grow text-right">
+                        <div className="flex items-center text-sm text-gray-600 mb-2">
+                          <Star className="h-4 w-4 text-yellow-500 mr-1" />
+                          {gig.rating} ({gig.reviewCount} تقييمات)
+                        </div>
+                        <p className="text-xl font-bold text-primary mb-2">{gig.price} جنيه</p>
+                      </CardContent>
+                    </Card>
+                  </Link>
                 ))}
               </div>
             ) : (

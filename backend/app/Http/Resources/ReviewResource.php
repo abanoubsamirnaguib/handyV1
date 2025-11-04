@@ -15,6 +15,8 @@ class ReviewResource extends JsonResource
             'product' => new ProductResource($this->whenLoaded('product')),
             'rating' => $this->rating,
             'comment' => $this->comment,
+            'image' => $this->image ? asset('storage/' . $this->image) : null,
+            'image_url' => $this->image ? asset('storage/' . $this->image) : null,
             'status' => $this->status,
             'created_at' => $this->created_at,
         ];

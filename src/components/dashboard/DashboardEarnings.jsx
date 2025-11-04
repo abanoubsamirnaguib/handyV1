@@ -31,6 +31,7 @@ const DashboardEarnings = () => {
   const [withdrawalRequests, setWithdrawalRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showWithdrawalDialog, setShowWithdrawalDialog] = useState(false);
+  const [selectedPeriod, setSelectedPeriod] = useState('last_6_months');
   const [withdrawalForm, setWithdrawalForm] = useState({
     amount: '',
     payment_method: '',
@@ -59,6 +60,7 @@ const DashboardEarnings = () => {
 
   const fetchEarningsData = async () => {
     try {
+      setLoading(true);
       const response = await api.getEarningsSummary();
       setEarningsData(response);
     } catch (error) {
@@ -68,6 +70,8 @@ const DashboardEarnings = () => {
         description: "حدث خطأ في تحميل بيانات الأرباح",
         variant: "destructive",
       });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -161,6 +165,61 @@ const DashboardEarnings = () => {
       default:
         return 'bg-gray-100 text-gray-800';
     }
+  };
+
+  // Filter monthly breakdown based on selected period
+  const getFilteredMonthlyBreakdown = () => {
+    const allMonths = earningsData.monthly_breakdown || [];
+    const monthOrder = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+    
+    // Sort by month order (most recent first)
+    const sortedMonths = [...allMonths].sort((a, b) => {
+      const aIndex = monthOrder.indexOf(a.month);
+      const bIndex = monthOrder.indexOf(b.month);
+      return bIndex - aIndex;
+    });
+
+    switch (selectedPeriod) {
+      case 'last_3_months':
+        return sortedMonths.slice(0, 3);
+      case 'last_6_months':
+        return sortedMonths.slice(0, 6);
+      case 'this_year':
+        return sortedMonths;
+      default:
+        return sortedMonths.slice(0, 6);
+    }
+  };
+
+  const filteredBreakdown = getFilteredMonthlyBreakdown();
+
+  // Get max earnings for chart scaling
+  const maxEarnings = filteredBreakdown.length > 0 
+    ? Math.max(...filteredBreakdown.map(item => item.earnings), 1)
+    : 1;
+
+  // Export report as CSV
+  const handleExportReport = () => {
+    const csvContent = [
+      ['الشهر', 'الأرباح (جنيه)'],
+      ...filteredBreakdown.map(item => [item.month, item.earnings.toFixed(2)])
+    ].map(row => row.join(',')).join('\n');
+
+    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `earnings-report-${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    toast({
+      title: "نجح",
+      description: "تم تصدير التقرير بنجاح",
+      variant: "default",
+    });
   };
 
   if (user?.active_role !== 'seller') {
@@ -304,7 +363,7 @@ const DashboardEarnings = () => {
               <CardDescription>عرض تفصيلي لأرباحك خلال الأشهر الماضية.</CardDescription>
             </div>
             <div className="flex items-center gap-2 mt-4 sm:mt-0">
-              <Select defaultValue="last_6_months">
+              <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="اختر الفترة" />
                 </SelectTrigger>
@@ -314,26 +373,69 @@ const DashboardEarnings = () => {
                   <SelectItem value="this_year">هذا العام</SelectItem>
                 </SelectContent>
               </Select>
-              <Button variant="outline">
+              <Button variant="outline" onClick={handleExportReport} disabled={filteredBreakdown.length === 0}>
                 <Download className="ml-2 h-4 w-4" /> تصدير التقرير
               </Button>
             </div>
           </CardHeader>
           <CardContent>
-            
-            <div className="h-72 bg-gray-100 rounded-md flex items-center justify-center">
-              <p className="text-gray-500"> (مخطط بياني للأرباح هنا)</p>
-            </div>
-            <div className="mt-6 space-y-3">
-              {earningsData.monthly_breakdown.slice(0,3).map(item => (
-                <div key={item.month} className="flex justify-between items-center p-3 bg-gray-50 rounded-md hover:bg-gray-100 transition">
-                  <span className="font-medium text-gray-700">{item.month}</span>
-                  <span className="font-semibold text-green-600">{item.earnings.toFixed(2)} جنيه</span>
+            {/* Chart Visualization */}
+            {filteredBreakdown.length > 0 ? (
+              <div className="h-72 bg-gray-50 rounded-md p-4 mb-6">
+                <div className="h-full flex items-end justify-between gap-2">
+                  {filteredBreakdown.map((item, index) => {
+                    const height = (item.earnings / maxEarnings) * 100;
+                    return (
+                      <div key={item.month} className="flex-1 flex flex-col items-center gap-2">
+                        <div className="flex-1 w-full flex items-end">
+                          <motion.div
+                            initial={{ height: 0 }}
+                            animate={{ height: `${height}%` }}
+                            transition={{ duration: 0.5, delay: index * 0.1 }}
+                            className="w-full bg-gradient-to-t from-green-500 to-green-400 rounded-t-md shadow-md hover:from-green-600 hover:to-green-500 transition-colors"
+                            style={{ minHeight: '8px' }}
+                            title={`${item.month}: ${item.earnings.toFixed(2)} جنيه`}
+                          />
+                        </div>
+                        <div className="text-xs text-gray-600 text-center font-medium mt-1">
+                          {item.month}
+                        </div>
+                        <div className="text-xs text-green-600 font-semibold">
+                          {item.earnings.toFixed(0)}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-              ))}
-              {earningsData.monthly_breakdown.length === 0 && (
+              </div>
+            ) : (
+              <div className="h-72 bg-gray-100 rounded-md flex items-center justify-center mb-6">
+                <p className="text-gray-500">لا توجد بيانات للأرباح الشهرية</p>
+              </div>
+            )}
+
+            {/* Monthly Breakdown List */}
+            <div className="mt-6 space-y-3">
+              {filteredBreakdown.length > 0 ? (
+                filteredBreakdown.map((item, index) => (
+                  <motion.div
+                    key={item.month}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    className="flex justify-between items-center p-3 bg-gray-50 rounded-md hover:bg-gray-100 transition"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Calendar className="h-4 w-4 text-gray-400" />
+                      <span className="font-medium text-gray-700">{item.month}</span>
+                    </div>
+                    <span className="font-semibold text-green-600">{item.earnings.toFixed(2)} جنيه</span>
+                  </motion.div>
+                ))
+              ) : (
                 <div className="text-center py-8 text-gray-500">
-                  لا توجد أرباح شهرية بعد
+                  <Calendar className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                  <p>لا توجد أرباح شهرية لهذه الفترة</p>
                 </div>
               )}
             </div>

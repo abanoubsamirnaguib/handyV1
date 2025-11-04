@@ -35,7 +35,6 @@ export const sellers = [
     memberSince: '2020-05-15',
     skills: ['المجوهرات', 'الفضة', 'الأحجار الكريمة'],
     completedOrders: 215,
-    responseTime: '2 ساعة',
   },
   {
     id: 's2',
@@ -49,7 +48,6 @@ export const sellers = [
     memberSince: '2019-11-20',
     skills: ['النحت على الخشب', 'الأثاث اليدوي', 'الديكور'],
     completedOrders: 178,
-    responseTime: '1 ساعة',
   },
   {
     id: 's3',
@@ -63,7 +61,6 @@ export const sellers = [
     memberSince: '2021-02-10',
     skills: ['المنسوجات', 'التطريز', 'الكروشيه'],
     completedOrders: 230,
-    responseTime: '3 ساعة',
   },
   {
     id: 's4',
@@ -77,7 +74,6 @@ export const sellers = [
     memberSince: '2020-08-05',
     skills: ['الفخار', 'الخزف', 'الرسم على الفخار'],
     completedOrders: 145,
-    responseTime: '4 ساعة',
   },
   {
     id: 's5',
@@ -91,7 +87,6 @@ export const sellers = [
     memberSince: '2020-01-15',
     skills: ['العطور', 'الزيوت الطبيعية', 'الاستخلاص'],
     completedOrders: 198,
-    responseTime: '2 ساعة',
   },
   {
     id: 's6',
@@ -105,7 +100,6 @@ export const sellers = [
     memberSince: '2019-09-22',
     skills: ['تصميم أزياء', 'خياطة', 'تطريز'],
     completedOrders: 167,
-    responseTime: '3 ساعة',
   },
   {
     id: 's7',
@@ -119,7 +113,6 @@ export const sellers = [
     memberSince: '2020-06-18',
     skills: ['رسم', 'نحت', 'ديكور'],
     completedOrders: 142,
-    responseTime: '4 ساعة',
   },
   {
     id: 's8',
@@ -133,7 +126,6 @@ export const sellers = [
     memberSince: '2019-12-10',
     skills: ['كروشيه', 'حياكة', 'تصميم'],
     completedOrders: 215,
-    responseTime: '1 ساعة',
   },
   {
     id: 's9',
@@ -147,7 +139,6 @@ export const sellers = [
     memberSince: '2021-03-05',
     skills: ['تصميم معماري', 'كونكريت', 'ديكور منزلي'],
     completedOrders: 119,
-    responseTime: '2 ساعة',
   },
   {
     id: 's10',
@@ -161,7 +152,6 @@ export const sellers = [
     memberSince: '2020-04-22',
     skills: ['مجوهرات', 'اكسسوارات', 'تصميم'],
     completedOrders: 187,
-    responseTime: '2 ساعة',
   },
   {
     id: 's11',
@@ -175,7 +165,6 @@ export const sellers = [
     memberSince: '2021-01-15',
     skills: ['ريزن', 'ديكور', 'فنون'],
     completedOrders: 158,
-    responseTime: '3 ساعة',
   },
   {
     id: 's12',
@@ -189,7 +178,6 @@ export const sellers = [
     memberSince: '2020-07-10',
     skills: ['طبخ', 'حلويات', 'وصفات تقليدية'],
     completedOrders: 226,
-    responseTime: '1 ساعة',
   }
 ];
 

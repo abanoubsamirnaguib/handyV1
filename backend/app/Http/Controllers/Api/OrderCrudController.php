@@ -5,6 +5,11 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\CartItem;
+use App\Models\Product;
+use App\Models\Seller;
+use App\Models\Conversation;
+use App\Models\Message;
+use App\Models\WishlistItem;
 use Illuminate\Http\Request;
 use App\Http\Resources\OrderResource;
 use App\Http\Requests\OrderRequest;
@@ -999,6 +1004,44 @@ class OrderCrudController extends Controller
             $notes = $request->notes;
             $adminId = Auth::id();
 
+            // If setting status to completed, use proper markAsCompleted method
+            if ($newStatus === 'completed' && $oldStatus !== 'completed') {
+                // Call the proper completion method which handles commission, wallet, etc.
+                $order->markAsCompleted();
+                
+                // Send seller notification (markAsCompleted only notifies buyer)
+                if ($order->seller && $order->seller->user_id) {
+                    $sellerMessage = "تم إكمال الطلب رقم {$order->id} بنجاح. تم تحويل المبلغ إلى محفظتك.";
+                    if ($notes) {
+                        $sellerMessage .= "\nملاحظات: " . $notes;
+                    }
+                    
+                    Notification::create([
+                        'user_id' => $order->seller->user_id,
+                        'notification_type' => 'order_status_changed',
+                        'message' => $sellerMessage,
+                        'is_read' => false,
+                        'link' => '/orders/' . $order->id,
+                        'created_at' => now(),
+                    ]);
+                }
+                
+                // Record admin action in history
+                $noteText = $notes ? "تم إكمال الطلب بواسطة الأدمن. ملاحظات: {$notes}" : "تم إكمال الطلب بواسطة الأدمن.";
+                $order->history()->create([
+                    'status' => 'completed',
+                    'action_by' => $adminId,
+                    'action_type' => 'status_changed_by_admin',
+                    'note' => $noteText,
+                    'created_at' => now()
+                ]);
+                
+                return response()->json([
+                    'message' => 'تم إكمال الطلب بنجاح',
+                    'order' => new OrderResource($order->fresh())
+                ]);
+            }
+
             // Update order status (and refund deposit if cancelling)
             $order->update([
                 'status' => $newStatus,
@@ -1098,5 +1141,166 @@ class OrderCrudController extends Controller
         ];
 
         return $statusMap[$status] ?? $status;
+    }
+
+    /**
+     * Get dashboard statistics for seller or buyer
+     */
+    public function getDashboardStats()
+    {
+        $user = Auth::user();
+        
+        if ($user->active_role === 'seller') {
+            // Seller statistics
+            $seller = Seller::where('user_id', $user->id)->first();
+            if (!$seller) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'البائع غير موجود'
+                ], 404);
+            }
+
+            // Total earnings from completed orders
+            $totalEarnings = $seller->getTotalEarnings();
+            
+            // New orders today (admin_approved status)
+            $newOrdersToday = Order::where('seller_id', $seller->id)
+                ->where('status', 'admin_approved')
+                ->whereDate('created_at', today())
+                ->count();
+            
+            // Total orders waiting for approval
+            $newOrders = Order::where('seller_id', $seller->id)
+                ->where('status', 'admin_approved')
+                ->count();
+            
+            // Total products/gigs
+            $totalProducts = Product::where('seller_id', $seller->id)->count();
+            $inactiveProducts = Product::where('seller_id', $seller->id)
+                ->where('status', '!=', 'active')
+                ->count();
+            
+            // Active customers (unique buyers who have completed orders)
+            $activeCustomers = Order::where('seller_id', $seller->id)
+                ->where('status', 'completed')
+                ->distinct('user_id')
+                ->count('user_id');
+            
+            // Average rating
+            $averageRating = $seller->rating ?? 0;
+
+            // Get top-selling products (most sold products)
+            $topSellingProducts = DB::table('order_items')
+                ->join('orders', 'order_items.order_id', '=', 'orders.id')
+                ->join('products', 'order_items.product_id', '=', 'products.id')
+                ->where('orders.seller_id', $seller->id)
+                ->whereIn('orders.status', ['completed', 'delivered', 'work_completed'])
+                ->select(
+                    'products.id',
+                    'products.title',
+                    'products.price',
+                    DB::raw('SUM(order_items.quantity) as total_sold')
+                )
+                ->groupBy('products.id', 'products.title', 'products.price')
+                ->orderByDesc('total_sold')
+                ->limit(3)
+                ->get()
+                ->map(function($product) {
+                    return [
+                        'id' => $product->id,
+                        'title' => $product->title,
+                        'price' => (float) $product->price,
+                        'total_sold' => (int) $product->total_sold
+                    ];
+                });
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'total_earnings' => (float) $totalEarnings,
+                    'new_orders' => $newOrders,
+                    'new_orders_today' => $newOrdersToday,
+                    'total_products' => $totalProducts,
+                    'inactive_products' => $inactiveProducts,
+                    'active_customers' => $activeCustomers,
+                    'average_rating' => round($averageRating, 1),
+                    'total_earnings_formatted' => number_format($totalEarnings, 2) . ' جنيه',
+                    'new_orders_today_text' => $newOrdersToday > 0 ? "+{$newOrdersToday} طلبات اليوم" : "لا توجد طلبات جديدة اليوم",
+                    'inactive_products_text' => $inactiveProducts > 0 ? "{$inactiveProducts} خدمة غير نشطة" : "جميع الخدمات نشطة",
+                    'average_rating_text' => "متوسط تقييم " . round($averageRating, 1),
+                    'top_selling_products' => $topSellingProducts
+                ]
+            ]);
+        } else {
+            // Buyer statistics
+            $userId = $user->id;
+            
+            // Total orders
+            $totalOrders = Order::where('user_id', $userId)->count();
+            
+            // Orders in progress
+            $ordersInProgress = Order::where('user_id', $userId)
+                ->whereIn('status', ['pending', 'admin_approved', 'seller_approved', 'in_progress', 'work_completed', 'ready_for_delivery', 'out_for_delivery'])
+                ->count();
+            
+            // Total spent (from completed orders)
+            $totalSpent = Order::where('user_id', $userId)
+                ->where('status', 'completed')
+                ->sum('total_price');
+            
+            // Average order value
+            $completedOrdersCount = Order::where('user_id', $userId)
+                ->where('status', 'completed')
+                ->count();
+            $averageOrderValue = $completedOrdersCount > 0 ? $totalSpent / $completedOrdersCount : 0;
+            
+            // Favorite sellers (sellers with multiple completed orders)
+            $favoriteSellers = Order::where('user_id', $userId)
+                ->where('status', 'completed')
+                ->select('seller_id', DB::raw('count(*) as order_count'))
+                ->groupBy('seller_id')
+                ->having('order_count', '>', 1)
+                ->count();
+            
+            // Unread messages count
+            $unreadMessages = Message::where('recipient_id', $userId)
+                ->where('read_status', false)
+                ->count();
+            
+            // Get unread message senders for description
+            $unreadSenders = Message::where('recipient_id', $userId)
+                ->where('read_status', false)
+                ->with('sender:id,name')
+                ->distinct('sender_id')
+                ->limit(2)
+                ->get()
+                ->pluck('sender.name')
+                ->filter()
+                ->toArray();
+            
+            $unreadSendersText = count($unreadSenders) > 0 
+                ? 'من ' . implode(' و', $unreadSenders)
+                : '';
+            
+            // Favorite products count (wishlist items)
+            $favoriteProducts = WishlistItem::where('user_id', $userId)->count();
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'total_orders' => $totalOrders,
+                    'orders_in_progress' => $ordersInProgress,
+                    'total_spent' => (float) $totalSpent,
+                    'average_order_value' => (float) $averageOrderValue,
+                    'favorite_sellers' => $favoriteSellers,
+                    'favorite_products' => $favoriteProducts,
+                    'unread_messages' => $unreadMessages,
+                    'total_spent_formatted' => number_format($totalSpent, 2) . ' جنيه',
+                    'orders_in_progress_text' => "{$ordersInProgress} طلبات قيد التنفيذ",
+                    'average_order_value_text' => "متوسط قيمة الطلب " . number_format($averageOrderValue, 0) . " جنيه",
+                    'unread_messages_text' => $unreadSendersText
+                ]
+            ]);
+        }
     }
 }

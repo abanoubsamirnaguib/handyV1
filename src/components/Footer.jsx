@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Facebook, Instagram, Twitter, Youtube, Mail, Phone, MapPin } from 'lucide-react';
+import { Facebook, Instagram, Youtube, Mail, Phone, MapPin } from 'lucide-react';
 import { apiFetch } from '@/lib/api';
 
 const Footer = () => {
@@ -30,16 +30,13 @@ const Footer = () => {
               منصة تجمع الحرفيين والمبدعين في مكان واحد، لعرض منتجاتهم اليدوية الفريدة والتواصل مع العملاء مباشرة.
             </p>
             <div className="flex space-x-4 space-x-reverse">
-              <a href="#" className="text-neutral-200 hover:text-roman-500 transition-colors">
+              <a href="https://www.facebook.com/share/17NFcvrTN2/" target="_blank" rel="noopener noreferrer" className="text-neutral-200 hover:text-roman-500 transition-colors">
                 <Facebook size={20} />
               </a>
-              <a href="#" className="text-neutral-200 hover:text-roman-500 transition-colors">
+              <a href="https://www.instagram.com/official646588/" target="_blank" rel="noopener noreferrer" className="text-neutral-200 hover:text-roman-500 transition-colors">
                 <Instagram size={20} />
               </a>
-              <a href="#" className="text-neutral-200 hover:text-roman-500 transition-colors">
-                <Twitter size={20} />
-              </a>
-              <a href="#" className="text-neutral-200 hover:text-roman-500 transition-colors">
+              <a href="https://www.youtube.com/@OfficialBAZAR-s4p" target="_blank" rel="noopener noreferrer" className="text-neutral-200 hover:text-roman-500 transition-colors">
                 <Youtube size={20} />
               </a>
             </div>

@@ -421,7 +421,18 @@ class Order extends Model
         // Transfer money to seller's wallet: seller gets net amount
         $this->seller->addToWallet($sellerNet);
         
+        // Increment seller's completed orders count
+        $this->seller->increment('completed_orders');
+        
         $this->addToHistory('completed', $this->user_id, 'order_completed');
+        
+        // إرسال إشعار للمشتري لتقييم المنتجات
+        \App\Services\NotificationService::create(
+            $this->user_id,
+            'order_review',
+            "تم إكمال طلبك #{$this->id}! يمكنك الآن تقييم المنتجات التي قمت بشرائها.",
+            "/orders/{$this->id}"
+        );
     }
     
     public function cancel($userId, $reason = null)

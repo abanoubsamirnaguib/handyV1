@@ -247,10 +247,6 @@ const MessagePage = () => {  const { id } = useParams();
                 ))}
               </div>
             </div>
-            <div>
-              <h3 className="font-semibold mb-1">وقت الاستجابة</h3>
-              <p className="text-gray-700">{seller.responseTime}</p>
-            </div>
           </CardContent>
         </Card>
       </motion.div>

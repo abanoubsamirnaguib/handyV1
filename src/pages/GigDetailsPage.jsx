@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Star, ShoppingCart, MessageSquare, Heart, ChevronLeft, ChevronRight, CheckCircle, ShieldCheck, Truck, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -549,34 +549,33 @@ const GigDetailsPage = () => {
           {relatedGigs.length > 0 && (
             <section>
               <h2 className="text-2xl font-bold text-neutral-900 mb-6 text-right">منتجات مشابهة من نفس البائع</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" dir="rtl">
                 {relatedGigs.map(relatedGig => (
-                  <Card key={relatedGig.id} className="overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 card-hover border-roman-500/20">
-                    <div className="relative h-48">
-                      <img 
-                        src={relatedGig.images && relatedGig.images.length > 0 
-                          ? relatedGig.images[0] 
-                          : `https://images.unsplash.com/photo-1635865165118-917ed9e20936`} 
-                        alt={relatedGig.title} 
-                        className="w-full h-full object-cover" 
-                      />
-                      <Badge variant="secondary" className="absolute top-2 right-2 bg-roman-500 text-white">{relatedGig.category?.name}</Badge>
-                      <div className="absolute top-2 left-2">
-                        <WishlistButton productId={relatedGig.id} inWishlist={relatedGig.in_wishlist} onWishlistChange={handleWishlistChange} size="md" />
+                  <Link key={relatedGig.id} to={`/gigs/${relatedGig.id}`} className="block">
+                    <Card className="overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 card-hover border-roman-500/20 cursor-pointer" dir="rtl">
+                      <div className="relative h-48">
+                        <img 
+                          src={relatedGig.images && relatedGig.images.length > 0 
+                            ? relatedGig.images[0] 
+                            : `https://images.unsplash.com/photo-1635865165118-917ed9e20936`} 
+                          alt={relatedGig.title} 
+                          className="w-full h-full object-cover" 
+                        />
+                        <Badge variant="secondary" className="absolute top-2 right-2 bg-roman-500 text-white">{relatedGig.category?.name}</Badge>
+                        <div className="absolute top-2 left-2" onClick={(e) => e.stopPropagation()}>
+                          <div onClick={(e) => e.preventDefault()}>
+                            <WishlistButton productId={relatedGig.id} inWishlist={relatedGig.in_wishlist} onWishlistChange={handleWishlistChange} size="md" />
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                    <CardHeader className="pb-1">
-                      <CardTitle className="text-md font-semibold text-neutral-900 h-12 overflow-hidden text-right">{relatedGig.title}</CardTitle>
-                    </CardHeader>
-                    <CardContent className="pb-3">
-                      <p className="text-lg font-bold text-roman-500 text-right">{relatedGig.price} جنيه</p>
-                    </CardContent>
-                    <CardFooter>
-                      <Button asChild variant="outline" className="w-full border-roman-500/50 text-roman-500 hover:bg-roman-500 hover:text-white">
-                        <Link to={`/gigs/${relatedGig.id}`}>عرض التفاصيل</Link>
-                      </Button>
-                    </CardFooter>
-                  </Card>
+                      <CardHeader className="pb-1 text-right">
+                        <CardTitle className="text-md font-semibold text-neutral-900 h-12 overflow-hidden">{relatedGig.title}</CardTitle>
+                      </CardHeader>
+                      <CardContent className="pb-3 text-right">
+                        <p className="text-lg font-bold text-roman-500">{relatedGig.price} جنيه</p>
+                      </CardContent>
+                    </Card>
+                  </Link>
                 ))}
               </div>
             </section>

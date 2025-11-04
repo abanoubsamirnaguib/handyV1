@@ -266,6 +266,9 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ reason }),
     }),
+  
+  // Dashboard statistics
+  getDashboardStats: () => apiFetch('orders/dashboard/stats'),
 
   // Enhanced Wishlist functions with existence checks
   getWishlist: () => apiFetch('wishlist'),
@@ -350,16 +353,52 @@ export const api = {
   getSellerReviews: (sellerId) => apiFetch(`sellers/${sellerId}/reviews`),
   getOrderReviews: (orderId) => apiFetch(`orders/${orderId}/reviews`),
   canReviewOrder: (orderId) => apiFetch(`orders/${orderId}/can-review`),
-  createReview: (reviewData) => 
-    apiFetch('reviews', {
-      method: 'POST',
-      body: JSON.stringify(reviewData),
-    }),
-  updateReview: (reviewId, reviewData) => 
-    apiFetch(`reviews/${reviewId}`, {
-      method: 'PUT',
-      body: JSON.stringify(reviewData),
-    }),
+  createReview: (reviewData, imageFile = null) => {
+    if (imageFile) {
+      // Use FormData if image is provided
+      const formData = new FormData();
+      formData.append('product_id', reviewData.product_id);
+      if (reviewData.order_id) formData.append('order_id', reviewData.order_id);
+      formData.append('rating', reviewData.rating);
+      if (reviewData.comment) formData.append('comment', reviewData.comment);
+      if (reviewData.status) formData.append('status', reviewData.status);
+      formData.append('image', imageFile);
+      
+      return apiFormFetch('reviews', {
+        method: 'POST',
+        body: formData,
+      });
+    } else {
+      // Use JSON if no image
+      return apiFetch('reviews', {
+        method: 'POST',
+        body: JSON.stringify(reviewData),
+      });
+    }
+  },
+  updateReview: (reviewId, reviewData, imageFile = null, removeImage = false) => {
+    if (imageFile || removeImage) {
+      // Use FormData if image is provided or being removed
+      const formData = new FormData();
+      if (reviewData.rating) formData.append('rating', reviewData.rating);
+      if (reviewData.comment !== undefined) formData.append('comment', reviewData.comment);
+      if (reviewData.status) formData.append('status', reviewData.status);
+      if (imageFile) formData.append('image', imageFile);
+      if (removeImage) formData.append('remove_image', '1');
+      console.log('formData1', formData);
+      return apiFormFetch(`reviews/${reviewId}`, {
+        method: 'PUT',
+        body: formData,
+      });
+    } else {
+      console.log('reviewData2', reviewData);
+      // Use JSON if no image changes
+      return apiFetch(`reviews/${reviewId}`, {
+        method: 'PUT',
+        body: JSON.stringify(reviewData),
+      });
+    }
+  },
   deleteReview: (reviewId) => 
     apiFetch(`reviews/${reviewId}`, { method: 'DELETE' }),
 

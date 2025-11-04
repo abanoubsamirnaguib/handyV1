@@ -21,6 +21,7 @@ const DashboardSidebar = ({ user }) => {
   const isDashboardRoot = location.pathname === '/dashboard' || location.pathname === '/dashboard/';
 
   const buyerLinks = [
+    { path: '/dashboard/overview', label: 'نظرة عامة', icon: LayoutDashboard },
     { path: '/dashboard/orders', label: 'طلباتي', icon: ShoppingBag },
     { path: '/wishlist', label: 'قائمة الأمنيات', icon: Heart },
     { path: '/dashboard/wallet', label: 'محفظتي', icon: DollarSign },
@@ -223,6 +224,7 @@ const DashboardContent = ({ user }) => {
 
   // Links based on user role
   const buyerLinks = [
+    { path: '/dashboard/overview', label: 'نظرة عامة', icon: LayoutDashboard },
     { path: '/dashboard/orders', label: 'طلباتي', icon: ShoppingBag },
     { path: '/wishlist', label: 'قائمة الأمنيات', icon: Heart },
     { path: '/dashboard/wallet', label: 'محفظتي', icon: DollarSign },

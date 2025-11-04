@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Menu, X, ShoppingCart, Bell, Search, User, Shield, Heart } from 'lucide-react';
+import { Menu, X, ShoppingCart, Bell, Search, User, Shield, Heart, Facebook, Instagram, Youtube, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -19,6 +19,7 @@ import {
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isSocialMenuOpen, setIsSocialMenuOpen] = useState(false);
   const { user, logout } = useAuth();
   const { cart } = useCart();
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
@@ -141,6 +142,63 @@ const Navbar = () => {
           </form>
 
           <div className="hidden md:flex items-center space-x-2 space-x-reverse">
+            {/* Social Media Dropdown */}
+            <DropdownMenu open={isSocialMenuOpen} onOpenChange={setIsSocialMenuOpen}>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="text-roman-500 hover:text-warning-500 hover:bg-success-100"
+                  onMouseEnter={() => setIsSocialMenuOpen(true)}
+                  onMouseLeave={() => setIsSocialMenuOpen(false)}
+                >
+                  <Share2 className="h-5 w-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent 
+                align="end" 
+                className="w-48"
+                onMouseEnter={() => setIsSocialMenuOpen(true)}
+                onMouseLeave={() => setIsSocialMenuOpen(false)}
+              >
+                <DropdownMenuLabel className="text-neutral-900">تابعنا على</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <a
+                    href="https://www.instagram.com/official646588/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 cursor-pointer"
+                  >
+                    <Instagram className="h-4 w-4 text-pink-500" />
+                    <span>Instagram</span>
+                  </a>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <a
+                    href="https://www.youtube.com/@OfficialBAZAR-s4p"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 cursor-pointer"
+                  >
+                    <Youtube className="h-4 w-4 text-red-500" />
+                    <span>YouTube</span>
+                  </a>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <a
+                    href="https://www.facebook.com/share/17NFcvrTN2/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 cursor-pointer"
+                  >
+                    <Facebook className="h-4 w-4 text-blue-500" />
+                    <span>Facebook</span>
+                  </a>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            
             {user ? (
               <>
                 <Button variant="ghost" size="icon" onClick={() => navigate('/cart')} className="relative text-roman-500 hover:text-warning-500 hover:bg-success-100">
@@ -322,6 +380,49 @@ const Navbar = () => {
                   </Button>
                 </div>
               )}
+              
+              {/* Social Media Links */}
+              <div className="pt-4 border-t border-roman-500/20">
+                <p className="text-sm font-medium text-neutral-600 mb-3 px-3">تابعنا على</p>
+                <div className="flex justify-center space-x-6 space-x-reverse">
+                  <a
+                    href="https://www.instagram.com/official646588/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex flex-col items-center space-y-1 text-neutral-600 hover:text-roman-500 transition-colors duration-200"
+                    aria-label="Instagram"
+                  >
+                    <div className="p-3 rounded-full bg-gradient-to-br from-pink-500 to-orange-500 text-white shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110">
+                      <Instagram size={24} />
+                    </div>
+                    <span className="text-xs font-medium">Instagram</span>
+                  </a>
+                  <a
+                    href="https://www.youtube.com/@OfficialBAZAR-s4p"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex flex-col items-center space-y-1 text-neutral-600 hover:text-roman-500 transition-colors duration-200"
+                    aria-label="YouTube"
+                  >
+                    <div className="p-3 rounded-full bg-gradient-to-br from-red-500 to-red-600 text-white shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110">
+                      <Youtube size={24} />
+                    </div>
+                    <span className="text-xs font-medium">YouTube</span>
+                  </a>
+                  <a
+                    href="https://www.facebook.com/share/17NFcvrTN2/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex flex-col items-center space-y-1 text-neutral-600 hover:text-roman-500 transition-colors duration-200"
+                    aria-label="Facebook"
+                  >
+                    <div className="p-3 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110">
+                      <Facebook size={24} />
+                    </div>
+                    <span className="text-xs font-medium">Facebook</span>
+                  </a>
+                </div>
+              </div>
             </nav>
           </motion.div>
         )}

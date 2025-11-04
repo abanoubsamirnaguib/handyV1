@@ -6,6 +6,7 @@ use App\Models\Review;
 use Illuminate\Http\Request;
 use App\Http\Resources\ReviewResource;
 use App\Http\Requests\ReviewRequest;
+use Illuminate\Support\Facades\Storage;
 
 class ReviewCrudController extends Controller
 {
@@ -38,19 +39,44 @@ class ReviewCrudController extends Controller
             }
         }
         
+        // Handle image upload
+        if ($request->hasFile('image')) {
+            $imagePath = $request->file('image')->store('reviews', 'public');
+            $validated['image'] = $imagePath;
+        }
         $review = Review::create($validated);
         $review->load(['user', 'product', 'order']);
         return new ReviewResource($review);
     }
     public function update(ReviewRequest $request, $id) {
         $review = Review::findOrFail($id);
-        
+        info('request', [$request->all()]);
         // Ensure user can only update their own reviews
         if ($review->user_id !== auth()->id()) {
             return response()->json(['message' => 'يمكنك فقط تعديل تقييماتك الخاصة'], 403);
         }
         
-        $review->update($request->validated());
+        $validated = $request->validated();
+        
+        // Handle image upload
+        if ($request->hasFile('image')) {
+            // Delete old image if exists
+            if ($review->image && Storage::disk('public')->exists($review->image)) {
+                Storage::disk('public')->delete($review->image);
+            }
+            $imagePath = $request->file('image')->store('reviews', 'public');
+            $validated['image'] = $imagePath;
+            info('image1', $validated);
+        } elseif ($request->has('remove_image') && $request->input('remove_image') === '1') {
+            // Remove existing image
+            if ($review->image && Storage::disk('public')->exists($review->image)) {
+                Storage::disk('public')->delete($review->image);
+            }
+            $validated['image'] = null;
+            info('image2', $validated);
+        }
+        info('image3', $validated);
+        $review->update($validated);
         $review->load(['user', 'product', 'order']);
         return new ReviewResource($review);
     }
@@ -60,6 +86,11 @@ class ReviewCrudController extends Controller
         // Ensure user can only delete their own reviews
         if ($review->user_id !== auth()->id()) {
             return response()->json(['message' => 'يمكنك فقط حذف تقييماتك الخاصة'], 403);
+        }
+        
+        // Delete image if exists
+        if ($review->image && Storage::disk('public')->exists($review->image)) {
+            Storage::disk('public')->delete($review->image);
         }
         
         $review->delete();

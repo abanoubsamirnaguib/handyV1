@@ -15,7 +15,8 @@ export const ChatProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
   const [connected, setConnected] = useState(false);
   const [activeChannels, setActiveChannels] = useState(new Set());
-  const { user } = useAuth();
+  const authContext = useAuth();
+  const user = authContext?.user || null;
   const { toast } = useToast();
   // Track the last time a conversation was marked as read to avoid rapid duplicate requests
   const lastMarkReadRef = useRef({});

@@ -441,7 +441,7 @@ const HomePage = () => {
           >
             منتجات <span className="text-roman-500">مميزة</span>
           </motion.h2>
-          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-2" dir="rtl">
             {loadingFeatured ? (
               <div className="col-span-8 text-center text-neutral-900/60 py-8">جاري التحميل...</div>
             ) : featuredError ? (
@@ -464,55 +464,51 @@ const HomePage = () => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5, delay: index * 0.1 }}
                   >
-                    <Card className="overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 flex flex-col h-62 card-hover border-roman-500/20" dir="rtl">
-                      <div className="relative h-56">
-                        <img 
-                          src={gig.images && gig.images.length > 0 
-                            ? gig.images[0] 
-                            : "https://images.unsplash.com/photo-1680188700662-5b03bdcf3017"} 
-                          alt={gig.title} 
-                          className="w-full h-full object-cover" 
-                        />
-                        <div className="absolute top-2 right-2 flex flex-col gap-1">
-                          <Badge variant="secondary" className="bg-roman-500 text-white">{categoryName}</Badge>
-                        </div>
-                        <div className="absolute top-2 left-2">
-                          <WishlistButton productId={gig.id} inWishlist={gig.in_wishlist} onWishlistChange={handleWishlistChange} size="md" />
-                        </div>
-                        <div className="absolute bottom-2 right-2 flex flex-col gap-1">
-                          <Badge variant="outline" className={`text-xs ${gig.type === 'gig' ? 'bg-warning-500/50 text-white border-warning-500' : 'bg-blue-100 text-blue-600 border-blue-300'}`}>
-                            {gig.type === 'gig' ? 'خدمة مخصصة' : 'منتج جاهز'}
-                          </Badge>
-                        </div>
-                      </div>
-                      <CardHeader className="pb-2 text-right p-2">
-                        <CardTitle className="text-sm font-semibold text-neutral-900 overflow-hidden relative group cursor-pointer">
-                          <div 
-                            className={`whitespace-nowrap transition-all duration-300 hover:scale-105 hover:text-roman-500 ${gig.title.length > 25 ? 'animate-scroll' : ''}`}
-                            style={{ animationDuration: `${Math.max(3, gig.title.length * 0.2)}s` }}
-                          >
-                            {gig.title}
+                    <Link to={`/gigs/${gig.id}`} className="block">
+                      <Card className="overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 flex flex-col h-62 card-hover border-roman-500/20 cursor-pointer" dir="rtl">
+                        <div className="relative h-56">
+                          <img 
+                            src={gig.images && gig.images.length > 0 
+                              ? gig.images[0] 
+                              : "https://images.unsplash.com/photo-1680188700662-5b03bdcf3017"} 
+                            alt={gig.title} 
+                            className="w-full h-full object-cover" 
+                          />
+                          <div className="absolute top-2 right-2 flex flex-col gap-1">
+                            <Badge variant="secondary" className="bg-roman-500 text-white">{categoryName}</Badge>
                           </div>
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="flex-grow text-right p-2">
-                        <div className="flex items-center justify-between text-xs mb-2">
-                          <div className="flex items-center text-neutral-900/70">
-                            <Star className="h-3 w-3 text-warning-500 ml-1" />
-                            <span className="whitespace-nowrap">{gig.rating} ({gig.reviewCount})</span>
+                          <div className="absolute top-2 left-2" onClick={(e) => e.stopPropagation()}>
+                            <div onClick={(e) => e.preventDefault()}>
+                              <WishlistButton productId={gig.id} inWishlist={gig.in_wishlist} onWishlistChange={handleWishlistChange} size="md" />
+                            </div>
                           </div>
-                          <p className="text-sm font-bold text-roman-500 whitespace-nowrap">{gig.price} ج</p>
+                          <div className="absolute bottom-2 right-2 flex flex-col gap-1">
+                            <Badge variant="outline" className={`text-xs ${gig.type === 'gig' ? 'bg-warning-500/50 text-white border-warning-500' : 'bg-blue-100 text-blue-600 border-blue-300'}`}>
+                              {gig.type === 'gig' ? 'منتج جاهز' : 'خدمة مخصصة'}
+                            </Badge>
+                          </div>
                         </div>
-                      </CardContent>
-                      <CardFooter className="flex justify-start p-2">
-                        <Button asChild className="w-full bg-roman-500 hover:bg-roman-500/90 text-white text-xs">
-                          <Link to={`/gigs/${gig.id}`} className="whitespace-nowrap">
-                            عرض التفاصيل
-                            <ArrowLeft className="ml-2 h-3 w-3" />
-                          </Link>
-                        </Button>
-                      </CardFooter>
-                    </Card>
+                        <CardHeader className="pb-2 text-right p-2">
+                          <CardTitle className="text-sm font-semibold text-neutral-900 overflow-hidden relative group">
+                            <div 
+                              className={`whitespace-nowrap transition-all duration-300 hover:scale-105 hover:text-roman-500 ${gig.title.length > 25 ? 'animate-scroll' : ''}`}
+                              style={{ animationDuration: `${Math.max(3, gig.title.length * 0.2)}s` }}
+                            >
+                              {gig.title}
+                            </div>
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="flex-grow text-right p-2">
+                          <div className="flex items-center justify-between text-xs mb-2">
+                            <div className="flex items-center text-neutral-900/70">
+                              <Star className="h-3 w-3 text-warning-500 ml-1" />
+                              <span className="whitespace-nowrap">{gig.rating} ({gig.reviewCount})</span>
+                            </div>
+                            <p className="text-sm font-bold text-roman-500 whitespace-nowrap">{gig.price} ج</p>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </Link>
                   </motion.div>
                 );
               })

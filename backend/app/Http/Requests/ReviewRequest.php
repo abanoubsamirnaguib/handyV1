@@ -15,6 +15,7 @@ class ReviewRequest extends FormRequest
                 'order_id' => 'nullable|exists:orders,id',
                 'rating' => 'required|integer|min:1|max:5',
                 'comment' => 'nullable|string',
+                'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120', // max 5MB, optional
                 'status' => 'in:published,hidden,pending',
             ];
         }
@@ -22,6 +23,7 @@ class ReviewRequest extends FormRequest
         return [
             'rating' => 'sometimes|required|integer|min:1|max:5',
             'comment' => 'nullable|string',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120', // max 5MB, optional
             'status' => 'in:published,hidden,pending',
         ];
     }

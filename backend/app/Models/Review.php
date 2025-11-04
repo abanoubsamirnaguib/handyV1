@@ -14,6 +14,7 @@ class Review extends Model
         'order_id',
         'rating',
         'comment',
+        'image',
         'review_date',
         'status',
         'created_at',

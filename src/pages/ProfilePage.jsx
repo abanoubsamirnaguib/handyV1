@@ -14,17 +14,22 @@ import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/AuthContext';
 import { useChat } from '@/contexts/ChatContext';
 import { apiFetch, apiUrl } from '@/lib/api';
+import { useToast } from '@/components/ui/use-toast';
 
 const ProfilePage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user, updateProfile, uploadProfileImage, uploadCoverImage } = useAuth();
   const { startConversation, setActiveConversation } = useChat();
+  const { toast } = useToast();
   const [profileData, setProfileData] = useState(null);
   const [userGigs, setUserGigs] = useState([]);
+  const [sellerReviews, setSellerReviews] = useState([]);
+  const [sellerData, setSellerData] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editFormData, setEditFormData] = useState({ name: '', bio: '', location: '', skills: '', avatar: '', phone: '' });
   const [loading, setLoading] = useState(true);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
   const [avatarFile, setAvatarFile] = useState(null);
   const [avatarPreview, setAvatarPreview] = useState(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
@@ -109,9 +114,10 @@ const ProfilePage = () => {
           avatar: data.avatar || '',
           cover_image: data.cover_image || '',
           phone: data.phone || '',
-          rating: typeof data.rating === 'number' ? data.rating : 0,
-          completedOrders: typeof data.completedOrders === 'number' ? data.completedOrders : 0,
-          reviewCount: typeof data.reviewCount === 'number' ? data.reviewCount : 0,
+          seller_id: data.seller_id || null,
+          rating: typeof data.rating === 'number' ? data.rating : (parseFloat(data.rating) || 0),
+          completedOrders: typeof data.completedOrders === 'number' ? data.completedOrders : (parseInt(data.completedOrders) || 0),
+          reviewCount: typeof data.reviewCount === 'number' ? data.reviewCount : (parseInt(data.reviewCount) || 0),
           memberSince: data.memberSince || data.createdAt || new Date().toISOString()
         };
         
@@ -137,37 +143,100 @@ const ProfilePage = () => {
             localStorage.setItem('user', JSON.stringify(updatedUser));
             console.log('Updated localStorage with validated data:', updatedUser);
           }
-        }        // Fetch gigs if the user is a seller - only do this once
-        if (validatedData.active_role === 'seller') {
-          const sellerID = validatedData.id;
-          console.log('Fetching gigs for seller:', sellerID);
+        }
+        
+        // Fetch complete seller data if the user is a seller
+        if (validatedData.active_role === 'seller' && validatedData.seller_id) {
+          const sellerID = validatedData.seller_id;
+          console.log('Fetching complete seller data for seller ID:', sellerID);
           
-          const gigsRes = await fetch(apiUrl(`/listsellers/${sellerID}`), {
-            cache: 'force-cache'
-          });
-          
-          if (gigsRes.ok) {
-            const sellerData = await gigsRes.json();
-            console.log('Raw gigs data received:', sellerData);
+          try {
+            // Fetch seller data from seller endpoint
+            const sellerResponse = await apiFetch(`listsellers/${sellerID}`);
+            console.log('Raw seller data received:', sellerResponse);
             
-            // Validate gigs data structure
-            const gigs = sellerData.gigs || [];
-            const validatedGigs = Array.isArray(gigs) ? gigs.map(gig => ({
-              id: gig.id,
-              title: gig.title || 'عنوان غير محدد',
-              price: typeof gig.price === 'number' ? gig.price : 0,
-              category: gig.category || 'غير محدد',
-              rating: typeof gig.rating === 'number' ? gig.rating : 0,
-              reviewCount: typeof gig.reviewCount === 'number' ? gig.reviewCount : 0,
-              images: Array.isArray(gig.images) ? gig.images : [],
-              description: gig.description || ''
-            })) : [];
-            
-            console.log('Validated gigs data being set:', validatedGigs);
-            setUserGigs(validatedGigs);
-          } else {
-            console.warn('Failed to fetch gigs, setting empty array');
-            setUserGigs([]);
+            if (sellerResponse.data) {
+              const sellerInfo = sellerResponse.data;
+              
+              // Update profile data with seller statistics
+              const updatedProfileData = {
+                ...validatedData,
+                rating: typeof sellerInfo.rating === 'number' ? sellerInfo.rating : parseFloat(sellerInfo.rating) || 0,
+                reviewCount: typeof sellerInfo.review_count === 'number' ? sellerInfo.review_count : parseInt(sellerInfo.review_count) || 0,
+                completedOrders: typeof sellerInfo.completed_orders === 'number' ? sellerInfo.completed_orders : parseInt(sellerInfo.completed_orders) || 0,
+                memberSince: sellerInfo.member_since || validatedData.memberSince,
+                skills: Array.isArray(sellerInfo.skills) ? sellerInfo.skills : validatedData.skills
+              };
+              setProfileData(updatedProfileData);
+              
+              // Store seller data separately
+              setSellerData({
+                id: sellerInfo.id,
+                rating: typeof sellerInfo.rating === 'number' ? sellerInfo.rating : parseFloat(sellerInfo.rating) || 0,
+                review_count: typeof sellerInfo.review_count === 'number' ? sellerInfo.review_count : parseInt(sellerInfo.review_count) || 0,
+                completed_orders: typeof sellerInfo.completed_orders === 'number' ? sellerInfo.completed_orders : parseInt(sellerInfo.completed_orders) || 0,
+                member_since: sellerInfo.member_since
+              });
+              
+              // Fetch seller's products/gigs
+              const products = sellerInfo.products || [];
+              const validatedGigs = Array.isArray(products) ? products.map(product => ({
+                id: product.id,
+                title: product.title || 'عنوان غير محدد',
+                price: typeof product.price === 'number' ? product.price : 0,
+                category: product.category?.name || product.category || 'غير محدد',
+                rating: typeof product.rating === 'number' ? product.rating : (parseFloat(product.rating) || 0),
+                reviewCount: typeof product.review_count === 'number' ? product.review_count : 0,
+                images: Array.isArray(product.images) 
+                  ? product.images.map(img => img.url || img.image_url || img)
+                  : [],
+                description: product.description || ''
+              })) : [];
+              
+              console.log('Validated gigs data being set:', validatedGigs);
+              setUserGigs(validatedGigs);
+              
+              // Fetch seller reviews
+              try {
+                const reviewsResponse = await apiFetch(`sellers/${sellerID}/reviews`);
+                if (reviewsResponse && reviewsResponse.data && Array.isArray(reviewsResponse.data)) {
+                  setSellerReviews(reviewsResponse.data);
+                }
+              } catch (reviewError) {
+                console.warn('Failed to fetch seller reviews:', reviewError);
+                setSellerReviews([]);
+              }
+            }
+          } catch (sellerError) {
+            console.warn('Failed to fetch seller data, trying fallback:', sellerError);
+            // Fallback: try to fetch gigs using user ID
+            try {
+              const gigsRes = await fetch(apiUrl(`/listsellers/${validatedData.id}`), {
+                cache: 'force-cache'
+              });
+              
+              if (gigsRes.ok) {
+                const sellerData = await gigsRes.json();
+                const gigs = sellerData.gigs || sellerData.data?.products || [];
+                const validatedGigs = Array.isArray(gigs) ? gigs.map(gig => ({
+                  id: gig.id,
+                  title: gig.title || 'عنوان غير محدد',
+                  price: typeof gig.price === 'number' ? gig.price : 0,
+                  category: gig.category?.name || gig.category || 'غير محدد',
+                  rating: typeof gig.rating === 'number' ? gig.rating : (parseFloat(gig.rating) || 0),
+                  reviewCount: typeof gig.reviewCount === 'number' ? gig.reviewCount : 0,
+                  images: Array.isArray(gig.images) 
+                    ? gig.images.map(img => img.url || img.image_url || img)
+                    : [],
+                  description: gig.description || ''
+                })) : [];
+                
+                setUserGigs(validatedGigs);
+              }
+            } catch (fallbackError) {
+              console.warn('Fallback also failed:', fallbackError);
+              setUserGigs([]);
+            }
           }
         } else {
           console.log('User is not a seller, setting empty gigs array');
@@ -823,10 +892,6 @@ const ProfilePage = () => {
                 </CardHeader>
                 <CardContent className="space-y-3 text-gray-700">
                   <div className="flex items-center justify-between">
-                    <span className="flex items-center"><Star className="h-5 w-5 ml-2 text-yellow-400" /> متوسط التقييم</span>
-                    <span className="font-semibold">{profileData?.rating?.toFixed(1) || 'غير متاح'}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
                     <span className="flex items-center"><Award className="h-5 w-5 ml-2 text-green-500" /> الطلبات المكتملة</span>
                     <span className="font-semibold">{profileData?.completedOrders || 0}</span>
                   </div>
@@ -861,7 +926,7 @@ const ProfilePage = () => {
             </div>
 
             {userGigs && userGigs.length > 0 ? (
-              <div className="grid sm:grid-cols-2 gap-6">
+              <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                 {userGigs.map(gig => (
                   <Card key={gig.id} className="overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 card-hover border-neutral-200/50">
                     <div className="relative h-48">
@@ -884,7 +949,7 @@ const ProfilePage = () => {
                     <CardContent className="pb-3">
                       <div className="flex items-center text-sm text-gray-500 mb-1">
                         <Star className="h-4 w-4 text-yellow-500 mr-1" />
-                        {gig.rating || 0} ({gig.reviewCount || 0} تقييمات)
+                        {typeof gig.rating === 'number' ? gig.rating : (parseFloat(gig.rating) || 0)} ({gig.reviewCount || 0} تقييمات)
                       </div>
                       <p className="text-lg font-bold text-primary">{gig.price || 0} جنيه</p>
                     </CardContent>

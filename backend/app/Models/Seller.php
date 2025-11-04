@@ -15,7 +15,6 @@ class Seller extends Model
         'review_count',
         'completed_orders',
         'wallet_balance',
-        'response_time',
         'created_at',
         'updated_at',
     ];

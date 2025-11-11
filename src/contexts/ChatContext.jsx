@@ -610,11 +610,7 @@ export const ChatProvider = ({ children }) => {
 
     const handleError = (error) => {
       setConnected(false);
-      toast({
-        title: "خطأ في الاتصال",
-        description: "تم قطع الاتصال بخدمة الرسائل المباشرة",
-        variant: "destructive",
-      });
+      console.error('Pusher connection error:', error);
     };
 
     // Listen to Pusher connection events

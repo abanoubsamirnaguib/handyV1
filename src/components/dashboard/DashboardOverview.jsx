@@ -180,7 +180,7 @@ const DashboardOverview = () => {
       value: dashboardStats?.favorite_sellers?.toString() || "0", 
       icon: Users, 
       color: "purple", 
-      description: "تواصل معهم الآن",
+      description: "البائعون الأكثر تعاملاً معهم",
       path: null // No specific page for this yet
     },
     { 

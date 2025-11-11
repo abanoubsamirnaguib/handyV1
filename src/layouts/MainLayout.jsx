@@ -8,10 +8,11 @@ import { motion } from 'framer-motion';
 const MainLayout = () => {
   const location = useLocation();
   const isChatPage = location.pathname === '/chat' || location.pathname.startsWith('/chat/');
+  const isDashboardPage = location.pathname.startsWith('/dashboard');
   
   return (
     <div className="flex flex-col min-h-screen" dir="rtl">
-      <Navbar />
+      {!isDashboardPage && <Navbar />}
       <motion.main 
         className={`flex-grow ${isChatPage ? 'pb-0' : 'pb-16 md:pb-0'}`}
         initial={{ opacity: 0, y: 20 }}

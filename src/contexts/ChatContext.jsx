@@ -56,17 +56,12 @@ export const ChatProvider = ({ children }) => {
 
   // Setup channels when conversations change
   useEffect(() => {
-    if (user && conversations.length > 0) {
-      // Only set up Pusher connection if not already connected or if channels have changed
-      const conversationIds = conversations.map(conv => `conversation.${conv.id}`).sort().join(',');
-      const channelIds = Array.from(activeChannels).sort().join(',');
-      
-      // Check if we need to update channels (new conversations or missing channels)
-      if (!connected || conversationIds !== channelIds) {
-        setupPusherConnection();
-      }
+    if (user && conversations.length > 0 && echo) {
+      // Only set up channels for conversations that need them
+      // The setupPusherConnection function will check which channels already exist
+      setupPusherConnection();
     }
-  }, [user, conversations, connected, activeChannels]);
+  }, [user, conversations]);
 
   // Update user's online status
   const updateOnlineStatus = async () => {
@@ -87,61 +82,43 @@ export const ChatProvider = ({ children }) => {
 
   // Setup Pusher connection and event listeners
   const setupPusherConnection = () => {
-    if (!user || !echo) return;
+    if (!user || !echo || !conversations.length) return;
 
     try {
-      // Force reconnect to ensure fresh connection
+      // Ensure Pusher is connected (but don't force reconnect)
       if (echo.connector && echo.connector.pusher) {
-        echo.connector.pusher.disconnect();
-        setTimeout(() => {
-          echo.connector.pusher.connect();
-        }, 500);
+        const pusher = echo.connector.pusher;
+        const connectionState = pusher.connection.state;
+        
+        // Only connect if not already connected or connecting
+        if (connectionState !== 'connected' && connectionState !== 'connecting') {
+          pusher.connect();
+        }
       }
 
-      // Listen for new messages on all user's conversations
+      // Subscribe only to new channels (not already subscribed)
       conversations.forEach(conversation => {
         const channelName = `conversation.${conversation.id}`;
         
-        // Skip if channel already exists
+        // Skip if we already track this channel
         if (activeChannels.has(channelName)) {
-          // Try re-binding to ensure event listener is active
-          try {
-            // Direct access to the channel using its name
-            const channelKey = `private-${channelName}`;
-            // Get existing channel directly using Pusher's channels object
-            const existingChannel = echo.connector.pusher.channels.channels[channelKey];
-            if (existingChannel) {
-              // Unbind all possible event formats
-              existingChannel.unbind('message.sent');
-              existingChannel.unbind('.message.sent');
-              
-              // Rebind with standard format
-              existingChannel.bind('message.sent', (e) => {
-                if (e && e.message) {
-                  handleNewMessage(e.message);
-                } else if (e) {
-                  handleNewMessage(e);
-                }
-              });
-              
-              // Also try Laravel's dot prefix format
-              existingChannel.bind('.message.sent', (e) => {
-                if (e && e.message) {
-                  handleNewMessage(e.message);
-                } else if (e) {
-                  handleNewMessage(e);
-                }
-              });
-            }
-          } catch (err) {
-            // Silent fail for rebinding errors
-          }
           return;
         }
         
+        // Check if channel already exists and is subscribed in Pusher
+        const channelKey = `private-${channelName}`;
+        const existingChannel = echo.connector?.pusher?.channels?.channels?.[channelKey];
+        
+        if (existingChannel && existingChannel.subscribed) {
+          // Channel already exists and is subscribed, just track it
+          setActiveChannels(prev => new Set([...prev, channelName]));
+          return;
+        }
+        
+        // Subscribe to new channel (this will trigger auth request only once per channel)
         const channel = echo.private(channelName);
         
-        // Listen for message events with different formats
+        // Listen for message events
         channel.listen('message.sent', (e) => {
           if (e && e.message) {
             handleNewMessage(e.message);
@@ -158,11 +135,6 @@ export const ChatProvider = ({ children }) => {
             handleNewMessage(e);
           }
         });
-        
-        // Listen for client whisper events
-        channel.listenForWhisper('message.sent', (e) => {
-          if (e) handleNewMessage(e);
-        });
 
         // Track active channels
         setActiveChannels(prev => new Set([...prev, channelName]));
@@ -170,11 +142,7 @@ export const ChatProvider = ({ children }) => {
 
       setConnected(true);
     } catch (error) {
-      toast({
-        title: "اتصال خطأ",
-        description: "فشل في الاتصال بخدمة الرسائل المباشرة",
-        variant: "destructive",
-      });
+      console.error('Pusher connection error:', error);
       setConnected(false);
     }
   };
@@ -200,8 +168,18 @@ export const ChatProvider = ({ children }) => {
 
     const channelName = `conversation.${conversationId}`;
     
-    // Skip if channel already exists
+    // Skip if channel already exists in our tracking
     if (activeChannels.has(channelName)) return;
+    
+    // Check if channel already exists and is subscribed in Pusher
+    const channelKey = `private-${channelName}`;
+    const existingChannel = echo.connector?.pusher?.channels?.channels?.[channelKey];
+    
+    if (existingChannel && existingChannel.subscribed) {
+      // Channel already exists and is subscribed, just track it
+      setActiveChannels(prev => new Set([...prev, channelName]));
+      return;
+    }
     
     try {
       const channel = echo.private(channelName);

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Star, MapPin, CalendarDays, Edit3, PlusCircle, MessageSquare, Briefcase, Award, Users, Phone, X, Crop, Share2 } from 'lucide-react';
+import { Star, MapPin, CalendarDays, Edit3, PlusCircle, MessageSquare, Briefcase, Award, Users, Phone, X, Crop, Share2, ShoppingBag, Eye, Clock, CheckCircle, XCircle, Package, Truck } from 'lucide-react';
 import ReactCrop, { centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import { Button } from '@/components/ui/button';
@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/AuthContext';
 import { useChat } from '@/contexts/ChatContext';
-import { apiFetch, apiUrl } from '@/lib/api';
+import { apiFetch, apiUrl, api } from '@/lib/api';
 import { useToast } from '@/components/ui/use-toast';
 
 const ProfilePage = () => {
@@ -24,6 +24,8 @@ const ProfilePage = () => {
   const { toast } = useToast();
   const [profileData, setProfileData] = useState(null);
   const [userGigs, setUserGigs] = useState([]);
+  const [userOrders, setUserOrders] = useState([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
   const [sellerReviews, setSellerReviews] = useState([]);
   const [sellerData, setSellerData] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -258,6 +260,42 @@ const ProfilePage = () => {
       console.log('Profile page unmounted');
     };
   }, [id, isOwnProfile, navigate]); // Remove user from dependency array to prevent re-fetches
+
+  // Fetch user orders if the user is a buyer
+  useEffect(() => {
+    const fetchUserOrders = async () => {
+      // Only fetch orders if:
+      // 1. This is the user's own profile
+      // 2. The user is a buyer (not a seller)
+      // 3. Profile data is loaded
+      if (!isOwnProfile || !profileData || profileData.active_role === 'seller') {
+        setUserOrders([]);
+        return;
+      }
+
+      setOrdersLoading(true);
+      try {
+        const response = await api.getOrders({ user_orders: true });
+        console.log('User orders API response:', response);
+        
+        // Handle both paginated and direct array responses
+        const ordersData = response.data || response;
+        setUserOrders(Array.isArray(ordersData) ? ordersData : []);
+      } catch (error) {
+        console.error('Error loading user orders:', error);
+        setUserOrders([]);
+        toast({
+          variant: "destructive",
+          title: "خطأ في تحميل الطلبات",
+          description: "حدث خطأ أثناء تحميل الطلبات. يرجى المحاولة مرة أخرى.",
+        });
+      } finally {
+        setOrdersLoading(false);
+      }
+    };
+
+    fetchUserOrders();
+  }, [isOwnProfile, profileData, toast]);
 
   const handleEditFormChange = (e) => {
     setEditFormData({ ...editFormData, [e.target.name]: e.target.value });
@@ -916,7 +954,7 @@ const ProfilePage = () => {
           >
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-2xl font-bold text-gray-800">
-                {profileData?.active_role === 'seller' ? 'خدماتي' : 'طلباتي'} ({userGigs?.length || 0})
+                {profileData?.active_role === 'seller' ? 'خدماتي' : 'طلباتي'} ({profileData?.active_role === 'seller' ? (userGigs?.length || 0) : (userOrders?.length || 0)})
               </h2>
               {isOwnProfile && profileData?.active_role === 'seller' && (
                 <Button onClick={() => navigate('/dashboard/gigs/new')} className="bg-green-500 hover:bg-green-600">
@@ -925,7 +963,111 @@ const ProfilePage = () => {
               )}
             </div>
 
-            {userGigs && userGigs.length > 0 ? (
+            {/* Show orders for buyers */}
+            {profileData?.active_role === 'buyer' ? (
+              ordersLoading ? (
+                <Card className="text-center py-12 border-dashed border-gray-300">
+                  <CardContent>
+                    <Clock className="h-16 w-16 text-gray-400 mx-auto mb-4 animate-spin" />
+                    <h3 className="text-xl font-semibold text-gray-700 mb-2">جاري تحميل الطلبات...</h3>
+                  </CardContent>
+                </Card>
+              ) : userOrders && userOrders.length > 0 ? (
+                <div className="grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {userOrders.map(order => {
+                    const getStatusBadge = (status) => {
+                      const statusConfig = {
+                        'pending': { label: 'قيد الانتظار', className: 'bg-amber-100 text-amber-700', icon: Clock },
+                        'admin_approved': { label: 'موافق عليه', className: 'bg-blue-100 text-blue-700', icon: CheckCircle },
+                        'seller_approved': { label: 'موافق عليه', className: 'bg-indigo-100 text-indigo-700', icon: CheckCircle },
+                        'in_progress': { label: 'قيد التنفيذ', className: 'bg-purple-100 text-purple-700', icon: Package },
+                        'work_completed': { label: 'تم الإنجاز', className: 'bg-cyan-100 text-cyan-700', icon: Package },
+                        'out_for_delivery': { label: 'قيد التوصيل', className: 'bg-orange-100 text-orange-700', icon: Truck },
+                        'delivered': { label: 'تم التسليم', className: 'bg-green-100 text-green-700', icon: Truck },
+                        'completed': { label: 'مكتمل', className: 'bg-emerald-100 text-emerald-700', icon: CheckCircle },
+                        'cancelled': { label: 'ملغى', className: 'bg-red-100 text-red-700', icon: XCircle },
+                        'rejected': { label: 'مرفوض', className: 'bg-red-100 text-red-700', icon: XCircle }
+                      };
+                      const config = statusConfig[status] || { label: status, className: 'bg-gray-100 text-gray-700', icon: Clock };
+                      const Icon = config.icon;
+                      return (
+                        <Badge variant="outline" className={`${config.className} font-medium flex items-center px-3 py-1 text-xs`}>
+                          <Icon className="ml-1 h-3 w-3" />
+                          {config.label}
+                        </Badge>
+                      );
+                    };
+
+                    const formatDate = (dateString) => {
+                      if (!dateString) return '';
+                      return new Date(dateString).toLocaleDateString('ar-EG', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      });
+                    };
+
+                    return (
+                      <Card key={order.id} className="overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 card-hover border-neutral-200/50">
+                        <CardHeader className="pb-2">
+                          <div className="flex items-center justify-between mb-2">
+                            <CardTitle className="text-lg font-semibold text-gray-700">
+                              طلب رقم #{order.id}
+                            </CardTitle>
+                            {getStatusBadge(order.status)}
+                          </div>
+                          <CardDescription className="text-sm text-gray-500">
+                            <CalendarDays className="inline ml-1 h-3 w-3" />
+                            {formatDate(order.order_date || order.created_at)}
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent className="pb-3">
+                          <div className="space-y-2">
+                            {order.items && order.items.length > 0 && (
+                              <div>
+                                <h4 className="text-sm font-semibold text-gray-700 mb-1">المنتجات:</h4>
+                                {order.items.slice(0, 2).map((item, idx) => (
+                                  <p key={idx} className="text-xs text-gray-600">
+                                    {item.product?.title || 'منتج'} (x{item.quantity || 1})
+                                  </p>
+                                ))}
+                                {order.items.length > 2 && (
+                                  <p className="text-xs text-gray-500">+ {order.items.length - 2} منتج آخر</p>
+                                )}
+                              </div>
+                            )}
+                            <Separator />
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm font-semibold text-gray-700">الإجمالي:</span>
+                              <span className="text-lg font-bold text-roman-500">{order.total_price || 0} جنيه</span>
+                            </div>
+                          </div>
+                        </CardContent>
+                        <CardFooter className="flex gap-2">
+                          <Button asChild variant="outline" className="flex-1 border-roman-500/30 text-neutral-900 hover:bg-success-100/30 hover:text-roman-500 hover:border-roman-500">
+                            <Link to={`/orders/${order.id}`}>
+                              <Eye className="ml-2 h-4 w-4" />
+                              عرض التفاصيل
+                            </Link>
+                          </Button>
+                        </CardFooter>
+                      </Card>
+                    );
+                  })}
+                </div>
+              ) : (
+                <Card className="text-center py-12 border-dashed border-gray-300">
+                  <CardContent>
+                    <ShoppingBag className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-xl font-semibold text-gray-700 mb-2">لا توجد طلبات حالياً</h3>
+                    <p className="text-gray-500">تصفح المنتجات وقم بطلبك الأول!</p>
+                    <Button asChild className="mt-4 bg-roman-500 hover:bg-roman-500/90 text-white">
+                      <Link to="/explore">استكشف المنتجات</Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+              )
+            ) : userGigs && userGigs.length > 0 ? (
               <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                 {userGigs.map(gig => (
                   <Card key={gig.id} className="overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 card-hover border-neutral-200/50">

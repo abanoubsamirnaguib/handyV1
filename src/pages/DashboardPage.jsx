@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Link, Outlet, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LayoutDashboard, ShoppingBag, MessageCircle, Settings, BarChart2, DollarSign, Users, LogOut, PlusCircle, Edit, Menu, X, ChevronLeft, Heart } from 'lucide-react';
+import { LayoutDashboard, ShoppingBag, MessageCircle, Settings, BarChart2, DollarSign, Users, LogOut, PlusCircle, Edit, Menu, X, ChevronLeft, Heart, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
@@ -26,6 +26,7 @@ const DashboardSidebar = ({ user }) => {
     { path: '/wishlist', label: 'قائمة الأمنيات', icon: Heart },
     { path: '/dashboard/wallet', label: 'محفظتي', icon: DollarSign },
     { path: '/dashboard/messages', label: 'الرسائل', icon: MessageCircle },
+    { path: '/profile/me', label: 'الملف الشخصي', icon: User },
     { path: '/dashboard/settings', label: 'إعدادات الحساب', icon: Settings },
   ];
 
@@ -35,6 +36,7 @@ const DashboardSidebar = ({ user }) => {
     { path: '/dashboard/orders', label: 'الطلبات الواردة', icon: DollarSign },
     { path: '/dashboard/earnings', label: 'الأرباح', icon: BarChart2 },
     { path: '/dashboard/messages', label: 'الرسائل', icon: MessageCircle },
+    { path: '/profile/me', label: 'الملف الشخصي', icon: User },
     { path: '/dashboard/settings', label: 'إعدادات الحساب', icon: Settings },
   ];
 
@@ -242,6 +244,7 @@ const DashboardContent = ({ user }) => {
     { path: '/wishlist', label: 'قائمة الأمنيات', icon: Heart },
     { path: '/dashboard/wallet', label: 'محفظتي', icon: DollarSign },
     { path: '/dashboard/messages', label: 'الرسائل', icon: MessageCircle },
+    { path: '/profile/me', label: 'الملف الشخصي', icon: User },
     { path: '/dashboard/settings', label: 'إعدادات الحساب', icon: Settings },
   ];
 
@@ -251,6 +254,7 @@ const DashboardContent = ({ user }) => {
     { path: '/dashboard/orders', label: 'الطلبات الواردة', icon: DollarSign },
     { path: '/dashboard/earnings', label: 'الأرباح', icon: BarChart2 },
     { path: '/dashboard/messages', label: 'الرسائل', icon: MessageCircle },
+    { path: '/profile/me', label: 'الملف الشخصي', icon: User },
     { path: '/dashboard/settings', label: 'إعدادات الحساب', icon: Settings },
   ];
 

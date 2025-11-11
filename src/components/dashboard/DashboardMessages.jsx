@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { MessageSquare, Users, Archive } from 'lucide-react';
+import { MessageSquare, Users } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -36,7 +36,7 @@ const DashboardMessages = () => {
         </Button>
       </motion.div>
 
-      <div className="grid gap-6 md:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-2">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
           <Card className="border-t-4 border-blue-500 shadow-lg">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -56,17 +56,6 @@ const DashboardMessages = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-gray-800">{conversations.reduce((sum, conv) => sum + conv.unreadCount, 0)}</div>
-            </CardContent>
-          </Card>
-        </motion.div>
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-          <Card className="border-t-4 border-gray-500 shadow-lg">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">محادثات مؤرشفة</CardTitle>
-              <Archive className="h-5 w-5 text-gray-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-gray-800">0</div>
             </CardContent>
           </Card>
         </motion.div>

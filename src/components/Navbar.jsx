@@ -28,6 +28,13 @@ const Navbar = () => {
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
+  // Close mobile menu when navigating to dashboard
+  useEffect(() => {
+    if (location.pathname.startsWith('/dashboard')) {
+      setIsMenuOpen(false);
+    }
+  }, [location.pathname]);
+
   // Helper function to determine if a link is active
   const isActiveLink = (path) => {
     if (path === '/') {
@@ -334,25 +341,6 @@ const Navbar = () => {
               }`} onClick={toggleMenu}>
                 السياسات
               </Link>
-              {user && (
-                <>
-                  {user.role !== 'admin' && (
-                    <Link to="/dashboard" className={`px-3 py-2 text-sm font-medium hover:text-primary transition-colors ${
-                      isActiveLink('/dashboard') ? 'text-roman-500 bg-roman-500/10 rounded-md font-semibold' : ''
-                    }`} onClick={toggleMenu}>
-                      لوحة التحكم
-                    </Link>
-                  )}
-                  {user.role === 'admin' && (
-                    <Link to="/admin/dashboard" className={`px-3 py-2 text-sm font-medium hover:text-primary flex items-center transition-colors ${
-                      isActiveLink('/admin') ? 'text-roman-500 bg-roman-500/10 rounded-md font-semibold' : ''
-                    }`} onClick={toggleMenu}>
-                      <Shield className={`ml-1 h-4 w-4 ${isActiveLink('/admin') ? 'text-roman-500' : 'text-blue-600'}`} />
-                      لوحة المدير
-                    </Link>
-                  )}
-                </>
-              )}
               {user ? (
                 <>
                   <Link to="/cart" className={`px-3 py-2 text-sm font-medium hover:text-primary transition-colors ${

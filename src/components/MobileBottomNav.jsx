@@ -1,13 +1,13 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Search, ShoppingCart, User, LogIn, Bell, MessageCircle, Heart } from 'lucide-react';
+import { Search, ShoppingCart, LogIn, Bell, MessageCircle, LayoutDashboard } from 'lucide-react';
 import { useNotifications } from '@/contexts/NotificationContext';
 
 const navItems = [
   {
-    label: 'حسابي',
-    icon: User,
-    to: '/profile/me',
+    label: 'لوحة التحكم',
+    icon: LayoutDashboard,
+    to: '/dashboard',
     show: () => !!localStorage.getItem('token'),
     type: 'regular'
   },
@@ -26,9 +26,9 @@ const navItems = [
     type: 'search'
   },
   {
-    label: 'المفضلة',
-    icon: Heart,
-    to: '/wishlist',
+    label: 'السلة',
+    icon: ShoppingCart,
+    to: '/cart',
     show: () => !!localStorage.getItem('token'),
     type: 'regular'
   },

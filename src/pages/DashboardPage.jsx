@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { Link, Outlet, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LayoutDashboard, ShoppingBag, MessageCircle, Settings, BarChart2, DollarSign, Users, LogOut, PlusCircle, Edit, Menu, X, ChevronLeft, Heart } from 'lucide-react';
@@ -221,6 +221,19 @@ const DashboardContent = ({ user }) => {
   const { isMobile, toggleSidebar, isMobileMenuOpen, isSidebarOpen } = useSidebar();
   // Create a ref for the main content scroll area
   const scrollRef = useScrollToTop();
+  const headerRef = useRef(null);
+  const [headerHeight, setHeaderHeight] = useState(72);
+
+  useEffect(() => {
+    if (isMobile && headerRef.current) {
+      const updateHeaderHeight = () => {
+        setHeaderHeight(headerRef.current?.offsetHeight || 72);
+      };
+      updateHeaderHeight();
+      window.addEventListener('resize', updateHeaderHeight);
+      return () => window.removeEventListener('resize', updateHeaderHeight);
+    }
+  }, [isMobile]);
 
   // Links based on user role
   const buyerLinks = [
@@ -246,10 +259,13 @@ const DashboardContent = ({ user }) => {
   return (      <main 
         ref={scrollRef}
         className={`flex-1 bg-background overflow-y-auto ${
-          !isMobile ? (isSidebarOpen ? 'dashboard-content-expanded' : 'dashboard-content-collapsed') : 'dashboard-content'
+          !isMobile ? (isSidebarOpen ? 'dashboard-content-expanded' : 'dashboard-content-collapsed') : 'dashboard-content pt-16'
         }`}
       >      {isMobile && (
-        <div className="mobile-header p-4 flex justify-between items-center bg-background/95 backdrop-blur-md border-b border-roman-500/20">
+        <div 
+          ref={headerRef}
+          className="fixed top-0 left-0 right-0 z-50 mobile-header p-4 flex justify-between items-center bg-background/95 backdrop-blur-md border-b border-roman-500/20"
+        >
           <div className="flex items-center">
             <Button
               variant="ghost"
@@ -283,7 +299,8 @@ const DashboardContent = ({ user }) => {
           animate={{ opacity: 1, height: 'auto' }}
           exit={{ opacity: 0, height: 0 }}
           transition={{ duration: 0.2 }}
-          className="w-full bg-background/95 backdrop-blur-md border-b border-roman-500/20"
+          className="fixed left-0 right-0 z-40 w-full bg-background/95 backdrop-blur-md border-b border-roman-500/20"
+          style={{ top: `${headerHeight}px` }}
         >
           <div className="p-4">
             <nav className="flex flex-col space-y-2">

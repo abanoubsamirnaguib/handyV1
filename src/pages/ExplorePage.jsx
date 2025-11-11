@@ -511,7 +511,11 @@ const ExplorePage = () => {
                 <span className="whitespace-nowrap">{gig.rating} ({gig.ordersCount || 0} طلب)</span>
                 <span className="whitespace-nowrap"></span>
               </div>
-              <p className="text-sm font-bold text-roman-500 whitespace-nowrap">{gig.price} ج</p>
+              <p className="text-sm font-bold text-roman-500 whitespace-nowrap">
+                {gig.type === 'gig' && (gig.price === '0.00')
+                  ? 'قابل للتفاوض'
+                  : `${gig.price} ج`}
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -561,7 +565,11 @@ const ExplorePage = () => {
                 <Star className="h-4 w-4 text-warning-500 ml-1" />
                 {gig.rating} ({gig.reviewCount} تقييمات) ({gig.ordersCount || 0} طلبات)
               </div>
-              <p className="text-xl font-bold text-roman-500 mb-2">{gig.price} جنيه</p>
+              <p className="text-xl font-bold text-roman-500 mb-2">
+                {gig.type === 'gig' && (gig.price === 0 || gig.price === '0' || gig.price === '0.00' || parseFloat(gig.price) === 0)
+                  ? 'قابل للتفاوض'
+                  : `${gig.price} جنيه`}
+              </p>
             </CardContent>
           </div>
         </Card>

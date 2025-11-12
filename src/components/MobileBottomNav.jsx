@@ -66,26 +66,18 @@ const MobileBottomNav = () => {
         >
           {/* Modern elevated search button with white background */}
           <div className="relative transform -translate-y-3">
-            <div className={`relative flex items-center justify-center w-16 h-16 rounded-full shadow-2xl transition-all duration-300 ${
+            <div className={`relative flex items-center justify-center w-16 h-16 rounded-full transition-all duration-300 ${
               isActive 
-                ? 'bg-white scale-110 shadow-roman-500/30' 
+                ? 'bg-white scale-110' 
                 : 'bg-white hover:scale-105'
             } border-4 border-white`}>
-              {/* Gradient background circle */}
-              <div className={`absolute inset-2 rounded-full bg-gradient-to-br transition-all duration-300 ${
-                isActive 
-                  ? 'from-roman-500 via-orange-500 to-red-500' 
-                  : 'from-roman-500/90 via-orange-400 to-orange-500'
-              }`} />
+              {/* Main color background circle */}
+              <div className="absolute inset-2 rounded-full bg-roman-500 transition-all duration-300" />
               {/* Icon container */}
               <div className="relative z-10 flex items-center justify-center">
                 <Icon size={24} className="text-white drop-shadow-sm" />
               </div>
-              {/* Subtle glow effect */}
-              <div className="absolute inset-0 rounded-full bg-gradient-to-br from-white/20 to-transparent" />
             </div>
-            {/* Modern shadow underneath */}
-            <div className="absolute top-1 left-1/2 transform -translate-x-1/2 w-12 h-12 bg-roman-500/20 rounded-full blur-xl" />
           </div>
           <span className={`text-xs font-medium mt-0 transition-colors duration-200 ${
             isActive ? 'text-roman-500 font-semibold' : 'text-neutral-900/70'

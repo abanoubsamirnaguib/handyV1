@@ -31,6 +31,7 @@ class UserRequest extends FormRequest
             'phone' => 'nullable|string|max:20',
             'skills' => 'nullable|array',
             'skills.*' => 'nullable|string',
+            'email_notifications' => 'nullable|boolean',
         ];
     }
 }

@@ -50,7 +50,6 @@ class ReviewCrudController extends Controller
     }
     public function update(ReviewRequest $request, $id) {
         $review = Review::findOrFail($id);
-        info('request', [$request->all()]);
         // Ensure user can only update their own reviews
         if ($review->user_id !== auth()->id()) {
             return response()->json(['message' => 'يمكنك فقط تعديل تقييماتك الخاصة'], 403);
@@ -66,16 +65,13 @@ class ReviewCrudController extends Controller
             }
             $imagePath = $request->file('image')->store('reviews', 'public');
             $validated['image'] = $imagePath;
-            info('image1', $validated);
         } elseif ($request->has('remove_image') && $request->input('remove_image') === '1') {
             // Remove existing image
             if ($review->image && Storage::disk('public')->exists($review->image)) {
                 Storage::disk('public')->delete($review->image);
             }
             $validated['image'] = null;
-            info('image2', $validated);
         }
-        info('image3', $validated);
         $review->update($validated);
         $review->load(['user', 'product', 'order']);
         return new ReviewResource($review);

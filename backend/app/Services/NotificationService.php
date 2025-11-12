@@ -5,9 +5,13 @@ namespace App\Services;
 use App\Models\Notification;
 use App\Models\User;
 use App\Events\NotificationCreated;
+use App\Traits\EmailTrait;
+use Illuminate\Support\Facades\Log;
 
 class NotificationService
 {
+    use EmailTrait;
+
     /**
      * Create a new notification for a user
      */
@@ -24,7 +28,48 @@ class NotificationService
         // Fire the notification event for real-time broadcasting
         event(new NotificationCreated($notification));
 
+        // Send email notification if user has enabled email notifications
+        $user = User::find($userId);
+        if ($user && $user->email_notifications) {
+            self::sendEmailNotification($user, $message, $link);
+        }
+
         return $notification;
+    }
+
+    /**
+     * Send email notification to user
+     */
+    private static function sendEmailNotification(User $user, string $message, ?string $link = null): void
+    {
+        try {
+            // Build full URL if link is provided
+            $fullLink = $link ? env('FRONTEND_URL', 'http://localhost:5173') . $link : null;
+            
+            $data = [
+                'user_name' => $user->name,
+                'message' => $message,
+                'link' => $fullLink,
+            ];
+
+            self::sendMail(
+                'إشعار جديد من منصة بازار',
+                $user->email,
+                $data,
+                'emails.notification'
+            );
+
+            Log::info('Email notification sent successfully', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to send email notification', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'error' => $e->getMessage()
+            ]);
+        }
     }
 
     /**

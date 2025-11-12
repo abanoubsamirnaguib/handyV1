@@ -385,9 +385,10 @@ export const api = {
       if (reviewData.status) formData.append('status', reviewData.status);
       if (imageFile) formData.append('image', imageFile);
       if (removeImage) formData.append('remove_image', '1');
+      formData.append('_method', 'PUT');
       console.log('formData1', formData);
       return apiFormFetch(`reviews/${reviewId}`, {
-        method: 'PUT',
+        method: 'POST', // Using POST but Laravel will treat it as PUT due to _method
         body: formData,
       });
     } else {

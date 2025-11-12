@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { User, Lock, Bell, CreditCard, Save } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -7,8 +7,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
+import { Switch } from '@/components/ui/switch';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
+import { apiUrl } from '@/lib/api';
 
 const SettingsSection = ({ title, description, icon, children }) => (
   <motion.div
@@ -54,6 +56,10 @@ const DashboardSettings = () => {
   const [avatarFile, setAvatarFile] = useState(null);
   const [avatarPreview, setAvatarPreview] = useState(user?.avatar || null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [notificationSettings, setNotificationSettings] = useState({
+    email_notifications: user?.email_notifications || false,
+  });
+  const [savingNotifications, setSavingNotifications] = useState(false);
 
   const handleProfileChange = (e) => {
     setProfileData({ ...profileData, [e.target.name]: e.target.value });
@@ -141,14 +147,21 @@ const DashboardSettings = () => {
       toast({ variant: "destructive", title: "خطأ", description: "الاسم والبريد الإلكتروني حقول إلزامية." });
       return;
     }
-    const profileUpdateData = await updateProfile({
+    
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(profileData.email)) {
+      toast({ variant: "destructive", title: "خطأ", description: "البريد الإلكتروني غير صحيح." });
+      return;
+    }
+    
+    const profileUpdateData = {
       name: profileData.name,
       email: profileData.email,
       bio: profileData.bio,
       avatar: profileData.avatarUrl,
       phone: profileData.phone,
-      skills: profileData.skills,
-    });
+    };
     
     // Include skills only if user is a seller
     if (user?.active_role === 'seller') {
@@ -179,6 +192,57 @@ const DashboardSettings = () => {
     if (success) {
       setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
       toast({ title: "تم تحديث كلمة المرور", description: "تم تغيير كلمة المرور بنجاح." });
+    }
+  };
+
+  // Update profile data when user changes
+  useEffect(() => {
+    if (user) {
+      setProfileData({
+        name: user.name || '',
+        email: user.email || '',
+        bio: user.bio || '',
+        avatarUrl: user.avatar || '',
+        phone: user.phone || '',
+        skills: user.skills || []
+      });
+      setAvatarPreview(user.avatar || null);
+    }
+  }, [user]);
+
+  // Update notification settings when user changes
+  useEffect(() => {
+    if (user?.email_notifications !== undefined) {
+      setNotificationSettings({
+        email_notifications: user.email_notifications || false,
+      });
+    }
+  }, [user]);
+
+  const handleNotificationSettingsSubmit = async (e) => {
+    e.preventDefault();
+    if (!user) return;
+    
+    setSavingNotifications(true);
+    try {
+      const success = await updateProfile({
+        email_notifications: notificationSettings.email_notifications,
+      });
+      
+      if (success) {
+        toast({
+          title: "تم تحديث إعدادات الإشعارات",
+          description: "تم حفظ تفضيلات الإشعارات بنجاح.",
+        });
+      }
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "خطأ",
+        description: "حدث خطأ أثناء تحديث إعدادات الإشعارات.",
+      });
+    } finally {
+      setSavingNotifications(false);
     }
   };
 
@@ -336,9 +400,59 @@ const DashboardSettings = () => {
       
       <Separator />
 
-      {/* Notifications Settings (Placeholder) */}
+      {/* Notifications Settings */}
       <SettingsSection title="الإشعارات" description="إدارة تفضيلات الإشعارات الخاصة بك." icon={Bell}>
-        <p className="text-gray-600">سيتم إضافة إعدادات الإشعارات قريباً.</p>
+        <form onSubmit={handleNotificationSettingsSubmit} className="space-y-4">
+          <div className="space-y-4">
+            {/* Site Notifications - Always Enabled */}
+            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <div className="flex-1">
+                <Label htmlFor="siteNotifications" className="text-base font-medium cursor-default">
+                  إشعارات الموقع
+                </Label>
+                <p className="text-sm text-gray-500 mt-1">
+                  ستحصل على إشعارات داخل الموقع دائماً
+                </p>
+              </div>
+              <Switch
+                id="siteNotifications"
+                checked={true}
+                disabled={true}
+                className="opacity-50 cursor-not-allowed"
+              />
+            </div>
+
+            {/* Email Notifications - User Choice */}
+            <div className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg">
+              <div className="flex-1">
+                <Label htmlFor="emailNotifications" className="text-base font-medium cursor-pointer">
+                  إشعارات البريد الإلكتروني
+                </Label>
+                <p className="text-sm text-gray-500 mt-1">
+                  {user?.active_role === 'seller' 
+                    ? 'استقبل إشعارات عبر البريد الإلكتروني كبائع'
+                    : 'استقبل إشعارات عبر البريد الإلكتروني كمشتري'}
+                </p>
+              </div>
+              <Switch
+                id="emailNotifications"
+                checked={notificationSettings.email_notifications}
+                onCheckedChange={(checked) => 
+                  setNotificationSettings(prev => ({ ...prev, email_notifications: checked }))
+                }
+              />
+            </div>
+          </div>
+
+          <Button 
+            type="submit" 
+            className="bg-blue-500 hover:bg-blue-600"
+            disabled={savingNotifications}
+          >
+            <Save className="ml-2 h-4 w-4" />
+            {savingNotifications ? 'جاري الحفظ...' : 'حفظ إعدادات الإشعارات'}
+          </Button>
+        </form>
       </SettingsSection>
 
       {/* Seller specific settings */}
@@ -346,9 +460,9 @@ const DashboardSettings = () => {
         <>
           <Separator />
           {/* Payment Settings (Placeholder for Sellers) */}
-          <SettingsSection title="إعدادات الدفع" description="إدارة طرق سحب الأرباح." icon={CreditCard}>
+          {/* <SettingsSection title="إعدادات الدفع" description="إدارة طرق سحب الأرباح." icon={CreditCard}>
             <p className="text-gray-600">سيتم إضافة إعدادات الدفع للبائعين قريباً.</p>
-          </SettingsSection>
+          </SettingsSection> */}
         </>
       )}
     </div>

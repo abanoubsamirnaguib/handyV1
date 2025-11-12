@@ -33,7 +33,8 @@ class User extends Authenticatable
         'avatar',
         'cover_image',
         'phone',
-        'email_verified'
+        'email_verified',
+        'email_notifications'
     ];
 
     /**
@@ -59,6 +60,7 @@ class User extends Authenticatable
             'is_seller' => 'boolean',
             'is_buyer' => 'boolean',
             'email_verified' => 'boolean',
+            'email_notifications' => 'boolean',
             'last_seen' => 'datetime',
             'buyer_wallet_balance' => 'decimal:2',
         ];

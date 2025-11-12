@@ -154,8 +154,10 @@ const GigDetailsPage = () => {
         
         // Fetch product reviews from backend
         api.getProductReviews(id).then(reviewsData => {
-          if (reviewsData && Array.isArray(reviewsData.data)) {
-            const formattedReviews = reviewsData.data.map(review => ({
+          // Handle both wrapped and direct array responses
+          const reviewsArray = Array.isArray(reviewsData) ? reviewsData : (reviewsData?.data || []);
+          if (reviewsArray && Array.isArray(reviewsArray)) {
+            const formattedReviews = reviewsArray.map(review => ({
               id: review.id,
               gigId: normalizedGig.id,
               userId: review.user?.id,
@@ -163,7 +165,8 @@ const GigDetailsPage = () => {
               rating: review.rating,
               comment: review.comment,
               date: review.created_at,
-              order_id: review.order_id
+              order_id: review.order_id,
+              image_url: review.image_url || review.image || null
             }));
             setReviews(formattedReviews);
           }
@@ -526,7 +529,7 @@ const GigDetailsPage = () => {
                 <Avatar className="h-10 w-10">
                   <AvatarFallback className="bg-roman-500 text-white">{review.userName.charAt(0)}</AvatarFallback>
                 </Avatar>
-                <div>
+                <div className="flex-1">
                   <div className="flex items-center space-x-2 space-x-reverse mb-1">
                     <p className="font-semibold text-neutral-900">{review.userName}</p>                    <div className="flex text-warning-500">
                       {[...Array(5)].map((_, i) => (
@@ -535,7 +538,18 @@ const GigDetailsPage = () => {
                     </div>
                   </div>
                   <p className="text-sm text-neutral-900/60 mb-2">{new Date(review.date).toLocaleDateString('ar-EG')}</p>
-                  <p className="text-neutral-900/80">{review.comment}</p>
+                  <p className="text-neutral-900/80 mb-2">{review.comment}</p>
+                  {review.image_url && (
+                    <div className="mt-3">
+                      <img 
+                        src={review.image_url} 
+                        alt={`صورة التقييم من ${review.userName}`}
+                        className="max-w-xs h-auto rounded-lg border border-gray-200 cursor-pointer hover:opacity-90 transition-opacity"
+                        style={{ maxHeight: '300px' }}
+                        onClick={() => window.open(review.image_url, '_blank')}
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
             </CardContent>

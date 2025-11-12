@@ -50,7 +50,7 @@ const navItems = [
 
 const MobileBottomNav = () => {
   const location = useLocation();
-  const { unreadCount } = useNotifications();
+  const { unreadCount = 0 } = useNotifications();
   
   const renderNavItem = (item) => {
     const { label, icon: Icon, to, type } = item;

@@ -4,7 +4,13 @@ import { apiUrl, api } from '@/lib/api';
 
 const AuthContext = createContext();
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
 
 // Replace all getApiUrl and API_BASE_URL usage with apiUrl
 
@@ -199,9 +205,30 @@ export const AuthProvider = ({ children }) => {
         avatar: typeof updatedData.avatar === 'string' ? updatedData.avatar : (user.avatar || ''),
         phone: typeof updatedData.phone === 'string' ? updatedData.phone : (user.phone || '')
       };
+      
+      // Include email if provided
+      if (updatedData.email !== undefined) {
+        // Validate email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(updatedData.email)) {
+          toast({
+            variant: 'destructive',
+            title: 'خطأ',
+            description: 'البريد الإلكتروني غير صحيح',
+          });
+          return false;
+        }
+        // Always include email if provided, even if same (to ensure it's updated)
+        dataToSend.email = updatedData.email;
+      }
+      
         // If skills are provided and user's active_role is seller, include them in the request
       if (Array.isArray(updatedData.skills) && (user.active_role === 'seller')) {
         dataToSend.skills = updatedData.skills;
+      }
+      // Include email_notifications if provided
+      if (updatedData.email_notifications !== undefined) {
+        dataToSend.email_notifications = updatedData.email_notifications;
       }
       
       const res = await fetch(apiUrl(`users/${user.id}`), {
@@ -215,8 +242,9 @@ export const AuthProvider = ({ children }) => {
       });
       
       if (!res.ok) {
-        const errorText = await res.text();
-        throw new Error(`Update failed: ${res.status} ${errorText}`);
+        const errorData = await res.json().catch(() => ({}));
+        const errorMessage = errorData.message || errorData.errors?.email?.[0] || 'حدث خطأ أثناء تحديث الملف الشخصي';
+        throw new Error(errorMessage);
       }
         const updatedUser = (await res.json()).data;
       
@@ -229,10 +257,11 @@ export const AuthProvider = ({ children }) => {
       });
       return true;
     } catch (error) {
+      const errorMessage = error.message || 'حدث خطأ أثناء تحديث الملف الشخصي';
       toast({
         variant: 'destructive',
         title: 'خطأ',
-        description: 'حدث خطأ أثناء تحديث الملف الشخصي',
+        description: errorMessage,
       });
       return false;
     }

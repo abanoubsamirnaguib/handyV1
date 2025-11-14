@@ -411,9 +411,20 @@ const AdminUsers = () => {
                 </CardHeader>
                 <CardContent className="flex-grow">
                   <div className="space-y-3 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">الدور:</span>
-                      {getRoleBadge(userData.role)}
+                    <div className="flex flex-col gap-1">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">الدور:</span>
+                        {getRoleBadge(userData.role)}
+                      </div>
+                      <p className="text-xs text-gray-400 text-right">
+                        هذا هو الدور المسجل به في بداية الدخول
+                      </p>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">الدور المفعل:</span>
+                        {getRoleBadge(userData.active_role)}
+                      </div>
                     </div>
                     
                     <div className="flex justify-between">

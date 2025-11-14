@@ -42,6 +42,12 @@ class AuthController extends Controller
                     'message' => 'البيانات التي قمت بإدخالها غير صحيحة'
                 ], 401);
             }
+            
+            // Update last_login and last_seen timestamps
+            $user->last_login = now();
+            $user->last_seen = now();
+            $user->save();
+            
             // If user is inactive, return error            
             $token = $user->createToken('api-token')->plainTextToken;
             
@@ -477,6 +483,14 @@ class AuthController extends Controller
         try {
             Log::info('Registration with email verification attempt started', ['email' => $request->input('email')]);
             
+            // Check if registrations are enabled
+            $registrationsEnabled = \App\Models\SiteSetting::where('setting_key', 'registrations_enabled')->value('setting_value') !== 'false';
+            if (!$registrationsEnabled) {
+                return response()->json([
+                    'message' => 'التسجيل غير متاح حالياً. يرجى المحاولة لاحقاً.'
+                ], 403);
+            }
+            
             $validated = $request->validate([
                 'name' => 'required|string|max:100',
                 'email' => 'required|email|unique:users,email',
@@ -545,6 +559,21 @@ class AuthController extends Controller
                 NotificationService::welcome($user->id, $user->name, $isSeller);
             } catch (Exception $notifError) {
                 Log::warning('Failed to send welcome notification', [
+                    'user_id' => $user->id,
+                    'error' => $notifError->getMessage()
+                ]);
+            }
+
+            // Notify admin about new user registration
+            try {
+                $roleText = $isSeller ? 'بائع' : 'مشتري';
+                NotificationService::notifyAdmin(
+                    'new_user',
+                    "مستخدم جديد انضم إلى المنصة: {$user->name} ({$roleText})",
+                    "/admin/users/{$user->id}"
+                );
+            } catch (Exception $notifError) {
+                Log::warning('Failed to send admin notification for new user', [
                     'user_id' => $user->id,
                     'error' => $notifError->getMessage()
                 ]);

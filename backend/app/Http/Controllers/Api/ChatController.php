@@ -7,6 +7,7 @@ use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\MessageAttachment;
 use App\Models\User;
+use App\Models\ChatReport;
 use App\Events\MessageSent;
 use App\Services\NotificationService;
 use App\Events\NotificationCreated;
@@ -516,6 +517,177 @@ class ChatController extends Controller
                 'active_conversations' => $activeConversations,
                 'today_messages' => $todayMessages,
             ]
+        ]);
+    }
+
+    /**
+     * Report a conversation
+     */
+    public function reportConversation(Request $request, $conversationId)
+    {
+        $validator = Validator::make($request->all(), [
+            'reason' => 'required|string|max:255',
+            'description' => 'nullable|string|max:1000',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $user = Auth::user();
+        
+        // Verify user is part of this conversation
+        $conversation = Conversation::where('id', $conversationId)
+            ->where(function ($query) use ($user) {
+                $query->where('buyer_id', $user->id)
+                      ->orWhere('seller_id', $user->id);
+            })
+            ->first();
+
+        if (!$conversation) {
+            return response()->json(['error' => 'Conversation not found'], 404);
+        }
+
+        // Check if user already reported this conversation
+        $existingReport = ChatReport::where('conversation_id', $conversationId)
+            ->where('reporter_id', $user->id)
+            ->where('status', 'pending')
+            ->first();
+
+        if ($existingReport) {
+            return response()->json(['error' => 'You have already reported this conversation'], 400);
+        }
+
+        // Create report
+        $report = ChatReport::create([
+            'conversation_id' => $conversationId,
+            'reporter_id' => $user->id,
+            'reason' => $request->reason,
+            'description' => $request->description,
+            'status' => 'pending',
+            'created_at' => now(),
+        ]);
+
+        // Send notification to admin
+        try {
+            $notification = NotificationService::chatReported($conversationId, $user->name, $request->reason);
+            broadcast(new NotificationCreated($notification));
+        } catch (\Exception $e) {
+            // Log error but don't fail the report
+            \Log::error('Failed to send notification for chat report: ' . $e->getMessage());
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'تم الإبلاغ عن المحادثة بنجاح',
+            'report' => $report
+        ], 201);
+    }
+
+    /**
+     * Admin: Get all chat reports
+     */
+    public function adminGetReports(Request $request)
+    {
+        $user = Auth::user();
+        
+        // Check if user is admin
+        if (!$user || $user->role !== 'admin') {
+            return response()->json(['message' => 'غير مصرح لك بالوصول'], 403);
+        }
+
+        $query = ChatReport::with(['conversation.buyer', 'conversation.seller', 'reporter', 'resolver'])
+            ->orderBy('created_at', 'desc');
+
+        // Filter by status if provided
+        if ($request->has('status') && !empty($request->status)) {
+            $query->where('status', $request->status);
+        }
+
+        $reports = $query->get();
+
+        $formattedReports = $reports->map(function ($report) {
+            return [
+                'id' => $report->id,
+                'conversation_id' => $report->conversation_id,
+                'conversation' => [
+                    'id' => $report->conversation->id,
+                    'buyer' => [
+                        'id' => $report->conversation->buyer->id,
+                        'name' => $report->conversation->buyer->name,
+                        'email' => $report->conversation->buyer->email,
+                        'avatar' => $report->conversation->buyer->avatar,
+                    ],
+                    'seller' => [
+                        'id' => $report->conversation->seller->id,
+                        'name' => $report->conversation->seller->name,
+                        'email' => $report->conversation->seller->email,
+                        'avatar' => $report->conversation->seller->avatar,
+                    ],
+                ],
+                'reporter' => [
+                    'id' => $report->reporter->id,
+                    'name' => $report->reporter->name,
+                    'email' => $report->reporter->email,
+                ],
+                'reason' => $report->reason,
+                'description' => $report->description,
+                'status' => $report->status,
+                'resolved_by' => $report->resolved_by,
+                'resolver' => $report->resolver ? [
+                    'id' => $report->resolver->id,
+                    'name' => $report->resolver->name,
+                ] : null,
+                'resolved_at' => $report->resolved_at,
+                'admin_notes' => $report->admin_notes,
+                'created_at' => $report->created_at,
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => $formattedReports
+        ]);
+    }
+
+    /**
+     * Admin: Resolve a chat report
+     */
+    public function adminResolveReport(Request $request, $reportId)
+    {
+        $user = Auth::user();
+        
+        // Check if user is admin
+        if (!$user || $user->role !== 'admin') {
+            return response()->json(['message' => 'غير مصرح لك بالوصول'], 403);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'status' => 'required|in:resolved,dismissed',
+            'admin_notes' => 'nullable|string|max:1000',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $report = ChatReport::find($reportId);
+
+        if (!$report) {
+            return response()->json(['error' => 'Report not found'], 404);
+        }
+
+        $report->update([
+            'status' => $request->status,
+            'resolved_by' => $user->id,
+            'resolved_at' => now(),
+            'admin_notes' => $request->admin_notes,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'تم حل البلاغ بنجاح',
+            'report' => $report
         ]);
     }
 }

@@ -106,6 +106,9 @@ Route::get('about-us/stats', [AdminController::class, 'getAboutUsStats']);
 // Public Cities list (for checkout selection)
 Route::get('cities', [CityCrudController::class, 'index']);
 
+// Public Site Settings (general settings for frontend)
+Route::get('site-settings/general', [SiteSettingController::class, 'getGeneralSettings']);
+
 // Protected Routes with middleware 
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('me', [AuthController::class, 'me']);
@@ -200,6 +203,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('conversations/{conversationId}/mark-read', [ChatController::class, 'markAsRead']);
         Route::delete('conversations/{conversationId}', [ChatController::class, 'deleteConversation']);
         Route::post('update-online-status', [ChatController::class, 'updateOnlineStatus']);
+        Route::post('conversations/{conversationId}/report', [ChatController::class, 'reportConversation']);
     });
     
     // Notification CRUD
@@ -266,6 +270,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         // New Delivery Order Management
         Route::get('delivery/orders-ready', [DeliveryPersonnelCrudController::class, 'getOrdersReadyForDelivery']);
         Route::get('delivery/picked-up-orders', [DeliveryPersonnelCrudController::class, 'getPickedUpOrdersAwaitingDeliveryAssignment']);
+        Route::get('delivery/orders-in-progress', [DeliveryPersonnelCrudController::class, 'getOrdersInProgress']);
         Route::post('delivery/bulk-assign-orders', [DeliveryPersonnelCrudController::class, 'bulkAssignOrders']);
         Route::post('delivery/assign-pickup-person', [DeliveryPersonnelCrudController::class, 'assignPickupPerson']);
         Route::post('delivery/assign-delivery-person', [DeliveryPersonnelCrudController::class, 'assignDeliveryPerson']);
@@ -293,6 +298,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
             Route::get('conversations', [ChatController::class, 'adminGetAllConversations']);
             Route::get('conversations/{conversationId}/messages', [ChatController::class, 'adminGetMessages']);
             Route::get('stats', [ChatController::class, 'adminGetStats']);
+            Route::get('reports', [ChatController::class, 'adminGetReports']);
+            Route::post('reports/{reportId}/resolve', [ChatController::class, 'adminResolveReport']);
         });
         
         // Admin wishlist management routes

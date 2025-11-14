@@ -31,9 +31,11 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
 import { api } from '@/lib/api';
+import { useSiteSettings } from '@/contexts/SiteSettingsContext';
 
 const AboutUsPage = () => {
   const { toast } = useToast();
+  const { settings } = useSiteSettings();
   const [stats, setStats] = useState([
     { number: "0", label: "حرفي موثوق", icon: Users },
     { number: "0", label: "منتج يدوي", icon: Palette },
@@ -557,7 +559,13 @@ const AboutUsPage = () => {
                     </div>
                     <div className="text-right flex-1">
                       <h3 className="font-bold text-neutral-900 mb-1 text-lg">البريد الإلكتروني</h3>
-                      <p className="text-roman-500 font-semibold text-left" dir="ltr">support@bazaar.com</p>
+                      <a 
+                        href={`mailto:${settings.contactEmail || 'officialbazar64@gmail.com'}`}
+                        className="text-roman-500 font-semibold text-left hover:text-roman-600 transition-colors block" 
+                        dir="ltr"
+                      >
+                        {settings.contactEmail || 'officialbazar64@gmail.com'}
+                      </a>
                       <p className="text-sm text-neutral-500">نجيب على رسائلك خلال 24 ساعة</p>
                     </div>
                   </motion.div>
@@ -573,7 +581,13 @@ const AboutUsPage = () => {
                     </div>
                     <div className="text-right flex-1">
                       <h3 className="font-bold text-neutral-900 mb-1 text-lg">رقم الهاتف</h3>
-                      <p className="text-warning-500 font-semibold text-left" dir="ltr">+20 123 456 7890</p>
+                      <a 
+                        href={`tel:${settings.contactPhone || '+201068644570'}`}
+                        className="text-warning-500 font-semibold text-left hover:text-warning-600 transition-colors block" 
+                        dir="ltr"
+                      >
+                        {settings.contactPhone || '+201068644570'}
+                      </a>
                       <p className="text-sm text-neutral-500">من السبت إلى الخميس: 9 ص - 6 م</p>
                     </div>
                   </motion.div>
@@ -589,7 +603,7 @@ const AboutUsPage = () => {
                     </div>
                     <div className="text-right flex-1">
                       <h3 className="font-bold text-neutral-900 mb-1 text-lg">العنوان</h3>
-                      <p className="text-darkOlive font-semibold">القاهرة، مصر</p>
+                      <p className="text-darkOlive font-semibold">{settings.contactAddress || 'شارع الحرفيين، الفيوم ، مصر'}</p>
                       <p className="text-sm text-roman-500">مقر منصة بازار للحرف اليدوية</p>
                     </div>
                   </motion.div>
@@ -605,8 +619,7 @@ const AboutUsPage = () => {
                     </div>
                     <div className="text-right flex-1">
                       <h3 className="font-bold text-neutral-900 mb-1 text-lg">ساعات العمل</h3>
-                      <p className="text-roman-500 font-semibold">السبت - الخميس</p>
-                      <p className="text-sm text-roman-500">9:00 صباحاً - 6:00 مساءً</p>
+                      <p className="text-roman-500 font-semibold">{settings.workingHours || 'السبت - الخميس: 9:00 صباحاً - 6:00 مساءً'}</p>
                     </div>
                   </motion.div>
                 </div>

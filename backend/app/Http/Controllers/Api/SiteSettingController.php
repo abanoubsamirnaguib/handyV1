@@ -14,6 +14,23 @@ class SiteSettingController extends Controller
         return SiteSetting::all();
     }
 
+    // Public: Get general site settings (for frontend)
+    public function getGeneralSettings()
+    {
+        // Only return editable settings (site name, logo, favicon are fixed in frontend)
+        $settings = [
+            'siteDescription' => SiteSetting::where('setting_key', 'site_description')->value('setting_value') ?? 'منصة تجمع الحرفيين والمبدعين في مكان واحد، لعرض منتجاتهم اليدوية الفريدة والتواصل مع العملاء مباشرة.',
+            'maintenanceMode' => SiteSetting::where('setting_key', 'maintenance_mode')->value('setting_value') === 'true',
+            'registrationsEnabled' => SiteSetting::where('setting_key', 'registrations_enabled')->value('setting_value') !== 'false',
+            'contactPhone' => SiteSetting::where('setting_key', 'contact_phone')->value('setting_value') ?? '+2 01068644570',
+            'contactEmail' => SiteSetting::where('setting_key', 'contact_email')->value('setting_value') ?? 'officialbazar64@gmail.com',
+            'contactAddress' => SiteSetting::where('setting_key', 'contact_address')->value('setting_value') ?? 'شارع الحرفيين، الفيوم ، مصر',
+            'workingHours' => SiteSetting::where('setting_key', 'working_hours')->value('setting_value') ?? 'السبت - الخميس: 9:00 صباحاً - 6:00 مساءً',
+        ];
+
+        return response()->json($settings);
+    }
+
     public function update(Request $request)
     {
         $data = $request->validate([
@@ -36,21 +53,20 @@ class SiteSettingController extends Controller
             return response()->json(['error' => 'غير مصرح'], 403);
         }
 
-        // General settings
+        // General settings (only editable settings, fixed values are handled in frontend)
         $generalSettings = [
-            'siteName' => SiteSetting::where('setting_key', 'site_name')->value('setting_value') ?? 'منصة الصنايعي',
-            'siteDescription' => SiteSetting::where('setting_key', 'site_description')->value('setting_value') ?? 'منصة تسويق المنتجات الحرفية اليدوية',
-            'logoUrl' => SiteSetting::where('setting_key', 'logo_url')->value('setting_value') ?? '/logo.png',
-            'faviconUrl' => SiteSetting::where('setting_key', 'favicon_url')->value('setting_value') ?? '/favicon.ico',
+            'siteDescription' => SiteSetting::where('setting_key', 'site_description')->value('setting_value') ?? 'منصة تجمع الحرفيين والمبدعين في مكان واحد، لعرض منتجاتهم اليدوية الفريدة والتواصل مع العملاء مباشرة.',
             'maintenanceMode' => SiteSetting::where('setting_key', 'maintenance_mode')->value('setting_value') === 'true',
             'registrationsEnabled' => SiteSetting::where('setting_key', 'registrations_enabled')->value('setting_value') !== 'false',
-            'defaultLanguage' => SiteSetting::where('setting_key', 'default_language')->value('setting_value') ?? 'ar',
-            'defaultCurrency' => SiteSetting::where('setting_key', 'default_currency')->value('setting_value') ?? 'EGP',
+            'contactPhone' => SiteSetting::where('setting_key', 'contact_phone')->value('setting_value') ?? '+20 1068644570',
+            'contactEmail' => SiteSetting::where('setting_key', 'contact_email')->value('setting_value') ?? 'officialbazar64@gmail.com',
+            'contactAddress' => SiteSetting::where('setting_key', 'contact_address')->value('setting_value') ?? 'شارع الحرفيين، الفيوم ، مصر',
+            'workingHours' => SiteSetting::where('setting_key', 'working_hours')->value('setting_value') ?? 'السبت - الخميس: 9:00 صباحاً - 6:00 مساءً',
         ];
 
         // Email settings
         $emailSettings = [
-            'senderName' => SiteSetting::where('setting_key', 'email_sender_name')->value('setting_value') ?? 'منصة الصنايعي',
+            'senderName' => SiteSetting::where('setting_key', 'email_sender_name')->value('setting_value') ?? 'بازار',
             'senderEmail' => SiteSetting::where('setting_key', 'email_sender_email')->value('setting_value') ?? 'no-reply@example.com',
             'smtpServer' => SiteSetting::where('setting_key', 'smtp_server')->value('setting_value') ?? 'smtp.example.com',
             'smtpPort' => SiteSetting::where('setting_key', 'smtp_port')->value('setting_value') ?? '587',
@@ -59,33 +75,38 @@ class SiteSettingController extends Controller
             'useSMTP' => SiteSetting::where('setting_key', 'use_smtp')->value('setting_value') === 'true',
         ];
 
-        // Notification settings
-        $notificationSettings = [
-            'newUserNotifications' => SiteSetting::where('setting_key', 'notify_new_users')->value('setting_value') !== 'false',
-            'newOrderNotifications' => SiteSetting::where('setting_key', 'notify_new_orders')->value('setting_value') !== 'false',
-            'productReportNotifications' => SiteSetting::where('setting_key', 'notify_product_reports')->value('setting_value') !== 'false',
-            'chatReportNotifications' => SiteSetting::where('setting_key', 'notify_chat_reports')->value('setting_value') !== 'false',
-            'lowStockNotifications' => SiteSetting::where('setting_key', 'notify_low_stock')->value('setting_value') !== 'false',
-            'adminEmails' => SiteSetting::where('setting_key', 'admin_emails')->value('setting_value') ?? 'admin@example.com',
+        // User Notification settings
+        $userNotificationSettings = [
+            'welcome' => SiteSetting::where('setting_key', 'user_notif_welcome')->value('setting_value') !== 'false',
+            'orderCreated' => SiteSetting::where('setting_key', 'user_notif_order_created')->value('setting_value') !== 'false',
+            'orderStatus' => SiteSetting::where('setting_key', 'user_notif_order_status')->value('setting_value') !== 'false',
+            'productPending' => SiteSetting::where('setting_key', 'user_notif_product_pending')->value('setting_value') !== 'false',
+            'productApproved' => SiteSetting::where('setting_key', 'user_notif_product_approved')->value('setting_value') !== 'false',
+            'message' => SiteSetting::where('setting_key', 'user_notif_message')->value('setting_value') !== 'false',
+            'review' => SiteSetting::where('setting_key', 'user_notif_review')->value('setting_value') !== 'false',
+            'payment' => SiteSetting::where('setting_key', 'user_notif_payment')->value('setting_value') !== 'false',
+            'system' => SiteSetting::where('setting_key', 'user_notif_system')->value('setting_value') !== 'false',
         ];
 
-        // Security settings
-        $securitySettings = [
-            'requireEmailVerification' => SiteSetting::where('setting_key', 'require_email_verification')->value('setting_value') !== 'false',
-            'twoFactorAuthEnabled' => SiteSetting::where('setting_key', 'two_factor_auth_enabled')->value('setting_value') === 'true',
-            'passwordMinLength' => SiteSetting::where('setting_key', 'password_min_length')->value('setting_value') ?? '8',
-            'passwordRequiresUppercase' => SiteSetting::where('setting_key', 'password_requires_uppercase')->value('setting_value') !== 'false',
-            'passwordRequiresNumber' => SiteSetting::where('setting_key', 'password_requires_number')->value('setting_value') !== 'false',
-            'passwordRequiresSymbol' => SiteSetting::where('setting_key', 'password_requires_symbol')->value('setting_value') === 'true',
-            'sessionTimeout' => SiteSetting::where('setting_key', 'session_timeout')->value('setting_value') ?? '120',
+        // Admin Notification settings
+        $adminNotificationSettings = [
+            'newUser' => SiteSetting::where('setting_key', 'admin_notif_new_user')->value('setting_value') !== 'false',
+            'newOrder' => SiteSetting::where('setting_key', 'admin_notif_new_order')->value('setting_value') !== 'false',
+            'productPending' => SiteSetting::where('setting_key', 'admin_notif_product_pending')->value('setting_value') !== 'false',
+            'productReport' => SiteSetting::where('setting_key', 'admin_notif_product_report')->value('setting_value') !== 'false',
+            'chatReport' => SiteSetting::where('setting_key', 'admin_notif_chat_report')->value('setting_value') !== 'false',
+            'withdrawalRequest' => SiteSetting::where('setting_key', 'admin_notif_withdrawal_request')->value('setting_value') !== 'false',
+            'contactMessage' => SiteSetting::where('setting_key', 'admin_notif_contact_message')->value('setting_value') !== 'false',
+            'adminEmail' => SiteSetting::where('setting_key', 'admin_notification_email')->value('setting_value') ?? 'admin@example.com',
+            'deliveryMethod' => SiteSetting::where('setting_key', 'admin_notification_delivery')->value('setting_value') ?? 'both',
         ];
 
         return response()->json([
             'settings' => [
                 'general' => $generalSettings,
                 'email' => $emailSettings,
-                'notifications' => $notificationSettings,
-                'security' => $securitySettings,
+                'userNotifications' => $userNotificationSettings,
+                'adminNotifications' => $adminNotificationSettings,
             ]
         ]);
     }
@@ -99,7 +120,7 @@ class SiteSettingController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'settingsType' => 'required|string|in:general,email,notifications,security',
+            'settingsType' => 'required|string|in:general,email,userNotifications,adminNotifications',
             'settings' => 'required|array',
         ]);
 
@@ -114,14 +135,13 @@ class SiteSettingController extends Controller
             // Map frontend setting names to backend setting keys based on type
             $settingMappings = [
                 'general' => [
-                    'siteName' => 'site_name',
                     'siteDescription' => 'site_description',
-                    'logoUrl' => 'logo_url',
-                    'faviconUrl' => 'favicon_url',
                     'maintenanceMode' => 'maintenance_mode',
                     'registrationsEnabled' => 'registrations_enabled',
-                    'defaultLanguage' => 'default_language',
-                    'defaultCurrency' => 'default_currency',
+                    'contactPhone' => 'contact_phone',
+                    'contactEmail' => 'contact_email',
+                    'contactAddress' => 'contact_address',
+                    'workingHours' => 'working_hours',
                 ],
                 'email' => [
                     'senderName' => 'email_sender_name',
@@ -132,22 +152,27 @@ class SiteSettingController extends Controller
                     'smtpPassword' => 'smtp_password',
                     'useSMTP' => 'use_smtp',
                 ],
-                'notifications' => [
-                    'newUserNotifications' => 'notify_new_users',
-                    'newOrderNotifications' => 'notify_new_orders',
-                    'productReportNotifications' => 'notify_product_reports',
-                    'chatReportNotifications' => 'notify_chat_reports',
-                    'lowStockNotifications' => 'notify_low_stock',
-                    'adminEmails' => 'admin_emails',
+                'userNotifications' => [
+                    'welcome' => 'user_notif_welcome',
+                    'orderCreated' => 'user_notif_order_created',
+                    'orderStatus' => 'user_notif_order_status',
+                    'productPending' => 'user_notif_product_pending',
+                    'productApproved' => 'user_notif_product_approved',
+                    'message' => 'user_notif_message',
+                    'review' => 'user_notif_review',
+                    'payment' => 'user_notif_payment',
+                    'system' => 'user_notif_system',
                 ],
-                'security' => [
-                    'requireEmailVerification' => 'require_email_verification',
-                    'twoFactorAuthEnabled' => 'two_factor_auth_enabled',
-                    'passwordMinLength' => 'password_min_length',
-                    'passwordRequiresUppercase' => 'password_requires_uppercase',
-                    'passwordRequiresNumber' => 'password_requires_number',
-                    'passwordRequiresSymbol' => 'password_requires_symbol',
-                    'sessionTimeout' => 'session_timeout',
+                'adminNotifications' => [
+                    'newUser' => 'admin_notif_new_user',
+                    'newOrder' => 'admin_notif_new_order',
+                    'productPending' => 'admin_notif_product_pending',
+                    'productReport' => 'admin_notif_product_report',
+                    'chatReport' => 'admin_notif_chat_report',
+                    'withdrawalRequest' => 'admin_notif_withdrawal_request',
+                    'contactMessage' => 'admin_notif_contact_message',
+                    'adminEmail' => 'admin_notification_email',
+                    'deliveryMethod' => 'admin_notification_delivery',
                 ],
             ];
 
@@ -177,8 +202,8 @@ class SiteSettingController extends Controller
             $messages = [
                 'general' => 'تم حفظ الإعدادات العامة بنجاح',
                 'email' => 'تم حفظ إعدادات البريد الإلكتروني بنجاح',
-                'notifications' => 'تم حفظ إعدادات الإشعارات بنجاح',
-                'security' => 'تم حفظ إعدادات الأمان بنجاح',
+                'userNotifications' => 'تم حفظ إعدادات إشعارات المستخدمين بنجاح',
+                'adminNotifications' => 'تم حفظ إعدادات إشعارات المشرفين بنجاح',
             ];
 
             return response()->json([

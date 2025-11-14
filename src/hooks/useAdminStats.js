@@ -10,7 +10,10 @@ export const useAdminStats = () => {
     total_sellers: 0,
     total_products: 0,
     active_users: 0,
-    pending_sellers: 0
+    pending_sellers: 0,
+    pending_products: 0,
+    total_buyers: 0,
+    suspended_users: 0
   });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -33,7 +36,10 @@ export const useAdminStats = () => {
         total_sellers: 0,
         total_products: 0,
         active_users: 0,
-        pending_sellers: 0
+        pending_sellers: 0,
+        pending_products: 0,
+        total_buyers: 0,
+        suspended_users: 0
       });
     } catch (err) {
       console.error('Error fetching admin stats:', err);

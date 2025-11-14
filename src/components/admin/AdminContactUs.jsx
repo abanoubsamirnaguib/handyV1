@@ -68,6 +68,11 @@ const AdminContactUs = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
+  // Reset page to 1 when tab changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab]);
+
   useEffect(() => {
     if (user?.role !== 'admin') {
       toast({
@@ -80,7 +85,7 @@ const AdminContactUs = () => {
     
     fetchContactMessages();
     fetchStats();
-  }, [user, currentPage]);
+  }, [user, currentPage, activeTab]);
 
   useEffect(() => {
     filterMessages();
@@ -128,6 +133,20 @@ const AdminContactUs = () => {
 
   const filterMessages = () => {
     let filtered = [...contactMessages];
+    
+    // Apply tab filter
+    if (activeTab !== 'all') {
+      filtered = filtered.filter(msg => {
+        if (activeTab === 'unread') {
+          return !msg.is_read;
+        } else if (activeTab === 'unresolved') {
+          return !msg.is_resolved;
+        } else if (activeTab === 'resolved') {
+          return msg.is_resolved;
+        }
+        return true;
+      });
+    }
     
     // Apply search filter
     if (searchTerm) {
@@ -255,17 +274,17 @@ const AdminContactUs = () => {
           <h1 className="text-3xl font-bold text-gray-800">رسائل التواصل</h1>
           <p className="text-gray-500 mt-1">إدارة رسائل العملاء والزوار</p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 justify-end">
           <Badge className="bg-blue-100 text-blue-700 py-2 px-3">
-            <MessageSquare className="h-4 w-4 mr-1" />
+            <MessageSquare className="h-4 w-4 ml-1" />
             إجمالي الرسائل: {stats.total || 0}
           </Badge>
           <Badge className="bg-yellow-100 text-yellow-700 py-2 px-3">
-            <AlertCircle className="h-4 w-4 mr-1" />
+            <AlertCircle className="h-4 w-4 ml-1" />
             غير مقروءة: {stats.unread || 0}
           </Badge>
           <Badge className="bg-red-100 text-red-700 py-2 px-3">
-            <X className="h-4 w-4 mr-1" />
+            <X className="h-4 w-4 ml-1" />
             غير محلولة: {stats.unresolved || 0}
           </Badge>
         </div>
@@ -279,7 +298,7 @@ const AdminContactUs = () => {
             animate={{ opacity: 1, y: 0 }}
             className="mb-4"
           >
-            <div className="flex gap-4 mb-4">
+            <div className="flex gap-4 mb-4 flex-row-reverse">
               <div className="relative flex-1">
                 <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
@@ -295,7 +314,7 @@ const AdminContactUs = () => {
                 onClick={fetchContactMessages}
                 disabled={loading}
               >
-                <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''} ml-2`} />
               </Button>
             </div>
           </motion.div>
@@ -311,7 +330,7 @@ const AdminContactUs = () => {
             <TabsContent value={activeTab} className="m-0">
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg flex items-center justify-between text-right">
+                  <CardTitle className="text-lg flex items-center justify-between flex-row-reverse text-right">
                     <span>رسائل التواصل</span>
                     <span className="text-sm font-normal text-gray-500">
                       صفحة {currentPage} من {totalPages}
@@ -336,8 +355,8 @@ const AdminContactUs = () => {
                           } ${!message.is_read ? 'ring-2 ring-yellow-200' : ''}`}
                           onClick={() => handleViewMessage(message)}
                         >
-                          <div className="flex justify-between items-start mb-2 text-right">
-                            <div className="flex items-center gap-2">
+                          <div className="flex justify-between items-start mb-2 flex-row-reverse text-right">
+                            <div className="flex items-center gap-2 flex-row-reverse">
                               <User className="h-4 w-4 text-gray-400" />
                               <span className="font-semibold text-gray-800">{message.name}</span>
                               {getStatusBadge(message)}
@@ -347,12 +366,12 @@ const AdminContactUs = () => {
                             </span>
                           </div>
                           
-                          <div className="flex items-center gap-2 mb-2 text-right">
+                          <div className="flex items-center gap-2 mb-2 flex-row-reverse text-right">
                             <Mail className="h-3 w-3 text-gray-400" />
                             <span className="text-sm text-gray-600" dir="ltr">{message.email}</span>
                             {message.phone && (
                               <>
-                                <Phone className="h-3 w-3 text-gray-400 mr-2" />
+                                <Phone className="h-3 w-3 text-gray-400 ml-2" />
                                 <span className="text-sm text-gray-600" dir="ltr">{message.phone}</span>
                               </>
                             )}
@@ -380,23 +399,23 @@ const AdminContactUs = () => {
                 
                 {/* Pagination */}
                 {totalPages > 1 && (
-                  <CardFooter className="flex justify-between">
-                    <Button 
-                      variant="outline" 
-                      disabled={currentPage >= totalPages}
-                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                    >
-                      التالي
-                    </Button>
-                    <span className="text-sm text-gray-500">
-                      صفحة {currentPage} من {totalPages}
-                    </span>
+                  <CardFooter className="flex justify-between flex-row-reverse">
                     <Button 
                       variant="outline" 
                       disabled={currentPage <= 1}
                       onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                     >
                       السابق
+                    </Button>
+                    <span className="text-sm text-gray-500">
+                      صفحة {currentPage} من {totalPages}
+                    </span>
+                    <Button 
+                      variant="outline" 
+                      disabled={currentPage >= totalPages}
+                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    >
+                      التالي
                     </Button>
                   </CardFooter>
                 )}
@@ -426,7 +445,7 @@ const AdminContactUs = () => {
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button variant="outline" className="border-green-200 text-green-600">
-                            <CheckCircle className="mr-2 h-4 w-4" />
+                            <CheckCircle className="ml-2 h-4 w-4" />
                             حل الرسالة
                           </Button>
                         </AlertDialogTrigger>
@@ -463,7 +482,7 @@ const AdminContactUs = () => {
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button variant="outline" className="border-red-200 text-red-600">
-                          <Trash2 className="mr-2 h-4 w-4" />
+                          <Trash2 className="ml-2 h-4 w-4" />
                           حذف
                         </Button>
                       </AlertDialogTrigger>
@@ -491,7 +510,7 @@ const AdminContactUs = () => {
                       variant="outline" 
                       onClick={() => setSelectedMessage(null)}
                     >
-                      <X className="mr-2 h-4 w-4" />
+                      <X className="ml-2 h-4 w-4" />
                       إغلاق
                     </Button>
                   </div>
@@ -504,21 +523,21 @@ const AdminContactUs = () => {
                   <div className="bg-gray-50 rounded-lg p-4">
                     <h3 className="font-semibold text-gray-800 mb-3 text-right">معلومات المرسل</h3>
                     <div className="space-y-2">
-                      <div className="flex items-center gap-2 justify-end">
+                      <div className="flex items-center gap-2 flex-row-reverse justify-end">
                         <span className="text-sm text-gray-700">{selectedMessage.name}</span>
                         <User className="h-4 w-4 text-gray-400" />
                       </div>
-                      <div className="flex items-center gap-2 justify-end">
+                      <div className="flex items-center gap-2 flex-row-reverse justify-end">
                         <span className="text-sm text-gray-700" dir="ltr">{selectedMessage.email}</span>
                         <Mail className="h-4 w-4 text-gray-400" />
                       </div>
                       {selectedMessage.phone && (
-                        <div className="flex items-center gap-2 justify-end">
+                        <div className="flex items-center gap-2 flex-row-reverse justify-end">
                           <span className="text-sm text-gray-700" dir="ltr">{selectedMessage.phone}</span>
                           <Phone className="h-4 w-4 text-gray-400" />
                         </div>
                       )}
-                      <div className="flex items-center gap-2 justify-end">
+                      <div className="flex items-center gap-2 flex-row-reverse justify-end">
                         <span className="text-sm text-gray-700">
                           {new Date(selectedMessage.created_at).toLocaleString('ar-EG')}
                         </span>

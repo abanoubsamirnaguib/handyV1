@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Facebook, Instagram, Youtube, Mail, Phone, MapPin } from 'lucide-react';
+import { Facebook, Instagram, Youtube, Mail, Phone, MapPin, Clock } from 'lucide-react';
 import { apiFetch } from '@/lib/api';
+import { useSiteSettings } from '@/contexts/SiteSettingsContext';
 
 const Footer = () => {
   const [categories, setCategories] = useState([]);
+  const { settings } = useSiteSettings();
 
   useEffect(() => {
     apiFetch('listcategories')
@@ -27,7 +29,7 @@ const Footer = () => {
               <h3 className="text-xl font-bold text-white">بازار</h3>
             </div>
             <p className="text-neutral-100 mb-4">
-              منصة تجمع الحرفيين والمبدعين في مكان واحد، لعرض منتجاتهم اليدوية الفريدة والتواصل مع العملاء مباشرة.
+              {settings.siteDescription || 'منصة تجمع الحرفيين والمبدعين في مكان واحد، لعرض منتجاتهم اليدوية الفريدة والتواصل مع العملاء مباشرة.'}
             </p>
             <div className="flex space-x-4 space-x-reverse">
               <a href="https://www.facebook.com/share/17NFcvrTN2/" target="_blank" rel="noopener noreferrer" className="text-neutral-200 hover:text-roman-500 transition-colors">
@@ -93,15 +95,23 @@ const Footer = () => {
             <ul className="space-y-3">
               <li className="flex items-center space-x-3 space-x-reverse">
                 <MapPin size={18} className="text-roman-500" />
-                <span className="text-neutral-200">شارع الحرفيين، القاهرة، مصر</span>
+                <span className="text-neutral-200">{settings.contactAddress || 'شارع الحرفيين، الفيوم ، مصر'}</span>
               </li>
               <li className="flex items-center space-x-3 space-x-reverse">
                 <Phone size={18} className="text-roman-500" />
-                <span className="text-neutral-200">+20 123 456 7890</span>
+                <a href={`tel:${settings.contactPhone}`} className="text-neutral-200 hover:text-neutral-900 transition-colors">
+                  {settings.contactPhone || '+201068644570'}
+                </a>
               </li>
               <li className="flex items-center space-x-3 space-x-reverse">
                 <Mail size={18} className="text-roman-500" />
-                <span className="text-neutral-200">info@herafty.com</span>
+                <a href={`mailto:${settings.contactEmail}`} className="text-neutral-200 hover:text-neutral-900 transition-colors">
+                  {settings.contactEmail || 'officialbazar64@gmail.com'}
+                </a>
+              </li>
+              <li className="flex items-center space-x-3 space-x-reverse">
+                <Clock size={18} className="text-roman-500" />
+                <span className="text-neutral-200">{settings.workingHours || 'السبت - الخميس: 9:00 صباحاً - 6:00 مساءً'}</span>
               </li>
             </ul>
           </div>

@@ -5,6 +5,7 @@ import { AuthProvider } from '@/contexts/AuthContext';
 import { CartProvider } from '@/contexts/CartContext';
 import { ChatProvider } from '@/contexts/ChatContext';
 import { NotificationProvider } from '@/contexts/NotificationContext';
+import { SiteSettingsProvider } from '@/contexts/SiteSettingsContext';
 import ScrollToTop from '@/components/ScrollToTop';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import DeliveryProtectedRoute from '@/components/DeliveryProtectedRoute';
@@ -73,11 +74,12 @@ import './styles/rtl-dropdown.css'; // Import our RTL dropdown styles
 
 function App() {
   return (
-    <AuthProvider>
-      <CartProvider>
-        <ChatProvider>
-          <NotificationProvider>
-            <ScrollToTop />
+    <SiteSettingsProvider>
+      <AuthProvider>
+        <CartProvider>
+          <ChatProvider>
+            <NotificationProvider>
+              <ScrollToTop />
             <Routes>
               <Route path="/" element={<MainLayout />}>
                 <Route index element={<HomePage />} />
@@ -231,6 +233,7 @@ function App() {
         </ChatProvider>
       </CartProvider>
     </AuthProvider>
+    </SiteSettingsProvider>
   );
 }
 

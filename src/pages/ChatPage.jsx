@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Send, Paperclip, UserCircle, ArrowLeft, Trash2, Search, MessageCircle, Image, File, ShoppingBag } from 'lucide-react';
+import { Send, Paperclip, UserCircle, ArrowLeft, Trash2, Search, MessageCircle, Image, File, ShoppingBag, Flag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -24,9 +24,21 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/components/ui/use-toast';
 
 const ChatPage = () => {
   const { user } = useAuth();
+  const { toast } = useToast();
   const { 
     conversations, 
     messages, 
@@ -46,6 +58,10 @@ const ChatPage = () => {
   const [showServiceModal, setShowServiceModal] = useState(false);
   const [sellerServices, setSellerServices] = useState([]);
   const [loadingServices, setLoadingServices] = useState(false);
+  const [showReportDialog, setShowReportDialog] = useState(false);
+  const [reportReason, setReportReason] = useState('');
+  const [reportDescription, setReportDescription] = useState('');
+  const [reporting, setReporting] = useState(false);
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
 
@@ -175,6 +191,36 @@ const ChatPage = () => {
 
   const removeFile = (index) => {
     setSelectedFiles(selectedFiles.filter((_, i) => i !== index));
+  };
+
+  const handleReportConversation = async () => {
+    if (!reportReason.trim() || !activeConversation) return;
+
+    try {
+      setReporting(true);
+      await api.reportConversation(activeConversation, {
+        reason: reportReason,
+        description: reportDescription,
+      });
+      
+      toast({
+        title: "تم الإبلاغ بنجاح",
+        description: "شكراً لك. سيتم مراجعة البلاغ من قبل الإدارة.",
+      });
+      
+      setShowReportDialog(false);
+      setReportReason('');
+      setReportDescription('');
+    } catch (error) {
+      console.error('Error reporting conversation:', error);
+      toast({
+        variant: "destructive",
+        title: "خطأ",
+        description: error.message || "حدث خطأ أثناء الإبلاغ عن المحادثة",
+      });
+    } finally {
+      setReporting(false);
+    }
   };
 
   const formatTime = (timestamp) => {
@@ -458,6 +504,54 @@ const ChatPage = () => {
                     جاري التحقق من الخدمات...
                   </div>
                 )}
+                
+                <Dialog open={showReportDialog} onOpenChange={setShowReportDialog}>
+                  <DialogTrigger asChild>
+                    <Button variant="ghost" size="icon" className="text-orange-600 hover:bg-orange-100">
+                      <Flag className="h-5 w-5" />
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent dir="rtl">
+                    <DialogHeader>
+                      <DialogTitle>الإبلاغ عن المحادثة</DialogTitle>
+                      <DialogDescription>
+                        إذا كان هناك محتوى غير لائق أو سلوك مشبوه في هذه المحادثة، يرجى الإبلاغ عنه.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                      <div>
+                        <label className="text-sm font-medium mb-2 block">سبب الإبلاغ *</label>
+                        <Input
+                          placeholder="مثال: محتوى غير لائق، مضايقة، إلخ..."
+                          value={reportReason}
+                          onChange={(e) => setReportReason(e.target.value)}
+                          dir="rtl"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium mb-2 block">تفاصيل إضافية (اختياري)</label>
+                        <Textarea
+                          placeholder="يرجى تقديم مزيد من التفاصيل..."
+                          value={reportDescription}
+                          onChange={(e) => setReportDescription(e.target.value)}
+                          rows={4}
+                          dir="rtl"
+                        />
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button variant="outline" onClick={() => setShowReportDialog(false)}>
+                        إلغاء
+                      </Button>
+                      <Button 
+                        onClick={handleReportConversation}
+                        disabled={!reportReason.trim() || reporting}
+                      >
+                        {reporting ? 'جاري الإبلاغ...' : 'إرسال البلاغ'}
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
                 
                 <AlertDialog>
                   <AlertDialogTrigger asChild>

@@ -23,8 +23,13 @@ class AdminController extends Controller
             'total_products' => Product::count(),
             'total_orders' => Order::count(),
             'active_users' => User::where('status', 'active')->count(),
-            'pending_sellers' => User::whereHas('seller')->where('status', 'pending')->count(),
+            'pending_sellers' => User::whereHas('seller')->where('status', 'suspended')->count(),
             'pending_orders' => Order::where('status', 'pending')->count(),
+            'pending_products' => Product::where('status', 'pending_review')->count(),
+            'total_buyers' => User::where(function($q) {
+                $q->where('role', 'buyer')->orWhere('is_buyer', true);
+            })->count(),
+            'suspended_users' => User::where('status', 'suspended')->count(),
         ];
 
         return response()->json($stats);
@@ -32,7 +37,8 @@ class AdminController extends Controller
 
     public function users(Request $request)
     {
-        $query = User::query();
+        $query = User::query()
+            ->withCount('orders as orders_count');
 
         if ($request->filled('search')) {
             $search = $request->search;
@@ -50,12 +56,19 @@ class AdminController extends Controller
             $query->where('status', $request->status);
         }
 
-        $users = $query->orderBy('created_at', 'desc')->paginate(20);
+        $perPage = $request->get('per_page', 20);
+        $users = $query->orderBy('created_at', 'desc')->paginate($perPage);
         
         return UserResource::collection($users);
-    }    public function sellers(Request $request)
+    }
+    public function sellers(Request $request)
     {
-        $query = Seller::with(['user', 'skills']);
+        $query = Seller::with(['user', 'skills'])
+            ->withCount([
+                'orders as in_progress_orders_count' => function($q) {
+                    $q->whereIn('status', ['pending', 'admin_approved', 'seller_approved', 'in_progress', 'work_completed', 'ready_for_delivery', 'out_for_delivery']);
+                }
+            ]);
 
         if ($request->filled('search')) {
             $search = $request->search;            $query->whereHas('user', function($q) use ($search) {
@@ -79,7 +92,8 @@ class AdminController extends Controller
 
     public function products(Request $request)
     {
-        $query = Product::with(['seller.user', 'category']);
+        $query = Product::with(['seller.user', 'category'])
+            ->withCount('orderItems as orders_count');
 
         if ($request->filled('search')) {
             $search = $request->search;
@@ -91,7 +105,13 @@ class AdminController extends Controller
 
         if ($request->filled('category')) {
             $query->where('category_id', $request->category);
-        }        if ($request->filled('featured')) {
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('featured')) {
             $query->where('featured', $request->featured === 'true');
         }
 
@@ -117,7 +137,7 @@ class AdminController extends Controller
         $seller = Seller::with('user')->findOrFail($id);
         
         $validated = $request->validate([
-            'status' => 'required|in:active,pending,suspended,rejected'
+            'status' => 'required|in:active,suspended'
         ]);
 
         // Update the user's status instead of seller's status
@@ -187,7 +207,7 @@ class AdminController extends Controller
 
     public function getOrders(Request $request)
     {
-        $query = Order::with(['user', 'seller.user', 'items.product', 'adminApprover', 'deliveryPerson', 'history.actionUser', 'city']);
+        $query = Order::with(['user', 'seller.user', 'items.product', 'adminApprover', 'deliveryPerson', 'pickupPerson', 'history.actionUser', 'city']);
 
         // استبعاد الطلبات التي في انتظار موافقة البائع على السعر
         $query->where(function($q) {

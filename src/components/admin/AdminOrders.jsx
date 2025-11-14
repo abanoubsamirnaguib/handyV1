@@ -455,6 +455,80 @@ const AdminOrders = () => {
               </div>
             </div>
 
+            {/* Delivery Personnel Info */}
+            {(order.pickup_person || order.delivery_person) && (
+              <div>
+                <h4 className="font-semibold mb-2">معلومات الدليفري</h4>
+                <div className="space-y-3 text-sm">
+                  {/* Pickup Person */}
+                  {order.pickup_person && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                      <h5 className="font-medium text-blue-800 mb-2 flex items-center">
+                        <Truck className="h-4 w-4 ml-2" />
+                        موظف الاستلام
+                      </h5>
+                      <div className="space-y-1 text-blue-700">
+                        <div className="flex items-center">
+                          <User className="h-3 w-3 ml-2" />
+                          <span>{order.pickup_person.name}</span>
+                        </div>
+                        <div className="flex items-center">
+                          <Phone className="h-3 w-3 ml-2" />
+                          <span>{order.pickup_person.phone}</span>
+                        </div>
+                        <div className="flex items-center">
+                          <span className="text-xs">الحالة:</span>
+                          <Badge 
+                            variant="outline" 
+                            className={`mr-2 text-xs ${
+                              order.pickup_person.status === 'active' 
+                                ? 'bg-green-100 text-green-800 border-green-200' 
+                                : 'bg-gray-100 text-gray-800 border-gray-200'
+                            }`}
+                          >
+                            {order.pickup_person.status === 'active' ? 'نشط' : order.pickup_person.status}
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Delivery Person */}
+                  {order.delivery_person && (
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                      <h5 className="font-medium text-green-800 mb-2 flex items-center">
+                        <Truck className="h-4 w-4 ml-2" />
+                        موظف التسليم
+                      </h5>
+                      <div className="space-y-1 text-green-700">
+                        <div className="flex items-center">
+                          <User className="h-3 w-3 ml-2" />
+                          <span>{order.delivery_person.name}</span>
+                        </div>
+                        <div className="flex items-center">
+                          <Phone className="h-3 w-3 ml-2" />
+                          <span>{order.delivery_person.phone}</span>
+                        </div>
+                        <div className="flex items-center">
+                          <span className="text-xs">الحالة:</span>
+                          <Badge 
+                            variant="outline" 
+                            className={`mr-2 text-xs ${
+                              order.delivery_person.status === 'active' 
+                                ? 'bg-green-100 text-green-800 border-green-200' 
+                                : 'bg-gray-100 text-gray-800 border-gray-200'
+                            }`}
+                          >
+                            {order.delivery_person.status === 'active' ? 'نشط' : order.delivery_person.status}
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Suspension Info */}
             {order.status === 'suspended' && (
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
@@ -1069,6 +1143,21 @@ const AdminOrders = () => {
                             <AlertDialogDescription>
                               تحديث حالة الطلب رقم {order.id} من "{getStatusInArabic(order.status)}" إلى حالة جديدة
                             </AlertDialogDescription>
+                            <AlertDialogDescription>
+                              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mt-2">
+                                <div className="flex items-start gap-2">
+                                  <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                                  <div className="text-sm text-amber-800">
+                                    <p className="font-medium mb-1">تحذير مهم:</p>
+                                    <p className="text-xs leading-relaxed">
+                                      يُرجى استخدام هذه الميزة للضرورة القصوى فقط. تغيير حالة الطلب يدوياً قد يسبب مشاكل في تتبع الطلب وإشعارات المستخدمين. 
+                                      يُفضل ترك الأمور لطبيعتها والسماح للنظام بإدارة حالات الطلبات تلقائياً.
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            </AlertDialogDescription>
+
                           </AlertDialogHeader>
                           <div className="space-y-4">
                             <div>

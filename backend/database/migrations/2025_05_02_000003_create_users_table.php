@@ -18,7 +18,7 @@ return new class extends Migration
             $table->enum('active_role', ['seller', 'buyer'])->default('buyer');
             $table->boolean('is_seller')->default(false);
             $table->boolean('is_buyer')->default(true);
-            $table->enum('status', ['active', 'rejected', 'suspended', 'pending'])->default('active');
+            $table->enum('status', ['active', 'suspended'])->default('active');
             $table->string('avatar', 255)->nullable();
             $table->string('phone', 20)->nullable();
             $table->text('bio')->nullable();

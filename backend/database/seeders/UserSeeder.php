@@ -113,7 +113,7 @@ class UserSeeder extends Seeder
                 'password' => Hash::make('sellerpass3'),
                 'role' => 'seller',
                 'avatar' => '',
-                'status' => 'pending',
+                'status' => 'suspended',
                 'created_at' => '2023-07-20',
                 'last_login' => null,
                 'phone' => '+97430000001',

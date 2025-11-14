@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import { useNotifications } from '@/contexts/NotificationContext';
+import { useSiteSettings } from '@/contexts/SiteSettingsContext';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,6 +24,7 @@ const Navbar = () => {
   const { user, logout } = useAuth();
   const { cart } = useCart();
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
+  const { settings } = useSiteSettings();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -74,7 +76,7 @@ const Navbar = () => {
   }, [user?.avatar, user?.name]);
 
   return (
-    <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-roman-500/20">
+    <header className={`sticky ${settings.maintenanceMode ? 'top-10' : 'top-0'} z-50 bg-background/80 backdrop-blur-md border-b border-roman-500/20`}>
       <div className="container mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
           <Link to="/" className="flex items-center space-x-2 space-x-reverse">
@@ -285,9 +287,11 @@ const Navbar = () => {
                 <Button variant="ghost" onClick={() => navigate('/login')} className="text-roman-500 hover:text-warning-500 hover:bg-success-100">
                   تسجيل الدخول
                 </Button>
-                <Button onClick={() => navigate('/register')} className="bg-roman-500 hover:bg-roman-500/90 text-white">
-                  إنشاء حساب
-                </Button>
+                {settings.registrationsEnabled && (
+                  <Button onClick={() => navigate('/register')} className="bg-roman-500 hover:bg-roman-500/90 text-white">
+                    إنشاء حساب
+                  </Button>
+                )}
               </>
             )}
           </div>
@@ -363,9 +367,11 @@ const Navbar = () => {
                   <Button variant="outline" onClick={() => { navigate('/login'); toggleMenu(); }}>
                     تسجيل الدخول
                   </Button>
-                  <Button onClick={() => { navigate('/register'); toggleMenu(); }}>
-                    إنشاء حساب
-                  </Button>
+                  {settings.registrationsEnabled && (
+                    <Button onClick={() => { navigate('/register'); toggleMenu(); }}>
+                      إنشاء حساب
+                    </Button>
+                  )}
                 </div>
               )}
               

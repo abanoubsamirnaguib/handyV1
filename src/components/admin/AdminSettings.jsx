@@ -6,9 +6,7 @@ import {
   Globe,
   DollarSign,
   Image,
-  Mail,
-  Bell,
-  Shield
+  Bell
 } from 'lucide-react';
 import { 
   Card, 
@@ -23,6 +21,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { adminApi } from '@/lib/api';
+import { useSiteSettings } from '@/contexts/SiteSettingsContext';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
@@ -48,9 +47,9 @@ const SettingsSection = ({ title, description, icon: Icon, children }) => (
     transition={{ duration: 0.5 }}
   >
     <Card className="shadow-lg border-blue-100">
-      <CardHeader className="flex flex-row items-start space-x-4 space-x-reverse pb-4">
+      <CardHeader className="flex flex-row-reverse items-start gap-4 pb-4">
         {React.createElement(Icon, { className: "h-8 w-8 text-blue-600 mt-1" })}
-        <div>
+        <div className="text-right flex-1">
           <CardTitle className="text-xl text-gray-800">{title}</CardTitle>
           <CardDescription className="text-gray-500">{description}</CardDescription>
         </div>
@@ -65,45 +64,49 @@ const SettingsSection = ({ title, description, icon: Icon, children }) => (
 const AdminSettings = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { refreshSettings } = useSiteSettings();
   const [loading, setLoading] = useState(false);
 
   // إعدادات الموقع العامة
   const [generalSettings, setGeneralSettings] = useState({
-    siteName: 'منصة الصنايعي',
-    siteDescription: 'منصة تسويق المنتجات الحرفية اليدوية',
-    logoUrl: '/logo.png',
-    faviconUrl: '/favicon.ico',
+    siteDescription: 'منصة تجمع الحرفيين والمبدعين في مكان واحد، لعرض منتجاتهم اليدوية الفريدة والتواصل مع العملاء مباشرة.',
     maintenanceMode: false,
     registrationsEnabled: true,
-    defaultLanguage: 'ar',
-    defaultCurrency: 'EGP',
+    contactPhone: '+20 123 456 7890',
+    contactEmail: 'officialbazar64@gmail.com',
+    contactAddress: 'شارع الحرفيين، الفيوم ، مصر',
+    workingHours: 'السبت - الخميس: 9:00 صباحاً - 6:00 مساءً',
   });
 
-  // إعدادات البريد الإلكتروني
-  const [emailSettings, setEmailSettings] = useState({
-    senderName: 'منصة الصنايعي',
-    senderEmail: 'no-reply@example.com',
-    smtpServer: 'smtp.example.com',
-    smtpPort: '587',
-    smtpUsername: 'smtp-user',
-    smtpPassword: 'smtp-password',
-    useSMTP: true,
+  // إعدادات إشعارات المستخدمين
+  const [userNotificationSettings, setUserNotificationSettings] = useState({
+    welcome: true,
+    orderCreated: true,
+    orderStatus: true,
+    productPending: true,
+    productApproved: true,
+    message: true,
+    review: true,
+    payment: true,
+    system: true,
   });
 
-  // إعدادات الإشعارات
-  const [notificationSettings, setNotificationSettings] = useState({
-    newUserNotifications: true,
-    newOrderNotifications: true,
-    productReportNotifications: true,
-    chatReportNotifications: true,
-    lowStockNotifications: true,
-    adminEmails: 'admin@example.com',
+  // إعدادات إشعارات المشرفين
+  const [adminNotificationSettings, setAdminNotificationSettings] = useState({
+    newUser: true,
+    newOrder: true,
+    productPending: true,
+    productReport: true,
+    chatReport: true,
+    withdrawalRequest: true,
+    contactMessage: true,
+    adminEmail: 'admin@example.com',
+    deliveryMethod: 'both', // both, email, dashboard
   });
   // إعدادات السحب
   const [withdrawalSettings, setWithdrawalSettings] = useState({
     minWithdrawalAmount: '100',
     maxWithdrawalAmount: '100000',
-    withdrawalProcessingFee: '0',
     withdrawalProcessingTime: '3-5 أيام عمل',
     enabledPaymentMethods: {
       vodafone_cash: true,
@@ -114,17 +117,6 @@ const AdminSettings = () => {
     },
   });
 
-  // إعدادات الأمان
-  const [securitySettings, setSecuritySettings] = useState({
-    requireEmailVerification: true,
-    twoFactorAuthEnabled: false,
-    passwordMinLength: '8',
-    passwordRequiresUppercase: true,
-    passwordRequiresNumber: true,
-    passwordRequiresSymbol: false,
-    sessionTimeout: '120', // دقائق
-  });
-
   const handleGeneralChange = (e) => {
     const { name, value, type, checked } = e.target;
     setGeneralSettings(prev => ({
@@ -133,17 +125,17 @@ const AdminSettings = () => {
     }));
   };
 
-  const handleEmailChange = (e) => {
+  const handleUserNotificationChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setEmailSettings(prev => ({
+    setUserNotificationSettings(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
   };
 
-  const handleNotificationChange = (e) => {
+  const handleAdminNotificationChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setNotificationSettings(prev => ({
+    setAdminNotificationSettings(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
@@ -167,14 +159,6 @@ const AdminSettings = () => {
     }));
   };
 
-  const handleSecurityChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setSecuritySettings(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
-  };
-
   // Load all settings on component mount
   useEffect(() => {
     loadWithdrawalSettings();
@@ -188,7 +172,6 @@ const AdminSettings = () => {
         setWithdrawalSettings({
           minWithdrawalAmount: response.settings.min_withdrawal_amount || '100',
           maxWithdrawalAmount: response.settings.max_withdrawal_amount || '100000',
-          withdrawalProcessingFee: response.settings.withdrawal_processing_fee || '0',
           withdrawalProcessingTime: response.settings.withdrawal_processing_time || '3-5 أيام عمل',
           enabledPaymentMethods: response.settings.enabled_payment_methods || {
             vodafone_cash: true,
@@ -216,27 +199,19 @@ const AdminSettings = () => {
           }));
         }
 
-        // Update email settings
-        if (response.settings.email) {
-          setEmailSettings(prev => ({
+        // Update user notification settings
+        if (response.settings.userNotifications) {
+          setUserNotificationSettings(prev => ({
             ...prev,
-            ...response.settings.email
+            ...response.settings.userNotifications
           }));
         }
 
-        // Update notification settings
-        if (response.settings.notifications) {
-          setNotificationSettings(prev => ({
+        // Update admin notification settings
+        if (response.settings.adminNotifications) {
+          setAdminNotificationSettings(prev => ({
             ...prev,
-            ...response.settings.notifications
-          }));
-        }
-
-        // Update security settings
-        if (response.settings.security) {
-          setSecuritySettings(prev => ({
-            ...prev,
-            ...response.settings.security
+            ...response.settings.adminNotifications
           }));
         }
       }
@@ -256,7 +231,6 @@ const AdminSettings = () => {
       const payload = {
         min_withdrawal_amount: withdrawalSettings.minWithdrawalAmount,
         max_withdrawal_amount: withdrawalSettings.maxWithdrawalAmount,
-        withdrawal_processing_fee: withdrawalSettings.withdrawalProcessingFee,
         withdrawal_processing_time: withdrawalSettings.withdrawalProcessingTime,
         enabled_payment_methods: withdrawalSettings.enabledPaymentMethods,
       };
@@ -305,14 +279,11 @@ const AdminSettings = () => {
         case 'general':
           settings = generalSettings;
           break;
-        case 'email':
-          settings = emailSettings;
+        case 'userNotifications':
+          settings = userNotificationSettings;
           break;
-        case 'notifications':
-          settings = notificationSettings;
-          break;
-        case 'security':
-          settings = securitySettings;
+        case 'adminNotifications':
+          settings = adminNotificationSettings;
           break;
         default:
           throw new Error('نوع إعدادات غير صحيح');
@@ -320,11 +291,15 @@ const AdminSettings = () => {
 
       await adminApi.updateSiteSettings(settingsType, settings);
       
+      // Refresh site settings if general settings were updated
+      if (settingsType === 'general') {
+        refreshSettings();
+      }
+      
       const messages = {
         'general': 'تم حفظ الإعدادات العامة بنجاح',
-        'email': 'تم حفظ إعدادات البريد الإلكتروني بنجاح',
-        'notifications': 'تم حفظ إعدادات الإشعارات بنجاح',
-        'security': 'تم حفظ إعدادات الأمان بنجاح',
+        'userNotifications': 'تم حفظ إعدادات إشعارات المستخدمين بنجاح',
+        'adminNotifications': 'تم حفظ إعدادات إشعارات المشرفين بنجاح',
       };
       
       toast({
@@ -356,9 +331,9 @@ const AdminSettings = () => {
   };
 
   return (
-    <div className="p-6 md:p-8 space-y-8">
+    <div className="p-6 md:p-8 space-y-8" dir="rtl">
       <motion.div
-        className="flex items-center justify-between"
+        className="flex items-center justify-between text-right"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
       >
@@ -369,26 +344,18 @@ const AdminSettings = () => {
       </motion.div>
 
       <Tabs defaultValue="general">
-        <TabsList className="grid grid-cols-5 mb-8">
+        <TabsList className="grid grid-cols-3 mb-8">
           <TabsTrigger value="general">
-            <Globe className="ml-2 h-4 w-4" />
+            <Globe className="mr-2 h-4 w-4" />
             عام
           </TabsTrigger>
-          <TabsTrigger value="email">
-            <Mail className="ml-2 h-4 w-4" />
-            البريد الإلكتروني
-          </TabsTrigger>
           <TabsTrigger value="notifications">
-            <Bell className="ml-2 h-4 w-4" />
+            <Bell className="mr-2 h-4 w-4" />
             الإشعارات
           </TabsTrigger>
           <TabsTrigger value="withdrawals">
-            <DollarSign className="ml-2 h-4 w-4" />
+            <DollarSign className="mr-2 h-4 w-4" />
             السحب
-          </TabsTrigger>
-          <TabsTrigger value="security">
-            <Shield className="ml-2 h-4 w-4" />
-            الأمان
           </TabsTrigger>
         </TabsList>
 
@@ -399,34 +366,6 @@ const AdminSettings = () => {
             icon={Globe}
           >
             <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="siteName">اسم الموقع</Label>
-                  <Input
-                    id="siteName"
-                    name="siteName"
-                    value={generalSettings.siteName}
-                    onChange={handleGeneralChange}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="defaultLanguage">اللغة الافتراضية</Label>
-                  <Select 
-                    name="defaultLanguage" 
-                    value={generalSettings.defaultLanguage}
-                    onValueChange={(value) => setGeneralSettings(prev => ({ ...prev, defaultLanguage: value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="اختر اللغة" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ar">العربية</SelectItem>
-                      <SelectItem value="en">الإنجليزية</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
               <div>
                 <Label htmlFor="siteDescription">وصف الموقع</Label>
                 <Textarea
@@ -435,56 +374,73 @@ const AdminSettings = () => {
                   value={generalSettings.siteDescription}
                   onChange={handleGeneralChange}
                   rows={3}
+                  className="text-right"
+                  dir="rtl"
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="logoUrl">رابط الشعار</Label>
-                  <Input
-                    id="logoUrl"
-                    name="logoUrl"
-                    value={generalSettings.logoUrl}
-                    onChange={handleGeneralChange}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="faviconUrl">رابط أيقونة الموقع</Label>
-                  <Input
-                    id="faviconUrl"
-                    name="faviconUrl"
-                    value={generalSettings.faviconUrl}
-                    onChange={handleGeneralChange}
-                  />
-                </div>
-              </div>
+              <Separator className="my-4" />
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-gray-800">معلومات التواصل</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="contactPhone">رقم التواصل</Label>
+                    <Input
+                      id="contactPhone"
+                      name="contactPhone"
+                      value={generalSettings.contactPhone}
+                      onChange={handleGeneralChange}
+                      placeholder="+20 123 456 7890"
+                      className="text-right"
+                      dir="rtl"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="contactEmail">البريد الإلكتروني</Label>
+                    <Input
+                      id="contactEmail"
+                      name="contactEmail"
+                      type="email"
+                      value={generalSettings.contactEmail}
+                      onChange={handleGeneralChange}
+                      placeholder="info@example.com"
+                      className="text-right"
+                      dir="rtl"
+                    />
+                  </div>
+                </div>
                 <div>
-                  <Label htmlFor="defaultCurrency">العملة الافتراضية</Label>
-                  <Select 
-                    name="defaultCurrency" 
-                    value={generalSettings.defaultCurrency}
-                    onValueChange={(value) => setGeneralSettings(prev => ({ ...prev, defaultCurrency: value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="اختر العملة" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="EGP">جنيه مصري (EGP)</SelectItem>
-                      <SelectItem value="USD">دولار أمريكي (USD)</SelectItem>
-                      <SelectItem value="SAR">ريال سعودي (SAR)</SelectItem>
-                      <SelectItem value="AED">درهم إماراتي (AED)</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="contactAddress">العنوان</Label>
+                  <Input
+                    id="contactAddress"
+                    name="contactAddress"
+                    value={generalSettings.contactAddress}
+                    onChange={handleGeneralChange}
+                    placeholder="شارع الحرفيين، الفيوم ، مصر"
+                    className="text-right"
+                    dir="rtl"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="workingHours">ساعات العمل</Label>
+                  <Input
+                    id="workingHours"
+                    name="workingHours"
+                    value={generalSettings.workingHours}
+                    onChange={handleGeneralChange}
+                    placeholder="السبت - الخميس: 9:00 صباحاً - 6:00 مساءً"
+                    className="text-right"
+                    dir="rtl"
+                  />
                 </div>
               </div>
 
               <Separator className="my-4" />
 
               <div className="flex flex-col space-y-4">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="maintenanceMode" className="cursor-pointer">وضع الصيانة</Label>
+                <div className="flex flex-row-reverse items-center justify-between">
+                  <Label htmlFor="maintenanceMode" className="cursor-pointer text-right flex-1">وضع الصيانة</Label>
                   <Switch
                     id="maintenanceMode"
                     name="maintenanceMode"
@@ -492,8 +448,8 @@ const AdminSettings = () => {
                     onCheckedChange={(checked) => setGeneralSettings(prev => ({ ...prev, maintenanceMode: checked }))}
                   />
                 </div>
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="registrationsEnabled" className="cursor-pointer">تمكين التسجيل للمستخدمين الجدد</Label>
+                <div className="flex flex-row-reverse items-center justify-between">
+                  <Label htmlFor="registrationsEnabled" className="cursor-pointer text-right flex-1">تمكين التسجيل للمستخدمين الجدد</Label>
                   <Switch
                     id="registrationsEnabled"
                     name="registrationsEnabled"
@@ -504,115 +460,13 @@ const AdminSettings = () => {
               </div>
             </div>
 
-            <div className="flex justify-end mt-6">
+            <div className="flex justify-start mt-6">
               <Button 
                 onClick={() => handleSaveSettings('general')}
                 className="bg-blue-600 hover:bg-blue-700"
                 disabled={loading}
               >
-                <Save className="ml-2 h-4 w-4" />
-                {loading ? 'جاري الحفظ...' : 'حفظ الإعدادات'}
-              </Button>
-            </div>
-          </SettingsSection>
-        </TabsContent>
-
-        <TabsContent value="email">
-          <SettingsSection 
-            title="إعدادات البريد الإلكتروني" 
-            description="ضبط إعدادات خادم البريد الإلكتروني ورسائل النظام" 
-            icon={Mail}
-          >
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="senderName">اسم المرسل</Label>
-                  <Input
-                    id="senderName"
-                    name="senderName"
-                    value={emailSettings.senderName}
-                    onChange={handleEmailChange}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="senderEmail">بريد المرسل</Label>
-                  <Input
-                    id="senderEmail"
-                    name="senderEmail"
-                    type="email"
-                    value={emailSettings.senderEmail}
-                    onChange={handleEmailChange}
-                  />
-                </div>
-              </div>
-
-              <Separator className="my-4" />
-
-              <div className="flex items-center justify-between mb-4">
-                <Label htmlFor="useSMTP" className="cursor-pointer">استخدام خادم SMTP</Label>
-                <Switch
-                  id="useSMTP"
-                  name="useSMTP"
-                  checked={emailSettings.useSMTP}
-                  onCheckedChange={(checked) => setEmailSettings(prev => ({ ...prev, useSMTP: checked }))}
-                />
-              </div>
-
-              {emailSettings.useSMTP && (
-                <div className="space-y-4 border-r-2 border-blue-200 pr-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="smtpServer">خادم SMTP</Label>
-                      <Input
-                        id="smtpServer"
-                        name="smtpServer"
-                        value={emailSettings.smtpServer}
-                        onChange={handleEmailChange}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="smtpPort">منفذ SMTP</Label>
-                      <Input
-                        id="smtpPort"
-                        name="smtpPort"
-                        value={emailSettings.smtpPort}
-                        onChange={handleEmailChange}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="smtpUsername">اسم مستخدم SMTP</Label>
-                      <Input
-                        id="smtpUsername"
-                        name="smtpUsername"
-                        value={emailSettings.smtpUsername}
-                        onChange={handleEmailChange}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="smtpPassword">كلمة مرور SMTP</Label>
-                      <Input
-                        id="smtpPassword"
-                        name="smtpPassword"
-                        type="password"
-                        value={emailSettings.smtpPassword}
-                        onChange={handleEmailChange}
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="flex justify-end mt-6">
-              <Button 
-                onClick={() => handleSaveSettings('email')}
-                className="bg-blue-600 hover:bg-blue-700"
-                disabled={loading}
-              >
-                <Save className="ml-2 h-4 w-4" />
+                <Save className="mr-2 h-4 w-4" />
                 {loading ? 'جاري الحفظ...' : 'حفظ الإعدادات'}
               </Button>
             </div>
@@ -620,92 +474,353 @@ const AdminSettings = () => {
         </TabsContent>
 
         <TabsContent value="notifications">
+          <div className="space-y-8">
+            {/* إشعارات المستخدمين */}
           <SettingsSection 
-            title="إعدادات الإشعارات" 
-            description="تكوين الإشعارات التي يتلقاها المشرفون والمستخدمون" 
+              title="إعدادات إشعارات المستخدمين" 
+              description="تحكم في أنواع الإشعارات التي يتلقاها المستخدمون في المنصة" 
             icon={Bell}
           >
             <div className="space-y-4">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                  <p className="text-sm text-blue-700">
+                    <strong>ملاحظة:</strong> يمكنك التحكم في أنواع الإشعارات التي يتلقاها المستخدمون. عند تعطيل أي نوع، لن يتلقى المستخدمون إشعارات من هذا النوع.
+                  </p>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex flex-row-reverse items-center justify-between">
+                    <div className="text-right flex-1">
+                      <Label htmlFor="welcome" className="cursor-pointer font-medium">إشعار الترحيب</Label>
+                      <p className="text-xs text-gray-500">يُرسل للمستخدمين الجدد عند التسجيل</p>
+                    </div>
+                    <Switch
+                      id="welcome"
+                      name="welcome"
+                      checked={userNotificationSettings.welcome}
+                      onCheckedChange={(checked) => setUserNotificationSettings(prev => ({ ...prev, welcome: checked }))}
+                    />
+                  </div>
+
+                  <Separator />
+                  
+                  <div className="flex flex-row-reverse items-center justify-between">
+                    <div className="text-right flex-1">
+                      <Label htmlFor="orderCreated" className="cursor-pointer font-medium">إشعار إنشاء الطلب</Label>
+                      <p className="text-xs text-gray-500">يُرسل عند إنشاء طلب جديد</p>
+                    </div>
+                    <Switch
+                      id="orderCreated"
+                      name="orderCreated"
+                      checked={userNotificationSettings.orderCreated}
+                      onCheckedChange={(checked) => setUserNotificationSettings(prev => ({ ...prev, orderCreated: checked }))}
+                    />
+                  </div>
+
+                  <Separator />
+                  
+                  <div className="flex flex-row-reverse items-center justify-between">
+                    <div className="text-right flex-1">
+                      <Label htmlFor="orderStatus" className="cursor-pointer font-medium">إشعار تحديث حالة الطلب</Label>
+                      <p className="text-xs text-gray-500">يُرسل عند تحديث حالة الطلب</p>
+                    </div>
+                    <Switch
+                      id="orderStatus"
+                      name="orderStatus"
+                      checked={userNotificationSettings.orderStatus}
+                      onCheckedChange={(checked) => setUserNotificationSettings(prev => ({ ...prev, orderStatus: checked }))}
+                    />
+                  </div>
+
+                  <Separator />
+                  
+                  <div className="flex flex-row-reverse items-center justify-between">
+                    <div className="text-right flex-1">
+                      <Label htmlFor="productPending" className="cursor-pointer font-medium">إشعار المنتج قيد المراجعة</Label>
+                      <p className="text-xs text-gray-500">يُرسل للبائع عند إضافة منتج جديد</p>
+                    </div>
+                    <Switch
+                      id="productPending"
+                      name="productPending"
+                      checked={userNotificationSettings.productPending}
+                      onCheckedChange={(checked) => setUserNotificationSettings(prev => ({ ...prev, productPending: checked }))}
+                    />
+                  </div>
+
+                  <Separator />
+                  
+                  <div className="flex flex-row-reverse items-center justify-between">
+                    <div className="text-right flex-1">
+                      <Label htmlFor="productApproved" className="cursor-pointer font-medium">إشعار الموافقة على المنتج</Label>
+                      <p className="text-xs text-gray-500">يُرسل للبائع عند الموافقة على منتجه</p>
+                    </div>
+                    <Switch
+                      id="productApproved"
+                      name="productApproved"
+                      checked={userNotificationSettings.productApproved}
+                      onCheckedChange={(checked) => setUserNotificationSettings(prev => ({ ...prev, productApproved: checked }))}
+                    />
+                  </div>
+
+                  <Separator />
+                  
+                  <div className="flex flex-row-reverse items-center justify-between">
+                    <div className="text-right flex-1">
+                      <Label htmlFor="message" className="cursor-pointer font-medium">إشعار الرسائل الجديدة</Label>
+                      <p className="text-xs text-gray-500">يُرسل عند استلام رسالة جديدة</p>
+                    </div>
+                    <Switch
+                      id="message"
+                      name="message"
+                      checked={userNotificationSettings.message}
+                      onCheckedChange={(checked) => setUserNotificationSettings(prev => ({ ...prev, message: checked }))}
+                    />
+                  </div>
+
+                  <Separator />
+                  
+                  <div className="flex flex-row-reverse items-center justify-between">
+                    <div className="text-right flex-1">
+                      <Label htmlFor="review" className="cursor-pointer font-medium">إشعار التقييمات الجديدة</Label>
+                      <p className="text-xs text-gray-500">يُرسل للبائع عند استلام تقييم جديد</p>
+                    </div>
+                    <Switch
+                      id="review"
+                      name="review"
+                      checked={userNotificationSettings.review}
+                      onCheckedChange={(checked) => setUserNotificationSettings(prev => ({ ...prev, review: checked }))}
+                    />
+                  </div>
+
+                  <Separator />
+                  
+                  <div className="flex flex-row-reverse items-center justify-between">
+                    <div className="text-right flex-1">
+                      <Label htmlFor="payment" className="cursor-pointer font-medium">إشعار استلام الدفعات</Label>
+                      <p className="text-xs text-gray-500">يُرسل للبائع عند استلام دفعة</p>
+                    </div>
+                    <Switch
+                      id="payment"
+                      name="payment"
+                      checked={userNotificationSettings.payment}
+                      onCheckedChange={(checked) => setUserNotificationSettings(prev => ({ ...prev, payment: checked }))}
+                    />
+                  </div>
+
+                  <Separator />
+                  
+                  <div className="flex flex-row-reverse items-center justify-between">
+                    <div className="text-right flex-1">
+                      <Label htmlFor="system" className="cursor-pointer font-medium">إشعارات النظام</Label>
+                      <p className="text-xs text-gray-500">إشعارات عامة من المنصة</p>
+                    </div>
+                    <Switch
+                      id="system"
+                      name="system"
+                      checked={userNotificationSettings.system}
+                      onCheckedChange={(checked) => setUserNotificationSettings(prev => ({ ...prev, system: checked }))}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-start mt-6">
+                <Button 
+                  onClick={() => handleSaveSettings('userNotifications')}
+                  className="bg-blue-600 hover:bg-blue-700"
+                  disabled={loading}
+                >
+                  <Save className="mr-2 h-4 w-4" />
+                  {loading ? 'جاري الحفظ...' : 'حفظ إعدادات المستخدمين'}
+                </Button>
+              </div>
+            </SettingsSection>
+
+            {/* إشعارات المشرفين */}
+            <SettingsSection 
+              title="إعدادات إشعارات المشرفين" 
+              description="تحكم في الإشعارات التي تتلقاها كمشرف عبر البريد الإلكتروني وداخل المنصة" 
+              icon={Bell}
+            >
+              <div className="space-y-4">
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
+                  <p className="text-sm text-amber-700">
+                    <strong>⚡ إشعارات فورية:</strong> يمكنك اختيار طريقة استلام الإشعارات الإدارية (بريد إلكتروني، لوحة تحكم، أو كلاهما).
+                  </p>
+                </div>
+
               <div>
-                <Label htmlFor="adminEmails">بريد المشرفين (للإشعارات)</Label>
+                  <Label htmlFor="adminEmail">بريد المشرف (للإشعارات)</Label>
                 <Input
-                  id="adminEmails"
-                  name="adminEmails"
-                  value={notificationSettings.adminEmails}
-                  onChange={handleNotificationChange}
-                  placeholder="admin@example.com, admin2@example.com"
-                />
-                <p className="text-xs text-gray-500 mt-1">افصل بين عناوين البريد الإلكتروني بفاصلة</p>
+                    id="adminEmail"
+                    name="adminEmail"
+                    type="email"
+                    value={adminNotificationSettings.adminEmail}
+                    onChange={handleAdminNotificationChange}
+                    placeholder="admin@example.com"
+                    className="text-right"
+                    dir="rtl"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">سيتم إرسال جميع الإشعارات الإدارية إلى هذا البريد</p>
+                </div>
+
+                <div>
+                  <Label htmlFor="deliveryMethod">طريقة استلام الإشعارات</Label>
+                  <Select 
+                    value={adminNotificationSettings.deliveryMethod}
+                    onValueChange={(value) => setAdminNotificationSettings(prev => ({ ...prev, deliveryMethod: value }))}
+                  >
+                    <SelectTrigger id="deliveryMethod" className="text-right" dir="rtl">
+                      <SelectValue placeholder="اختر طريقة الاستلام" />
+                    </SelectTrigger>
+                    <SelectContent className="text-right" dir="rtl">
+                      <SelectItem value="both">
+                        <div className="flex flex-col text-right">
+                          <span className="font-medium">كلاهما</span>
+                          <span className="text-xs text-gray-500">البريد الإلكتروني + لوحة التحكم</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="email">
+                        <div className="flex flex-col text-right">
+                          <span className="font-medium">البريد الإلكتروني فقط</span>
+                          <span className="text-xs text-gray-500">إرسال الإشعارات للبريد فقط</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="dashboard">
+                        <div className="flex flex-col text-right">
+                          <span className="font-medium">لوحة التحكم فقط</span>
+                          <span className="text-xs text-gray-500">الإشعارات داخل الموقع فقط</span>
+                        </div>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {adminNotificationSettings.deliveryMethod === 'both' && '✅ ستتلقى الإشعارات عبر البريد وداخل لوحة التحكم'}
+                    {adminNotificationSettings.deliveryMethod === 'email' && '📧 ستتلقى الإشعارات عبر البريد الإلكتروني فقط'}
+                    {adminNotificationSettings.deliveryMethod === 'dashboard' && '🔔 ستتلقى الإشعارات داخل لوحة التحكم فقط'}
+                  </p>
               </div>
 
               <Separator className="my-4" />
 
               <div className="space-y-3">
-                <Label className="block mb-2">إشعارات المشرفين</Label>
+                  <div className="flex flex-row-reverse items-center justify-between">
+                    <div className="text-right flex-1">
+                      <Label htmlFor="newUser" className="cursor-pointer font-medium">تسجيل مستخدم جديد</Label>
+                      <p className="text-xs text-gray-500">إشعار عند انضمام مستخدم جديد للمنصة</p>
+                    </div>
+                    <Switch
+                      id="newUser"
+                      name="newUser"
+                      checked={adminNotificationSettings.newUser}
+                      onCheckedChange={(checked) => setAdminNotificationSettings(prev => ({ ...prev, newUser: checked }))}
+                    />
+                  </div>
+
+                  <Separator />
                 
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="newUserNotifications" className="cursor-pointer">تنبيه عند تسجيل مستخدم جديد</Label>
+                <div className="flex flex-row-reverse items-center justify-between">
+                    <div className="text-right flex-1">
+                      <Label htmlFor="newOrder" className="cursor-pointer font-medium">طلب جديد</Label>
+                      <p className="text-xs text-gray-500">إشعار عند إنشاء طلب جديد</p>
+                    </div>
                   <Switch
-                    id="newUserNotifications"
-                    name="newUserNotifications"
-                    checked={notificationSettings.newUserNotifications}
-                    onCheckedChange={(checked) => setNotificationSettings(prev => ({ ...prev, newUserNotifications: checked }))}
+                      id="newOrder"
+                      name="newOrder"
+                      checked={adminNotificationSettings.newOrder}
+                      onCheckedChange={(checked) => setAdminNotificationSettings(prev => ({ ...prev, newOrder: checked }))}
                   />
                 </div>
+
+                  <Separator />
                 
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="newOrderNotifications" className="cursor-pointer">تنبيه عند إنشاء طلب جديد</Label>
+                <div className="flex flex-row-reverse items-center justify-between">
+                    <div className="text-right flex-1">
+                      <Label htmlFor="productPending" className="cursor-pointer font-medium">منتج يحتاج مراجعة</Label>
+                      <p className="text-xs text-gray-500">إشعار عند إضافة منتج جديد يحتاج موافقة</p>
+                    </div>
                   <Switch
-                    id="newOrderNotifications"
-                    name="newOrderNotifications"
-                    checked={notificationSettings.newOrderNotifications}
-                    onCheckedChange={(checked) => setNotificationSettings(prev => ({ ...prev, newOrderNotifications: checked }))}
+                      id="productPending"
+                      name="productPending"
+                      checked={adminNotificationSettings.productPending}
+                      onCheckedChange={(checked) => setAdminNotificationSettings(prev => ({ ...prev, productPending: checked }))}
                   />
                 </div>
+
+                  <Separator />
                 
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="productReportNotifications" className="cursor-pointer">تنبيه عند الإبلاغ عن منتج</Label>
+                <div className="flex flex-row-reverse items-center justify-between">
+                    <div className="text-right flex-1">
+                      <Label htmlFor="productReport" className="cursor-pointer font-medium">الإبلاغ عن منتج</Label>
+                      <p className="text-xs text-gray-500">إشعار عند الإبلاغ عن منتج مخالف</p>
+                    </div>
                   <Switch
-                    id="productReportNotifications"
-                    name="productReportNotifications"
-                    checked={notificationSettings.productReportNotifications}
-                    onCheckedChange={(checked) => setNotificationSettings(prev => ({ ...prev, productReportNotifications: checked }))}
+                      id="productReport"
+                      name="productReport"
+                      checked={adminNotificationSettings.productReport}
+                      onCheckedChange={(checked) => setAdminNotificationSettings(prev => ({ ...prev, productReport: checked }))}
                   />
                 </div>
+
+                  <Separator />
                 
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="chatReportNotifications" className="cursor-pointer">تنبيه عند الإبلاغ عن محادثة</Label>
+                <div className="flex flex-row-reverse items-center justify-between">
+                    <div className="text-right flex-1">
+                      <Label htmlFor="chatReport" className="cursor-pointer font-medium">الإبلاغ عن محادثة</Label>
+                      <p className="text-xs text-gray-500">إشعار عند الإبلاغ عن محادثة غير لائقة</p>
+                    </div>
                   <Switch
-                    id="chatReportNotifications"
-                    name="chatReportNotifications"
-                    checked={notificationSettings.chatReportNotifications}
-                    onCheckedChange={(checked) => setNotificationSettings(prev => ({ ...prev, chatReportNotifications: checked }))}
+                      id="chatReport"
+                      name="chatReport"
+                      checked={adminNotificationSettings.chatReport}
+                      onCheckedChange={(checked) => setAdminNotificationSettings(prev => ({ ...prev, chatReport: checked }))}
                   />
                 </div>
+
+                  <Separator />
                 
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="lowStockNotifications" className="cursor-pointer">تنبيه عند انخفاض المخزون</Label>
+                <div className="flex flex-row-reverse items-center justify-between">
+                    <div className="text-right flex-1">
+                      <Label htmlFor="withdrawalRequest" className="cursor-pointer font-medium">طلب سحب جديد</Label>
+                      <p className="text-xs text-gray-500">إشعار عند تقديم طلب سحب من بائع</p>
+                    </div>
                   <Switch
-                    id="lowStockNotifications"
-                    name="lowStockNotifications"
-                    checked={notificationSettings.lowStockNotifications}
-                    onCheckedChange={(checked) => setNotificationSettings(prev => ({ ...prev, lowStockNotifications: checked }))}
+                      id="withdrawalRequest"
+                      name="withdrawalRequest"
+                      checked={adminNotificationSettings.withdrawalRequest}
+                      onCheckedChange={(checked) => setAdminNotificationSettings(prev => ({ ...prev, withdrawalRequest: checked }))}
                   />
                 </div>
+
+                  <Separator />
+                  
+                  <div className="flex flex-row-reverse items-center justify-between">
+                    <div className="text-right flex-1">
+                      <Label htmlFor="contactMessage" className="cursor-pointer font-medium">رسالة تواصل جديدة</Label>
+                      <p className="text-xs text-gray-500">إشعار عند استلام رسالة من صفحة التواصل</p>
+                    </div>
+                    <Switch
+                      id="contactMessage"
+                      name="contactMessage"
+                      checked={adminNotificationSettings.contactMessage}
+                      onCheckedChange={(checked) => setAdminNotificationSettings(prev => ({ ...prev, contactMessage: checked }))}
+                    />
+                  </div>
               </div>
             </div>
 
-            <div className="flex justify-end mt-6">
+            <div className="flex justify-start mt-6">
               <Button 
-                onClick={() => handleSaveSettings('notifications')}
+                  onClick={() => handleSaveSettings('adminNotifications')}
                 className="bg-blue-600 hover:bg-blue-700"
                 disabled={loading}
               >
-                <Save className="ml-2 h-4 w-4" />
-                {loading ? 'جاري الحفظ...' : 'حفظ الإعدادات'}
+                <Save className="mr-2 h-4 w-4" />
+                  {loading ? 'جاري الحفظ...' : 'حفظ إعدادات المشرفين'}
               </Button>
             </div>
           </SettingsSection>
+          </div>
         </TabsContent>
 
         <TabsContent value="withdrawals">
@@ -725,6 +840,8 @@ const AdminSettings = () => {
                     min="1"
                     value={withdrawalSettings.minWithdrawalAmount}
                     onChange={handleWithdrawalChange}
+                    className="text-right"
+                    dir="rtl"
                   />
                   <p className="text-xs text-gray-500 mt-1">أقل مبلغ يمكن للبائع طلب سحبه</p>
                 </div>
@@ -737,35 +854,24 @@ const AdminSettings = () => {
                     min="1"
                     value={withdrawalSettings.maxWithdrawalAmount}
                     onChange={handleWithdrawalChange}
+                    className="text-right"
+                    dir="rtl"
                   />
                   <p className="text-xs text-gray-500 mt-1">أعلى مبلغ يمكن للبائع طلب سحبه في المرة الواحدة</p>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="withdrawalProcessingFee">رسوم المعالجة (جنيه مصري)</Label>
-                  <Input
-                    id="withdrawalProcessingFee"
-                    name="withdrawalProcessingFee"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={withdrawalSettings.withdrawalProcessingFee}
-                    onChange={handleWithdrawalChange}
-                  />
-                  <p className="text-xs text-gray-500 mt-1">رسوم إضافية يتم خصمها من كل عملية سحب</p>
-                </div>
-                <div>
-                  <Label htmlFor="withdrawalProcessingTime">وقت المعالجة المتوقع</Label>
-                  <Input
-                    id="withdrawalProcessingTime"
-                    name="withdrawalProcessingTime"
-                    value={withdrawalSettings.withdrawalProcessingTime}
-                    onChange={handleWithdrawalChange}
-                  />
-                  <p className="text-xs text-gray-500 mt-1">الوقت المتوقع لمعالجة طلبات السحب</p>
-                </div>
+              <div>
+                <Label htmlFor="withdrawalProcessingTime">وقت المعالجة المتوقع</Label>
+                <Input
+                  id="withdrawalProcessingTime"
+                  name="withdrawalProcessingTime"
+                  value={withdrawalSettings.withdrawalProcessingTime}
+                  onChange={handleWithdrawalChange}
+                  className="text-right"
+                  dir="rtl"
+                />
+                <p className="text-xs text-gray-500 mt-1">الوقت المتوقع لمعالجة طلبات السحب</p>
               </div>
 
               <Separator className="my-4" />
@@ -774,8 +880,8 @@ const AdminSettings = () => {
                 <Label className="block mb-2">طرق الدفع المتاحة للسحب</Label>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="vodafone_cash" className="cursor-pointer">فودافون كاش</Label>
+                  <div className="flex flex-row-reverse items-center justify-between">
+                    <Label htmlFor="vodafone_cash" className="cursor-pointer text-right flex-1">فودافون كاش</Label>
                     <Switch
                       id="vodafone_cash"
                       checked={withdrawalSettings.enabledPaymentMethods.vodafone_cash}
@@ -783,8 +889,8 @@ const AdminSettings = () => {
                     />
                   </div>
                   
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="instapay" className="cursor-pointer">انستا باي</Label>
+                  <div className="flex flex-row-reverse items-center justify-between">
+                    <Label htmlFor="instapay" className="cursor-pointer text-right flex-1">انستا باي</Label>
                     <Switch
                       id="instapay"
                       checked={withdrawalSettings.enabledPaymentMethods.instapay}
@@ -792,8 +898,8 @@ const AdminSettings = () => {
                     />
                   </div>
                   
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="etisalat_cash" className="cursor-pointer">اتصالات كاش</Label>
+                  <div className="flex flex-row-reverse items-center justify-between">
+                    <Label htmlFor="etisalat_cash" className="cursor-pointer text-right flex-1">اتصالات كاش</Label>
                     <Switch
                       id="etisalat_cash"
                       checked={withdrawalSettings.enabledPaymentMethods.etisalat_cash}
@@ -801,8 +907,8 @@ const AdminSettings = () => {
                     />
                   </div>
                   
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="orange_cash" className="cursor-pointer">أورانج كاش</Label>
+                  <div className="flex flex-row-reverse items-center justify-between">
+                    <Label htmlFor="orange_cash" className="cursor-pointer text-right flex-1">أورانج كاش</Label>
                     <Switch
                       id="orange_cash"
                       checked={withdrawalSettings.enabledPaymentMethods.orange_cash}
@@ -810,8 +916,8 @@ const AdminSettings = () => {
                     />
                   </div>
                   
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="bank_transfer" className="cursor-pointer">تحويل بنكي</Label>
+                  <div className="flex flex-row-reverse items-center justify-between">
+                    <Label htmlFor="bank_transfer" className="cursor-pointer text-right flex-1">تحويل بنكي</Label>
                     <Switch
                       id="bank_transfer"
                       checked={withdrawalSettings.enabledPaymentMethods.bank_transfer}
@@ -832,115 +938,13 @@ const AdminSettings = () => {
               </div>
             </div>
 
-            <div className="flex justify-end mt-6">
+            <div className="flex justify-start mt-6">
               <Button 
                 onClick={() => handleSaveSettings('withdrawals')}
                 className="bg-blue-600 hover:bg-blue-700"
                 disabled={loading}
               >
-                <Save className="ml-2 h-4 w-4" />
-                {loading ? 'جاري الحفظ...' : 'حفظ الإعدادات'}
-              </Button>
-            </div>
-          </SettingsSection>
-        </TabsContent>
-
-        <TabsContent value="security">
-          <SettingsSection 
-            title="إعدادات الأمان" 
-            description="تكوين إعدادات أمان النظام وسياسات كلمات المرور" 
-            icon={Shield}
-          >
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="requireEmailVerification" className="cursor-pointer">طلب تأكيد البريد الإلكتروني</Label>
-                <Switch
-                  id="requireEmailVerification"
-                  name="requireEmailVerification"
-                  checked={securitySettings.requireEmailVerification}
-                  onCheckedChange={(checked) => setSecuritySettings(prev => ({ ...prev, requireEmailVerification: checked }))}
-                />
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <Label htmlFor="twoFactorAuthEnabled" className="cursor-pointer">تمكين المصادقة الثنائية (إذا كان متاحًا)</Label>
-                <Switch
-                  id="twoFactorAuthEnabled"
-                  name="twoFactorAuthEnabled"
-                  checked={securitySettings.twoFactorAuthEnabled}
-                  onCheckedChange={(checked) => setSecuritySettings(prev => ({ ...prev, twoFactorAuthEnabled: checked }))}
-                />
-              </div>
-
-              <Separator className="my-4" />
-              
-              <Label className="block mb-2">متطلبات كلمة المرور</Label>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="passwordMinLength">الحد الأدنى لطول كلمة المرور</Label>
-                  <Input
-                    id="passwordMinLength"
-                    name="passwordMinLength"
-                    type="number"
-                    min="6"
-                    max="64"
-                    value={securitySettings.passwordMinLength}
-                    onChange={handleSecurityChange}
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="sessionTimeout">مهلة الجلسة (بالدقائق)</Label>
-                  <Input
-                    id="sessionTimeout"
-                    name="sessionTimeout"
-                    type="number"
-                    min="5"
-                    value={securitySettings.sessionTimeout}
-                    onChange={handleSecurityChange}
-                  />
-                </div>
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <Label htmlFor="passwordRequiresUppercase" className="cursor-pointer">يتطلب حرف كبير واحد على الأقل</Label>
-                <Switch
-                  id="passwordRequiresUppercase"
-                  name="passwordRequiresUppercase"
-                  checked={securitySettings.passwordRequiresUppercase}
-                  onCheckedChange={(checked) => setSecuritySettings(prev => ({ ...prev, passwordRequiresUppercase: checked }))}
-                />
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <Label htmlFor="passwordRequiresNumber" className="cursor-pointer">يتطلب رقم واحد على الأقل</Label>
-                <Switch
-                  id="passwordRequiresNumber"
-                  name="passwordRequiresNumber"
-                  checked={securitySettings.passwordRequiresNumber}
-                  onCheckedChange={(checked) => setSecuritySettings(prev => ({ ...prev, passwordRequiresNumber: checked }))}
-                />
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <Label htmlFor="passwordRequiresSymbol" className="cursor-pointer">يتطلب رمزًا واحدًا على الأقل</Label>
-                <Switch
-                  id="passwordRequiresSymbol"
-                  name="passwordRequiresSymbol"
-                  checked={securitySettings.passwordRequiresSymbol}
-                  onCheckedChange={(checked) => setSecuritySettings(prev => ({ ...prev, passwordRequiresSymbol: checked }))}
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-end mt-6">
-              <Button 
-                onClick={() => handleSaveSettings('security')}
-                className="bg-blue-600 hover:bg-blue-700"
-                disabled={loading}
-              >
-                <Save className="ml-2 h-4 w-4" />
+                <Save className="mr-2 h-4 w-4" />
                 {loading ? 'جاري الحفظ...' : 'حفظ الإعدادات'}
               </Button>
             </div>

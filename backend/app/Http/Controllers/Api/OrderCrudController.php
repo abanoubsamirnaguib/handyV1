@@ -25,7 +25,7 @@ class OrderCrudController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Order::with(['user', 'seller', 'items.product', 'adminApprover', 'deliveryPerson', 'city', 'history.actionUser']);
+        $query = Order::with(['user', 'seller', 'items.product', 'adminApprover', 'deliveryPerson', 'pickupPerson', 'city', 'history.actionUser']);
         
         // فلترة حسب المستخدم
         if ($request->has('user_orders')) {
@@ -331,6 +331,20 @@ class OrderCrudController extends Controller
                     'created_at' => now(),
                 ]);
             }
+
+            // Notify admin about new order
+            try {
+                \App\Services\NotificationService::notifyAdmin(
+                    'new_order',
+                    "طلب جديد برقم #{$order->id} - إجمالي: {$order->total_price} جنيه",
+                    "/admin/orders/{$order->id}"
+                );
+            } catch (\Exception $notifError) {
+                \Log::warning('Failed to send admin notification for new order', [
+                    'order_id' => $order->id,
+                    'error' => $notifError->getMessage()
+                ]);
+            }
             
             return new OrderResource($order);
             
@@ -367,6 +381,7 @@ class OrderCrudController extends Controller
                 'items.product.images',
                 'adminApprover',
                 'deliveryPerson',
+                'pickupPerson',
                 'history.actionUser',
                 'city'
             ])->findOrFail($id);

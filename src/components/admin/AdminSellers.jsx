@@ -307,12 +307,8 @@ const AdminSellers = () => {
     switch(status) {
       case 'active':
         return <Badge className="bg-green-500 hover:bg-green-600"><Check className="h-3 w-3 ml-1" />نشط</Badge>;
-      case 'pending':
-        return <Badge className="bg-yellow-500 hover:bg-yellow-600"><Shield className="h-3 w-3 ml-1" />بانتظار الموافقة</Badge>;
       case 'suspended':
         return <Badge className="bg-red-500 hover:bg-red-600"><Ban className="h-3 w-3 ml-1" />معلق</Badge>;
-      case 'rejected':
-        return <Badge className="bg-gray-500 hover:bg-gray-600"><X className="h-3 w-3 ml-1" />مرفوض</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
@@ -350,14 +346,8 @@ const AdminSellers = () => {
         <div className="flex flex-wrap gap-2">          <Badge className="bg-green-100 text-green-700 py-2 px-3">
             <UserCheck className="h-4 w-4 ml-1" /> نشط: {sellers.filter(s => s.user?.status === 'active').length}
           </Badge>
-          <Badge className="bg-yellow-100 text-yellow-700 py-2 px-3">
-            <Shield className="h-4 w-4 ml-1" /> بانتظار الموافقة: {sellers.filter(s => s.user?.status === 'pending').length}
-          </Badge>
           <Badge className="bg-orange-100 text-red-700 py-2 px-3">
             <Ban className="h-4 w-4 ml-1" /> معلق: {sellers.filter(s => s.user?.status === 'suspended').length}
-          </Badge>
-          <Badge className="bg-red-100 text-gray-700 py-2 px-3">
-            <X className="h-4 w-4 ml-1" /> مرفوض: {sellers.filter(s => s.user?.status === 'rejected').length}
           </Badge>
         </div>
       </motion.div>
@@ -384,9 +374,7 @@ const AdminSellers = () => {
             <SelectContent>
               <SelectItem value="">الكل</SelectItem>
               <SelectItem value="active">نشط</SelectItem>
-              <SelectItem value="pending">بانتظار الموافقة</SelectItem>
               <SelectItem value="suspended">معلق</SelectItem>
-              <SelectItem value="rejected">مرفوض</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -434,6 +422,22 @@ const AdminSellers = () => {
                     </CardHeader>
                     <CardContent className="flex-grow">
                     <div className="space-y-3 text-sm">                    <div className="flex justify-between">
+                      <span className="text-gray-600">رقم التواصل:</span>
+                      <span className="font-semibold">{seller.phone || seller.user?.phone || 'غير متوفر'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">الطلبات المكتملة:</span>
+                      <Badge variant="outline" className="border-green-200 text-green-600">
+                        {seller.completed_orders || 0}
+                      </Badge>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">الطلبات تحت التنفيذ:</span>
+                      <Badge variant="outline" className="border-blue-200 text-blue-600">
+                        {seller.in_progress_orders_count || 0}
+                      </Badge>
+                    </div>
+                    <div className="flex justify-between">
                       <span className="text-gray-600">الوصف:</span>
                       <span className="text-right max-w-[200px] truncate">{seller.user?.bio || 'لا يوجد وصف'}</span>
                     </div>
@@ -476,29 +480,6 @@ const AdminSellers = () => {
                     >
                     <MessageSquare className="ml-1 h-4 w-4" /> محادثة
                     </Button>
-                      {seller.user.status === 'pending' && (
-                    <div className="grid grid-cols-2 gap-2 col-span-2">
-                      <Button 
-                      variant="default" 
-                      size="sm"
-                      className="bg-green-500 hover:bg-green-600"
-                      onClick={() => handleApproveSeller(seller.id)}
-                      disabled={updating}
-                      >
-                      {updating ? <Loader2 className="ml-1 h-4 w-4 animate-spin" /> : <Check className="ml-1 h-4 w-4" />}
-                      موافقة
-                      </Button>
-                      <Button 
-                      variant="destructive" 
-                      size="sm"
-                      onClick={() => handleRejectSeller(seller.id)}
-                      disabled={updating}
-                      >
-                      {updating ? <Loader2 className="ml-1 h-4 w-4 animate-spin" /> : <X className="ml-1 h-4 w-4" />}
-                      رفض
-                      </Button>
-                    </div>
-                    )}
                       {seller.user.status === 'active' && (
                     <AlertDialog>
                       <AlertDialogTrigger asChild>

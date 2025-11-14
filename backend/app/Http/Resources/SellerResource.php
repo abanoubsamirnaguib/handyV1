@@ -26,6 +26,7 @@ class SellerResource extends JsonResource
             'rating' => $this->rating,
             'review_count' => $this->review_count,
             'completed_orders' => $this->completed_orders,
+            'in_progress_orders_count' => $this->in_progress_orders_count ?? 0,
             'skills' => $skills,
             'products' => $this->relationLoaded('products')
                 ? ProductResource::collection($this->products->map(function ($product) {

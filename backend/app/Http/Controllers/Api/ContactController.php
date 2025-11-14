@@ -38,6 +38,20 @@ class ContactController extends Controller
                 'message' => $request->message,
             ]);
 
+            // إشعار المشرف برسالة تواصل جديدة
+            try {
+                \App\Services\NotificationService::notifyAdmin(
+                    'contact_message',
+                    "رسالة تواصل جديدة من {$request->name} - {$request->subject}",
+                    "/admin/contact-us"
+                );
+            } catch (\Exception $e) {
+                \Log::warning('Failed to send admin notification for contact message', [
+                    'contact_id' => $contactMessage->id,
+                    'error' => $e->getMessage()
+                ]);
+            }
+
             return response()->json([
                 'message' => 'تم إرسال رسالتك بنجاح، سنتواصل معك قريباً',
                 'data' => $contactMessage

@@ -547,4 +547,50 @@ class DeliveryPersonnelCrudController extends Controller
             'data' => $orders
         ]);
     }
+
+    // الحصول على الطلبات قيد التنفيذ (تم تعيين موظف استلام/تسليم ولكن لم تكتمل بعد)
+    public function getOrdersInProgress(Request $request)
+    {
+        $query = Order::with(['user', 'seller.user', 'items.product', 'pickupPerson', 'deliveryPerson'])
+            ->where(function($q) {
+                // الطلبات التي تم تعيين موظف استلام لها ولكن لم يتم استلامها بعد
+                $q->where(function($subQuery) {
+                    $subQuery->whereNotNull('pickup_person_id')
+                             ->whereNull('delivery_picked_up_at')
+                             ->where('status', 'ready_for_delivery');
+                })
+                // أو الطلبات التي تم تعيين موظف تسليم لها ولكن لم يتم تسليمها بعد
+                ->orWhere(function($subQuery) {
+                    $subQuery->whereNotNull('delivery_person_id')
+                             ->whereNotNull('delivery_picked_up_at')
+                             ->whereNull('delivered_at')
+                             ->whereIn('status', ['ready_for_delivery', 'out_for_delivery']);
+                });
+            });
+
+        // فلترة حسب البحث
+        if ($request->has('search') && $request->search) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('id', 'like', "%{$search}%")
+                  ->orWhereHas('user', function($userQuery) use ($search) {
+                      $userQuery->where('name', 'like', "%{$search}%")
+                               ->orWhere('phone', 'like', "%{$search}%");
+                  })
+                  ->orWhereHas('seller.user', function($sellerQuery) use ($search) {
+                      $sellerQuery->where('name', 'like', "%{$search}%")
+                                 ->orWhere('phone', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        $orders = $query->orderBy('work_completed_at', 'asc')
+                       ->orderBy('delivery_picked_up_at', 'asc')
+                       ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $orders
+        ]);
+    }
 } 

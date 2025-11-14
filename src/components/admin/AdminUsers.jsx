@@ -14,7 +14,10 @@ import {
   Eye,
   Mail,
   Loader2,
-  MessageSquare
+  MessageSquare,
+  ChevronLeft,
+  ChevronRight,
+  ShoppingBag
 } from 'lucide-react';
 import { 
   Card, 
@@ -51,20 +54,27 @@ import {
   SelectValue
 } from "@/components/ui/select";
 import { adminApi } from '@/lib/api';
+import { useAdminStats } from '@/hooks/useAdminStats';
 
 const AdminUsers = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const { startConversation, setActiveConversation } = useChat();
+  const { stats } = useAdminStats();
   
   const [users, setUsers] = useState([]);
-  const [filteredUsers, setFilteredUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [itemsPerPage, setItemsPerPage] = useState(20);
 
   useEffect(() => {
     if (user?.role !== 'admin') {
@@ -74,20 +84,39 @@ const AdminUsers = () => {
         description: "هذه الصفحة مخصصة للمشرفين فقط."
       });
       return;
-    }    fetchUsers();
+    }
+    fetchUsers();
   }, [user]);
+
+  // Fetch users when search, filter, or page changes
+  useEffect(() => {
+    if (user?.role === 'admin') {
+      fetchUsers();
+    }
+  }, [searchTerm, roleFilter, statusFilter, currentPage, user]);
 
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const params = {};
+      const params = {
+        page: currentPage
+      };
       if (searchTerm) params.search = searchTerm;
       if (roleFilter) params.role = roleFilter;
       if (statusFilter) params.status = statusFilter;
       
       const response = await adminApi.getUsers(params);
-      setUsers(response.data || []);
-      setFilteredUsers(response.data || []);
+      
+      // Handle Laravel pagination response
+      if (response.data && Array.isArray(response.data)) {
+        setUsers(response.data || []);
+        setCurrentPage(response.meta?.current_page || 1);
+        setTotalPages(response.meta?.last_page || 1);
+        setTotalItems(response.meta?.total || 0);
+        setItemsPerPage(response.meta?.per_page || 20);
+      } else {
+        setUsers(response.data || []);
+      }
     } catch (error) {
       console.error('Error fetching users:', error);
       toast({
@@ -100,28 +129,40 @@ const AdminUsers = () => {
     }
   };
 
-  useEffect(() => {
-    // تطبيق الفلاتر
-    let result = [...users];
-    
-    if (searchTerm) {
-      result = result.filter(user => 
-        user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.id.toString().includes(searchTerm.toLowerCase())
-      );
+  // Handle search and filter changes
+  const handleSearchChange = (value) => {
+    setSearchTerm(value);
+    setCurrentPage(1); // Reset to first page when searching
+  };
+
+  const handleRoleChange = (value) => {
+    setRoleFilter(value);
+    setCurrentPage(1); // Reset to first page when filtering
+  };
+
+  const handleStatusChange = (value) => {
+    setStatusFilter(value);
+    setCurrentPage(1); // Reset to first page when filtering
+  };
+
+  // Pagination handlers
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= totalPages && newPage !== currentPage) {
+      setCurrentPage(newPage);
     }
-    
-    if (roleFilter) {
-      result = result.filter(user => user.role === roleFilter);
+  };
+
+  const handlePrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
     }
-    
-    if (statusFilter) {
-      result = result.filter(user => user.status === statusFilter);
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
     }
-    
-    setFilteredUsers(result);
-  }, [searchTerm, roleFilter, statusFilter, users]);
+  };
 
   const handleSuspendUser = async (userId) => {
     try {
@@ -271,13 +312,13 @@ const AdminUsers = () => {
         </div>
         <div className="flex flex-wrap gap-2">
           <Badge className="bg-green-100 text-green-700 py-2 px-3">
-            <User className="h-4 w-4 ml-1" /> المشترين: {users.filter(u => u.role === 'buyer').length}
+            <User className="h-4 w-4 ml-1" /> المشترين: {stats?.total_buyers || 0}
           </Badge>
           <Badge className="bg-blue-100 text-blue-700 py-2 px-3">
-            <UserCheck className="h-4 w-4 ml-1" /> البائعين: {users.filter(u => u.role === 'seller').length}
+            <UserCheck className="h-4 w-4 ml-1" /> البائعين: {stats?.total_sellers || 0}
           </Badge>
           <Badge className="bg-red-100 text-red-700 py-2 px-3">
-            <Ban className="h-4 w-4 ml-1" /> معلق: {users.filter(u => u.status === 'suspended').length}
+            <Ban className="h-4 w-4 ml-1" /> معلق: {stats?.suspended_users || 0}
           </Badge>
         </div>
       </motion.div>
@@ -292,12 +333,12 @@ const AdminUsers = () => {
           <Input
             placeholder="البحث عن مستخدم..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
             className="pr-10"
           />
         </div>
         <div className="w-full md:w-1/4">
-          <Select value={roleFilter} onValueChange={setRoleFilter}>
+          <Select value={roleFilter} onValueChange={handleRoleChange}>
             <SelectTrigger className="w-full">
               <UserCheck className="h-4 w-4 ml-2" />
               <SelectValue placeholder="فلترة حسب الدور" />
@@ -311,7 +352,7 @@ const AdminUsers = () => {
           </Select>
         </div>
         <div className="w-full md:w-1/4">
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <Select value={statusFilter} onValueChange={handleStatusChange}>
             <SelectTrigger className="w-full">
               <Shield className="h-4 w-4 ml-2" />
               <SelectValue placeholder="فلترة حسب الحالة" />
@@ -326,15 +367,26 @@ const AdminUsers = () => {
         </div>
       </motion.div>
 
-      {filteredUsers.length === 0 ? (
+      {users.length === 0 ? (
         <div className="text-center py-12">
           <UserX className="h-16 w-16 text-gray-300 mx-auto mb-4" />
           <h2 className="text-2xl font-semibold text-gray-700 mb-2">لا يوجد مستخدمين</h2>
           <p className="text-gray-500">لم يتم العثور على مستخدمين يطابقون معايير البحث.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {filteredUsers.map((userData, index) => (
+        <>
+          {/* Users info header */}
+          <div className="flex justify-between items-center mb-4">
+            <p className="text-sm text-gray-600">
+              عرض {((currentPage - 1) * itemsPerPage) + 1} إلى {Math.min(currentPage * itemsPerPage, totalItems)} من {totalItems} مستخدم
+            </p>
+            <p className="text-sm text-gray-600">
+              الصفحة {currentPage} من {totalPages}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            {users.map((userData, index) => (
             <motion.div
               key={userData.id}
               initial={{ opacity: 0, y: 20 }}
@@ -366,18 +418,32 @@ const AdminUsers = () => {
                     
                     <div className="flex justify-between">
                       <span className="text-gray-600">تاريخ التسجيل:</span>
-                      <span>{userData.created_at ? new Date(userData.created_at).toLocaleDateString('ar-SA') : 'غير محدد'}</span>
+                      <span>{userData.created_at ? new Date(userData.created_at).toLocaleDateString('en-GB') : 'غير محدد'}</span>
                     </div>
                     
                     <div className="flex justify-between">
                       <span className="text-gray-600">آخر تسجيل دخول:</span>
-                      <span>{userData.last_login ? new Date(userData.last_login).toLocaleDateString('ar-SA') : 'لم يسجل دخول'}</span>
+                      <span>{userData.last_login ? new Date(userData.last_login).toLocaleDateString('en-GB') : 'لم يسجل دخول'}</span>
                     </div>
                     
                     <div className="flex justify-between">
-                      <span className="text-gray-600">{userData.role === 'buyer' ? 'عدد الطلبات:' : 'عدد المنتجات:'}</span>
-                      <span>{userData.role === 'buyer' ? (userData.orders_count || 0) : (userData.products_count || 0)}</span>
+                      <span className="text-gray-600">آخر ظهور:</span>
+                      <span>{userData.last_seen ? new Date(userData.last_seen).toLocaleDateString('en-GB') : 'غير متاح'}</span>
                     </div>
+                    
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">عدد الطلبات:</span>
+                      <Badge variant="outline" className="border-blue-200 text-blue-600">
+                        <ShoppingBag className="h-3 w-3 ml-1" />
+                        {userData.orders_count || 0}
+                      </Badge>
+                    </div>
+                    {userData.phone && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">رقم التواصل:</span>
+                        <span className="font-semibold">{userData.phone}</span>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
                 <CardFooter className="grid grid-cols-1 gap-2 pt-4 border-t">
@@ -447,7 +513,93 @@ const AdminUsers = () => {
               </Card>
             </motion.div>
           ))}
-        </div>
+          </div>
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex justify-center items-center gap-2 mt-8"
+            >
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handlePrevPage}
+                disabled={currentPage === 1}
+                className="flex items-center gap-1"
+              >
+                <ChevronRight className="h-4 w-4" />
+                السابق
+              </Button>
+
+              <div className="flex items-center gap-1">
+                {/* Show first page */}
+                {currentPage > 3 && (
+                  <>
+                    <Button
+                      variant={1 === currentPage ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => handlePageChange(1)}
+                      className={1 === currentPage ? "bg-blue-600 hover:bg-blue-700" : ""}
+                    >
+                      1
+                    </Button>
+                    {currentPage > 4 && <span className="px-2 text-gray-500">...</span>}
+                  </>
+                )}
+
+                {/* Show pages around current page */}
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  const startPage = Math.max(1, Math.min(currentPage - 2, totalPages - 4));
+                  const pageNum = startPage + i;
+                  
+                  if (pageNum > totalPages || pageNum < 1) return null;
+                  if (currentPage <= 3 || pageNum !== 1) {
+                    return (
+                      <Button
+                        key={pageNum}
+                        variant={pageNum === currentPage ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => handlePageChange(pageNum)}
+                        className={pageNum === currentPage ? "bg-blue-600 hover:bg-blue-700" : ""}
+                      >
+                        {pageNum}
+                      </Button>
+                    );
+                  }
+                  return null;
+                })}
+
+                {/* Show last page */}
+                {currentPage < totalPages - 2 && (
+                  <>
+                    {currentPage < totalPages - 3 && <span className="px-2 text-gray-500">...</span>}
+                    <Button
+                      variant={totalPages === currentPage ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => handlePageChange(totalPages)}
+                      className={totalPages === currentPage ? "bg-blue-600 hover:bg-blue-700" : ""}
+                    >
+                      {totalPages}
+                    </Button>
+                  </>
+                )}
+              </div>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleNextPage}
+                disabled={currentPage === totalPages}
+                className="flex items-center gap-1"
+              >
+                التالي
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+            </motion.div>
+          )}
+        </>
       )}
     </div>
   );

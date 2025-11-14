@@ -9,6 +9,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
+import { useSiteSettings } from '@/contexts/SiteSettingsContext';
+import { AlertCircle } from 'lucide-react';
 
 const RegisterPage = () => {
   const navigate = useNavigate();
@@ -16,6 +18,7 @@ const RegisterPage = () => {
   const [searchParams] = useSearchParams();
   const { user, loading, sendEmailVerificationOTP } = useAuth();
   const { toast } = useToast();
+  const { settings } = useSiteSettings();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -111,6 +114,43 @@ const RegisterPage = () => {
   // Don't render the register form if user is already authenticated
   if (user) {
     return null;
+  }
+
+  // Show message if registration is disabled
+  if (!settings.registrationsEnabled) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-neutral-100 p-4">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+          className="w-full max-w-lg"
+        >
+          <Card className="shadow-2xl border-roman-500/20">
+            <CardHeader className="text-center">
+              <div className="mx-auto p-3 bg-yellow-500/10 rounded-full w-fit mb-4">
+                <AlertCircle className="h-10 w-10 text-yellow-500" />
+              </div>
+              <CardTitle className="text-3xl font-bold text-neutral-900">التسجيل غير متاح حالياً</CardTitle>
+              <CardDescription className="text-neutral-900/70 mt-4">
+                نعتذر، التسجيل للمستخدمين الجدد غير متاح حالياً. يرجى المحاولة لاحقاً.
+              </CardDescription>
+            </CardHeader>
+            <CardFooter className="flex flex-col items-center space-y-3">
+              <Button variant="outline" onClick={() => navigate('/')} className="w-full border-roman-500/50 text-roman-500 hover:bg-roman-500 hover:text-white">
+                العودة إلى الصفحة الرئيسية
+              </Button>
+              <p className="text-sm text-neutral-900/80">
+                لديك حساب بالفعل؟{' '}
+                <Link to="/login" className="font-medium text-roman-500 hover:underline">
+                  تسجيل الدخول
+                </Link>
+              </p>
+            </CardFooter>
+          </Card>
+        </motion.div>
+      </div>
+    );
   }
 
   return (

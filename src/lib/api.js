@@ -291,6 +291,11 @@ export const api = {
   // Chat API functions
   getConversations: () => apiFetch('chat/conversations'),
   getMessages: (conversationId) => apiFetch(`chat/conversations/${conversationId}/messages`),
+  reportConversation: (conversationId, data) => 
+    apiFetch(`chat/conversations/${conversationId}/report`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
   sendMessage: (messageData) => 
     apiFetch('chat/messages', {
       method: 'POST',
@@ -425,6 +430,10 @@ export const api = {
   // About Us Statistics
   getAboutUsStats: () => 
     apiFetch('about-us/stats'),
+
+  // Public Site Settings
+  getGeneralSiteSettings: () => 
+    apiFetch('site-settings/general'),
 };
 
 // Admin API functions
@@ -567,6 +576,10 @@ export const adminApi = {
     const searchParams = new URLSearchParams(params);
     return apiFetch(`admin/delivery/picked-up-orders?${searchParams}`);
   },
+  getOrdersInProgress: (params = {}) => {
+    const searchParams = new URLSearchParams(params);
+    return apiFetch(`admin/delivery/orders-in-progress?${searchParams}`);
+  },
   bulkAssignOrders: (orderIds, deliveryPersonId) => 
     apiFetch('admin/delivery/bulk-assign-orders', {
       method: 'POST',
@@ -659,6 +672,15 @@ export const adminApi = {
   getConversationMessages: (conversationId) => 
     apiFetch(`admin/chat/conversations/${conversationId}/messages`),
   getChatStats: () => apiFetch('admin/chat/stats'),
+  getChatReports: (params = {}) => {
+    const searchParams = new URLSearchParams(params);
+    return apiFetch(`admin/chat/reports?${searchParams}`);
+  },
+  resolveChatReport: (reportId, data) => 
+    apiFetch(`admin/chat/reports/${reportId}/resolve`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
 
   // Admin announcements management
   getAnnouncements: (params = {}) => {

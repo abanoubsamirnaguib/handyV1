@@ -108,6 +108,20 @@ class WithdrawalRequestController extends Controller
             'payment_details' => $request->payment_details,
         ]);
 
+        // إشعار المشرف بطلب سحب جديد
+        try {
+            \App\Services\NotificationService::notifyAdmin(
+                'withdrawal_request',
+                "طلب سحب جديد من {$user->name} - المبلغ: {$request->amount} جنيه",
+                "/admin/withdrawals/{$withdrawalRequest->id}"
+            );
+        } catch (\Exception $e) {
+            \Log::warning('Failed to send admin notification for withdrawal request', [
+                'withdrawal_id' => $withdrawalRequest->id,
+                'error' => $e->getMessage()
+            ]);
+        }
+
         return response()->json([
             'message' => 'تم إرسال طلب السحب بنجاح',
             'withdrawal_request' => [
@@ -285,7 +299,6 @@ class WithdrawalRequestController extends Controller
 
         $minAmount = SiteSetting::where('setting_key', 'min_withdrawal_amount')->value('setting_value') ?? '100';
         $maxAmount = SiteSetting::where('setting_key', 'max_withdrawal_amount')->value('setting_value') ?? '100000';
-        $processingFee = SiteSetting::where('setting_key', 'withdrawal_processing_fee')->value('setting_value') ?? '0';
         $processingTime = SiteSetting::where('setting_key', 'withdrawal_processing_time')->value('setting_value') ?? '3-5 أيام عمل';
         
         // Get enabled payment methods
@@ -302,7 +315,6 @@ class WithdrawalRequestController extends Controller
             'settings' => [
                 'min_withdrawal_amount' => (float) $minAmount,
                 'max_withdrawal_amount' => (float) $maxAmount,
-                'withdrawal_processing_fee' => (float) $processingFee,
                 'withdrawal_processing_time' => $processingTime,
                 'enabled_payment_methods' => $enabledPaymentMethods,
             ]
@@ -320,7 +332,6 @@ class WithdrawalRequestController extends Controller
         $validator = Validator::make($request->all(), [
             'min_withdrawal_amount' => 'required|numeric|min:1',
             'max_withdrawal_amount' => 'required|numeric|gt:min_withdrawal_amount',
-            'withdrawal_processing_fee' => 'nullable|numeric|min:0',
             'withdrawal_processing_time' => 'nullable|string|max:255',
             'enabled_payment_methods' => 'nullable|array',
         ], [
@@ -336,7 +347,6 @@ class WithdrawalRequestController extends Controller
             $settings = [
                 'min_withdrawal_amount' => $request->min_withdrawal_amount,
                 'max_withdrawal_amount' => $request->max_withdrawal_amount,
-                'withdrawal_processing_fee' => $request->withdrawal_processing_fee ?? 0,
                 'withdrawal_processing_time' => $request->withdrawal_processing_time ?? '3-5 أيام عمل',
             ];
 

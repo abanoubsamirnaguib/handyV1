@@ -75,6 +75,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Get all orders for this user (as buyer)
+     */
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
+    }
+
+    /**
      * Check if user can act as seller
      */
     public function canActAsSeller()

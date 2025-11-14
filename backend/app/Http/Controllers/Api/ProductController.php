@@ -153,6 +153,21 @@ class ProductController extends Controller
             );
         }
 
+        // إشعار المشرف بمنتج جديد يحتاج مراجعة
+        try {
+            $productTypeText = $product->type === 'gig' ? 'خدمة' : 'منتج';
+            \App\Services\NotificationService::notifyAdmin(
+                'product_pending',
+                "{$productTypeText} جديد يحتاج مراجعة: {$product->title}",
+                "/admin/products/{$product->id}"
+            );
+        } catch (\Exception $e) {
+            \Log::warning('Failed to send admin notification for pending product', [
+                'product_id' => $product->id,
+                'error' => $e->getMessage()
+            ]);
+        }
+
         return response()->json([
             'message' => 'Product created successfully', 
             'product' => $product->load(['images', 'tags']),

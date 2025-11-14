@@ -48,7 +48,12 @@ const AdminSidebar = () => {
       badge: stats?.pending_orders > 0 ? stats.pending_orders : null
     },
     { path: '/admin/categories', label: 'التصنيفات', icon: Tag },
-    { path: '/admin/products', label: 'المنتجات', icon: PackageOpen },
+    { 
+      path: '/admin/products', 
+      label: 'المنتجات', 
+      icon: PackageOpen,
+      badge: stats?.pending_products > 0 ? stats.pending_products : null
+    },
     { path: '/admin/sellers', label: 'البائعين', icon: UserCheck },
     { path: '/admin/users', label: 'المستخدمين', icon: Users },
     { path: '/admin/cities', label: 'المدن', icon: MapPin },
@@ -124,16 +129,14 @@ const AdminSidebar = () => {
                   )}
                   {link.badge && (isSidebarOpen || isMobile) && (
                     <Badge 
-                      variant="destructive" 
-                      className="ml-2 min-w-[20px] h-5 text-xs px-1.5 animate-pulse"
+                      className="ml-2 min-w-[20px] h-5 text-xs px-1.5 animate-pulse bg-blue-600 text-white hover:bg-blue-700"
                     >
                       {link.badge}
                     </Badge>
                   )}
                   {link.badge && (!isSidebarOpen && !isMobile) && (
                     <Badge 
-                      variant="destructive" 
-                      className="absolute -top-1 -left-1 min-w-[18px] h-[18px] text-[10px] px-1 animate-pulse"
+                      className="absolute -top-1 -left-1 min-w-[18px] h-[18px] text-[10px] px-1 animate-pulse bg-blue-600 text-white hover:bg-blue-700"
                     >
                       {link.badge}
                     </Badge>
@@ -179,7 +182,12 @@ const AdminLayout = () => {
       badge: stats?.pending_orders > 0 ? stats.pending_orders : null
     },
     { path: '/admin/categories', label: 'التصنيفات', icon: Tag },
-    { path: '/admin/products', label: 'المنتجات', icon: PackageOpen },
+    { 
+      path: '/admin/products', 
+      label: 'المنتجات', 
+      icon: PackageOpen,
+      badge: stats?.pending_products > 0 ? stats.pending_products : null
+    },
     { path: '/admin/sellers', label: 'البائعين', icon: UserCheck },
     { path: '/admin/users', label: 'المستخدمين', icon: Users },
     { path: '/admin/cities', label: 'المدن', icon: MapPin },
@@ -239,8 +247,7 @@ const AdminLayout = () => {
                     </div>
                     {link.badge && (
                       <Badge 
-                        variant="destructive" 
-                        className="min-w-[20px] h-5 text-xs px-1.5 animate-pulse"
+                        className="min-w-[20px] h-5 text-xs px-1.5 animate-pulse bg-blue-600 text-white hover:bg-blue-700"
                       >
                         {link.badge}
                       </Badge>

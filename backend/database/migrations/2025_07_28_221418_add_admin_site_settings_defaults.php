@@ -15,8 +15,8 @@ return new class extends Migration
         // Add default admin site settings
         $defaultSettings = [
             // General settings
-            ['setting_key' => 'site_name', 'setting_value' => 'منصة الصنايعي'],
-            ['setting_key' => 'site_description', 'setting_value' => 'منصة تسويق المنتجات الحرفية اليدوية'],
+            ['setting_key' => 'site_name', 'setting_value' => 'بازار'],
+            ['setting_key' => 'site_description', 'setting_value' => 'منصة تجمع الحرفيين والمبدعين في مكان واحد، لعرض منتجاتهم اليدوية الفريدة والتواصل مع العملاء مباشرة.'],
             ['setting_key' => 'logo_url', 'setting_value' => '/logo.png'],
             ['setting_key' => 'favicon_url', 'setting_value' => '/favicon.ico'],
             ['setting_key' => 'maintenance_mode', 'setting_value' => 'false'],
@@ -25,7 +25,7 @@ return new class extends Migration
             ['setting_key' => 'default_currency', 'setting_value' => 'EGP'],
             
             // Email settings
-            ['setting_key' => 'email_sender_name', 'setting_value' => 'منصة الصنايعي'],
+            ['setting_key' => 'email_sender_name', 'setting_value' => 'بازار'],
             ['setting_key' => 'email_sender_email', 'setting_value' => 'no-reply@example.com'],
             ['setting_key' => 'smtp_server', 'setting_value' => 'smtp.example.com'],
             ['setting_key' => 'smtp_port', 'setting_value' => '587'],

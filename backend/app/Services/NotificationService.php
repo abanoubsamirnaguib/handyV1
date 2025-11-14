@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Notification;
 use App\Models\User;
+use App\Models\SiteSetting;
 use App\Events\NotificationCreated;
 use App\Traits\EmailTrait;
 use Illuminate\Support\Facades\Log;
@@ -13,10 +14,150 @@ class NotificationService
     use EmailTrait;
 
     /**
+     * Check if notification type is enabled for users
+     */
+    private static function isUserNotificationEnabled(string $type): bool
+    {
+        $settingKey = 'user_notif_' . $type;
+        $setting = SiteSetting::where('setting_key', $settingKey)->first();
+        
+        // Default to true if setting doesn't exist
+        return $setting ? $setting->setting_value === 'true' : true;
+    }
+
+    /**
+     * Check if admin notification type is enabled
+     */
+    private static function isAdminNotificationEnabled(string $type): bool
+    {
+        $settingKey = 'admin_notif_' . $type;
+        $setting = SiteSetting::where('setting_key', $settingKey)->first();
+        
+        // Default to true if setting doesn't exist
+        return $setting ? $setting->setting_value === 'true' : true;
+    }
+
+    /**
+     * Get admin notification email
+     */
+    private static function getAdminNotificationEmail(): ?string
+    {
+        $setting = SiteSetting::where('setting_key', 'admin_notification_email')->first();
+        return $setting ? $setting->setting_value : null;
+    }
+
+    /**
+     * Get admin notification delivery preference
+     */
+    private static function getAdminNotificationDelivery(): string
+    {
+        $setting = SiteSetting::where('setting_key', 'admin_notification_delivery')->first();
+        return $setting ? $setting->setting_value : 'both'; // default: both
+    }
+
+    /**
+     * Send notification to admin(s)
+     */
+    public static function notifyAdmin(string $type, string $message, ?string $link = null): void
+    {
+        // Check if this admin notification type is enabled
+        if (!self::isAdminNotificationEnabled($type)) {
+            return;
+        }
+
+        // Get delivery preference
+        $deliveryMethod = self::getAdminNotificationDelivery();
+        
+        // إرسال الإشعار داخل لوحة التحكم (إذا كان الخيار: both أو dashboard)
+        if (in_array($deliveryMethod, ['both', 'dashboard'])) {
+            // Send to all admin users (role = 'admin')
+            $adminUsers = User::where('role', 'admin')->get();
+            
+            if ($adminUsers->isEmpty()) {
+                Log::warning('No admin users found for notification', ['type' => $type]);
+                return;
+            }
+            
+            foreach ($adminUsers as $admin) {
+                // Create in-site notification
+                $notification = Notification::create([
+                    'user_id' => $admin->id,
+                    'notification_type' => 'admin_' . $type,
+                    'message' => $message,
+                    'link' => $link,
+                    'is_read' => false,
+                ]);
+
+                // Fire the notification event for real-time broadcasting
+                event(new NotificationCreated($notification));
+            }
+            
+            Log::info('Admin dashboard notification sent', [
+                'type' => $type,
+                'admin_count' => $adminUsers->count(),
+            ]);
+        }
+
+        // إرسال الإشعار عبر البريد الإلكتروني (إذا كان الخيار: both أو email)
+        if (in_array($deliveryMethod, ['both', 'email'])) {
+            // Get admin email
+            $adminEmail = self::getAdminNotificationEmail();
+            if (!$adminEmail) {
+                Log::warning('Admin notification email not configured', ['type' => $type]);
+                // Don't return here - dashboard notification might still be sent
+            } else {
+                try {
+                    $fullLink = $link ? env('FRONTEND_URL', 'http://localhost:5173') . $link : null;
+                    
+                    $data = [
+                        'message' => $message,
+                        'link' => $fullLink,
+                    ];
+
+                    self::sendMail(
+                        'إشعار إداري - منصة بازار',
+                        $adminEmail,
+                        $data,
+                        'emails.admin-notification'
+                    );
+
+                    Log::info('Admin email notification sent successfully', [
+                        'email' => $adminEmail,
+                        'type' => $type,
+                    ]);
+                } catch (\Exception $e) {
+                    Log::error('Failed to send admin email notification', [
+                        'email' => $adminEmail,
+                        'type' => $type,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            }
+        }
+    }
+
+    /**
      * Create a new notification for a user
      */
     public static function create(int $userId, string $type, string $message, ?string $link = null): Notification
     {
+        // Check if this notification type is enabled for users
+        if (!self::isUserNotificationEnabled($type)) {
+            // Still create the notification but don't send email
+            $notification = Notification::create([
+                'user_id' => $userId,
+                'notification_type' => $type,
+                'message' => $message,
+                'link' => $link,
+                'is_read' => false,
+            ]);
+            
+            // Fire the notification event for real-time broadcasting
+            event(new NotificationCreated($notification));
+            
+            return $notification;
+        }
+
         $notification = Notification::create([
             'user_id' => $userId,
             'notification_type' => $type,
@@ -146,6 +287,38 @@ class NotificationService
             message: "لديك رسالة جديدة من {$senderName}",
             link: "/chat"
         );
+    }
+
+    /**
+     * Notify admin about a chat report
+     */
+    public static function chatReported(int $conversationId, string $reporterName, string $reason): Notification
+    {
+        $message = "تم الإبلاغ عن محادثة من المستخدم {$reporterName}. السبب: {$reason}";
+        $link = "/admin/messages";
+        
+        // Notify all admins
+        self::notifyAdmin('chat_report', $message, $link);
+        
+        // Return a notification object for the first admin (for broadcasting)
+        $admin = User::where('role', 'admin')->first();
+        if ($admin) {
+            return self::create(
+                userId: $admin->id,
+                type: 'admin_chat_report',
+                message: $message,
+                link: $link
+            );
+        }
+        
+        // Return a dummy notification if no admin found (shouldn't happen)
+        return Notification::create([
+            'user_id' => 0,
+            'notification_type' => 'admin_chat_report',
+            'message' => $message,
+            'link' => $link,
+            'is_read' => false,
+        ]);
     }
 
     /**

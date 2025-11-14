@@ -19,13 +19,15 @@ import {
   UserCheck,
   UserPlus,
   Clock,
-  CheckCircle2
+  CheckCircle2,
+  Loader2
 } from 'lucide-react';
 
 const AdminDeliveryAssignment = () => {
   const { toast } = useToast();
   
   const [orders, setOrders] = useState([]);
+  const [ordersInProgress, setOrdersInProgress] = useState([]);
   const [deliveryPersonnel, setDeliveryPersonnel] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -49,12 +51,23 @@ const AdminDeliveryAssignment = () => {
   const loadInitialData = async () => {
     try {
       setIsLoading(true);
-      const [ordersResponse, personnelResponse] = await Promise.all([
+      const [ordersResponse, ordersInProgressResponse, personnelResponse] = await Promise.all([
         adminApi.getOrdersReadyForDelivery(),
+        adminApi.getOrdersInProgress(),
         adminApi.getAvailableDeliveryPersonnel()
       ]);
       
+      // getOrdersReadyForDelivery uses paginate() so data is in response.data.data
+      // apiFetch returns res.json() directly, so response structure is: { success: true, data: {...} }
+      // For paginated responses: response.data.data contains the array
       setOrders(ordersResponse.data?.data || []);
+      
+      // getOrdersInProgress uses get() so data is directly in response.data (array)
+      // apiFetch returns res.json() directly, so response structure is: { success: true, data: [...] }
+      // So we access: response.data (which is the array)
+      const inProgressData = ordersInProgressResponse.data || [];
+      setOrdersInProgress(Array.isArray(inProgressData) ? inProgressData : []);
+      
       setDeliveryPersonnel(personnelResponse.data || []);
     } catch (error) {
       console.error('Error loading data:', error);
@@ -241,45 +254,183 @@ const AdminDeliveryAssignment = () => {
       </Card>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {(() => {
+        // دمج جميع الطلبات (الجاهزة + قيد التنفيذ) مع تجنب التكرار
+        const orderIds = new Set();
+        const allOrders = [];
+        
+        // إضافة الطلبات الجاهزة
+        orders.forEach(order => {
+          if (!orderIds.has(order.id)) {
+            orderIds.add(order.id);
+            allOrders.push(order);
+          }
+        });
+        
+        // إضافة الطلبات قيد التنفيذ (تجنب التكرار)
+        ordersInProgress.forEach(order => {
+          if (!orderIds.has(order.id)) {
+            orderIds.add(order.id);
+            allOrders.push(order);
+          }
+        });
+        
+        // حساب الإحصائيات
+        const totalOrders = allOrders.length;
+        const assignedForPickup = allOrders.filter(order => order.pickup_person_id).length;
+        const assignedForDelivery = allOrders.filter(order => order.delivery_person_id).length;
+        const inProgressCount = ordersInProgress.length;
+        
+        return (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center">
+                  <Package className="h-8 w-8 text-blue-600" />
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-gray-600">إجمالي الطلبات</p>
+                    <p className="text-2xl font-bold text-gray-900">{totalOrders}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center">
+                  <UserCheck className="h-8 w-8 text-green-600" />
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-gray-600">معين للاستلام من البائع</p>
+                    <p className="text-2xl font-bold text-gray-900">
+                      {assignedForPickup}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center">
+                  <Truck className="h-8 w-8 text-purple-600" />
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-gray-600">معين للتسليم للمشتري</p>
+                    <p className="text-2xl font-bold text-gray-900">
+                      {assignedForDelivery}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center">
+                  <Loader2 className="h-8 w-8 text-orange-600" />
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-gray-600">قيد التنفيذ</p>
+                    <p className="text-2xl font-bold text-gray-900">
+                      {inProgressCount}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        );
+      })()}
+
+      {/* Orders In Progress */}
+      {ordersInProgress.length > 0 && (
         <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center">
-              <Package className="h-8 w-8 text-blue-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">إجمالي الطلبات</p>
-                <p className="text-2xl font-bold text-gray-900">{orders.length}</p>
-              </div>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Loader2 className="h-5 w-5 text-orange-600" />
+              الطلبات قيد التنفيذ ({ordersInProgress.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {ordersInProgress.map((order) => {
+                const isPickupPending = order.pickup_person_id && !order.delivery_picked_up_at;
+                const isDeliveryPending = order.delivery_person_id && order.delivery_picked_up_at && !order.delivered_at;
+                
+                return (
+                  <div key={order.id} className="border rounded-lg p-4 hover:bg-gray-50 bg-orange-50">
+                    <div className="flex justify-between items-start">
+                      <div className="space-y-2 flex-1">
+                        <div className="flex items-center gap-4">
+                          <h3 className="font-semibold">طلب #{order.id}</h3>
+                          <Badge variant="outline" className={isPickupPending ? "bg-green-100 text-green-800" : "bg-blue-100 text-blue-800"}>
+                            {isPickupPending ? 'في انتظار الاستلام من البائع' : 'في انتظار التسليم للمشتري'}
+                          </Badge>
+                          {order.work_completed_at && (
+                            <Badge variant="outline">
+                              {formatDate(order.work_completed_at)}
+                            </Badge>
+                          )}
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
+                          <div className="flex items-center gap-2">
+                            <User className="h-4 w-4" />
+                            <span>العميل: {order.user?.name}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Phone className="h-4 w-4" />
+                            <span>{order.customer_phone}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <User className="h-4 w-4" />
+                            <span>البائع: {order.seller?.user?.name}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <MapPin className="h-4 w-4" />
+                            <span>{order.delivery_address}</span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-6 pt-2 border-t">
+                          {isPickupPending && order.pickup_person && (
+                            <div className="flex flex-col items-start gap-1">
+                              <div className="flex items-center gap-2">
+                                <UserCheck className="h-5 w-5 text-green-600" />
+                                <span className="text-sm font-medium text-gray-700">موظف الاستلام من البائع:</span>
+                              </div>
+                              <span className="text-sm text-green-800 font-semibold mr-7">
+                                {order.pickup_person?.name || 'غير محدد'}
+                              </span>
+                              {order.pickup_person?.phone && (
+                                <span className="text-xs text-gray-500 mr-7">
+                                  {order.pickup_person.phone}
+                                </span>
+                              )}
+                            </div>
+                          )}
+                          
+                          {isDeliveryPending && order.delivery_person && (
+                            <div className="flex flex-col items-start gap-1">
+                              <div className="flex items-center gap-2">
+                                <Truck className="h-5 w-5 text-blue-600" />
+                                <span className="text-sm font-medium text-gray-700">موظف التسليم للمشتري:</span>
+                              </div>
+                              <span className="text-sm text-blue-800 font-semibold mr-7">
+                                {order.delivery_person?.name || 'غير محدد'}
+                              </span>
+                              {order.delivery_person?.phone && (
+                                <span className="text-xs text-gray-500 mr-7">
+                                  {order.delivery_person.phone}
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center">
-              <UserCheck className="h-8 w-8 text-green-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">معين للاستلام</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {orders.filter(order => order.pickup_person_id).length}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center">
-              <Truck className="h-8 w-8 text-purple-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">معين للتسليم</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {orders.filter(order => order.delivery_person_id).length}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      )}
 
       {/* Orders List */}
       <Card>
@@ -325,29 +476,41 @@ const AdminDeliveryAssignment = () => {
                       </div>
 
                       <div className="flex items-center gap-4">
-                        {order.pickup_person_id ? (
-                          <Badge variant="default" className="bg-green-100 text-green-800">
-                            <UserCheck className="h-3 w-3 mr-1" />
-                            موظف الاستلام معين
-                          </Badge>
-                        ) : (
-                          <Badge variant="secondary">
-                            <Clock className="h-3 w-3 mr-1" />
-                            بحاجة لموظف استلام
-                          </Badge>
-                        )}
+                        <div className="flex flex-col items-center gap-1">
+                          {order.pickup_person_id ? (
+                            <>
+                              <UserCheck className="h-5 w-5 text-green-600" />
+                              <span className="text-xs text-green-800 font-medium">
+                                {order.pickup_person?.name || 'موظف الاستلام'}
+                              </span>
+                            </>
+                          ) : (
+                            <>
+                              <Clock className="h-5 w-5 text-gray-400" />
+                              <span className="text-xs text-gray-500">
+                                بحاجة لموظف استلام
+                              </span>
+                            </>
+                          )}
+                        </div>
                         
-                        {order.delivery_person_id ? (
-                          <Badge variant="default" className="bg-blue-100 text-blue-800">
-                            <Truck className="h-3 w-3 mr-1" />
-                            موظف التسليم معين
-                          </Badge>
-                        ) : (
-                          <Badge variant="secondary">
-                            <Clock className="h-3 w-3 mr-1" />
-                            بحاجة لموظف تسليم
-                          </Badge>
-                        )}
+                        <div className="flex flex-col items-center gap-1">
+                          {order.delivery_person_id ? (
+                            <>
+                              <Truck className="h-5 w-5 text-blue-600" />
+                              <span className="text-xs text-blue-800 font-medium">
+                                {order.delivery_person?.name || 'موظف التسليم'}
+                              </span>
+                            </>
+                          ) : (
+                            <>
+                              <Clock className="h-5 w-5 text-gray-400" />
+                              <span className="text-xs text-gray-500">
+                                بحاجة لموظف تسليم
+                              </span>
+                            </>
+                          )}
+                        </div>
                       </div>
                     </div>
 

@@ -11,7 +11,9 @@ import {
   Star,
   Loader2,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  X,
+  Check
 } from 'lucide-react';
 import { 
   Card, 
@@ -54,6 +56,7 @@ const AdminProducts = () => {
   
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);  const [updating, setUpdating] = useState(false);
@@ -76,7 +79,7 @@ const AdminProducts = () => {
     if (user?.role === 'admin') {
       fetchProducts();
     }
-  }, [searchTerm, categoryFilter, currentPage, user]);  const fetchProducts = async () => {
+  }, [searchTerm, categoryFilter, statusFilter, currentPage, user]);  const fetchProducts = async () => {
     try {
       setLoading(true);
       const params = {
@@ -84,6 +87,7 @@ const AdminProducts = () => {
       };
       if (searchTerm) params.search = searchTerm;
       if (categoryFilter) params.category = categoryFilter;
+      if (statusFilter) params.status = statusFilter;
       
       const response = await adminApi.getProducts(params);
       
@@ -130,6 +134,11 @@ const AdminProducts = () => {
 
   const handleCategoryChange = (value) => {
     setCategoryFilter(value);
+    setCurrentPage(1); // Reset to first page when filtering
+  };
+
+  const handleStatusChange = (value) => {
+    setStatusFilter(value);
     setCurrentPage(1); // Reset to first page when filtering
   };
 
@@ -186,6 +195,53 @@ const AdminProducts = () => {
   const handleViewProduct = (productId) => {
     navigate(`/gigs/${productId}`);
   };
+
+  const handleRejectProduct = async (productId) => {
+    try {
+      setUpdating(true);
+      await adminApi.updateProductStatus(productId, 'rejected');
+      setProducts(prev => prev.map(p => p.id === productId ? { ...p, status: 'rejected' } : p));
+      toast({
+        title: "تم رفض المنتج",
+        description: "تم رفض المنتج بنجاح."
+      });
+      // Refresh products to remove rejected product from pending_review list
+      await fetchProducts();
+    } catch (error) {
+      console.error('Error rejecting product:', error);
+      toast({
+        variant: "destructive",
+        title: "خطأ",
+        description: "حدث خطأ أثناء رفض المنتج"
+      });
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleApproveProduct = async (productId) => {
+    try {
+      setUpdating(true);
+      await adminApi.updateProductStatus(productId, 'active');
+      setProducts(prev => prev.map(p => p.id === productId ? { ...p, status: 'active' } : p));
+      toast({
+        title: "تم الموافقة على المنتج",
+        description: "تم تفعيل المنتج بنجاح."
+      });
+      // Refresh products to remove approved product from pending_review list
+      await fetchProducts();
+    } catch (error) {
+      console.error('Error approving product:', error);
+      toast({
+        variant: "destructive",
+        title: "خطأ",
+        description: "حدث خطأ أثناء الموافقة على المنتج"
+      });
+    } finally {
+      setUpdating(false);
+    }
+  };
+
   const handleToggleFeatured = async (productId) => {
     try {
       setUpdating(true);
@@ -285,6 +341,21 @@ const AdminProducts = () => {
             </SelectContent>
           </Select>
         </div>
+        <div className="w-full md:w-1/3">
+          <Select value={statusFilter} onValueChange={handleStatusChange}>
+            <SelectTrigger className="w-full">
+              <Filter className="h-4 w-4 ml-2" />
+              <SelectValue placeholder="تصفية حسب الحالة" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">الكل</SelectItem>
+              <SelectItem value="active">مفعل</SelectItem>
+              <SelectItem value="inactive">معطل</SelectItem>
+              <SelectItem value="pending_review">في انتظار المراجعة</SelectItem>
+              <SelectItem value="rejected">مرفوض</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </motion.div>      {products.length === 0 ? (
         <div className="text-center py-12">
           <Package className="h-16 w-16 text-gray-300 mx-auto mb-4" />
@@ -339,14 +410,32 @@ const AdminProducts = () => {
                   <CardContent className="flex-grow">
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
+                        <span className="text-gray-600">معرف البائع:</span>
+                        <span className="font-semibold">{product.seller_name || product.seller?.user?.name || product.sellerId || 'غير محدد'}</span>
+                      </div>
+                      <div className="flex justify-between">
                         <span className="text-gray-600">التصنيف:</span>
                         <Badge variant="outline" className="border-blue-200 text-blue-600">
-                          {category?.name || 'غير محدد'}
+                          {category?.name || product.category_name || 'غير محدد'}
+                        </Badge>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">النوع:</span>
+                        <Badge variant="outline" className={product.type === 'gig' ? "border-purple-200 text-purple-600" : "border-orange-200 text-orange-600"}>
+                          {product.type === 'gig' ? 'خدمة' : 'منتج جاهز'}
                         </Badge>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">السعر:</span>
-                        <span className="font-semibold text-green-600">{product.price} جنيه</span>
+                        {product.price == 0 ? (
+                          <span className="font-semibold text-blue-600">خدمة قابلة للتفاوض</span>
+                        ) : (
+                          <span className="font-semibold text-green-600">{product.price} جنيه</span>
+                        )}
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">عدد الطلبات:</span>
+                        <span className="font-semibold">{product.orders_count || 0}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">التقييم:</span>
@@ -354,10 +443,6 @@ const AdminProducts = () => {
                           <Star className="h-4 w-4 text-yellow-500 ml-1" />
                           {product.rating} ({product.reviewCount})
                         </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">معرف البائع:</span>
-                        <span>{product.sellerId}</span>
                       </div>
                     </div>
                   </CardContent>
@@ -370,45 +455,100 @@ const AdminProducts = () => {
                     >
                       <Eye className="ml-1 h-4 w-4" /> عرض
                     </Button>
-                    <Button 
-                      variant={product.featured ? "outline" : "default"}
-                      size="sm"
-                      className={product.featured 
-                        ? "border-yellow-500 text-yellow-600" 
-                        : "bg-yellow-500 hover:bg-yellow-600"}
-                      onClick={() => handleToggleFeatured(product.id)}
-                    >
-                      <Bookmark className="ml-1 h-4 w-4" />
-                      {product.featured ? "إلغاء التمييز" : "تمييز"}
-                    </Button>
-                    <Button
-                      variant={product.status === 'active' ? 'destructive' : 'default'}
-                      size="sm"
-                      className={product.status === 'active' ? 'bg-gray-400 hover:bg-gray-500' : 'bg-green-500 hover:bg-green-600'}
-                      disabled={updating}
-                      onClick={async () => {
-                        setUpdating(true);
-                        try {
-                          const newStatus = product.status === 'active' ? 'inactive' : 'active';
-                          await adminApi.updateProductStatus(product.id, newStatus);
-                          setProducts(prev => prev.map(p => p.id === product.id ? { ...p, status: newStatus } : p));
-                          toast({
-                            title: newStatus === 'active' ? 'تم تفعيل المنتج' : 'تم إلغاء تفعيل المنتج',
-                            description: newStatus === 'active' ? 'تم تفعيل المنتج بنجاح.' : 'تم إلغاء تفعيل المنتج بنجاح.'
-                          });
-                        } catch (error) {
-                          toast({
-                            variant: 'destructive',
-                            title: 'خطأ',
-                            description: 'حدث خطأ أثناء تغيير حالة المنتج'
-                          });
-                        } finally {
-                          setUpdating(false);
-                        }
-                      }}
-                    >
-                      {product.status === 'active' ? 'تعطيل' : 'تفعيل'}
-                    </Button>
+                    {product.status === 'pending_review' ? (
+                      <>
+                        <Button 
+                          variant="default"
+                          size="sm"
+                          className="bg-green-500 hover:bg-green-600"
+                          disabled={updating}
+                          onClick={() => handleApproveProduct(product.id)}
+                        >
+                          <Check className="ml-1 h-4 w-4" /> موافقة
+                        </Button>
+                        <Button 
+                          variant="destructive"
+                          size="sm"
+                          className="bg-red-500 hover:bg-red-600"
+                          disabled={updating}
+                          onClick={() => handleRejectProduct(product.id)}
+                        >
+                          <X className="ml-1 h-4 w-4" /> رفض
+                        </Button>
+                      </>
+                    ) : product.status === 'rejected' || product.status === 'inactive' ? (
+                      <>
+                        <Button
+                          variant="default"
+                          size="sm"
+                          className="bg-green-500 hover:bg-green-600"
+                          disabled={updating}
+                          onClick={async () => {
+                            setUpdating(true);
+                            try {
+                              await adminApi.updateProductStatus(product.id, 'active');
+                              setProducts(prev => prev.map(p => p.id === product.id ? { ...p, status: 'active' } : p));
+                              toast({
+                                title: 'تم تفعيل المنتج',
+                                description: 'تم تفعيل المنتج بنجاح.'
+                              });
+                            } catch (error) {
+                              toast({
+                                variant: 'destructive',
+                                title: 'خطأ',
+                                description: 'حدث خطأ أثناء تفعيل المنتج'
+                              });
+                            } finally {
+                              setUpdating(false);
+                            }
+                          }}
+                        >
+                          تفعيل
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <Button 
+                          variant={product.featured ? "outline" : "default"}
+                          size="sm"
+                          className={product.featured 
+                            ? "border-yellow-500 text-yellow-600" 
+                            : "bg-yellow-500 hover:bg-yellow-600"}
+                          onClick={() => handleToggleFeatured(product.id)}
+                        >
+                          <Bookmark className="ml-1 h-4 w-4" />
+                          {product.featured ? "إلغاء التمييز" : "تمييز"}
+                        </Button>
+                        <Button
+                          variant={product.status === 'active' ? 'destructive' : 'default'}
+                          size="sm"
+                          className={product.status === 'active' ? 'bg-gray-400 hover:bg-gray-500' : 'bg-green-500 hover:bg-green-600'}
+                          disabled={updating}
+                          onClick={async () => {
+                            setUpdating(true);
+                            try {
+                              const newStatus = product.status === 'active' ? 'inactive' : 'active';
+                              await adminApi.updateProductStatus(product.id, newStatus);
+                              setProducts(prev => prev.map(p => p.id === product.id ? { ...p, status: newStatus } : p));
+                              toast({
+                                title: newStatus === 'active' ? 'تم تفعيل المنتج' : 'تم إلغاء تفعيل المنتج',
+                                description: newStatus === 'active' ? 'تم تفعيل المنتج بنجاح.' : 'تم إلغاء تفعيل المنتج بنجاح.'
+                              });
+                            } catch (error) {
+                              toast({
+                                variant: 'destructive',
+                                title: 'خطأ',
+                                description: 'حدث خطأ أثناء تغيير حالة المنتج'
+                              });
+                            } finally {
+                              setUpdating(false);
+                            }
+                          }}
+                        >
+                          {product.status === 'active' ? 'تعطيل' : 'تفعيل'}
+                        </Button>
+                      </>
+                    )}
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button variant="destructive" size="sm">

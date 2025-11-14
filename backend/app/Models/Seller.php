@@ -35,6 +35,11 @@ class Seller extends Model
         return $this->hasMany(Product::class);
     }
 
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
+    }
+
     // Get all reviews for this seller's products
     public function reviews()
     {

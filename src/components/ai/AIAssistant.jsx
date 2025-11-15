@@ -147,7 +147,7 @@ const AIAssistant = () => {
     <>
       {/* Floating Button */}
       <motion.div
-        className="fixed bottom-24 right-6 z-50 flex flex-col items-center gap-2 md:bottom-6"
+        className="fixed bottom-24 right-6 z-50 flex flex-col items-center gap-2 md:bottom-6 md:right-6"
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
       >
@@ -188,7 +188,7 @@ const AIAssistant = () => {
             initial={{ opacity: 0, y: 20, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.9 }}
-            className="fixed bottom-32 right-6 w-96 h-[450px] z-40 bg-white rounded-lg shadow-2xl flex flex-col md:bottom-24"
+            className="fixed bottom-32 right-6 left-4 md:left-auto md:w-96 h-[450px] z-40 bg-white rounded-lg shadow-2xl flex flex-col md:bottom-24"
             dir="rtl"
           >
             <Card className="h-full flex flex-col border-0 shadow-none">

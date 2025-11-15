@@ -36,6 +36,7 @@ import NotificationsPage from '@/pages/NotificationsPage.jsx';
 import AboutUsPage from '@/pages/AboutUsPage.jsx';
 import PolicyPage from '@/pages/PolicyPage.jsx';
 import AnnouncementsPage from '@/pages/AnnouncementsPage.jsx';
+import AIAssistant from '@/components/ai/AIAssistant';
 
 // Delivery Pages
 import DeliveryLoginPage from '@/pages/DeliveryLoginPage.jsx';
@@ -229,6 +230,7 @@ function App() {
               </Route>
             </Routes>
             <Toaster />
+            <AIAssistant />
           </NotificationProvider>
         </ChatProvider>
       </CartProvider>

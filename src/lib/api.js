@@ -434,6 +434,13 @@ export const api = {
   // Public Site Settings
   getGeneralSiteSettings: () => 
     apiFetch('site-settings/general'),
+
+  // AI Assistant
+  chatWithAI: (message, history = []) => 
+    apiFetch('ai-assistant/chat', {
+      method: 'POST',
+      body: JSON.stringify({ message, history }),
+    }),
 };
 
 // Admin API functions

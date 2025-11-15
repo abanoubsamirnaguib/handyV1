@@ -203,7 +203,10 @@ export default defineConfig({
 		headers: {
 			'Cross-Origin-Embedder-Policy': 'credentialless',
 		},
-		allowedHosts: true,
+		// Only allow specific hosts in development
+		allowedHosts: process.env.NODE_ENV === 'development' 
+			? ['localhost', '127.0.0.1', 'handy3.abanoubsamir.com']
+			: ['handy3.abanoubsamir.com'],
 	},
 	resolve: {
 		extensions: ['.jsx', '.js', '.tsx', '.ts', '.json', ],

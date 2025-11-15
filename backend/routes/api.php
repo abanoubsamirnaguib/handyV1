@@ -38,6 +38,7 @@ use App\Http\Controllers\Api\AnnouncementController;
 use App\Http\Controllers\Api\AdminAnnouncementController;
 use App\Http\Controllers\Api\CityCrudController;
 use App\Http\Controllers\Api\PlatformProfitController;
+use App\Http\Controllers\Api\AIAssistantController;
 
 
 Broadcast::routes(['middleware' => ['broadcast.auth']]);
@@ -109,11 +110,18 @@ Route::get('cities', [CityCrudController::class, 'index']);
 // Public Site Settings (general settings for frontend)
 Route::get('site-settings/general', [SiteSettingController::class, 'getGeneralSettings']);
 
+// AI Assistant routes (public - can be moved to protected if needed)
+Route::post('ai-assistant/chat', [AIAssistantController::class, 'chat']);
+
 // Protected Routes with middleware 
 Route::middleware(['auth:sanctum'])->group(function () {
-    Route::get('me', [AuthController::class, 'me']);
+    // Allow logout without status check (suspended users should be able to log out)
     Route::post('logout', [AuthController::class, 'logout']);
-    Route::get('check-token', [AuthController::class, 'checkToken']);
+    
+    // All other routes require active user status
+    Route::middleware(['check.user.status'])->group(function () {
+        Route::get('me', [AuthController::class, 'me']);
+        Route::get('check-token', [AuthController::class, 'checkToken']);
     
     // Role switching endpoints
     Route::post('switch-role', [AuthController::class, 'switchRole']);
@@ -341,7 +349,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // Buyer withdrawal routes
     Route::get('buyer-withdrawals', [\App\Http\Controllers\Api\BuyerWithdrawalRequestController::class, 'index']);
     Route::post('buyer-withdrawals', [\App\Http\Controllers\Api\BuyerWithdrawalRequestController::class, 'store']);
-});
+    }); // End check.user.status middleware group
+}); // End auth:sanctum middleware group
 
 // Delivery Personnel Routes (separate authentication)
 Route::prefix('delivery')->name('delivery.')->group(function () {

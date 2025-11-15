@@ -107,7 +107,7 @@ class NotificationService
                 // Don't return here - dashboard notification might still be sent
             } else {
                 try {
-                    $fullLink = $link ? env('FRONTEND_URL', 'http://localhost:5173') . $link : null;
+                    $fullLink = $link ? rtrim(env('FRONTEND_URL', request()->getSchemeAndHttpHost()), '/') . $link : null;
                     
                     $data = [
                         'message' => $message,
@@ -185,7 +185,7 @@ class NotificationService
     {
         try {
             // Build full URL if link is provided
-            $fullLink = $link ? env('FRONTEND_URL', 'http://localhost:5173') . $link : null;
+            $fullLink = $link ? env('FRONTEND_URL', request()->getSchemeAndHttpHost()) . $link : null;
             
             $data = [
                 'user_name' => $user->name,

@@ -43,12 +43,20 @@ class AuthController extends Controller
                 ], 401);
             }
             
+            // Check if user is suspended
+            if ($user->status === 'suspended') {
+                Log::info('Suspended user attempted login', ['email' => $credentials['email'], 'user_id' => $user->id]);
+                return response()->json([
+                    'message' => 'تم تعليق حسابك. يرجى التواصل مع الإدارة.'
+                ], 403);
+            }
+            
             // Update last_login and last_seen timestamps
             $user->last_login = now();
             $user->last_seen = now();
             $user->save();
             
-            // If user is inactive, return error            
+            // Create token for authenticated user
             $token = $user->createToken('api-token')->plainTextToken;
             
             // Load seller relationship with skills if user is a seller
@@ -581,7 +589,7 @@ class AuthController extends Controller
             
             // Send welcome email
             try {
-                $dashboardUrl = env('FRONTEND_URL', 'http://localhost:5173') . '/dashboard';
+                $dashboardUrl = env('FRONTEND_URL', request()->getSchemeAndHttpHost()) . '/dashboard';
                 
                 self::sendMail(
                     subject: 'مرحباً بك في بازار!',

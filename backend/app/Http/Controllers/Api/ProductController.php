@@ -111,6 +111,13 @@ class ProductController extends Controller
      */
     public function store(Request $request)
     {
+        // Check if user is suspended
+        if (Auth::user()->status === 'suspended') {
+            return response()->json([
+                'message' => 'لا يمكنك إضافة منتجات لأن حسابك معلق. يرجى التواصل مع الإدارة.'
+            ], 403);
+        }
+        
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'required|string',

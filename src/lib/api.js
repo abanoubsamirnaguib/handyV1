@@ -481,11 +481,16 @@ export const adminApi = {
     apiFetch(`admin/products/${productId}/featured`, { method: 'PATCH' }),
   deleteProduct: (productId) => 
     apiFetch(`admin/products/${productId}`, { method: 'DELETE' }),
-  updateProductStatus: (productId, status) => 
-    apiFetch(`admin/products/${productId}/status`, {
+  updateProductStatus: (productId, status, rejectionReason = null) => {
+    const body = { status };
+    if (rejectionReason !== null) {
+      body.rejection_reason = rejectionReason;
+    }
+    return apiFetch(`admin/products/${productId}/status`, {
       method: 'PATCH',
-      body: JSON.stringify({ status }),
-    }),
+      body: JSON.stringify(body),
+    });
+  },
   // Recent activity
   getRecentActivity: () => apiFetch('admin/recent-activity'),
 

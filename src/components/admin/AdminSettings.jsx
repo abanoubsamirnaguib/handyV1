@@ -76,6 +76,7 @@ const AdminSettings = () => {
     contactEmail: 'officialbazar64@gmail.com',
     contactAddress: 'شارع الحرفيين، الفيوم ، مصر',
     workingHours: 'السبت - الخميس: 9:00 صباحاً - 6:00 مساءً',
+    transactionNumber: '',
   });
 
   // إعدادات إشعارات المستخدمين
@@ -433,6 +434,25 @@ const AdminSettings = () => {
                     className="text-right"
                     dir="rtl"
                   />
+                </div>
+              </div>
+
+              <Separator className="my-4" />
+
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-gray-800">معلومات الدفع</h3>
+                <div>
+                  <Label htmlFor="transactionNumber">رقم الحساب/التحويل (Instapay أو أي طريقة دفع أخرى)</Label>
+                  <Input
+                    id="transactionNumber"
+                    name="transactionNumber"
+                    value={generalSettings.transactionNumber}
+                    onChange={handleGeneralChange}
+                    placeholder="أدخل رقم الحساب أو رقم التحويل"
+                    className="text-right"
+                    dir="rtl"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">سيتم عرض هذا الرقم للمشترين عند رفع صورة إثبات الدفع</p>
                 </div>
               </div>
 

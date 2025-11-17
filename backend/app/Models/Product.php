@@ -19,6 +19,7 @@ class Product extends Model
         'review_count',
         'featured',
         'status',
+        'rejection_reason',
         'created_at',
         'updated_at',
         'type',

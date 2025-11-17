@@ -9,9 +9,11 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/components/ui/use-toast';
 import { api } from '@/lib/api';
+import { useSiteSettings } from '@/contexts/SiteSettingsContext';
 
 const ServiceOrderModal = ({ isOpen, onClose, sellerId, sellerUserId, sellerName, sellerAvatar, preloadedServices = [] }) => {
   const { toast } = useToast();
+  const { settings } = useSiteSettings();
   const [services, setServices] = useState(preloadedServices);
   const [selectedService, setSelectedService] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -502,6 +504,14 @@ const ServiceOrderModal = ({ isOpen, onClose, sellerId, sellerUserId, sellerName
                     </select>
                   </div>
                 </div>
+                
+                {settings.transactionNumber && formData.payment_method !== 'cash_on_delivery' && (
+                  <div className="bg-roman-50 border border-roman-200 rounded-lg p-3 mb-4">
+                    <p className="text-sm font-semibold text-roman-800 mb-1">رقم الحساب/التحويل:</p>
+                    <p className="text-lg font-bold text-roman-900">{settings.transactionNumber}</p>
+                    <p className="text-xs text-roman-600 mt-1">يرجى التحويل إلى هذا الرقم عند الدفع</p>
+                  </div>
+                )}
                 
                 <div>
                   <label className="block text-sm font-medium mb-2">

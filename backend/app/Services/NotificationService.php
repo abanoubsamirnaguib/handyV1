@@ -277,6 +277,23 @@ class NotificationService
     }
 
     /**
+     * Create a product rejected notification
+     */
+    public static function productRejected(int $userId, string $productTitle, string $productType = 'منتج', string $rejectionReason = ''): Notification
+    {
+        $typeText = $productType === 'gig' ? 'خدمتك' : 'منتجك';
+        $reasonText = $rejectionReason ? "\n\nسبب الرفض: {$rejectionReason}" : '';
+        $message = "❌ تم رفض {$typeText}: \"{$productTitle}\".{$reasonText}\n\nيرجى مراجعة السبب وإعادة إنشاء المنتج/الخدمة مرة أخرى.";
+        
+        return self::create(
+            userId: $userId,
+            type: 'product_rejected',
+            message: $message,
+            link: '/dashboard/gigs'
+        );
+    }
+
+    /**
      * Create a message notification
      */
     public static function messageReceived(int $userId, string $senderName): Notification

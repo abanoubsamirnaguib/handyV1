@@ -189,9 +189,21 @@ class AdminController extends Controller
     {
         $product = Product::findOrFail($id);
         $validated = $request->validate([
-            'status' => 'required|in:active,inactive,pending_review,rejected'
+            'status' => 'required|in:active,inactive,pending_review,rejected',
+            'rejection_reason' => 'nullable|string|max:1000'
         ]);
-        $product->update(['status' => $validated['status']]);
+        
+        $updateData = ['status' => $validated['status']];
+        
+        // إذا تم رفض المنتج، نحفظ سبب الرفض
+        if ($validated['status'] === 'rejected' && isset($validated['rejection_reason'])) {
+            $updateData['rejection_reason'] = $validated['rejection_reason'];
+        } elseif ($validated['status'] !== 'rejected') {
+            // إذا تم تغيير الحالة من rejected إلى حالة أخرى، نحذف سبب الرفض
+            $updateData['rejection_reason'] = null;
+        }
+        
+        $product->update($updateData);
 
         // إذا تم تفعيل المنتج، نرسل إشعارًا للبائع
         if ($validated['status'] === 'active' && $product->seller && $product->seller->user_id) {
@@ -199,6 +211,16 @@ class AdminController extends Controller
                 userId: $product->seller->user_id,
                 productTitle: $product->title,
                 productType: $product->type
+            );
+        }
+        
+        // إذا تم رفض المنتج، نرسل إشعارًا للبائع مع سبب الرفض
+        if ($validated['status'] === 'rejected' && $product->seller && $product->seller->user_id) {
+            \App\Services\NotificationService::productRejected(
+                userId: $product->seller->user_id,
+                productTitle: $product->title,
+                productType: $product->type,
+                rejectionReason: $validated['rejection_reason'] ?? ''
             );
         }
 

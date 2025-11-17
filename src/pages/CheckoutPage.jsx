@@ -12,11 +12,13 @@ import { Separator } from '@/components/ui/separator';
 import { useCart } from '@/contexts/CartContext';
 import { useToast } from '@/components/ui/use-toast';
 import { api } from '@/lib/api';
+import { useSiteSettings } from '@/contexts/SiteSettingsContext';
 
 const CheckoutPage = () => {
   const { cart, clearCart, getCartTotal } = useCart();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { settings } = useSiteSettings();
 
   // Form state
   const [formData, setFormData] = useState({
@@ -364,6 +366,13 @@ const CheckoutPage = () => {
                       <Upload className="ml-2 h-4 w-4 text-roman-500" />
                       صورة إثبات الدفع (اختياري)
                     </Label>
+                    {settings.transactionNumber && (
+                      <div className="bg-roman-50 border border-roman-200 rounded-lg p-3 mb-3">
+                        <p className="text-sm font-semibold text-roman-800 mb-1">رقم الحساب/التحويل:</p>
+                        <p className="text-lg font-bold text-roman-900">{settings.transactionNumber}</p>
+                        <p className="text-xs text-roman-600 mt-1">يرجى التحويل إلى هذا الرقم عند الدفع</p>
+                      </div>
+                    )}
                     <div className="border-2 border-dashed border-roman-500/30 rounded-lg p-4">
                       <input
                         type="file"

@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Package, 
-  PlusCircle, 
   Trash2, 
   Eye, 
   Bookmark,
@@ -25,6 +24,7 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { 
   Select, 
   SelectContent, 
@@ -64,7 +64,11 @@ const AdminProducts = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
-  const [itemsPerPage, setItemsPerPage] = useState(5);useEffect(() => {
+  const [itemsPerPage, setItemsPerPage] = useState(5);
+  // Rejection dialog state
+  const [rejectionReason, setRejectionReason] = useState('');
+  const [selectedProductToReject, setSelectedProductToReject] = useState(null);
+  const [showRejectDialog, setShowRejectDialog] = useState(false);useEffect(() => {
     if (user?.role !== 'admin') {
       toast({
         variant: "destructive",
@@ -183,28 +187,41 @@ const AdminProducts = () => {
     }
   };
 
-  const handleAddProduct = () => {
-    toast({
-      title: "إضافة منتج جديد",
-      description: "سيتم تحويلك إلى صفحة إضافة منتج."
-    });
-    // في تطبيق حقيقي، هنا سيتم التحويل إلى صفحة إضافة منتج
-    // navigate('/admin/products/new');
-  };
 
   const handleViewProduct = (productId) => {
     navigate(`/gigs/${productId}`);
   };
 
-  const handleRejectProduct = async (productId) => {
+  const openRejectDialog = (productId) => {
+    setSelectedProductToReject(productId);
+    setRejectionReason('');
+    setShowRejectDialog(true);
+  };
+
+  const handleRejectProduct = async () => {
+    if (!selectedProductToReject) return;
+    
+    if (!rejectionReason.trim()) {
+      toast({
+        variant: "destructive",
+        title: "سبب الرفض مطلوب",
+        description: "يرجى إدخال سبب رفض المنتج."
+      });
+      return;
+    }
+
     try {
       setUpdating(true);
-      await adminApi.updateProductStatus(productId, 'rejected');
-      setProducts(prev => prev.map(p => p.id === productId ? { ...p, status: 'rejected' } : p));
+      await adminApi.updateProductStatus(selectedProductToReject, 'rejected', rejectionReason);
+      setProducts(prev => prev.map(p => p.id === selectedProductToReject ? { ...p, status: 'rejected' } : p));
       toast({
         title: "تم رفض المنتج",
-        description: "تم رفض المنتج بنجاح."
+        description: "تم رفض المنتج بنجاح وإرسال الإشعار للبائع."
       });
+      // Close dialog and reset state
+      setShowRejectDialog(false);
+      setSelectedProductToReject(null);
+      setRejectionReason('');
       // Refresh products to remove rejected product from pending_review list
       await fetchProducts();
     } catch (error) {
@@ -304,12 +321,6 @@ const AdminProducts = () => {
           <h1 className="text-3xl font-bold text-gray-800">إدارة المنتجات</h1>
           <p className="text-gray-500 mt-1">استعراض وإدارة المنتجات المعروضة</p>
         </div>
-        <Button 
-          onClick={handleAddProduct} 
-          className="bg-blue-600 hover:bg-blue-700"
-        >
-          <PlusCircle className="ml-2 h-5 w-5" /> إضافة منتج جديد
-        </Button>
       </motion.div>
 
       <motion.div
@@ -466,15 +477,73 @@ const AdminProducts = () => {
                         >
                           <Check className="ml-1 h-4 w-4" /> موافقة
                         </Button>
-                        <Button 
-                          variant="destructive"
-                          size="sm"
-                          className="bg-red-500 hover:bg-red-600"
-                          disabled={updating}
-                          onClick={() => handleRejectProduct(product.id)}
+                        <AlertDialog 
+                          open={showRejectDialog && selectedProductToReject === product.id} 
+                          onOpenChange={(open) => {
+                            if (!open) {
+                              setShowRejectDialog(false);
+                              setSelectedProductToReject(null);
+                              setRejectionReason('');
+                            }
+                          }}
                         >
-                          <X className="ml-1 h-4 w-4" /> رفض
-                        </Button>
+                          <AlertDialogTrigger asChild>
+                            <Button 
+                              variant="destructive"
+                              size="sm"
+                              className="bg-red-500 hover:bg-red-600"
+                              disabled={updating}
+                              onClick={() => openRejectDialog(product.id)}
+                            >
+                              <X className="ml-1 h-4 w-4" /> رفض
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>رفض المنتج</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                هل أنت متأكد من رغبتك في رفض المنتج "{product.title}"؟
+                                سيتم إشعار البائع بالرفض وطلب إعادة إنشاء المنتج.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <div className="my-4">
+                              <label className="block text-sm font-medium mb-2">سبب الرفض (مطلوب)</label>
+                              <Textarea
+                                value={rejectionReason}
+                                onChange={(e) => setRejectionReason(e.target.value)}
+                                placeholder="أدخل سبب رفض المنتج... (مثال: المحتوى غير مناسب، الصور غير واضحة، الوصف غير كافٍ)"
+                                rows={4}
+                                className="w-full"
+                              />
+                              <p className="text-xs text-gray-500 mt-1">
+                                سيتم إرسال هذا السبب للبائع في الإشعار
+                              </p>
+                            </div>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel onClick={() => {
+                                setShowRejectDialog(false);
+                                setSelectedProductToReject(null);
+                                setRejectionReason('');
+                              }}>
+                                إلغاء
+                              </AlertDialogCancel>
+                              <AlertDialogAction 
+                                onClick={handleRejectProduct}
+                                disabled={updating || !rejectionReason.trim()}
+                                className="bg-red-600 hover:bg-red-700"
+                              >
+                                {updating ? (
+                                  <>
+                                    <Loader2 className="h-4 w-4 animate-spin ml-2" />
+                                    جاري الرفض...
+                                  </>
+                                ) : (
+                                  'رفض المنتج'
+                                )}
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </>
                     ) : product.status === 'rejected' || product.status === 'inactive' ? (
                       <>

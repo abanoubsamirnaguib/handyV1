@@ -388,9 +388,9 @@ const GigDetailsPage = () => {
 
             <p className="text-neutral-900/80 leading-relaxed text-right">{gig.description}</p>
             
-            <div className="text-3xl font-bold text-roman-500">
+            <div className="text-2xl font-bold text-roman-500">
               {(gig.type === 'gig') && (gig.price === '0.00') 
-                ? 'المنتج خدمة قابل للتفاوض يمكنك مراسلة البائع لتحديد السعر'
+                ? 'المنتج خدمة قابل للتفاوض'
                 : `${gig.price} جنيه`}
             </div>
 

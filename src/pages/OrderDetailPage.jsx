@@ -11,10 +11,11 @@ import { Separator } from '@/components/ui/separator';
 import { 
   Clock, Package, Check, AlertTriangle, CreditCard, Truck, 
   Upload, User, Phone, MapPin, Calendar, FileText, Star,
-  ArrowLeft, CheckCircle, AlertCircle, Timer, Loader2, Edit, Trash2, X
+  ArrowLeft, CheckCircle, AlertCircle, Timer, Loader2, Edit, Trash2, X,
+  ChevronDown, ChevronUp
 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,6 +28,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { api, adminApi, sellerApi, deliveryApi } from '@/lib/api';
+import { useSiteSettings } from '@/contexts/SiteSettingsContext';
 
 const OrderDetailPage = () => {
   const { orderId } = useParams();
@@ -34,6 +36,7 @@ const OrderDetailPage = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { settings } = useSiteSettings();
   
   const [order, setOrder] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -65,6 +68,29 @@ const OrderDetailPage = () => {
   const [isUpdatingReview, setIsUpdatingReview] = useState(false);
   const [isDeletingReview, setIsDeletingReview] = useState(false);
   const [reviewToDelete, setReviewToDelete] = useState(null);
+  
+  // Card collapse/expand state - default all cards expanded
+  const [expandedCards, setExpandedCards] = useState({
+    orderStatus: true,
+    orderItems: true,
+    deliveryDetails: true,
+    paymentInfo: true,
+    requirements: true,
+    timeline: true,
+    customerInfo: true,
+    sellerInfo: true,
+    importantDates: true,
+    existingReviews: true,
+    reviewSection: true,
+    actions: true,
+  });
+
+  const toggleCard = (cardKey) => {
+    setExpandedCards(prev => ({
+      ...prev,
+      [cardKey]: !prev[cardKey]
+    }));
+  };
 
   useEffect(() => {
     if (orderId) {
@@ -790,12 +816,23 @@ const OrderDetailPage = () => {
     if (!order?.timeline) return null;
 
     return (      <Card className="border-0 shadow-lg overflow-hidden">
-        <CardHeader className="bg-roman-500 text-white">
-          <CardTitle className="flex items-center text-xl">
-            <Calendar className="h-6 w-6 ml-2" />
-            الجدول الزمني للطلب
+        <CardHeader 
+          className="bg-roman-500 text-white cursor-pointer hover:bg-roman-600 transition-colors"
+          onClick={() => toggleCard('timeline')}
+        >
+          <CardTitle className="flex items-center justify-between text-xl">
+            <div className="flex items-center">
+              <Calendar className="h-6 w-6 ml-2" />
+              الجدول الزمني للطلب
+            </div>
+            {expandedCards.timeline ? (
+              <ChevronUp className="h-5 w-5" />
+            ) : (
+              <ChevronDown className="h-5 w-5" />
+            )}
           </CardTitle>
         </CardHeader>
+        {expandedCards.timeline && (
         <CardContent className="p-6">          <div className="relative">
             {/* Timeline Line */}
             <div className="absolute right-6 top-0 bottom-0 w-0.5 bg-roman-500"></div>
@@ -829,6 +866,7 @@ const OrderDetailPage = () => {
             </div>
           </div>
         </CardContent>
+        )}
       </Card>
     );
   };
@@ -877,9 +915,20 @@ const OrderDetailPage = () => {
     
     return (
       <Card className="mt-6">
-        <CardHeader>
-          <CardTitle>الإجراءات المتاحة</CardTitle>
+        <CardHeader 
+          className="cursor-pointer hover:bg-gray-50 transition-colors"
+          onClick={() => toggleCard('actions')}
+        >
+          <CardTitle className="flex items-center justify-between">
+            <span>الإجراءات المتاحة</span>
+            {expandedCards.actions ? (
+              <ChevronUp className="h-5 w-5" />
+            ) : (
+              <ChevronDown className="h-5 w-5" />
+            )}
+          </CardTitle>
         </CardHeader>
+        {expandedCards.actions && (
         <CardContent className="space-y-4">
           {/* Customer Actions */}
           {isCustomer && (
@@ -889,6 +938,13 @@ const OrderDetailPage = () => {
                !(order.is_service_order && order.requires_deposit) && ( // لا تظهر للطلبات التي تتطلب عربون
                 <div className="space-y-3">
                   <Label>رفع إيصال الدفع</Label>
+                  {settings.transactionNumber && (
+                    <div className="bg-roman-50 border border-roman-200 rounded-lg p-3 mb-3">
+                      <p className="text-sm font-semibold text-roman-800 mb-1">رقم الحساب/التحويل:</p>
+                      <p className="text-lg font-bold text-roman-900">{settings.transactionNumber}</p>
+                      <p className="text-xs text-roman-600 mt-1">يرجى التحويل إلى هذا الرقم عند الدفع</p>
+                    </div>
+                  )}
                   <Input
                     type="file"
                     accept="image/*"
@@ -922,6 +978,13 @@ const OrderDetailPage = () => {
                       يمكنك دفع باقي المبلغ ورفع إثبات الدفع في أي مرحلة من مراحل الطلب
                     </p>
                   </div>
+                  {settings.transactionNumber && (
+                    <div className="bg-roman-50 border border-roman-200 rounded-lg p-3">
+                      <p className="text-sm font-semibold text-roman-800 mb-1">رقم الحساب/التحويل:</p>
+                      <p className="text-lg font-bold text-roman-900">{settings.transactionNumber}</p>
+                      <p className="text-xs text-roman-600 mt-1">يرجى التحويل إلى هذا الرقم عند الدفع</p>
+                    </div>
+                  )}
                   <Label>رفع إثبات دفع باقي المبلغ</Label>
                   <Input
                     type="file"
@@ -1225,6 +1288,7 @@ const OrderDetailPage = () => {
             </AlertDialog>
           )}
         </CardContent>
+        )}
       </Card>
     );
   };
@@ -1292,12 +1356,23 @@ const OrderDetailPage = () => {
             <div className="lg:col-span-8 space-y-6">
                 {/* Order Status Card */}
               <Card className="bg-white border-0 shadow-lg">
-                <CardHeader className="bg-roman-500/10 rounded-t-lg">
-                  <CardTitle className="flex items-center text-xl">
-                    <AlertCircle className="h-6 w-6 ml-2 text-roman-500" />
-                    حالة الطلب الحالية
+                <CardHeader 
+                  className="bg-roman-500/10 rounded-t-lg cursor-pointer hover:bg-roman-500/20 transition-colors"
+                  onClick={() => toggleCard('orderStatus')}
+                >
+                  <CardTitle className="flex items-center justify-between text-xl">
+                    <div className="flex items-center">
+                      <AlertCircle className="h-6 w-6 ml-2 text-roman-500" />
+                      حالة الطلب الحالية
+                    </div>
+                    {expandedCards.orderStatus ? (
+                      <ChevronUp className="h-5 w-5 text-roman-500" />
+                    ) : (
+                      <ChevronDown className="h-5 w-5 text-roman-500" />
+                    )}
                   </CardTitle>
                 </CardHeader>
+                {expandedCards.orderStatus && (
                 <CardContent className="pt-6">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div className="space-y-2">
@@ -1314,14 +1389,26 @@ const OrderDetailPage = () => {
                     </div>
                   </div>
                 </CardContent>
+                )}
               </Card>              {/* Order Items Card */}
               <Card className="border-0 shadow-lg overflow-hidden">
-                <CardHeader className="bg-roman-500 text-white">
-                  <CardTitle className="flex items-center text-xl">
-                    <Package className="h-6 w-6 ml-2" />
-                    عناصر الطلب ({order.items?.length || 0} منتج)
+                <CardHeader 
+                  className="bg-roman-500 text-white cursor-pointer hover:bg-roman-600 transition-colors"
+                  onClick={() => toggleCard('orderItems')}
+                >
+                  <CardTitle className="flex items-center justify-between text-xl">
+                    <div className="flex items-center">
+                      <Package className="h-6 w-6 ml-2" />
+                      عناصر الطلب ({order.items?.length || 0} منتج)
+                    </div>
+                    {expandedCards.orderItems ? (
+                      <ChevronUp className="h-5 w-5" />
+                    ) : (
+                      <ChevronDown className="h-5 w-5" />
+                    )}
                   </CardTitle>
                 </CardHeader>
+                {expandedCards.orderItems && (
                 <CardContent className="p-0">
                   <div className="divide-y divide-gray-100">
                     {order.items && order.items.map((item, index) => (
@@ -1428,17 +1515,29 @@ const OrderDetailPage = () => {
                     </div>
                   </div>
                 </CardContent>
+                )}
               </Card>
 
               {/* Delivery Details Card */}
               {(order.city || order.delivery_fee) && (
                 <Card className="border-0 shadow-lg">
-                  <CardHeader className="bg-roman-500 text-white">
-                    <CardTitle className="flex items-center text-xl">
-                      <Truck className="h-6 w-6 ml-2" />
-                      تفاصيل التوصيل
+                  <CardHeader 
+                    className="bg-roman-500 text-white cursor-pointer hover:bg-roman-600 transition-colors"
+                    onClick={() => toggleCard('deliveryDetails')}
+                  >
+                    <CardTitle className="flex items-center justify-between text-xl">
+                      <div className="flex items-center">
+                        <Truck className="h-6 w-6 ml-2" />
+                        تفاصيل التوصيل
+                      </div>
+                      {expandedCards.deliveryDetails ? (
+                        <ChevronUp className="h-5 w-5" />
+                      ) : (
+                        <ChevronDown className="h-5 w-5" />
+                      )}
                     </CardTitle>
                   </CardHeader>
+                  {expandedCards.deliveryDetails && (
                   <CardContent className="pt-6 space-y-4">
                     {order.city && (
                       <div className="flex justify-between items-center">
@@ -1453,15 +1552,27 @@ const OrderDetailPage = () => {
                       </div>
                     )}
                   </CardContent>
+                  )}
                 </Card>
               )}              {/* Payment Information Card */}
               <Card className="border-0 shadow-lg">
-                <CardHeader className="bg-roman-500 text-white">
-                  <CardTitle className="flex items-center text-xl">
-                    <CreditCard className="h-6 w-6 ml-2" />
-                    معلومات الدفع
+                <CardHeader 
+                  className="bg-roman-500 text-white cursor-pointer hover:bg-roman-600 transition-colors"
+                  onClick={() => toggleCard('paymentInfo')}
+                >
+                  <CardTitle className="flex items-center justify-between text-xl">
+                    <div className="flex items-center">
+                      <CreditCard className="h-6 w-6 ml-2" />
+                      معلومات الدفع
+                    </div>
+                    {expandedCards.paymentInfo ? (
+                      <ChevronUp className="h-5 w-5" />
+                    ) : (
+                      <ChevronDown className="h-5 w-5" />
+                    )}
                   </CardTitle>
                 </CardHeader>
+                {expandedCards.paymentInfo && (
                 <CardContent className="pt-6">
                   <div className="grid md:grid-cols-2 gap-6">
                     <div className="space-y-4">
@@ -1560,17 +1671,29 @@ const OrderDetailPage = () => {
                     </div>
                   </div>
                 </CardContent>
+                )}
               </Card>
 
               {/* Requirements and Notes */}
               {(order.requirements || order.service_requirements || order.notes) && (
                 <Card className="border-0 shadow-lg">
-                  <CardHeader className="bg-roman-500 text-white">
-                    <CardTitle className="flex items-center text-xl">
-                      <FileText className="h-6 w-6 ml-2" />
-                      ملاحظات ومتطلبات
+                  <CardHeader 
+                    className="bg-roman-500 text-white cursor-pointer hover:bg-roman-600 transition-colors"
+                    onClick={() => toggleCard('requirements')}
+                  >
+                    <CardTitle className="flex items-center justify-between text-xl">
+                      <div className="flex items-center">
+                        <FileText className="h-6 w-6 ml-2" />
+                        ملاحظات ومتطلبات
+                      </div>
+                      {expandedCards.requirements ? (
+                        <ChevronUp className="h-5 w-5" />
+                      ) : (
+                        <ChevronDown className="h-5 w-5" />
+                      )}
                     </CardTitle>
                   </CardHeader>
+                  {expandedCards.requirements && (
                   <CardContent className="pt-6">
                     {order.is_service_order && order.service_requirements && (
                       <div className="mb-4">
@@ -1597,6 +1720,7 @@ const OrderDetailPage = () => {
                       </div>
                     )}
                   </CardContent>
+                  )}
                 </Card>
               )}
 
@@ -1608,12 +1732,23 @@ const OrderDetailPage = () => {
             <div className="lg:col-span-4 space-y-6">
                 {/* Customer Information */}
               <Card className="border-0 shadow-lg">
-                <CardHeader className="bg-roman-500 text-white">
-                  <CardTitle className="flex items-center">
-                    <User className="h-5 w-5 ml-2" />
-                    معلومات العميل
+                <CardHeader 
+                  className="bg-roman-500 text-white cursor-pointer hover:bg-roman-600 transition-colors"
+                  onClick={() => toggleCard('customerInfo')}
+                >
+                  <CardTitle className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <User className="h-5 w-5 ml-2" />
+                      معلومات العميل
+                    </div>
+                    {expandedCards.customerInfo ? (
+                      <ChevronUp className="h-5 w-5" />
+                    ) : (
+                      <ChevronDown className="h-5 w-5" />
+                    )}
                   </CardTitle>
                 </CardHeader>
+                {expandedCards.customerInfo && (
                 <CardContent className="pt-6 space-y-4">
                   <div className="flex items-center space-x-3">
                     <div className="w-10 h-10 bg-roman-500 rounded-full flex items-center justify-center">
@@ -1647,14 +1782,26 @@ const OrderDetailPage = () => {
                     </div>
                   )}
                 </CardContent>
+                )}
               </Card>              {/* Seller Information */}
               <Card className="border-0 shadow-lg">
-                <CardHeader className="bg-roman-500 text-white">
-                  <CardTitle className="flex items-center">
-                    <User className="h-5 w-5 ml-2" />
-                    معلومات البائع
+                <CardHeader 
+                  className="bg-roman-500 text-white cursor-pointer hover:bg-roman-600 transition-colors"
+                  onClick={() => toggleCard('sellerInfo')}
+                >
+                  <CardTitle className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <User className="h-5 w-5 ml-2" />
+                      معلومات البائع
+                    </div>
+                    {expandedCards.sellerInfo ? (
+                      <ChevronUp className="h-5 w-5" />
+                    ) : (
+                      <ChevronDown className="h-5 w-5" />
+                    )}
                   </CardTitle>
                 </CardHeader>
+                {expandedCards.sellerInfo && (
                 <CardContent className="pt-6 space-y-4">
                   <div className="flex items-center space-x-3">
                     <div className="w-10 h-10 bg-roman-500 rounded-full flex items-center justify-center">
@@ -1690,15 +1837,27 @@ const OrderDetailPage = () => {
                     </div>
                   )}
                 </CardContent>
+                )}
               </Card>
 
               {/* Important Dates */}              <Card className="border-0 shadow-lg">
-                <CardHeader className="bg-roman-500 text-white">
-                  <CardTitle className="flex items-center">
-                    <Calendar className="h-5 w-5 ml-2" />
-                    التواريخ المهمة
+                <CardHeader 
+                  className="bg-roman-500 text-white cursor-pointer hover:bg-roman-600 transition-colors"
+                  onClick={() => toggleCard('importantDates')}
+                >
+                  <CardTitle className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <Calendar className="h-5 w-5 ml-2" />
+                      التواريخ المهمة
+                    </div>
+                    {expandedCards.importantDates ? (
+                      <ChevronUp className="h-5 w-5" />
+                    ) : (
+                      <ChevronDown className="h-5 w-5" />
+                    )}
                   </CardTitle>
                 </CardHeader>
+                {expandedCards.importantDates && (
                 <CardContent className="pt-6 space-y-4">
                   <div className="space-y-3">
                     <div className="flex justify-between items-center">
@@ -1791,17 +1950,29 @@ const OrderDetailPage = () => {
                     </div>
                   )}
                 </CardContent>
+                )}
               </Card>
 
               {/* Existing Reviews Section */}
               {existingReviews.length > 0 && (
                 <Card className="border-0 shadow-lg">
-                  <CardHeader className="bg-roman-500 text-white">
-                    <CardTitle className="flex items-center">
-                      <Star className="h-5 w-5 ml-2" />
-                      تقييمات الطلب
+                  <CardHeader 
+                    className="bg-roman-500 text-white cursor-pointer hover:bg-roman-600 transition-colors"
+                    onClick={() => toggleCard('existingReviews')}
+                  >
+                    <CardTitle className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <Star className="h-5 w-5 ml-2" />
+                        تقييمات الطلب
+                      </div>
+                      {expandedCards.existingReviews ? (
+                        <ChevronUp className="h-5 w-5" />
+                      ) : (
+                        <ChevronDown className="h-5 w-5" />
+                      )}
                     </CardTitle>
                   </CardHeader>
+                  {expandedCards.existingReviews && (
                   <CardContent className="pt-6">
                     {isLoadingReviews ? (
                       <div className="text-center py-6">
@@ -2014,18 +2185,30 @@ const OrderDetailPage = () => {
                       </div>
                     )}
                   </CardContent>
+                  )}
                 </Card>
               )}
 
               {/* Review Section */}
               {showReviewSection && (
                 <Card className="border-0 shadow-lg">
-                  <CardHeader className="bg-roman-500 text-white">
-                    <CardTitle className="flex items-center">
-                      <Star className="h-5 w-5 ml-2" />
-                      تقييم المنتجات
+                  <CardHeader 
+                    className="bg-roman-500 text-white cursor-pointer hover:bg-roman-600 transition-colors"
+                    onClick={() => toggleCard('reviewSection')}
+                  >
+                    <CardTitle className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <Star className="h-5 w-5 ml-2" />
+                        تقييم المنتجات
+                      </div>
+                      {expandedCards.reviewSection ? (
+                        <ChevronUp className="h-5 w-5" />
+                      ) : (
+                        <ChevronDown className="h-5 w-5" />
+                      )}
                     </CardTitle>
                   </CardHeader>
+                  {expandedCards.reviewSection && (
                   <CardContent className="pt-6">
                     <div className="space-y-6">
                       {reviewableProducts.map((product) => (
@@ -2145,6 +2328,7 @@ const OrderDetailPage = () => {
                       ))}
                     </div>
                   </CardContent>
+                  )}
                 </Card>
               )}
 

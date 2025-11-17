@@ -33,7 +33,7 @@ class AIAssistantController extends Controller
     private function loadPdfContent()
     {
         try {
-            $textPath = storage_path('app/website_scenarios.txt');
+            $textPath = storage_path('website_scenarios.txt');
             if (file_exists($textPath)) {
                 $this->pdfContent = file_get_contents($textPath);
             }

@@ -20,6 +20,7 @@ export const SiteSettingsProvider = ({ children }) => {
     contactEmail: 'officialbazar64@gmail.com',
     contactAddress: 'شارع الحرفيين، الفيوم ، مصر',
     workingHours: 'السبت - الخميس: 9:00 صباحاً - 6:00 مساءً',
+    transactionNumber: '',
   });
   const [loading, setLoading] = useState(true);
 
@@ -38,6 +39,7 @@ export const SiteSettingsProvider = ({ children }) => {
         contactEmail: data.contactEmail || 'officialbazar64@gmail.com',
         contactAddress: data.contactAddress || 'شارع الحرفيين، الفيوم ، مصر',
         workingHours: data.workingHours || 'السبت - الخميس: 9:00 صباحاً - 6:00 مساءً',
+        transactionNumber: data.transactionNumber || '',
       });
     } catch (error) {
       console.error('Error loading site settings:', error);

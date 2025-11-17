@@ -26,6 +26,7 @@ class SiteSettingController extends Controller
             'contactEmail' => SiteSetting::where('setting_key', 'contact_email')->value('setting_value') ?? 'officialbazar64@gmail.com',
             'contactAddress' => SiteSetting::where('setting_key', 'contact_address')->value('setting_value') ?? 'شارع الحرفيين، الفيوم ، مصر',
             'workingHours' => SiteSetting::where('setting_key', 'working_hours')->value('setting_value') ?? 'السبت - الخميس: 9:00 صباحاً - 6:00 مساءً',
+            'transactionNumber' => SiteSetting::where('setting_key', 'transaction_number')->value('setting_value') ?? '',
         ];
 
         return response()->json($settings);
@@ -62,6 +63,7 @@ class SiteSettingController extends Controller
             'contactEmail' => SiteSetting::where('setting_key', 'contact_email')->value('setting_value') ?? 'officialbazar64@gmail.com',
             'contactAddress' => SiteSetting::where('setting_key', 'contact_address')->value('setting_value') ?? 'شارع الحرفيين، الفيوم ، مصر',
             'workingHours' => SiteSetting::where('setting_key', 'working_hours')->value('setting_value') ?? 'السبت - الخميس: 9:00 صباحاً - 6:00 مساءً',
+            'transactionNumber' => SiteSetting::where('setting_key', 'transaction_number')->value('setting_value') ?? '',
         ];
 
         // Email settings
@@ -142,6 +144,7 @@ class SiteSettingController extends Controller
                     'contactEmail' => 'contact_email',
                     'contactAddress' => 'contact_address',
                     'workingHours' => 'working_hours',
+                    'transactionNumber' => 'transaction_number',
                 ],
                 'email' => [
                     'senderName' => 'email_sender_name',

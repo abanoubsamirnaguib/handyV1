@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Send, Loader2 } from 'lucide-react';
+import { X, Send, Loader2, Trash2, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -19,6 +19,72 @@ const AIAssistant = () => {
   const [hasGreeted, setHasGreeted] = useState(false);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
+  
+  // Drag and visibility states
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [isHidden, setIsHidden] = useState(false);
+  const [showDeleteButton, setShowDeleteButton] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [hasMoved, setHasMoved] = useState(false);
+  const buttonRef = useRef(null);
+  const dragStartPos = useRef({ x: 0, y: 0 });
+  const longPressTimer = useRef(null);
+
+  // Detect mobile screen size
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Load position and visibility from localStorage on mount
+  useEffect(() => {
+    const savedPosition = localStorage.getItem('mernaButtonPosition');
+    const savedVisibility = localStorage.getItem('mernaButtonVisible');
+    
+    if (savedPosition) {
+      try {
+        const pos = JSON.parse(savedPosition);
+        setPosition(pos);
+      } catch (e) {
+        console.error('Error loading button position:', e);
+        // Set default position on error
+        const buttonSize = window.innerWidth < 768 ? 56 : 64;
+        setPosition({ 
+          x: window.innerWidth - buttonSize - 24, 
+          y: window.innerHeight - buttonSize - 24 
+        });
+      }
+    } else {
+      // Default position (bottom right)
+      const buttonSize = window.innerWidth < 768 ? 56 : 64;
+      setPosition({ 
+        x: window.innerWidth - buttonSize - 24, 
+        y: window.innerHeight - buttonSize - 24 
+      });
+    }
+    
+    if (savedVisibility === 'false') {
+      setIsHidden(true);
+    }
+  }, []);
+
+  // Save position to localStorage when it changes
+  useEffect(() => {
+    if (position.x !== 0 || position.y !== 0) {
+      localStorage.setItem('mernaButtonPosition', JSON.stringify(position));
+    }
+  }, [position]);
+
+  // Save visibility to localStorage when it changes
+  useEffect(() => {
+    localStorage.setItem('mernaButtonVisible', String(!isHidden));
+  }, [isHidden]);
 
   useEffect(() => {
     if (isOpen && !hasGreeted && messages.length === 0) {
@@ -143,43 +209,272 @@ const AIAssistant = () => {
     }
   };
 
+  // Drag handlers for touch (mobile)
+  const handleTouchStart = (e) => {
+    if (isOpen) return; // Don't drag when chat is open
+    
+    const touch = e.touches[0];
+    dragStartPos.current = {
+      x: touch.clientX - position.x,
+      y: touch.clientY - position.y
+    };
+    setIsDragging(true);
+    setHasMoved(false);
+    setShowDeleteButton(false);
+    
+    // Long press to show delete button
+    longPressTimer.current = setTimeout(() => {
+      if (isDragging) {
+        setShowDeleteButton(true);
+      }
+    }, 500);
+  };
+
+  const handleTouchMove = (e) => {
+    if (!isDragging || isOpen) return;
+    
+    clearTimeout(longPressTimer.current);
+    setHasMoved(true);
+    const touch = e.touches[0];
+    const newX = touch.clientX - dragStartPos.current.x;
+    const newY = touch.clientY - dragStartPos.current.y;
+    
+    // Constrain to screen bounds
+    const buttonSize = isMobile ? 56 : 64;
+    const padding = 12;
+    const maxX = window.innerWidth - buttonSize - padding;
+    const maxY = window.innerHeight - buttonSize - padding;
+    
+    setPosition({
+      x: Math.max(padding, Math.min(newX, maxX)),
+      y: Math.max(padding, Math.min(newY, maxY))
+    });
+  };
+
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+    setHasMoved(false);
+    clearTimeout(longPressTimer.current);
+  };
+
+  // Drag handlers for mouse (desktop)
+  const handleMouseDown = (e) => {
+    if (isOpen) return; // Don't drag when chat is open
+    
+    // Don't start dragging if clicking directly on a button (but allow dragging from container)
+    const clickedButton = e.target.closest('button');
+    if (clickedButton && clickedButton !== e.currentTarget) {
+      // If we clicked on a button that's not the container itself, don't drag
+      return;
+    }
+    
+    e.preventDefault();
+    e.stopPropagation();
+    dragStartPos.current = {
+      x: e.clientX - position.x,
+      y: e.clientY - position.y
+    };
+    setIsDragging(true);
+    setHasMoved(false);
+    setShowDeleteButton(false);
+  };
+
+  const handleMouseUp = (e) => {
+    if (isDragging) {
+      setIsDragging(false);
+      setHasMoved(false);
+    }
+  };
+
+  // Add global mouse event listeners for dragging
+  useEffect(() => {
+    if (isDragging && !isOpen) {
+      const handleMouseMoveGlobal = (e) => {
+        setHasMoved(true);
+        const newX = e.clientX - dragStartPos.current.x;
+        const newY = e.clientY - dragStartPos.current.y;
+        
+        // Constrain to screen bounds
+        const buttonSize = isMobile ? 56 : 64;
+        const padding = 12;
+        const maxX = window.innerWidth - buttonSize - padding;
+        const maxY = window.innerHeight - buttonSize - padding;
+        
+        setPosition({
+          x: Math.max(padding, Math.min(newX, maxX)),
+          y: Math.max(padding, Math.min(newY, maxY))
+        });
+      };
+      
+      const handleMouseUpGlobal = () => {
+        setIsDragging(false);
+        setHasMoved(false);
+      };
+      
+      window.addEventListener('mousemove', handleMouseMoveGlobal);
+      window.addEventListener('mouseup', handleMouseUpGlobal);
+      return () => {
+        window.removeEventListener('mousemove', handleMouseMoveGlobal);
+        window.removeEventListener('mouseup', handleMouseUpGlobal);
+      };
+    }
+  }, [isDragging, isMobile, isOpen]);
+
+  // Handle window resize to keep button in bounds
+  useEffect(() => {
+    const handleResize = () => {
+      const buttonSize = isMobile ? 56 : 64;
+      const padding = 12;
+      const maxX = window.innerWidth - buttonSize - padding;
+      const maxY = window.innerHeight - buttonSize - padding;
+      
+      setPosition(prev => ({
+        x: Math.max(padding, Math.min(prev.x, maxX)),
+        y: Math.max(padding, Math.min(prev.y, maxY))
+      }));
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [isMobile]);
+
+  // Delete/hide button
+  const handleDelete = (e) => {
+    e.stopPropagation();
+    setIsHidden(true);
+    setIsOpen(false);
+    setShowDeleteButton(false);
+  };
+
+  // Restore button
+  const handleRestore = () => {
+    setIsHidden(false);
+    // Reset to default position
+    const buttonSize = isMobile ? 56 : 64;
+    const padding = 24;
+    setPosition({ 
+      x: window.innerWidth - buttonSize - padding, 
+      y: window.innerHeight - buttonSize - padding 
+    });
+  };
+
   return (
     <>
-      {/* Floating Button */}
-      <motion.div
-        className="fixed bottom-24 right-6 z-50 flex flex-col items-center gap-2 md:bottom-6 md:right-6"
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-      >
+      {/* Restore Button - shown when button is hidden */}
+      {isHidden && (
         <motion.button
-          onClick={() => setIsOpen(!isOpen)}
-          className="bg-roman-500 hover:bg-roman-600 text-white rounded-full p-3 shadow-lg flex items-center justify-center transition-colors"
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          onClick={handleRestore}
+          className="fixed bottom-6 left-6 z-50 bg-roman-500 hover:bg-roman-600 text-white rounded-full p-3 shadow-lg flex items-center justify-center transition-colors md:bottom-6 md:left-6"
+          title="استعادة ميرنا"
         >
-          {isOpen ? (
-            <X size={20} />
-          ) : (
-            <div className="relative">
-              <img 
-                src="https://avatar.iran.liara.run/public/girl?bg=e85856" 
-                alt="ميرنا" 
-                className="w-10 h-10 rounded-full border-2 border-white shadow-md"
-              />
-              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-success-500 rounded-full border-2 border-white"></div>
-            </div>
-          )}
+          <RotateCcw size={20} />
         </motion.button>
-        {!isOpen && (
-          <motion.span
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-xs font-semibold text-gray-700 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full shadow-md whitespace-nowrap"
-          >
-            ميرنا
-          </motion.span>
-        )}
-      </motion.div>
+      )}
+
+      {/* Floating Button */}
+      {!isHidden && (
+        <motion.div
+          ref={buttonRef}
+          className="fixed z-50 flex flex-col items-center gap-2 touch-none"
+          data-drag-handle
+          style={{
+            left: `${position.x}px`,
+            top: `${position.y}px`,
+            cursor: isDragging ? 'grabbing' : 'grab'
+          }}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onMouseDown={handleMouseDown}
+          onMouseUp={handleMouseUp}
+          onMouseEnter={() => {
+            if (!isMobile && !isOpen && !isDragging) {
+              setShowDeleteButton(true);
+            }
+          }}
+          onMouseLeave={() => {
+            if (!isMobile) {
+              setShowDeleteButton(false);
+            }
+          }}
+          whileHover={!isDragging ? { scale: 1.05 } : {}}
+          whileTap={!isDragging ? { scale: 0.95 } : {}}
+        >
+          <div className="relative">
+            <motion.button
+              onClick={(e) => {
+                // Only open/close if we didn't drag
+                if (!isDragging && !hasMoved) {
+                  setIsOpen(!isOpen);
+                }
+                e.stopPropagation();
+              }}
+              onMouseDown={(e) => {
+                // Prevent dragging when clicking directly on button
+                e.stopPropagation();
+              }}
+              className={`bg-roman-500 hover:bg-roman-600 text-white rounded-full shadow-lg flex items-center justify-center transition-colors pointer-events-auto ${
+                isMobile 
+                  ? 'w-14 h-14 p-2' 
+                  : 'w-16 h-16 p-3'
+              }`}
+              whileHover={!isDragging ? { scale: 1.1 } : {}}
+              whileTap={!isDragging ? { scale: 0.9 } : {}}
+              disabled={isDragging}
+            >
+              {isOpen ? (
+                <X size={isMobile ? 18 : 20} />
+              ) : (
+                <div className="relative">
+                  <img 
+                    src="https://avatar.iran.liara.run/public/girl?bg=e85856" 
+                    alt="ميرنا" 
+                    className={`rounded-full border-2 border-white shadow-md ${
+                      isMobile 
+                        ? 'w-8 h-8' 
+                        : 'w-10 h-10'
+                    }`}
+                  />
+                  <div className={`absolute -bottom-1 -right-1 bg-success-500 rounded-full border-2 border-white ${
+                    isMobile 
+                      ? 'w-3 h-3' 
+                      : 'w-4 h-4'
+                  }`}></div>
+                </div>
+              )}
+            </motion.button>
+            
+            {/* Delete Button - shown on long press or hover */}
+            {showDeleteButton && !isOpen && (
+              <motion.button
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                onClick={handleDelete}
+                className="absolute -top-2 -right-2 bg-warning-500 hover:bg-warning-600 text-white rounded-full p-1.5 shadow-lg z-10"
+                title="حذف الزر"
+              >
+                <Trash2 size={14} />
+              </motion.button>
+            )}
+          </div>
+          
+          {!isOpen && (
+            <motion.span
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className={`font-semibold text-gray-700 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full shadow-md whitespace-nowrap ${
+                isMobile 
+                  ? 'text-[10px]' 
+                  : 'text-xs'
+              }`}
+            >
+              ميرنا
+            </motion.span>
+          )}
+        </motion.div>
+      )}
 
       {/* Chat Window */}
       <AnimatePresence>

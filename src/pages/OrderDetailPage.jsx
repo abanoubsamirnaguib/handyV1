@@ -1902,7 +1902,21 @@ const OrderDetailPage = () => {
                       </div>
                       <p className="text-sm text-red-700 mt-2">
                         {order.time_remaining?.is_late 
-                          ? `تأخر الطلب بـ ${order.time_remaining.overdue_hours} ساعة`
+                          ? (() => {
+                              const overdueDays = order.time_remaining.overdue_days || 0;
+                              const overdueHours = order.time_remaining.overdue_hours || 0;
+                              const overdueHoursRemainder = order.time_remaining.overdue_hours_remainder || 0;
+                              
+                              if (overdueDays >= 1) {
+                                let text = `تأخر الطلب بـ ${overdueDays} يوم`;
+                                if (overdueHoursRemainder > 0) {
+                                  text += ` و ${overdueHoursRemainder} ساعة`;
+                                }
+                                return text;
+                              }
+                              
+                              return `تأخر الطلب بـ ${overdueHours} ساعة`;
+                            })()
                           : 'لم يتم إنجاز الطلب في الوقت المحدد'
                         }
                       </p>
@@ -1910,7 +1924,9 @@ const OrderDetailPage = () => {
                   )}
                   
                   {/* Time Remaining for Active Orders */}
-                  {order.time_remaining && !order.time_remaining.is_late && 
+                  {order.work_started_at &&
+                   order.time_remaining && 
+                   !order.time_remaining.is_late && 
                    ['seller_approved', 'in_progress'].includes(order.status) && (
                     <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                       <div className="flex items-center">

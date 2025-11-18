@@ -14,7 +14,7 @@ use App\Services\NotificationService;
 class PaymentController extends Controller
 {
     /**
-     * Procesar el pago de un depósito
+     * معالجة دفع العربون
      */
     public function processDeposit(Request $request)
     {
@@ -30,31 +30,31 @@ class PaymentController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        // Verificar que el pedido pertenece al usuario actual
+        // التحقق من أن الطلب يخصّ المستخدم الحالي
         $order = Order::where('id', $request->order_id)
             ->where('user_id', Auth::id())
             ->first();
             
         if (!$order) {
-            return response()->json(['error' => 'Pedido no encontrado o no autorizado'], 404);
+            return response()->json(['error' => 'الطلب غير موجود أو غير مصرح بالوصول إليه'], 404);
         }
 
-        // Verificar que el depósito no haya sido pagado ya
+        // التأكد من أن العربون لم يُدفع سابقاً
         if ($order->deposit_status === 'paid') {
-            return response()->json(['error' => 'El depósito ya ha sido pagado'], 400);
+            return response()->json(['error' => 'تم دفع العربون بالفعل'], 400);
         }
 
-        // التحقق من أن العربون لا يتجاوز 80% من قيمة المنتج
+        // التأكد من أن قيمة العربون لا تتجاوز 80% من قيمة المنتج
         $maxDepositAmount = $order->total_price * 0.8;
         if ($request->amount > $maxDepositAmount) {
             return response()->json(['error' => 'قيمة العربون لا يمكن أن تتجاوز 80% من قيمة المنتج الأصلي'], 400);
         }
 
         try {
-            // En una aplicación real, aquí se procesaría el pago con un gateway de pago
-            // Simulamos que el pago fue exitoso
+            // في تطبيق حقيقي سيتم تمرير الدفع إلى بوابة دفع
+            // هنا نفترض أن عملية الدفع نجحت
             
-            // Registrar el pago
+            // تسجيل عملية الدفع
             $payment = new Payment([
                 'order_id' => $order->id,
                 'user_id' => Auth::id(),
@@ -63,22 +63,19 @@ class PaymentController extends Controller
                 'amount' => $request->amount,
                 'status' => 'completed',
                 'transaction_id' => 'tx_' . uniqid(),
-                'notes' => 'Depósito pagado a través del chat'
+                'notes' => 'تم دفع العربون عن طريق المحادثة'
             ]);
             
             $payment->save();
             
-            // Actualizar el pedido
+            // تحديث بيانات الطلب
             $order->deposit_amount = $request->amount;
             $order->deposit_status = 'paid';
-            $order->status = 'in_progress'; // Cambiar estado del pedido a "en progreso"
+            $order->status = 'in_progress'; // تغيير حالة الطلب إلى "قيد التنفيذ"
             $order->chat_conversation_id = $request->conversation_id;
             $order->save();
             
-            // Registrar en el historial del pedido
-            // (esto requeriría un modelo OrderHistory que no implementamos aquí)
-            
-            // Send deposit notification to seller
+            // إرسال إشعار للبائع بوصول العربون
             if ($order->seller && $order->seller->user_id) {
                 NotificationService::depositReceived(
                     $order->seller->user_id,
@@ -89,19 +86,19 @@ class PaymentController extends Controller
             
             return response()->json([
                 'success' => true,
-                'message' => 'Depósito procesado exitosamente',
+                'message' => 'تمت معالجة دفع العربون بنجاح',
                 'payment' => $payment,
                 'order' => $order
             ]);
             
         } catch (\Exception $e) {
-            Log::error('Error al procesar el depósito: ' . $e->getMessage());
-            return response()->json(['error' => 'Error al procesar el pago'], 500);
+            Log::error('حدث خطأ أثناء معالجة العربون: ' . $e->getMessage());
+            return response()->json(['error' => 'حدث خطأ أثناء معالجة الدفع'], 500);
         }
     }
     
     /**
-     * Procesar el pago del resto del monto después del depósito
+     * معالجة دفع المبلغ المتبقي بعد العربون
      */
     public function processRemainingPayment(Request $request)
     {
@@ -114,28 +111,28 @@ class PaymentController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        // Verificar que el pedido pertenece al usuario actual
+        // التحقق من أن الطلب يخصّ المستخدم الحالي
         $order = Order::where('id', $request->order_id)
             ->where('user_id', Auth::id())
             ->first();
             
         if (!$order) {
-            return response()->json(['error' => 'Pedido no encontrado o no autorizado'], 404);
+            return response()->json(['error' => 'الطلب غير موجود أو غير مصرح بالوصول إليه'], 404);
         }
 
-        // Verificar que el depósito ya fue pagado
+        // التأكد من أن العربون تم دفعه بالفعل
         if ($order->requires_deposit && $order->deposit_status !== 'paid') {
-            return response()->json(['error' => 'Debe pagar el depósito primero'], 400);
+            return response()->json(['error' => 'يجب دفع العربون أولاً'], 400);
         }
         
-        // Calcular el monto restante
+        // حساب المبلغ المتبقي
         $remainingAmount = $order->getRemainingAmount();
 
         try {
-            // En una aplicación real, aquí se procesaría el pago con un gateway de pago
-            // Simulamos que el pago fue exitoso
+            // في تطبيق حقيقي سيتم تمرير الدفع إلى بوابة دفع
+            // هنا نفترض أن عملية الدفع نجحت
             
-            // Registrar el pago
+            // تسجيل عملية الدفع
             $payment = new Payment([
                 'order_id' => $order->id,
                 'user_id' => Auth::id(),
@@ -144,37 +141,37 @@ class PaymentController extends Controller
                 'amount' => $remainingAmount,
                 'status' => 'completed',
                 'transaction_id' => 'tx_' . uniqid(),
-                'notes' => 'Pago del monto restante'
+                'notes' => 'دفع المبلغ المتبقي'
             ]);
             
             $payment->save();
             
-            // Actualizar el pedido
-            $order->status = 'paid'; // Cambiar estado del pedido a "pagado"
+            // تحديث بيانات الطلب
+            $order->payment_status = 'paid'; // تأكيد أن الطلب بالكامل أصبح مدفوعاً
             $order->save();
             
             return response()->json([
                 'success' => true,
-                'message' => 'Pago restante procesado exitosamente',
+                'message' => 'تمت معالجة دفع المبلغ المتبقي بنجاح',
                 'payment' => $payment,
                 'order' => $order
             ]);
             
         } catch (\Exception $e) {
-            Log::error('Error al procesar el pago restante: ' . $e->getMessage());
-            return response()->json(['error' => 'Error al procesar el pago'], 500);
+            Log::error('حدث خطأ أثناء معالجة دفع المبلغ المتبقي: ' . $e->getMessage());
+            return response()->json(['error' => 'حدث خطأ أثناء معالجة الدفع'], 500);
         }
     }
     
     /**
-     * Obtener información sobre los pagos de una orden específica
+     * الحصول على معلومات المدفوعات الخاصة بطلب معيّن
      */
     public function getOrderPayments($orderId)
     {
         $order = Order::with('payments')->where('id', $orderId)->where('user_id', Auth::id())->first();
         
         if (!$order) {
-            return response()->json(['error' => 'Pedido no encontrado o no autorizado'], 404);
+            return response()->json(['error' => 'الطلب غير موجود أو غير مصرح بالوصول إليه'], 404);
         }
         
         return response()->json([

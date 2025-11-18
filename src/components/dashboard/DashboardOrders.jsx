@@ -430,7 +430,7 @@ const DashboardOrders = () => {
                       <div className="mt-2 text-xs text-gray-500">
                         <Clock className="inline ml-1 h-3 w-3" />
                         موعد الإنجاز: {formatDate(order.completion_deadline)}
-                        {order.time_remaining && !order.time_remaining.is_late && (
+                        {order.work_started_at && order.time_remaining && !order.time_remaining.is_late && (
                           <span className="text-blue-600 mr-2">
                             (متبقي: {(() => {
                               // Handle both backend formats - days/hours as separate fields or days as decimal

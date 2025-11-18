@@ -4,6 +4,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\PlatformProfit;
+use Carbon\Carbon;
 
 class Order extends Model
 {
@@ -264,22 +265,49 @@ class Order extends Model
         
         // إذا كان طلب خدمة ولديه صورة باقي المبلغ، نرجع للحالة السابقة
         if ($this->is_service_order && $this->remaining_payment_proof && $this->previous_status) {
-            $this->update([
+            $finalApprovalData = [
                 'status' => $this->previous_status, // الرجوع للحالة السابقة
                 'admin_approved_at' => now(),
                 'admin_approved_by' => $adminId,
                 'admin_notes' => $notes,
                 'payment_status' => 'paid', // تأكيد أن الدفع النهائي تم
                 'previous_status' => null // مسح الحالة السابقة
-            ]);
+            ];
+
+            if ($this->requires_deposit && $this->deposit_status !== 'paid') {
+                $finalApprovalData['deposit_status'] = 'paid';
+            }
+
+            $this->update($finalApprovalData);
         } else {
             // الموافقة العادية (على العربون أو الطلبات العادية)
-            $this->update([
+            $approvalData = [
                 'status' => 'admin_approved',
                 'admin_approved_at' => now(),
                 'admin_approved_by' => $adminId,
                 'admin_notes' => $notes
-            ]);
+            ];
+
+            // أي طلب خدمة يحتوي على عربون وصورة إثبات للعربون يعتبر مدفوعاً للعربون
+            if ($this->requires_deposit && $this->deposit_image) {
+                if ($this->deposit_status !== 'paid') {
+                    $approvalData['deposit_status'] = 'paid';
+                }
+                if ($this->payment_status !== 'paid') {
+                    $approvalData['payment_status'] = 'partial';
+                }
+            }
+
+            // الطلبات الجاهزة (غير الخدمات) والتي لديها إثبات دفع تصبح مدفوعة بعد موافقة الأدمن
+            if (
+                !$this->is_service_order && 
+                $this->payment_method !== 'cash_on_delivery' && 
+                $this->payment_status !== 'paid'
+            ) {
+                $approvalData['payment_status'] = 'paid';
+            }
+
+            $this->update($approvalData);
         }
         
         $this->addToHistory('admin_approved', $adminId, 'admin_approval', $notes);
@@ -316,10 +344,18 @@ class Order extends Model
             throw new \Exception('لا يمكن بدء العمل على هذا الطلب في الوقت الحالي');
         }
         
-        $this->update([
+        $startTime = now();
+        $updateData = [
             'status' => 'in_progress',
-            'work_started_at' => now()
-        ]);
+            'work_started_at' => $startTime
+        ];
+        
+        $plannedDurationInSeconds = $this->getPlannedWorkDurationInSeconds();
+        if ($plannedDurationInSeconds > 0) {
+            $updateData['completion_deadline'] = $startTime->copy()->addSeconds($plannedDurationInSeconds);
+        }
+        
+        $this->update($updateData);
         
         $this->addToHistory('in_progress', $this->seller->user_id, 'work_started');
     }
@@ -660,10 +696,15 @@ class Order extends Model
     // التحقق من تأخير الطلب
     public function checkIfLate()
     {
-        if (!$this->completion_deadline || $this->isCompleted() || $this->isCancelled()) {
+        if (
+            !$this->completion_deadline || 
+            $this->isCompleted() || 
+            $this->isCancelled() ||
+            !$this->work_started_at
+        ) {
             return false;
         }
-
+        
         // الطلب يصبح متأخر إذا تجاوز الموعد المحدد ولم يصل لحالة "جاهز للتوصيل" بعد
         $isLate = now()->gt($this->completion_deadline) && 
                   in_array($this->status, ['seller_approved', 'in_progress']) && 
@@ -679,23 +720,35 @@ class Order extends Model
     // الحصول على الوقت المتبقي لإنجاز الطلب
     public function getTimeRemaining()
     {
-        if (!$this->completion_deadline || $this->isCompleted() || $this->isCancelled()) {
+        if (
+            !$this->completion_deadline || 
+            $this->isCompleted() || 
+            $this->isCancelled() ||
+            !$this->work_started_at
+        ) {
             return null;
         }
-
+        
         $now = now();
-        $deadline = \Carbon\Carbon::parse($this->completion_deadline);
-
+        $deadline = Carbon::parse($this->completion_deadline);
+        
         // إذا تجاوزنا الموعد ولم نصل لحالة "جاهز للتوصيل"
         if ($now->gt($deadline) && !$this->isReadyForDelivery()) {
-            return ['is_late' => true, 'overdue_hours' => $now->diffInHours($deadline)];
+            $overdueHours = $now->diffInHours($deadline);
+            $overdueDays = intdiv($overdueHours, 24);
+            return [
+                'is_late' => true,
+                'overdue_hours' => abs($overdueHours),
+                'overdue_days' => abs($overdueDays),
+                'overdue_hours_remainder' => abs($overdueHours % 24)
+            ];
         }
-
+        
         // إذا وصلنا لحالة "جاهز للتوصيل" فالطلب لم يعد متأخراً
         if ($this->isReadyForDelivery() || $this->isOutForDelivery() || $this->isDelivered()) {
             return null;
         }
-
+        
         return [
             'is_late' => false,
             'days' => $now->diffInDays($deadline, false),
@@ -812,5 +865,21 @@ class Order extends Model
         return $this->is_service_order && 
                $this->original_service_price !== null && 
                $this->original_service_price == 0;
+    }
+    
+    protected function getPlannedWorkDurationInSeconds(): int
+    {
+        if (!$this->completion_deadline || !$this->seller_approved_at) {
+            return 0;
+        }
+        
+        $sellerApprovedAt = $this->seller_approved_at instanceof Carbon
+            ? $this->seller_approved_at
+            : Carbon::parse($this->seller_approved_at);
+        $deadline = $this->completion_deadline instanceof Carbon
+            ? $this->completion_deadline
+            : Carbon::parse($this->completion_deadline);
+        
+        return max($sellerApprovedAt->diffInSeconds($deadline, false), 0);
     }
 }

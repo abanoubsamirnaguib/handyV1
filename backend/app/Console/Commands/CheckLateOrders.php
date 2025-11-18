@@ -31,6 +31,7 @@ class CheckLateOrders extends Command
         
         // Get orders that have a deadline and are not completed, cancelled, or ready for delivery
         $orders = Order::whereNotNull('completion_deadline')
+                      ->whereNotNull('work_started_at')
                       ->whereNotIn('status', ['completed', 'cancelled', 'ready_for_delivery', 'out_for_delivery', 'delivered'])
                       ->where('completion_deadline', '<', now())
                       ->where('is_late', false)

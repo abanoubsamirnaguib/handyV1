@@ -244,11 +244,13 @@ const GigDetailsPage = () => {
   }
 
   const handleAddToCart = () => {
-    addToCart({ ...gig, quantity });
-    toast({
-      title: 'تمت الإضافة إلى السلة',
-      description: `${gig.title} (الكمية: ${quantity}) تمت إضافتها إلى سلة التسوق.`,
-    });
+    const success = addToCart({ ...gig, quantity });
+    if (!success) {
+      // إذا فشلت العملية بسبب عدم تسجيل الدخول، يتم إعادة التوجيه
+      navigate('/login');
+      return;
+    }
+    // رسالة النجاح يتم عرضها من داخل addToCart
   };
 
   const handleContactSeller = async () => {

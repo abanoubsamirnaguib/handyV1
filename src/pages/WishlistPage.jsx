@@ -73,13 +73,18 @@ const WishlistPage = () => {
   const handleAddToCart = async (product) => {
     try {
       if (product.type === 'product') {
-        addToCart({
+        const success = addToCart({
           id: product.id,
           title: product.title,
           price: product.price,
           image: product.images?.[0]?.image_url,
           quantity: 1
         });
+        if (!success) {
+          // إذا فشلت العملية بسبب عدم تسجيل الدخول، يتم إعادة التوجيه
+          navigate('/login');
+          return;
+        }
       } else {
         // For services, redirect to product page
         navigate(`/gigs/${product.id}`);

@@ -553,6 +553,8 @@ const ChatPage = () => {
                   </DialogContent>
                 </Dialog>
                 
+                {/* Temporarily hidden */}
+                {false && (
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button variant="ghost" size="icon" className="text-destructive hover:bg-red-100">
@@ -574,6 +576,7 @@ const ChatPage = () => {
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
+                )}
               </div>
             </header>
 

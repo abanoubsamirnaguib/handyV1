@@ -14,7 +14,7 @@ import { useSiteSettings } from '@/contexts/SiteSettingsContext';
 const ServiceOrderModal = ({ isOpen, onClose, sellerId, sellerUserId, sellerName, sellerAvatar, preloadedServices = [] }) => {
   const { toast } = useToast();
   const { settings } = useSiteSettings();
-  const [services, setServices] = useState(preloadedServices);
+  const [services, setServices] = useState(Array.isArray(preloadedServices) ? preloadedServices : []);
   const [selectedService, setSelectedService] = useState(null);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -48,7 +48,7 @@ const ServiceOrderModal = ({ isOpen, onClose, sellerId, sellerUserId, sellerName
   useEffect(() => {
     if (isOpen && sellerUserIdForApi) {
       // Use preloaded services if available, otherwise load from server
-      if (preloadedServices && preloadedServices.length > 0) {
+      if (preloadedServices && Array.isArray(preloadedServices) && preloadedServices.length > 0) {
         setServices(preloadedServices);
       } else {
         loadSellerServices();
@@ -58,12 +58,35 @@ const ServiceOrderModal = ({ isOpen, onClose, sellerId, sellerUserId, sellerName
     }
   }, [isOpen, sellerUserIdForApi, preloadedServices]);
 
+  // Ensure services is always an array
+  useEffect(() => {
+    if (!Array.isArray(services)) {
+      setServices([]);
+    }
+  }, [services]);
+
+  // Auto-enable price change when service price is 0
+  useEffect(() => {
+    if (selectedService) {
+      const price = parseFloat(selectedService.price) || 0;
+      if (price === 0) {
+        setEnablePriceChange(true);
+      } else {
+        // Reset when selecting a service with price > 0
+        setEnablePriceChange(false);
+        setProposedPrice('');
+      }
+    }
+  }, [selectedService]);
+
   const loadSellerServices = async () => {
     try {
       setLoading(true);
       // getSellerServices expects user_id, not seller_id from sellers table
       const response = await api.getSellerServices(sellerUserIdForApi);
-      setServices(response);
+      // Ensure response is an array
+      const servicesArray = Array.isArray(response) ? response : (response?.data ? (Array.isArray(response.data) ? response.data : []) : []);
+      setServices(servicesArray);
     } catch (error) {
       console.error('Error loading services:', error);
       toast({
@@ -71,6 +94,7 @@ const ServiceOrderModal = ({ isOpen, onClose, sellerId, sellerUserId, sellerName
         title: "خطأ",
         description: "خطأ في تحميل الخدمات"
       });
+      setServices([]); // Set to empty array on error
     } finally {
       setLoading(false);
     }
@@ -94,6 +118,64 @@ const ServiceOrderModal = ({ isOpen, onClose, sellerId, sellerUserId, sellerName
       ...prev,
       [field]: value
     }));
+  };
+
+  // Helper function to get the effective service price
+  const getEffectiveServicePrice = () => {
+    if (!selectedService) return 0;
+    if (enablePriceChange && proposedPrice) {
+      return parseFloat(proposedPrice) || 0;
+    }
+    if (selectedService.price > 0) {
+      return selectedService.price;
+    }
+    if (proposedPrice) {
+      return parseFloat(proposedPrice) || 0;
+    }
+    return 0;
+  };
+
+  // Handle deposit amount change (allow free typing)
+  const handleDepositAmountChange = (value) => {
+    handleInputChange('deposit_amount', value);
+  };
+
+  // Handle deposit amount blur (validate when user leaves the field)
+  const handleDepositAmountBlur = () => {
+    const effectivePrice = getEffectiveServicePrice();
+    if (!effectivePrice || effectivePrice === 0) {
+      return;
+    }
+
+    const value = formData.deposit_amount;
+    if (!value || value === '') {
+      return;
+    }
+
+    const numValue = parseFloat(value);
+    if (isNaN(numValue)) {
+      return;
+    }
+
+    const minDeposit = effectivePrice * 0.2;
+    const maxDeposit = effectivePrice * 0.8;
+
+    // Validate and adjust value if outside range
+    if (numValue < minDeposit) {
+      handleInputChange('deposit_amount', minDeposit.toFixed(2));
+      toast({
+        variant: "destructive",
+        title: "خطأ في قيمة العربون",
+        description: `قيمة العربون لا يمكن أن تكون أقل من 20% من قيمة الخدمة (${minDeposit.toFixed(2)} جنيه). تم تعديل القيمة تلقائياً.`
+      });
+    } else if (numValue > maxDeposit) {
+      handleInputChange('deposit_amount', maxDeposit.toFixed(2));
+      toast({
+        variant: "destructive",
+        title: "خطأ في قيمة العربون",
+        description: `قيمة العربون لا يمكن أن تتجاوز 80% من قيمة الخدمة (${maxDeposit.toFixed(2)} جنيه). تم تعديل القيمة تلقائياً.`
+      });
+    }
   };
 
   const handleDepositImageChange = (e) => {
@@ -129,9 +211,33 @@ const ServiceOrderModal = ({ isOpen, onClose, sellerId, sellerUserId, sellerName
       return;
     }
     
+    // Get effective service price
+    const effectivePrice = getEffectiveServicePrice();
+    if (effectivePrice === 0) {
+      toast({
+        variant: "destructive",
+        title: "خطأ",
+        description: "يرجى إدخال سعر الخدمة أولاً"
+      });
+      return;
+    }
+    
+    const depositAmount = parseFloat(formData.deposit_amount);
+    const minDepositAmount = effectivePrice * 0.2;
+    const maxDepositAmount = effectivePrice * 0.8;
+    
+    // التحقق من أن العربون لا يقل عن 20% من قيمة الخدمة
+    if (depositAmount < minDepositAmount) {
+      toast({
+        variant: "destructive",
+        title: "خطأ في قيمة العربون",
+        description: `قيمة العربون لا يمكن أن تكون أقل من 20% من قيمة الخدمة (${minDepositAmount.toFixed(2)} جنيه)`
+      });
+      return;
+    }
+    
     // التحقق من أن العربون لا يتجاوز 80% من قيمة الخدمة
-    const maxDepositAmount = selectedService.price * 0.8;
-    if (parseFloat(formData.deposit_amount) > maxDepositAmount) {
+    if (depositAmount > maxDepositAmount) {
       toast({
         variant: "destructive",
         title: "خطأ في قيمة العربون",
@@ -154,7 +260,8 @@ const ServiceOrderModal = ({ isOpen, onClose, sellerId, sellerUserId, sellerName
       
       // التحقق من السعر المقترح
       // إذا السعر 0 أو تم تفعيل تغيير السعر، يجب إدخال سعر مقترح
-      if (selectedService.price === 0 || enablePriceChange) {
+      const servicePrice = parseFloat(selectedService.price) || 0;
+      if (servicePrice === 0 || enablePriceChange) {
         const proposedPriceValue = parseFloat(proposedPrice);
         if (!proposedPrice || proposedPriceValue <= 0) {
           toast({
@@ -181,14 +288,23 @@ const ServiceOrderModal = ({ isOpen, onClose, sellerId, sellerUserId, sellerName
       formDataToSend.append('deposit_image', depositImage);
       formDataToSend.append('requires_deposit', 'true');
       formDataToSend.append('is_service_order', 'true');
-      formDataToSend.append('total_price', selectedService.price);
       
-      // إضافة السعر المقترح
+      // إضافة السعر المقترح وتحديد total_price
       // إذا السعر 0، يجب إرسال السعر المقترح دائماً
       // إذا السعر > 0 وتم تفعيل تغيير السعر، نرسل السعر المقترح
-      if ((selectedService.price === 0 || enablePriceChange) && proposedPrice) {
+      let totalPriceToSend = servicePrice;
+      
+      if ((servicePrice === 0 || enablePriceChange) && proposedPrice) {
+        const proposedPriceValue = parseFloat(proposedPrice);
         formDataToSend.append('buyer_proposed_price', proposedPrice);
+        // إذا كان السعر الأصلي 0، نرسل السعر المقترح كـ total_price للتحقق من العربون
+        // لأن الـ backend validation يستخدم total_price * 0.8 للتحقق من deposit_amount
+        if (servicePrice === 0) {
+          totalPriceToSend = proposedPriceValue;
+        }
       }
+      
+      formDataToSend.append('total_price', totalPriceToSend);
       
       if (formData.city_id) formDataToSend.append('city_id', formData.city_id);
       
@@ -272,7 +388,7 @@ const ServiceOrderModal = ({ isOpen, onClose, sellerId, sellerUserId, sellerName
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
                   <p className="mt-2 text-gray-500">جاري تحميل الخدمات...</p>
                 </div>
-              ) : services.length === 0 ? (
+              ) : !Array.isArray(services) || services.length === 0 ? (
                 <div className="text-center py-8">
                   <p className="text-gray-500">لا توجد خدمات متاحة</p>
                 </div>
@@ -324,8 +440,8 @@ const ServiceOrderModal = ({ isOpen, onClose, sellerId, sellerUserId, sellerName
                     </div>
                   </div>
                   
-                  {/* Price Change Option */}
-                  {selectedService.price >= 0 && (
+                  {/* Price Change Option - Only show for services with price > 0 */}
+                  {selectedService.price > 0 && (
                     <div className="mt-3 p-3 bg-white rounded-lg">
                       <label className="flex items-center cursor-pointer">
                         <input
@@ -357,15 +473,19 @@ const ServiceOrderModal = ({ isOpen, onClose, sellerId, sellerUserId, sellerName
                     </div>
                   )}
                   
-                  {/* If service price is 0, require proposed price */}
-                  {selectedService.price === 0 && (
+                  {/* If service price is 0, require proposed price (always enabled) */}
+                  {(() => {
+                    const price = parseFloat(selectedService.price) || 0;
+                    return price === 0;
+                  })() && (
                     <div className="mt-3 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
                       <label className="block text-sm font-medium mb-2">
                         <DollarSign className="w-4 h-4 inline ml-1" />
-                        السعر المقترح (ج.م)
+                        السعر المقترح (ج.م) <span className="text-red-500">*</span>
                       </label>
                       <Input
                         type="number"
+                        step="0.01"
                         min="1"
                         value={proposedPrice}
                         onChange={(e) => setProposedPrice(e.target.value)}
@@ -373,7 +493,7 @@ const ServiceOrderModal = ({ isOpen, onClose, sellerId, sellerUserId, sellerName
                         required
                         className="w-full"
                       />
-                      <p className="text-xs text-blue-600 mt-1 flex items-center">
+                      <p className="text-xs text-roman-600 mt-1 flex items-center">
                         <svg className="h-4 w-4 ml-1" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                         </svg>
@@ -462,34 +582,31 @@ const ServiceOrderModal = ({ isOpen, onClose, sellerId, sellerUserId, sellerName
                     <Input
                       type="number"
                       step="0.01"
-                      min="1"
-                      max={selectedService ? (
-                        enablePriceChange && proposedPrice 
-                          ? parseFloat(proposedPrice) * 0.8 
-                          : selectedService.price > 0 
-                            ? selectedService.price * 0.8 
-                            : proposedPrice 
-                              ? parseFloat(proposedPrice) * 0.8 
-                              : 0
-                      ) : 0}
+                      min={selectedService ? (() => {
+                        const effectivePrice = getEffectiveServicePrice();
+                        return effectivePrice > 0 ? effectivePrice * 0.2 : 0;
+                      })() : 0}
+                      max={selectedService ? (() => {
+                        const effectivePrice = getEffectiveServicePrice();
+                        return effectivePrice > 0 ? effectivePrice * 0.8 : 0;
+                      })() : 0}
                       value={formData.deposit_amount}
-                      onChange={(e) => handleInputChange('deposit_amount', e.target.value)}
+                      onChange={(e) => handleDepositAmountChange(e.target.value)}
+                      onBlur={handleDepositAmountBlur}
                       placeholder="أدخل قيمة العربون"
                       required
                     />
-                    {selectedService && (
-                      <p className="text-xs text-gray-500 mt-1">
-                        الحد الأقصى للعربون: {(
-                          (enablePriceChange && proposedPrice 
-                            ? parseFloat(proposedPrice) 
-                            : selectedService.price > 0 
-                              ? selectedService.price 
-                              : proposedPrice 
-                                ? parseFloat(proposedPrice) 
-                                : 0) * 0.8
-                        ).toFixed(2)} جنيه (80% من قيمة الخدمة)
-                      </p>
-                    )}
+                    {selectedService && (() => {
+                      const effectivePrice = getEffectiveServicePrice();
+                      if (effectivePrice === 0) return null;
+                      const minDeposit = effectivePrice * 0.2;
+                      const maxDeposit = effectivePrice * 0.8;
+                      return (
+                        <p className="text-xs text-gray-500 mt-1">
+                          نطاق العربون المسموح: من {minDeposit.toFixed(2)} إلى {maxDeposit.toFixed(2)} جنيه (20% - 80% من قيمة الخدمة)
+                        </p>
+                      );
+                    })()}
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-2">طريقة الدفع</label>

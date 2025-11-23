@@ -6,9 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Models\ContactMessage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use App\Traits\EmailTrait;
 
 class ContactController extends Controller
 {
+    use EmailTrait;
     /**
      * Submit a contact us message (public endpoint)
      */
@@ -208,6 +210,30 @@ class ContactController extends Controller
         try {
             $message = ContactMessage::findOrFail($id);
             $message->markAsResolved(auth()->user()->id, $request->admin_notes);
+
+            // إرسال إيميل للعميل عند وجود رد من الإدمن
+            if (!empty($request->admin_notes)) {
+                try {
+                    self::sendMail(
+                        subject: $message->subject ? "رد على: {$message->subject}" : "رد على رسالتك",
+                        to: $message->email,
+                        data: [
+                            'name' => $message->name,
+                            'subject' => $message->subject,
+                            'original_message' => $message->message,
+                            'admin_reply' => $request->admin_notes,
+                        ],
+                        viewPath: 'emails.contact-reply'
+                    );
+                } catch (\Exception $e) {
+                    \Log::warning('Failed to send contact reply email', [
+                        'contact_id' => $message->id,
+                        'email' => $message->email,
+                        'error' => $e->getMessage()
+                    ]);
+                    // لا نوقف العملية إذا فشل إرسال الإيميل
+                }
+            }
 
             return response()->json([
                 'message' => 'تم تعليم الرسالة كمحلولة',

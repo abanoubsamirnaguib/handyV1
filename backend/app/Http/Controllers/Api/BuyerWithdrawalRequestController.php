@@ -145,6 +145,22 @@ class BuyerWithdrawalRequestController extends Controller
 
         $requestModel = BuyerWithdrawalRequest::findOrFail($id);
         $requestModel->approve($user->id);
+        
+        // إرسال إشعار للمشتري بالموافقة على طلب السحب
+        try {
+            \App\Services\NotificationService::create(
+                $requestModel->user_id,
+                'payment',
+                "تمت الموافقة على طلب سحب الأموال. المبلغ: {$requestModel->amount} جنيه",
+                "/dashboard/wallet"
+            );
+        } catch (\Exception $e) {
+            \Log::warning('Failed to send notification to buyer for approved withdrawal', [
+                'withdrawal_id' => $requestModel->id,
+                'error' => $e->getMessage()
+            ]);
+        }
+        
         return response()->json(['message' => 'تمت الموافقة على طلب السحب']);
     }
 
@@ -156,13 +172,41 @@ class BuyerWithdrawalRequestController extends Controller
             return response()->json(['error' => 'غير مصرح'], 403);
         }
 
-        $request->validate([
-            'reason' => 'required|string|max:255'
+        $validator = Validator::make($request->all(), [
+            'rejection_reason' => 'required|string|max:500',
         ]);
 
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
         $requestModel = BuyerWithdrawalRequest::findOrFail($id);
-        $requestModel->reject($user->id, $request->reason);
-        return response()->json(['message' => 'تم رفض طلب السحب']);
+        $requestModel->reject($user->id, $request->rejection_reason);
+        
+        // إرسال إشعار للمشتري برفض طلب السحب
+        try {
+            \App\Services\NotificationService::create(
+                $requestModel->user_id,
+                'payment',
+                "تم رفض طلب سحب الأموال. السبب: {$request->rejection_reason}",
+                "/dashboard/wallet"
+            );
+        } catch (\Exception $e) {
+            \Log::warning('Failed to send notification to buyer for rejected withdrawal', [
+                'withdrawal_id' => $requestModel->id,
+                'error' => $e->getMessage()
+            ]);
+        }
+        
+        return response()->json([
+            'message' => 'تم رفض طلب السحب',
+            'withdrawal_request' => [
+                'id' => $requestModel->id,
+                'status' => $requestModel->getStatusLabel(),
+                'rejection_reason' => $requestModel->rejection_reason,
+                'processed_at' => $requestModel->processed_at instanceof \DateTime ? $requestModel->processed_at->format('Y-m-d H:i') : null,
+            ]
+        ]);
     }
 }
 

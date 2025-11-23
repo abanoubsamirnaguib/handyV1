@@ -313,6 +313,28 @@ class Order extends Model
         $this->addToHistory('admin_approved', $adminId, 'admin_approval', $notes);
     }
     
+    public function canBeRejectedByAdmin()
+    {
+        // يمكن رفض الطلبات قيد المراجعة فقط
+        return $this->isPending();
+    }
+    
+    public function rejectByAdmin($adminId, $reason)
+    {
+        if (!$this->canBeRejectedByAdmin()) {
+            throw new \Exception('لا يمكن رفض هذا الطلب في الوقت الحالي. يمكن رفض الطلبات قيد المراجعة فقط.');
+        }
+        
+        // تحديث حالة الطلب إلى ملغى
+        $this->update([
+            'status' => 'cancelled',
+            'admin_notes' => $reason
+        ]);
+        
+        // إضافة إلى سجل الطلب
+        $this->addToHistory('admin_rejected', $adminId, 'admin_rejection', $reason);
+    }
+    
     public function approveBySeller($notes = null, $sellerAddress = null, $completionDeadline = null)
     {
         if (!$this->canBeApprovedBySeller()) {

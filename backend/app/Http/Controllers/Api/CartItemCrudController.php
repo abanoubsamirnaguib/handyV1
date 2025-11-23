@@ -51,6 +51,11 @@ class CartItemCrudController extends Controller
     // إضافة منتج للعربة
     public function addToCart(Request $request)
     {
+        // التحقق من تسجيل الدخول
+        if (!Auth::check()) {
+            return response()->json(['message' => 'يجب عليك تسجيل الدخول أولاً لإضافة المنتجات إلى السلة'], 401);
+        }
+        
         $validated = $request->validate([
             'product_id' => 'required|exists:products,id',
             'quantity' => 'required|integer|min:1|max:10'

@@ -2054,7 +2054,8 @@ const OrderDetailPage = () => {
                                       </div>
                                     )}
                                     {/* Edit/Delete buttons for own reviews */}
-                                    {review.user?.id === user?.id && (
+                                    {/* Temporarily hidden */}
+                                    {false && review.user?.id === user?.id && (
                                       <div className="flex items-center gap-1">
                                         {editingReview === review.id ? (
                                           <>

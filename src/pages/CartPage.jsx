@@ -14,12 +14,39 @@ const CartPage = () => {
   const { cart, removeFromCart, updateQuantity, getCartTotal, clearCart } = useCart();
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  // التحقق من أن جميع المنتجات من نفس البائع
+  const checkMultipleSellers = () => {
+    if (cart.length === 0) return false;
+    
+    const sellerIds = cart
+      .map(item => item.sellerId || item.seller_id || item.seller?.id)
+      .filter(id => id !== undefined && id !== null);
+    
+    if (sellerIds.length === 0) return false;
+    
+    const uniqueSellerIds = [...new Set(sellerIds)];
+    return uniqueSellerIds.length > 1;
+  };
+
+  const hasMultipleSellers = checkMultipleSellers();
+
   const handleCheckout = () => {
     if (cart.length === 0) {
       toast({
         variant: "destructive",
         title: "السلة فارغة",
         description: "الرجاء إضافة منتجات إلى السلة أولاً.",
+      });
+      return;
+    }
+
+    // التحقق من أن جميع المنتجات من نفس البائع
+    if (hasMultipleSellers) {
+      toast({
+        variant: "destructive",
+        title: "خطأ في السلة",
+        description: "لا يمكن أن تحتوي الطلبية على منتجات من بائعين مختلفين. يرجى إزالة المنتجات من بائع آخر أو إنشاء طلب منفصل.",
       });
       return;
     }
@@ -99,6 +126,16 @@ const CartPage = () => {
                   <CardTitle className="text-2xl text-primary">ملخص الطلب</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  {/* تحذير بائعين مختلفين */}
+                  {hasMultipleSellers && (
+                    <div className="p-3 bg-red-50 rounded-lg border-r-4 border-red-400 mb-4">
+                      <p className="text-sm font-semibold text-red-800 mb-1">⚠️ تحذير</p>
+                      <p className="text-xs text-red-700">
+                        لا يمكن أن تحتوي الطلبية على منتجات من بائعين مختلفين. يرجى إزالة المنتجات من بائع آخر أو إنشاء طلب منفصل.
+                      </p>
+                    </div>
+                  )}
+
                   <div className="space-y-3">
                     <div className="flex justify-between text-gray-700">
                       <span>المجموع الفرعي:</span>
@@ -124,7 +161,12 @@ const CartPage = () => {
                   </div>
                 </CardContent>
                 <CardFooter className="flex flex-col gap-3">
-                  <Button size="lg" onClick={handleCheckout} className="w-full bg-green-500 hover:bg-green-600">
+                  <Button 
+                    size="lg" 
+                    onClick={handleCheckout} 
+                    disabled={hasMultipleSellers}
+                    className={`w-full ${hasMultipleSellers ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-500 hover:bg-green-600'}`}
+                  >
                     <CreditCard className="ml-2 h-5 w-5" /> إتمام عملية الشراء
                   </Button>
                   <Button variant="outline" onClick={clearCart} className="w-full text-destructive border-destructive hover:bg-red-50">

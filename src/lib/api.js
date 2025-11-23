@@ -58,8 +58,29 @@ export async function apiFetch(path, options = {}) {
 
   const res = await fetch(apiUrl(path), { ...defaultOptions, ...options });
   if (!res.ok) {
-    const error = await res.text();
-    throw new Error(`API error: ${res.status} - ${error}`);
+    let errorMessage = `API error: ${res.status}`;
+    let errorText = '';
+    try {
+      errorText = await res.text();
+      // Try to parse as JSON
+      try {
+        const errorJson = JSON.parse(errorText);
+        if (errorJson.message) {
+          errorMessage = errorJson.message;
+        } else {
+          errorMessage = errorText;
+        }
+      } catch {
+        // If not JSON, use the text as is
+        errorMessage = errorText || errorMessage;
+      }
+    } catch {
+      // If reading response fails, use default message
+    }
+    const error = new Error(errorMessage);
+    error.status = res.status;
+    error.response = errorText;
+    throw error;
   }
   return res.json();
 }
@@ -77,8 +98,29 @@ export async function apiFormFetch(path, options = {}) {
     headers,
   });
   if (!res.ok) {
-    const error = await res.text();
-    throw new Error(`API error: ${res.status} - ${error}`);
+    let errorMessage = `API error: ${res.status}`;
+    let errorText = '';
+    try {
+      errorText = await res.text();
+      // Try to parse as JSON
+      try {
+        const errorJson = JSON.parse(errorText);
+        if (errorJson.message) {
+          errorMessage = errorJson.message;
+        } else {
+          errorMessage = errorText;
+        }
+      } catch {
+        // If not JSON, use the text as is
+        errorMessage = errorText || errorMessage;
+      }
+    } catch {
+      // If reading response fails, use default message
+    }
+    const error = new Error(errorMessage);
+    error.status = res.status;
+    error.response = errorText;
+    throw error;
   }
   return res.json();
 }

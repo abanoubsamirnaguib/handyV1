@@ -177,22 +177,8 @@ const CheckoutPage = () => {
       console.error('Error creating order:', error);
       console.error('Error response:', error.response);
       
-      // Try to extract more detailed error message
-      let errorMessage = "حدث خطأ أثناء إنشاء الطلب. يرجى المحاولة مرة أخرى.";
-      
-      if (error.message) {
-        errorMessage = error.message;
-      }
-      
-      // Check if it's a validation error
-      if (error.message && error.message.includes('API error: 422')) {
-        errorMessage = "خطأ في البيانات المرسلة. تأكد من صحة جميع البيانات.";
-      }
-      
-      // Check if it's a 500 error
-      if (error.message && error.message.includes('API error: 500')) {
-        errorMessage = "خطأ في الخادم. يرجى المحاولة مرة أخرى لاحقاً.";
-      }
+      // Extract error message - the API now extracts the message from JSON response
+      let errorMessage = error.message || "حدث خطأ أثناء إنشاء الطلب. يرجى المحاولة مرة أخرى.";
       
       toast({
         variant: "destructive",

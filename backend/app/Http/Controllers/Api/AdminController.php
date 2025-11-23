@@ -316,6 +316,64 @@ class AdminController extends Controller
         return new OrderResource($order->fresh()->load(['user', 'seller.user', 'items.product', 'adminApprover']));
     }
 
+    public function rejectOrder(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'reason' => 'required|string|max:1000'
+        ]);
+
+        $order = Order::findOrFail($id);
+        
+        // استخدام الطريقة الجديدة من النموذج للتحقق من إمكانية الرفض
+        if (!$order->canBeRejectedByAdmin()) {
+            return response()->json([
+                'message' => 'لا يمكن رفض هذا الطلب في الوقت الحالي. يمكن رفض الطلبات قيد المراجعة فقط.'
+            ], 400);
+        }
+
+        try {
+            $order->rejectByAdmin(auth()->id(), $validated['reason']);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => $e->getMessage()
+            ], 400);
+        }
+
+        // إرسال إشعار للمشتري
+        try {
+            \App\Services\NotificationService::create(
+                $order->user_id,
+                'order_rejected',
+                "تم رفض طلبك رقم {$order->id} من قبل الإدارة.\n\nسبب الرفض: {$validated['reason']}",
+                "/orders/{$order->id}"
+            );
+        } catch (\Exception $e) {
+            \Log::warning('Failed to send notification for rejected order', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage()
+            ]);
+        }
+
+        // إرسال إشعار للبائع إذا كان موجوداً
+        if ($order->seller && $order->seller->user_id) {
+            try {
+                \App\Services\NotificationService::create(
+                    $order->seller->user_id,
+                    'order_rejected',
+                    "تم رفض الطلب رقم {$order->id} من قبل الإدارة.\n\nسبب الرفض: {$validated['reason']}",
+                    "/orders/{$order->id}"
+                );
+            } catch (\Exception $e) {
+                \Log::warning('Failed to send notification to seller for rejected order', [
+                    'order_id' => $order->id,
+                    'error' => $e->getMessage()
+                ]);
+            }
+        }
+
+        return new OrderResource($order->fresh()->load(['user', 'seller.user', 'items.product', 'adminApprover']));
+    }
+
     /**
      * Get statistics for About Us page (public endpoint)
      */

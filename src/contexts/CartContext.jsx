@@ -1,29 +1,81 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useToast } from '@/components/ui/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 const CartContext = createContext();
 
 export const useCart = () => useContext(CartContext);
 
+// Helper function to get cart key for a specific user
+const getCartKey = (userId) => `cart_${userId}`;
+
 export const CartProvider = ({ children }) => {
   const [cart, setCart] = useState([]);
+  const [isInitialized, setIsInitialized] = useState(false);
+  const isClearingCart = React.useRef(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
+  // Load cart from localStorage when user changes
   useEffect(() => {
-    // Load cart from localStorage
-    const storedCart = localStorage.getItem('cart');
-    if (storedCart) {
-      setCart(JSON.parse(storedCart));
+    if (user?.id) {
+      // Load cart for the current user
+      try {
+        const cartKey = getCartKey(user.id);
+        const storedCart = localStorage.getItem(cartKey);
+        if (storedCart) {
+          const parsedCart = JSON.parse(storedCart);
+          setCart(Array.isArray(parsedCart) ? parsedCart : []);
+        } else {
+          setCart([]);
+        }
+      } catch (error) {
+        console.error('Error loading cart from localStorage:', error);
+        setCart([]);
+      }
+    } else {
+      // If no user, clear the cart
+      setCart([]);
     }
-  }, []);
+    setIsInitialized(true);
+  }, [user?.id]);
 
-  // Save cart to localStorage whenever it changes
+  // Save cart to localStorage whenever it changes (but not on initial load)
   useEffect(() => {
-    localStorage.setItem('cart', JSON.stringify(cart));
-  }, [cart]);
+    // Skip saving on initial load or if user is not logged in
+    if (!isInitialized || !user?.id) return;
+
+    try {
+      const cartKey = getCartKey(user.id);
+      // حفظ السلة في localStorage دائماً (حتى لو كانت فارغة)
+      // حذف localStorage فقط عند استدعاء clearCart() صراحة
+      if (isClearingCart.current) {
+        // حذف localStorage عند clearCart()
+        localStorage.removeItem(cartKey);
+        isClearingCart.current = false;
+      } else {
+        // حفظ السلة في localStorage (حتى لو كانت فارغة)
+        localStorage.setItem(cartKey, JSON.stringify(cart));
+      }
+    } catch (error) {
+      console.error('Error saving cart to localStorage:', error);
+    }
+  }, [cart, isInitialized, user?.id]);
 
   const addToCart = (item) => {
+    // التحقق من تسجيل الدخول قبل إضافة المنتج للسلة
+    if (!user) {
+      toast({
+        variant: 'destructive',
+        title: 'يرجى تسجيل الدخول',
+        description: 'يجب عليك تسجيل الدخول أولاً لإضافة المنتجات إلى السلة',
+      });
+      // إرجاع false للإشارة إلى أن العملية فشلت بسبب عدم تسجيل الدخول
+      // المكونات التي تستدعي addToCart يمكنها التحقق من القيمة وإعادة التوجيه
+      return false;
+    }
+
     // Check if item already exists in cart
     const existingItemIndex = cart.findIndex((cartItem) => cartItem.id === item.id);
 
@@ -41,6 +93,8 @@ export const CartProvider = ({ children }) => {
       title: 'تمت الإضافة إلى السلة',
       description: `تمت إضافة ${item.title} إلى سلة التسوق`,
     });
+    
+    return true;
   };
 
   const removeFromCart = (itemId) => {
@@ -64,6 +118,12 @@ export const CartProvider = ({ children }) => {
   };
 
   const clearCart = () => {
+    if (!user?.id) {
+      setCart([]);
+      return;
+    }
+    
+    isClearingCart.current = true;
     setCart([]);
     toast({
       title: 'تم تفريغ السلة',

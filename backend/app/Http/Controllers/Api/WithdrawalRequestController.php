@@ -236,10 +236,26 @@ class WithdrawalRequestController extends Controller
             return response()->json(['error' => 'غير مصرح'], 403);
         }
 
-        $withdrawalRequest = WithdrawalRequest::findOrFail($id);
+        $withdrawalRequest = WithdrawalRequest::with('seller')->findOrFail($id);
 
         try {
             $withdrawalRequest->approve($user->id, $request->admin_notes);
+            
+            // إرسال إشعار للبائع بالموافقة على طلب السحب
+            try {
+                $sellerUserId = $withdrawalRequest->seller->user_id;
+                \App\Services\NotificationService::create(
+                    $sellerUserId,
+                    'payment',
+                    "تمت الموافقة على طلب سحب الأموال. المبلغ: {$withdrawalRequest->amount} جنيه",
+                    "/dashboard/earnings"
+                );
+            } catch (\Exception $e) {
+                \Log::warning('Failed to send notification to seller for approved withdrawal', [
+                    'withdrawal_id' => $withdrawalRequest->id,
+                    'error' => $e->getMessage()
+                ]);
+            }
             
             return response()->json([
                 'message' => 'تم الموافقة على طلب السحب بنجاح',
@@ -270,10 +286,26 @@ class WithdrawalRequestController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $withdrawalRequest = WithdrawalRequest::findOrFail($id);
+        $withdrawalRequest = WithdrawalRequest::with('seller')->findOrFail($id);
 
         try {
             $withdrawalRequest->reject($user->id, $request->rejection_reason);
+            
+            // إرسال إشعار للبائع برفض طلب السحب
+            try {
+                $sellerUserId = $withdrawalRequest->seller->user_id;
+                \App\Services\NotificationService::create(
+                    $sellerUserId,
+                    'payment',
+                    "تم رفض طلب سحب الأموال. السبب: {$request->rejection_reason}",
+                    "/dashboard/earnings"
+                );
+            } catch (\Exception $e) {
+                \Log::warning('Failed to send notification to seller for rejected withdrawal', [
+                    'withdrawal_id' => $withdrawalRequest->id,
+                    'error' => $e->getMessage()
+                ]);
+            }
             
             return response()->json([
                 'message' => 'تم رفض طلب السحب',

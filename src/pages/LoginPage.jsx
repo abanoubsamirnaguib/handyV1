@@ -81,7 +81,7 @@ const LoginPage = () => {
             <CardTitle className="text-3xl font-bold text-neutral-900">تسجيل الدخول</CardTitle>
             <CardDescription className="text-neutral-900/70">مرحباً بعودتك! أدخل بياناتك للمتابعة.</CardDescription>
           </CardHeader>
-          <div className="mx-4 mb-4 p-3 bg-success-100/30 border-r-4 border-roman-500 rounded-md text-sm">
+          {/* <div className="mx-4 mb-4 p-3 bg-success-100/30 border-r-4 border-roman-500 rounded-md text-sm">
             <div className="flex items-start">
               <HelpCircle className="h-5 w-5 text-roman-500 ml-2 mt-0.5" />
               <div>
@@ -91,7 +91,7 @@ const LoginPage = () => {
                 <p className="text-neutral-900/80"><strong>مسؤول:</strong> admin@example.com / admin123</p>
               </div>
             </div>
-          </div>
+          </div> */}
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">

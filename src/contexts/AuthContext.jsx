@@ -231,6 +231,11 @@ export const AuthProvider = ({ children }) => {
         dataToSend.email_notifications = updatedData.email_notifications;
       }
       
+      // Include show_ai_assistant if provided
+      if (updatedData.show_ai_assistant !== undefined) {
+        dataToSend.show_ai_assistant = updatedData.show_ai_assistant;
+      }
+      
       const res = await fetch(apiUrl(`users/${user.id}`), {
         method: 'PUT',
         headers: {

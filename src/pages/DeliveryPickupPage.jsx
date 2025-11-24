@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Alert, AlertDescription } from '../components/ui/alert';
+import { Textarea } from '../components/ui/textarea';
 import { 
   ArrowLeft, 
   Package, 
@@ -13,7 +14,8 @@ import {
   DollarSign,
   Calendar,
   Loader2,
-  CheckCircle
+  CheckCircle,
+  PauseCircle
 } from 'lucide-react';
 import { toast } from '../components/ui/use-toast';
 import { deliveryApi } from '../lib/api';
@@ -24,7 +26,9 @@ const DeliveryPickupPage = () => {
   const [order, setOrder] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSuspending, setIsSuspending] = useState(false);
   const [error, setError] = useState('');
+  const [suspensionReason, setSuspensionReason] = useState('');
 
   const token = localStorage.getItem('delivery_token');
 
@@ -78,6 +82,35 @@ const DeliveryPickupPage = () => {
       setError('حدث خطأ أثناء استلام الطلب');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleSuspendOrder = async () => {
+    if (!suspensionReason.trim()) {
+      setError('يجب إدخال سبب تعليق الطلب');
+      return;
+    }
+
+    setIsSuspending(true);
+    setError('');
+
+    try {
+      const data = await deliveryApi.suspendOrder(orderId, { reason: suspensionReason });
+      if (data.success) {
+        toast({
+          title: 'تم تعليق الطلب',
+          description: 'تم تعليق الطلب بسبب عدم إمكانية الاستلام من البائع',
+          variant: 'default'
+        });
+        navigate('/delivery/dashboard');
+      } else {
+        setError(data.message || 'فشل في تعليق الطلب');
+      }
+    } catch (error) {
+      console.error('Error during suspension:', error);
+      setError('حدث خطأ أثناء تعليق الطلب');
+    } finally {
+      setIsSuspending(false);
     }
   };
 
@@ -265,33 +298,79 @@ const DeliveryPickupPage = () => {
                   </Alert>
                 )}
                 
-                <div className="space-y-4">
-                  <p className="text-sm text-gray-600">
-                    تأكد من استلام جميع المنتجات من البائع قبل النقر على زر الاستلام
-                  </p>
-                  
-                  <Button
-                    onClick={handlePickupSubmit}
-                    disabled={isSubmitting || order?.status !== 'ready_for_delivery'}
-                    className="w-full"
-                    size="lg"
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        جاري الاستلام...
-                      </>
-                    ) : (
-                      <>
-                        <Package className="h-4 w-4 mr-2" />
-                        تأكيد استلام الطلب
-                      </>
-                    )}
-                  </Button>
+                <div className="space-y-6">
+                  {/* تأكيد الاستلام */}
+                  <div className="space-y-3">
+                    <h4 className="font-medium text-green-700">تأكيد الاستلام الناجح</h4>
+                    <p className="text-sm text-gray-600">
+                      تأكد من استلام جميع المنتجات من البائع قبل النقر على زر الاستلام
+                    </p>
+                    
+                    <Button
+                      onClick={handlePickupSubmit}
+                      disabled={isSubmitting || order?.status !== 'ready_for_delivery'}
+                      className="w-full bg-green-600 hover:bg-green-700"
+                      size="lg"
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          جاري الاستلام...
+                        </>
+                      ) : (
+                        <>
+                          <Package className="h-4 w-4 mr-2" />
+                          تأكيد استلام الطلب
+                        </>
+                      )}
+                    </Button>
+                  </div>
+
+                  <div className="border-t pt-4">
+                    <div className="flex items-center justify-center">
+                      <span className="text-sm text-gray-400 bg-gray-50 px-3 py-1 rounded">أو</span>
+                    </div>
+                  </div>
+
+                  {/* تعليق الطلب */}
+                  <div className="space-y-3">
+                    <h4 className="font-medium text-amber-700">تعليق الطلب</h4>
+                    <p className="text-sm text-gray-600">
+                      في حالة عدم تمكنك من الاستلام من البائع أو عدم استجابته
+                    </p>
+                    
+                    <Textarea
+                      placeholder="اكتب سبب تعليق الطلب (مثل: لم يرد البائع، عنوان خاطئ، إلخ...)"
+                      value={suspensionReason}
+                      onChange={(e) => setSuspensionReason(e.target.value)}
+                      rows={3}
+                      className="resize-none"
+                    />
+                    
+                    <Button
+                      onClick={handleSuspendOrder}
+                      disabled={isSuspending || !suspensionReason.trim() || order?.status !== 'ready_for_delivery'}
+                      className="w-full bg-amber-600 hover:bg-amber-700"
+                      size="lg"
+                      variant="default"
+                    >
+                      {isSuspending ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          جاري التعليق...
+                        </>
+                      ) : (
+                        <>
+                          <PauseCircle className="h-4 w-4 mr-2" />
+                          تعليق الطلب
+                        </>
+                      )}
+                    </Button>
+                  </div>
                   
                   {order?.status !== 'ready_for_delivery' && (
                     <p className="text-sm text-amber-600 text-center">
-                      هذا الطلب غير جاهز للاستلام حالياً
+                      هذا الطلب غير جاهز للاستلام أو التعليق حالياً
                     </p>
                   )}
                 </div>

@@ -369,22 +369,39 @@ const AdminDeliveryAssignment = () => {
                         </div>
                         
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
-                          <div className="flex items-center gap-2">
-                            <User className="h-4 w-4" />
-                            <span>العميل: {order.user?.name}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Phone className="h-4 w-4" />
-                            <span>{order.customer_phone}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <User className="h-4 w-4" />
-                            <span>البائع: {order.seller?.user?.name}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <MapPin className="h-4 w-4" />
-                            <span>{order.delivery_address}</span>
-                          </div>
+                          {isPickupPending ? (
+                            // عرض بيانات البائع عند انتظار الاستلام
+                            <>
+                              <div className="flex items-center gap-2">
+                                <User className="h-4 w-4" />
+                                <span>البائع: {order.seller?.user?.name}</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Phone className="h-4 w-4" />
+                                <span>{order.seller?.user?.phone}</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <MapPin className="h-4 w-4" />
+                                <span>{order.seller_address}</span>
+                              </div>
+                            </>
+                          ) : (
+                            // عرض بيانات المشتري عند انتظار التسليم
+                            <>
+                              <div className="flex items-center gap-2">
+                                <User className="h-4 w-4" />
+                                <span>العميل: {order.user?.name}</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Phone className="h-4 w-4" />
+                                <span>{order.customer_phone}</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <MapPin className="h-4 w-4" />
+                                <span>{order.delivery_address}</span>
+                              </div>
+                            </>
+                          )}
                         </div>
 
                         <div className="flex items-center gap-6 pt-2 border-t">
@@ -457,22 +474,59 @@ const AdminDeliveryAssignment = () => {
                       </div>
                       
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
-                        <div className="flex items-center gap-2">
-                          <User className="h-4 w-4" />
-                          <span>العميل: {order.user?.name}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Phone className="h-4 w-4" />
-                          <span>{order.customer_phone}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <User className="h-4 w-4" />
-                          <span>البائع: {order.seller?.user?.name}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <MapPin className="h-4 w-4" />
-                          <span>{order.delivery_address}</span>
-                        </div>
+                        {!order.pickup_person_id ? (
+                          // إذا لم يتم تعيين موظف استلام بعد، اعرض بيانات البائع
+                          <>
+                            <div className="flex items-center gap-2">
+                              <User className="h-4 w-4" />
+                              <span>البائع: {order.seller?.user?.name}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Phone className="h-4 w-4" />
+                              <span>{order.seller?.user?.phone}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <MapPin className="h-4 w-4" />
+                              <span>{order.seller_address}</span>
+                            </div>
+                          </>
+                        ) : !order.delivery_person_id ? (
+                          // إذا تم تعيين موظف الاستلام ولكن لم يتم تعيين موظف التسليم، اعرض بيانات المشتري
+                          <>
+                            <div className="flex items-center gap-2">
+                              <User className="h-4 w-4" />
+                              <span>العميل: {order.user?.name}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Phone className="h-4 w-4" />
+                              <span>{order.customer_phone}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <MapPin className="h-4 w-4" />
+                              <span>{order.delivery_address}</span>
+                            </div>
+                          </>
+                        ) : (
+                          // إذا تم تعيين كلاهما، اعرض البيانات كاملة
+                          <>
+                            <div className="flex items-center gap-2">
+                              <User className="h-4 w-4" />
+                              <span>العميل: {order.user?.name}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Phone className="h-4 w-4" />
+                              <span>{order.customer_phone}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <User className="h-4 w-4" />
+                              <span>البائع: {order.seller?.user?.name}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <MapPin className="h-4 w-4" />
+                              <span>{order.delivery_address}</span>
+                            </div>
+                          </>
+                        )}
                       </div>
 
                       <div className="flex items-center gap-4">

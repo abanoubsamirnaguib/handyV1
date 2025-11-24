@@ -66,7 +66,7 @@ class AdminController extends Controller
         $query = Seller::with(['user', 'skills'])
             ->withCount([
                 'orders as in_progress_orders_count' => function($q) {
-                    $q->whereIn('status', ['pending', 'admin_approved', 'seller_approved', 'in_progress', 'work_completed', 'ready_for_delivery', 'out_for_delivery']);
+                    $q->whereIn('status', ['pending', 'admin_approved', 'seller_approved', 'work_completed', 'ready_for_delivery', 'out_for_delivery']);
                 }
             ]);
 

@@ -212,6 +212,24 @@ const AdminDelivery = () => {
     }
   };
 
+  const handleResetTripsCount = async (personnelId) => {
+    try {
+      await adminApi.resetTripsCount(personnelId);
+      toast({
+        title: "تم تصفير العداد",
+        description: "تم تصفير عداد المشاوير بنجاح"
+      });
+      fetchDeliveryPersonnel();
+    } catch (error) {
+      console.error('Error resetting trips count:', error);
+      toast({
+        variant: "destructive",
+        title: "خطأ",
+        description: "حدث خطأ أثناء تصفير عداد المشاوير"
+      });
+    }
+  };
+
   const handleAssignOrder = async (orderId, personnelId) => {
     try {
       await adminApi.assignOrder(orderId, personnelId);
@@ -423,10 +441,14 @@ const AdminDelivery = () => {
                     <Phone className="h-4 w-4 text-gray-500" />
                     <span className="text-sm">{personnel.phone}</span>
                   </div>
+                  <div className="flex items-center gap-2">
+                    <Package className="h-4 w-4 text-gray-500" />
+                    <span className="text-sm">المشاوير المكتملة: {Math.floor(personnel.trips_count / 2) || 0}</span>
+                  </div>
                 </div>
               </CardContent>
               <CardFooter>
-                <div className="flex gap-2 w-full">
+                <div className="flex gap-2 w-full flex-wrap">
                   <Button 
                     variant="outline" 
                     size="sm"
@@ -442,6 +464,14 @@ const AdminDelivery = () => {
                   >
                     <RotateCcw className="h-4 w-4 mr-1" />
                     إعادة تعيين
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleResetTripsCount(personnel.id)}
+                  >
+                    <RotateCcw className="h-4 w-4 mr-1" />
+                    تصفير المشاوير
                   </Button>
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
@@ -520,4 +550,4 @@ const AdminDelivery = () => {
   );
 };
 
-export default AdminDelivery; 
+export default AdminDelivery;

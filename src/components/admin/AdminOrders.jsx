@@ -254,7 +254,6 @@ const AdminOrders = () => {
       'pending': 'بانتظار المراجعة',
       'admin_approved': 'معتمد من الإدارة',
       'seller_approved': 'مقبول من البائع',
-      'in_progress': 'جاري العمل',
       'ready_for_delivery': 'جاهز للتوصيل',
       'out_for_delivery': 'في الطريق',
       'delivered': 'تم التوصيل',
@@ -278,10 +277,6 @@ const AdminOrders = () => {
       'seller_approved': { 
         label: 'مقبول من البائع', 
         color: 'bg-green-100 text-green-800' 
-      },
-      'in_progress': { 
-        label: 'جاري العمل', 
-        color: 'bg-purple-100 text-purple-800' 
       },
       'ready_for_delivery': { 
         label: 'جاهز للتوصيل', 
@@ -452,6 +447,12 @@ const AdminOrders = () => {
                   <Phone className="h-4 w-4 ml-2 text-gray-500" />
                   <span>{order.seller?.phone || 'غير محدد'}</span>
                 </div>
+                {order.seller_address && (
+                  <div className="flex items-start">
+                    <MapPin className="h-4 w-4 ml-2 mt-1 text-gray-500" />
+                    <span>{order.seller_address}</span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -996,7 +997,6 @@ const AdminOrders = () => {
                   <RTLSelectItem value="pending">بانتظار المراجعة</RTLSelectItem>
                   <RTLSelectItem value="admin_approved">معتمد من الإدارة</RTLSelectItem>
                   <RTLSelectItem value="seller_approved">مقبول من البائع</RTLSelectItem>
-                  <RTLSelectItem value="in_progress">جاري العمل</RTLSelectItem>
                   <RTLSelectItem value="ready_for_delivery">جاهز للتوصيل</RTLSelectItem>
                   <RTLSelectItem value="out_for_delivery">في الطريق</RTLSelectItem>
                   <RTLSelectItem value="delivered">تم التوصيل</RTLSelectItem>
@@ -1112,12 +1112,18 @@ const AdminOrders = () => {
                         <User className="h-4 w-4 ml-1 text-orange-600" />
                         <span className="text-sm font-medium text-gray-800">{order.seller?.name || 'غير محدد'}</span>
                       </div>
-                      <div className="flex items-center">
+                      <div className="flex items-center mb-2">
                         <Package className="h-4 w-4 ml-1 text-orange-600" />
                         <span className="text-sm text-gray-600">
                           {order.items?.length || 0} عنصر
                         </span>
                       </div>
+                      {order.seller_address && (
+                        <div className="flex items-start">
+                          <MapPin className="h-4 w-4 ml-1 mt-1 text-orange-600" />
+                          <span className="text-sm text-gray-600">{order.seller_address}</span>
+                        </div>
+                      )}
                     </div>
 
                     {/* Actions */}
@@ -1170,7 +1176,6 @@ const AdminOrders = () => {
                                   <RTLSelectItem value="pending">بانتظار المراجعة</RTLSelectItem>
                                   <RTLSelectItem value="admin_approved">معتمد من الإدارة</RTLSelectItem>
                                   <RTLSelectItem value="seller_approved">مقبول من البائع</RTLSelectItem>
-                                  <RTLSelectItem value="in_progress">جاري العمل</RTLSelectItem>
                                   <RTLSelectItem value="ready_for_delivery">جاهز للتوصيل</RTLSelectItem>
                                   <RTLSelectItem value="out_for_delivery">في الطريق</RTLSelectItem>
                                   <RTLSelectItem value="delivered">تم التوصيل</RTLSelectItem>

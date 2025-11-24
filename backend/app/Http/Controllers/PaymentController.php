@@ -71,7 +71,7 @@ class PaymentController extends Controller
             // تحديث بيانات الطلب
             $order->deposit_amount = $request->amount;
             $order->deposit_status = 'paid';
-            $order->status = 'in_progress'; // تغيير حالة الطلب إلى "قيد التنفيذ"
+            // تم دفع الطلب - الحالة تبقى كما هي حتى يوافق البائع
             $order->chat_conversation_id = $request->conversation_id;
             $order->save();
             

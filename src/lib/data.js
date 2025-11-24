@@ -609,7 +609,7 @@ export const orders = [
     userId: 'u2',
     gigId: 'g2',
     sellerId: 's2',
-    status: 'in_progress',
+    status: 'seller_approved',
     price: 250,
     quantity: 1,
     totalPrice: 250,

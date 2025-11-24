@@ -58,6 +58,7 @@ const DashboardSettings = () => {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [notificationSettings, setNotificationSettings] = useState({
     email_notifications: user?.email_notifications || false,
+    show_ai_assistant: user?.show_ai_assistant !== false, // True by default unless explicitly set to false
   });
   const [savingNotifications, setSavingNotifications] = useState(false);
 
@@ -212,9 +213,10 @@ const DashboardSettings = () => {
 
   // Update notification settings when user changes
   useEffect(() => {
-    if (user?.email_notifications !== undefined) {
+    if (user) {
       setNotificationSettings({
         email_notifications: user.email_notifications || false,
+        show_ai_assistant: user.show_ai_assistant !== false, // True by default unless explicitly set to false
       });
     }
   }, [user]);
@@ -227,6 +229,7 @@ const DashboardSettings = () => {
     try {
       const success = await updateProfile({
         email_notifications: notificationSettings.email_notifications,
+        show_ai_assistant: notificationSettings.show_ai_assistant,
       });
       
       if (success) {
@@ -439,6 +442,25 @@ const DashboardSettings = () => {
                 checked={notificationSettings.email_notifications}
                 onCheckedChange={(checked) => 
                   setNotificationSettings(prev => ({ ...prev, email_notifications: checked }))
+                }
+              />
+            </div>
+
+            {/* AI Assistant Settings */}
+            <div className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg">
+              <div className="flex-1">
+                <Label htmlFor="showAiAssistant" className="text-base font-medium cursor-pointer">
+                  إظهار ميرنا (المساعد الذكي)
+                </Label>
+                <p className="text-sm text-gray-500 mt-1">
+                  إظهار أو إخفاء ميرنا المساعد الذكي في الموقع
+                </p>
+              </div>
+              <Switch
+                id="showAiAssistant"
+                checked={notificationSettings.show_ai_assistant}
+                onCheckedChange={(checked) => 
+                  setNotificationSettings(prev => ({ ...prev, show_ai_assistant: checked }))
                 }
               />
             </div>

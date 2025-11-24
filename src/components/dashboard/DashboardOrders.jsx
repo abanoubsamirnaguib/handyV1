@@ -25,11 +25,6 @@ const OrderStatusBadge = ({ status, statusLabel }) => {
       icon: <CheckCircle className="ml-1 h-3 w-3" />, 
       className: 'bg-gradient-to-r from-indigo-100 to-indigo-50 text-indigo-700 border-indigo-200 shadow-sm'
     },
-    'in_progress': { 
-      icon: <Package className="ml-1 h-3 w-3" />, 
-      className: 'bg-gradient-to-r from-purple-100 to-purple-50 text-purple-700 border-purple-200 shadow-sm',
-      pulse: true
-    },
     'work_completed': { 
       icon: <Package className="ml-1 h-3 w-3" />, 
       className: 'bg-gradient-to-r from-cyan-100 to-cyan-50 text-cyan-700 border-cyan-200 shadow-sm'
@@ -430,7 +425,7 @@ const DashboardOrders = () => {
                       <div className="mt-2 text-xs text-gray-500">
                         <Clock className="inline ml-1 h-3 w-3" />
                         موعد الإنجاز: {formatDate(order.completion_deadline)}
-                        {order.work_started_at && order.time_remaining && !order.time_remaining.is_late && (
+                        {order.seller_approved_at && order.time_remaining && !order.time_remaining.is_late && (
                           <span className="text-blue-600 mr-2">
                             (متبقي: {(() => {
                               // Handle both backend formats - days/hours as separate fields or days as decimal

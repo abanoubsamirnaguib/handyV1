@@ -23,6 +23,7 @@ class UserResource extends JsonResource
             'seller_id' => $this->seller_id, // ID from sellers table (null if not a seller)
             'buyer_wallet_balance' => $this->buyer_wallet_balance,
             'email_notifications' => $this->email_notifications ?? false,
+            'show_ai_assistant' => $this->show_ai_assistant ?? true,
             'orders_count' => $this->orders_count ?? 0,
             'created_at' => $this->created_at,
             'last_login' => $this->last_login,

@@ -291,7 +291,7 @@ const DeliveryDashboardPage = () => {
             <div className="border-t pt-3">
               <h4 className="font-medium mb-2 flex items-center">
                 <User className="h-4 w-4 mr-1" />
-                معلومات البائع
+                بيانات البائع
               </h4>
               <div className="text-sm text-gray-600 space-y-1">
                 <div>الاسم: {order.seller?.user?.name}</div>
@@ -305,7 +305,7 @@ const DeliveryDashboardPage = () => {
             <div className="border-t pt-3">
               <h4 className="font-medium mb-2 flex items-center">
                 <User className="h-4 w-4 mr-1" />
-                معلومات العميل
+                بيانات المشتري
               </h4>
               <div className="text-sm text-gray-600 space-y-1">
                 <div>الاسم: {order.customer_name || order.user?.name}</div>
@@ -552,25 +552,25 @@ const DeliveryDashboardPage = () => {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">الأرباح اليوم</CardTitle>
-              <DollarSign className="h-4 w-4 text-green-600" />
+              <CardTitle className="text-sm font-medium">المشاوير المكتملة</CardTitle>
+              <Package className="h-4 w-4 text-green-600" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-green-600">
-                {stats.earnings?.today || 0} ج.م
+                {Math.floor(stats.trips_count / 2) || 0}
               </div>
               <p className="text-xs text-muted-foreground">
-                من {stats.earnings?.pickup_count || 0} استلام و {stats.earnings?.delivery_count || 0} تسليم
+                إجمالي عدد المشاوير المكتملة
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">في انتظار الاستلام</CardTitle>
+              <CardTitle className="text-sm font-medium">في انتظار الاستلام من البائع</CardTitle>
               <Clock className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -583,7 +583,7 @@ const DeliveryDashboardPage = () => {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">جاهز للتسليم</CardTitle>
+              <CardTitle className="text-sm font-medium">في انتظار التسليم للمشتري</CardTitle>
               <Truck className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -612,10 +612,10 @@ const DeliveryDashboardPage = () => {
         <Tabs defaultValue="pickup" className="space-y-4">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="pickup">
-              طلبات الاستلام ({getOrdersByStatus('ready_for_delivery').length})
+              في انتظار الاستلام من البائع ({getOrdersByStatus('ready_for_delivery').length})
             </TabsTrigger>
             <TabsTrigger value="delivery">
-              طلبات التسليم ({getOrdersByStatus('out_for_delivery').length})
+              في انتظار التسليم للمشتري ({getOrdersByStatus('out_for_delivery').length})
             </TabsTrigger>
             <TabsTrigger value="suspended">
               طلبات معلقة ({suspendedOrders.length})

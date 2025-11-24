@@ -612,46 +612,6 @@ class OrderCrudController extends Controller
         }
     }
     
-    // بدء العمل على الطلب
-    public function startWork($id)
-    {
-        $order = Order::findOrFail($id);
-        
-        // التحقق من أن البائع يملك هذا الطلب
-        if ($order->seller->user_id !== Auth::id()) {
-            return response()->json(['message' => 'غير مصرح لك بهذا الإجراء'], 403);
-        }
-        
-        try {
-            $order->startWork();
-            // Notify buyer and seller
-            Notification::create([
-                'user_id' => $order->user_id,
-                'notification_type' => 'order_status_changed',
-                'message' => 'بدأ البائع العمل على طلبك رقم: ' . $order->id,
-                'is_read' => false,
-                'link' => '/orders/' . $order->id,
-                'created_at' => now(),
-            ]);
-            if ($order->seller && $order->seller->user_id) {
-                Notification::create([
-                    'user_id' => $order->seller->user_id,
-                    'notification_type' => 'order_status_changed',
-                    'message' => 'لقد بدأت العمل على الطلب رقم: ' . $order->id,
-                    'is_read' => false,
-                    'link' => '/orders/' . $order->id,
-                    'created_at' => now(),
-                ]);
-            }
-            return response()->json([
-                'message' => 'تم بدء العمل على الطلب بنجاح',
-                'order' => new OrderResource($order->fresh())
-            ]);
-        } catch (\Exception $e) {
-            return response()->json(['message' => $e->getMessage()], 400);
-        }
-    }
-    
     // إكمال العمل على الطلب
     public function completeWork(Request $request, $id)
     {
@@ -798,7 +758,7 @@ class OrderCrudController extends Controller
             // إرجاع العربون للطلبات التي تتطلب عربون
             if ($order->requires_deposit && $order->hasDepositPaid()) {
                 $wasAdminApproved = !is_null($order->admin_approved_at) || in_array($order->status, [
-                    'admin_approved', 'seller_approved', 'in_progress', 'ready_for_delivery', 'out_for_delivery', 'delivered'
+                    'admin_approved', 'seller_approved', 'ready_for_delivery', 'out_for_delivery', 'delivered'
                 ]);
                 if($wasAdminApproved) {
                     $order->user->addToBuyerWallet($order->deposit_amount);
@@ -1008,7 +968,7 @@ class OrderCrudController extends Controller
         }
 
         $request->validate([
-            'status' => 'required|in:pending,admin_approved,seller_approved,in_progress,ready_for_delivery,out_for_delivery,delivered,completed,cancelled,suspended',
+            'status' => 'required|in:pending,admin_approved,seller_approved,ready_for_delivery,out_for_delivery,delivered,completed,cancelled,suspended',
             'notes' => 'nullable|string|max:1000'
         ]);
 
@@ -1146,7 +1106,6 @@ class OrderCrudController extends Controller
             'pending' => 'بانتظار المراجعة',
             'admin_approved' => 'معتمد من الإدارة',
             'seller_approved' => 'مقبول من البائع',
-            'in_progress' => 'جاري العمل',
             'ready_for_delivery' => 'جاهز للتوصيل',
             'out_for_delivery' => 'في الطريق',
             'delivered' => 'تم التوصيل',
@@ -1255,7 +1214,7 @@ class OrderCrudController extends Controller
             
             // Orders in progress
             $ordersInProgress = Order::where('user_id', $userId)
-                ->whereIn('status', ['pending', 'admin_approved', 'seller_approved', 'in_progress', 'work_completed', 'ready_for_delivery', 'out_for_delivery'])
+                ->whereIn('status', ['pending', 'admin_approved', 'seller_approved', 'work_completed', 'ready_for_delivery', 'out_for_delivery'])
                 ->count();
             
             // Total spent (from completed orders)

@@ -4,7 +4,7 @@
 
 :root {
   /* Base colors - using Roman neutral palette */
-  --background: 39 14% 96%;  /* #feefd7 - neutral-100 */
+  --background: 0 0% 100%;  /* White */
   --foreground: 0 6% 18%;    /* #2e2e2f - neutral-900 */
   
   /* Card styling */

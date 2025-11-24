@@ -980,7 +980,6 @@ const ProfilePage = () => {
                         'pending': { label: 'قيد الانتظار', className: 'bg-amber-100 text-amber-700', icon: Clock },
                         'admin_approved': { label: 'موافق عليه', className: 'bg-blue-100 text-blue-700', icon: CheckCircle },
                         'seller_approved': { label: 'موافق عليه', className: 'bg-indigo-100 text-indigo-700', icon: CheckCircle },
-                        'in_progress': { label: 'قيد التنفيذ', className: 'bg-purple-100 text-purple-700', icon: Package },
                         'work_completed': { label: 'تم الإنجاز', className: 'bg-cyan-100 text-cyan-700', icon: Package },
                         'out_for_delivery': { label: 'قيد التوصيل', className: 'bg-orange-100 text-orange-700', icon: Truck },
                         'delivered': { label: 'تم التسليم', className: 'bg-green-100 text-green-700', icon: Truck },

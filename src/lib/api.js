@@ -619,6 +619,8 @@ export const adminApi = {
     apiFetch(`admin/delivery-personnel/${personnelId}`, { method: 'DELETE' }),
   resetDeliveryPersonnelPassword: (personnelId) => 
     apiFetch(`admin/delivery-personnel/${personnelId}/reset-password`, { method: 'POST' }),
+  resetTripsCount: (personnelId) =>
+    apiFetch(`admin/delivery-personnel/${personnelId}/reset-trips`, { method: 'POST' }),
   getAvailableDeliveryPersonnel: () => apiFetch('admin/delivery/available-personnel'),
   
   // New Delivery Order Management
@@ -880,11 +882,6 @@ export const sellerApi = {
       body: JSON.stringify({ reason }),
     }),
   
-  startWork: (orderId, notes = '') => 
-    apiFetch(`orders/${orderId}/start-work`, {
-      method: 'POST',
-      body: JSON.stringify({ notes }),
-    }),
   completeWork: (orderId, notes = '', deliveryDate = null) => 
     apiFetch(`orders/${orderId}/complete-work`, {
       method: 'POST',

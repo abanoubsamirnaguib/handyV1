@@ -102,7 +102,7 @@ class Seller extends Model
     public function getPendingEarnings()
     {
         return Order::where('seller_id', $this->id)
-                   ->whereIn('status', ['pending', 'admin_approved', 'seller_approved', 'in_progress', 'ready_for_delivery', 'out_for_delivery', 'delivered'])
+                   ->whereIn('status', ['pending', 'admin_approved', 'seller_approved', 'ready_for_delivery', 'out_for_delivery', 'delivered'])
                    ->sum('total_price');
     }
 

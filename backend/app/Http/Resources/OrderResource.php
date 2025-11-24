@@ -58,7 +58,6 @@ class OrderResource extends JsonResource
             'admin_approved_by' => $this->admin_approved_by,
             'admin_approver' => new UserResource($this->whenLoaded('adminApprover')),
             'seller_approved_at' => $this->seller_approved_at,
-            'work_started_at' => $this->work_started_at,
             'work_completed_at' => $this->work_completed_at,
             'delivery_scheduled_at' => $this->delivery_scheduled_at,
             'delivery_picked_up_at' => $this->delivery_picked_up_at,
@@ -86,7 +85,6 @@ class OrderResource extends JsonResource
             // معلومات إضافية
             'can_be_approved_by_admin' => $this->canBeApprovedByAdmin(),
             'can_be_approved_by_seller' => $this->canBeApprovedBySeller(),
-            'can_start_work' => $this->canStartWork(),
             'can_complete_work' => $this->canCompleteWork(),
             'can_be_picked_up_by_delivery' => $this->canBePickedUpByDelivery(),
             'can_be_delivered' => $this->canBeDelivered(),
@@ -141,15 +139,6 @@ class OrderResource extends JsonResource
                 'status' => 'seller_approved',
                 'label' => 'موافقة البائع',
                 'date' => $this->seller_approved_at,
-                'completed' => true
-            ];
-        }
-        
-        if ($this->work_started_at) {
-            $timeline[] = [
-                'status' => 'work_started',
-                'label' => 'بدء العمل',
-                'date' => $this->work_started_at,
                 'completed' => true
             ];
         }

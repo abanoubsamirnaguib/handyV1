@@ -101,7 +101,7 @@ const OrderDetailPage = () => {
   const checkAndUpdateLateOrder = async (orderData) => {
     // Check if order has completion deadline and is in active status
     if (!orderData.completion_deadline || 
-        !['seller_approved', 'in_progress'].includes(orderData.status) ||
+        orderData.status !== 'seller_approved' ||
         orderData.is_late) {
       return;
     }
@@ -347,28 +347,6 @@ const OrderDetailPage = () => {
           description: error.response?.data?.message || "حدث خطأ أثناء قبول الطلب.",
         });
       }
-    } finally {
-      setIsUpdating(false);
-    }
-  };
-
-  const handleStartWork = async () => {
-    setIsUpdating(true);
-    try {
-      await sellerApi.startWork(orderId, notes);
-      toast({
-        title: "تم بدء العمل",
-        description: "تم بدء العمل على الطلب بنجاح.",
-      });
-      setNotes('');
-      loadOrder();
-    } catch (error) {
-      console.error('Error starting work:', error);
-      toast({
-        variant: "destructive",
-        title: "خطأ في بدء العمل",
-        description: "حدث خطأ أثناء بدء العمل على الطلب.",
-      });
     } finally {
       setIsUpdating(false);
     }
@@ -760,12 +738,6 @@ const OrderDetailPage = () => {
         icon: <Check className="h-4 w-4 ml-1" />, 
         color: 'bg-green-100 text-green-700 border-green-200 shadow-md'
       },
-      'in_progress': { 
-        label: 'جاري العمل', 
-        icon: <Timer className="h-4 w-4 ml-1" />, 
-        color: 'bg-roman-500/20 text-roman-500 border-roman-500/30 shadow-md',
-        pulse: true
-      },
       'ready_for_delivery': { 
         label: 'جاهز للتوصيل', 
         icon: <Package className="h-4 w-4 ml-1" />, 
@@ -882,9 +854,9 @@ const OrderDetailPage = () => {
     // Check if there are any actions available - if not, don't render the card
     const hasCustomerActions = isCustomer && (
       (order.status === 'pending' && !order.payment_proof && !(order.is_service_order && order.requires_deposit)) ||
-      (order.is_service_order && order.requires_deposit && order.deposit_status === 'paid' && !order.remaining_payment_proof && ['admin_approved', 'seller_approved', 'in_progress', 'work_completed', 'ready_for_delivery', 'out_for_delivery', 'delivered'].includes(order.status)) ||
+      (order.is_service_order && order.requires_deposit && order.deposit_status === 'paid' && !order.remaining_payment_proof && ['admin_approved', 'seller_approved', 'work_completed', 'ready_for_delivery', 'out_for_delivery', 'delivered'].includes(order.status)) ||
       (order.is_service_order && order.requires_deposit && order.deposit_status === 'paid' && order.remaining_payment_proof) ||
-      ['pending', 'admin_approved', 'seller_approved', 'in_progress'].includes(order.status) ||
+      ['pending', 'admin_approved', 'seller_approved'].includes(order.status) ||
       order.status === 'delivered'
     );
     
@@ -893,8 +865,7 @@ const OrderDetailPage = () => {
     const hasSellerActions = isSeller && (
       (order.price_approval_status === 'pending_approval' && order.buyer_proposed_price) ||
       order.status === 'admin_approved' ||
-      order.status === 'seller_approved' ||
-      order.status === 'in_progress'
+      order.status === 'seller_approved'
     );
     
     const hasDeliveryActions = isDelivery && (
@@ -966,7 +937,7 @@ const OrderDetailPage = () => {
                order.requires_deposit && 
                order.deposit_status === 'paid' && 
                !order.remaining_payment_proof &&
-               ['admin_approved', 'seller_approved', 'in_progress', 'work_completed', 'ready_for_delivery', 'out_for_delivery', 'delivered'].includes(order.status) && (
+               ['admin_approved', 'seller_approved', 'work_completed', 'ready_for_delivery', 'out_for_delivery', 'delivered'].includes(order.status) && (
                 <div className="space-y-3">
                   <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
                     <h4 className="font-semibold text-blue-800 mb-2">دفع باقي المبلغ</h4>
@@ -1029,8 +1000,7 @@ const OrderDetailPage = () => {
 
               {(order.status === 'pending' || 
                 order.status === 'admin_approved' || 
-                order.status === 'seller_approved' ||
-                order.status === 'in_progress') && (
+                order.status === 'seller_approved') && (
                 <div className="space-y-3">
                   <Label>عنوان التوصيل</Label>
                   <Textarea
@@ -1189,17 +1159,6 @@ const OrderDetailPage = () => {
               )}
 
               {order.status === 'seller_approved' && (
-                <Button 
-                  onClick={handleStartWork}
-                  disabled={isUpdating}
-                  className="w-full bg-purple-600 hover:bg-purple-700"
-                >
-                  {isUpdating ? <Loader2 className="h-4 w-4 animate-spin ml-2" /> : <Timer className="h-4 w-4 ml-2" />}
-                  بدء العمل على الطلب
-                </Button>
-              )}
-
-              {order.status === 'in_progress' && (
                 <div className="space-y-3">
                   <Label>ملاحظات إنهاء العمل</Label>
                   <Textarea
@@ -1924,10 +1883,10 @@ const OrderDetailPage = () => {
                   )}
                   
                   {/* Time Remaining for Active Orders */}
-                  {order.work_started_at &&
+                  {order.seller_approved_at &&
                    order.time_remaining && 
                    !order.time_remaining.is_late && 
-                   ['seller_approved', 'in_progress'].includes(order.status) && (
+                   order.status === 'seller_approved' && (
                     <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                       <div className="flex items-center">
                         <Clock className="h-5 w-5 text-blue-600 ml-2" />

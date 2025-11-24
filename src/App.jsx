@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster } from '@/components/ui/toaster';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { CartProvider } from '@/contexts/CartContext';
@@ -74,6 +74,8 @@ import AdminPlatformProfits from '@/components/admin/AdminPlatformProfits';
 import './styles/rtl-dropdown.css'; // Import our RTL dropdown styles
 
 function App() {
+  const location = useLocation();
+
   return (
     <SiteSettingsProvider>
       <AuthProvider>
@@ -230,7 +232,7 @@ function App() {
               </Route>
             </Routes>
             <Toaster />
-            <AIAssistant />
+            {!location.pathname.startsWith('/admin') && !location.pathname.startsWith('/delivery') && <AIAssistant />}
           </NotificationProvider>
         </ChatProvider>
       </CartProvider>

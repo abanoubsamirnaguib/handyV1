@@ -13,7 +13,7 @@ class OrderRequest extends FormRequest
             return [
                 'user_id' => 'required|exists:users,id',
                 'seller_id' => 'required|exists:sellers,id',
-                'status' => 'in:pending,admin_approved,seller_approved,in_progress,ready_for_delivery,out_for_delivery,delivered,completed,cancelled',
+                'status' => 'in:pending,admin_approved,seller_approved,ready_for_delivery,out_for_delivery,delivered,completed,cancelled',
                 'total_price' => 'required|numeric',
                 'order_date' => 'required|date',
                 'delivery_date' => 'nullable|date',
@@ -42,7 +42,7 @@ class OrderRequest extends FormRequest
         }
         // PATCH/PUT (update)
         return [
-            'status' => 'in:pending,admin_approved,seller_approved,in_progress,ready_for_delivery,out_for_delivery,delivered,completed,cancelled',
+            'status' => 'in:pending,admin_approved,seller_approved,ready_for_delivery,out_for_delivery,delivered,completed,cancelled',
             'total_price' => 'sometimes|required|numeric',
             'order_date' => 'sometimes|required|date',
             'delivery_date' => 'nullable|date',

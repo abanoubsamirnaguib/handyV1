@@ -144,7 +144,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('{id}/seller-approve', [OrderCrudController::class, 'sellerApprove']);
         Route::post('{id}/approve-price', [OrderCrudController::class, 'approveProposedPrice']);
         Route::post('{id}/reject-price', [OrderCrudController::class, 'rejectProposedPrice']);
-        Route::post('{id}/start-work', [OrderCrudController::class, 'startWork']);
         Route::post('{id}/complete-work', [OrderCrudController::class, 'completeWork']);
         
         // Delivery actions
@@ -273,6 +272,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         // Delivery Personnel Management
         Route::apiResource('delivery-personnel', DeliveryPersonnelCrudController::class);
         Route::post('delivery-personnel/{id}/reset-password', [DeliveryPersonnelCrudController::class, 'resetPassword']);
+        Route::post('delivery-personnel/{id}/reset-trips', [DeliveryPersonnelCrudController::class, 'resetTripsCount']);
         Route::get('delivery/available-personnel', [DeliveryPersonnelCrudController::class, 'availableDeliveryPersonnel']);
         
         // New Delivery Order Management

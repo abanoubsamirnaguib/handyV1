@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\DeliveryPersonnel;
-use App\Models\DeliveryEarning;
 use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -88,10 +87,7 @@ class DeliveryController extends Controller
             'data' => [
                 'delivery_person' => $deliveryPerson,
                 'stats' => [
-                    'total_pickups' => $deliveryPerson->getPickupCount(),
-                    'total_deliveries' => $deliveryPerson->getDeliveryCount(),
-                    'today_pickups' => $deliveryPerson->getTodayPickupCount(),
-                    'today_deliveries' => $deliveryPerson->getTodayDeliveryCount(),
+                    'trips_count' => $deliveryPerson->trips_count,
                     'is_available' => $deliveryPerson->isAvailable()
                 ]
             ]
@@ -104,19 +100,13 @@ class DeliveryController extends Controller
         $deliveryPerson = Auth::guard('delivery')->user();
         $deliveryPerson->updateLastSeen();
 
-        $earningsStats = $deliveryPerson->getEarningsStats();
-
         return response()->json([
             'success' => true,
             'data' => [
-                'total_pickups' => $deliveryPerson->getPickupCount(),
-                'total_deliveries' => $deliveryPerson->getDeliveryCount(),
-                'today_pickups' => $deliveryPerson->getTodayPickupCount(),
-                'today_deliveries' => $deliveryPerson->getTodayDeliveryCount(),
+                'trips_count' => $deliveryPerson->trips_count,
                 'pending_pickups' => $deliveryPerson->ordersToPickup()->count(),
                 'pending_deliveries' => $deliveryPerson->ordersToDeliver()->count(),
                 'is_available' => $deliveryPerson->isAvailable(),
-                'earnings' => $earningsStats
             ]
         ]);
     }
@@ -236,15 +226,10 @@ class DeliveryController extends Controller
             // استخدام الدالة الجديدة التي تتعامل مع النظام المحدث
             $order->pickUpByDelivery($deliveryPerson->id, 'تم استلام الطلب من البائع');
 
-            // إضافة ربح للدليفري عن الاستلام
-            DeliveryEarning::createEarning(
-                $deliveryPerson->id,
-                $order->id,
-                'pickup',
-                $order->delivery_fee ?? 10.00
-            );
+            // زيادة عدد المشاوير
+            $deliveryPerson->increment('trips_count');
 
-            $message = 'تم استلام الطلب بنجاح وإضافة 10 ج لحسابك';
+            $message = 'تم استلام الطلب بنجاح';
             
             // إذا لم يتم تعيين موظف التسليم، أضف تنبيه
             if (!$order->delivery_person_id || $order->delivery_person_id != $deliveryPerson->id) {
@@ -294,17 +279,12 @@ class DeliveryController extends Controller
 
             $order->addToHistory('delivered', null, 'delivery', 'تم تسليم الطلب للعميل بواسطة الدليفري');
 
-            // إضافة ربح للدليفري عن التسليم
-            DeliveryEarning::createEarning(
-                $deliveryPerson->id,
-                $order->id,
-                'delivery',
-                $order->delivery_fee ?? 10.00
-            );
+            // زيادة عدد المشاوير
+            $deliveryPerson->increment('trips_count');
 
             return response()->json([
                 'success' => true,
-                'message' => 'تم تسليم الطلب بنجاح وإضافة 10 ج لحسابك',
+                'message' => 'تم تسليم الطلب بنجاح',
                 'data' => $order
             ]);
         } catch (\Exception $e) {

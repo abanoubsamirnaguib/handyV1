@@ -34,7 +34,8 @@ class User extends Authenticatable
         'cover_image',
         'phone',
         'email_verified',
-        'email_notifications'
+        'email_notifications',
+        'show_ai_assistant'
     ];
 
     /**
@@ -61,6 +62,7 @@ class User extends Authenticatable
             'is_buyer' => 'boolean',
             'email_verified' => 'boolean',
             'email_notifications' => 'boolean',
+            'show_ai_assistant' => 'boolean',
             'last_seen' => 'datetime',
             'buyer_wallet_balance' => 'decimal:2',
         ];

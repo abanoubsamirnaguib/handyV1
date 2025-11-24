@@ -12,6 +12,12 @@ import { useAuth } from '@/contexts/AuthContext';
 
 const AIAssistant = () => {
   const { user } = useAuth();
+  
+  // Don't render if user has explicitly disabled AI assistant
+  if (user && user.show_ai_assistant === false) {
+    return null;
+  }
+  
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');

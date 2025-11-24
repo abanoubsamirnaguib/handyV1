@@ -32,6 +32,7 @@ class UserRequest extends FormRequest
             'skills' => 'nullable|array',
             'skills.*' => 'nullable|string',
             'email_notifications' => 'nullable|boolean',
+            'show_ai_assistant' => 'nullable|boolean',
         ];
     }
 }

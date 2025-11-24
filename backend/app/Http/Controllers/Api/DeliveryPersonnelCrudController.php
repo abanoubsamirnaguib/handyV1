@@ -96,14 +96,10 @@ class DeliveryPersonnelCrudController extends Controller
         $deliveryPerson = DeliveryPersonnel::with(['createdBy'])->findOrFail($id);
         
         $stats = [
-            'total_orders' => $deliveryPerson->orders()->count(),
-            'total_pickups' => $deliveryPerson->getPickupCount(),
-            'total_deliveries' => $deliveryPerson->getDeliveryCount(),
-            'today_pickups' => $deliveryPerson->getTodayPickupCount(),
-            'today_deliveries' => $deliveryPerson->getTodayDeliveryCount(),
+            'trips_count' => $deliveryPerson->trips_count,
             'pending_pickups' => $deliveryPerson->ordersToPickup()->count(),
             'pending_deliveries' => $deliveryPerson->ordersToDeliver()->count(),
-        ];
+        ];;
 
         return response()->json([
             'success' => true,
@@ -593,4 +589,17 @@ class DeliveryPersonnelCrudController extends Controller
             'data' => $orders
         ]);
     }
-} 
+
+    // تصفير عداد المشاوير لدليفري معين
+    public function resetTripsCount(Request $request, $id)
+    {
+        $deliveryPerson = DeliveryPersonnel::findOrFail($id);
+        $deliveryPerson->resetTripsCount();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'تم تصفير عداد المشاوير بنجاح',
+            'data' => $deliveryPerson->fresh()
+        ]);
+    }
+}

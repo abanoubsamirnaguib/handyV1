@@ -132,11 +132,6 @@ class Order extends Model
     {
         return $this->belongsTo(DeliveryPersonnel::class, 'pickup_person_id');
     }
-
-    public function deliveryEarnings()
-    {
-        return $this->hasMany(DeliveryEarning::class);
-    }
     
     public function history()
     {
@@ -161,11 +156,6 @@ class Order extends Model
     public function isSellerApproved()
     {                       
         return $this->status === 'seller_approved';
-    }
-    
-    public function isInProgress()
-    {
-        return $this->status === 'in_progress';
     }
     
     public function isReadyForDelivery()
@@ -222,14 +212,9 @@ class Order extends Model
         return $this->isAdminApproved();
     }
     
-    public function canStartWork()
-    {
-        return $this->isSellerApproved();
-    }
-    
     public function canCompleteWork()
     {
-        return $this->isInProgress();
+        return $this->isSellerApproved();
     }
     
     public function canBePickedUpByDelivery()
@@ -252,9 +237,9 @@ class Order extends Model
         return $this->isDelivered();
     }
     
-    public function canBeCancelledByUser()
+    public function canBeCancelled()
     {
-        return in_array($this->status, ['pending', 'admin_approved', 'seller_approved', 'in_progress']);
+        return in_array($this->status, ['pending', 'admin_approved', 'seller_approved']);
     }
     
     public function approveByAdmin($adminId, $notes = null)
@@ -360,33 +345,13 @@ class Order extends Model
         $this->addToHistory('seller_approved', $this->seller->user_id, 'seller_approval', $notes);
     }
     
-    public function startWork()
-    {
-        if (!$this->canStartWork()) {
-            throw new \Exception('لا يمكن بدء العمل على هذا الطلب في الوقت الحالي');
-        }
-        
-        $startTime = now();
-        $updateData = [
-            'status' => 'in_progress',
-            'work_started_at' => $startTime
-        ];
-        
-        $plannedDurationInSeconds = $this->getPlannedWorkDurationInSeconds();
-        if ($plannedDurationInSeconds > 0) {
-            $updateData['completion_deadline'] = $startTime->copy()->addSeconds($plannedDurationInSeconds);
-        }
-        
-        $this->update($updateData);
-        
-        $this->addToHistory('in_progress', $this->seller->user_id, 'work_started');
-    }
-    
     public function completeWork($deliveryScheduledAt = null)
     {
         if (!$this->canCompleteWork()) {
             throw new \Exception('لا يمكن إكمال العمل على هذا الطلب في الوقت الحالي');
         }
+        
+        // تحديث الحالة من seller_approved إلى ready_for_delivery
         
         $this->update([
             'status' => 'ready_for_delivery',
@@ -646,7 +611,6 @@ class Order extends Model
                in_array($this->status, [
                    'admin_approved', 
                    'seller_approved', 
-                   'in_progress', 
                    'work_completed',
                    'ready_for_delivery',
                    'out_for_delivery',
@@ -660,7 +624,6 @@ class Order extends Model
             'pending' => 'قيد الانتظار',
             'admin_approved' => 'موافقة الإدارة',
             'seller_approved' => 'موافقة البائع',
-            'in_progress' => 'جاري التنفيذ',
             'ready_for_delivery' => 'جاهز للتوصيل',
             'out_for_delivery' => 'قيد التوصيل',
             'delivered' => 'تم التوصيل',
@@ -680,8 +643,6 @@ class Order extends Model
             case 'admin_approved':
                 return 'انتظار موافقة البائع';
             case 'seller_approved':
-                return 'انتظار بدء العمل';
-            case 'in_progress':
                 return 'العمل قيد التنفيذ';
             case 'ready_for_delivery':
                 return 'انتظار استلام الدليفري';
@@ -722,14 +683,14 @@ class Order extends Model
             !$this->completion_deadline || 
             $this->isCompleted() || 
             $this->isCancelled() ||
-            !$this->work_started_at
+            !$this->seller_approved_at
         ) {
             return false;
         }
         
         // الطلب يصبح متأخر إذا تجاوز الموعد المحدد ولم يصل لحالة "جاهز للتوصيل" بعد
         $isLate = now()->gt($this->completion_deadline) && 
-                  in_array($this->status, ['seller_approved', 'in_progress']) && 
+                  $this->status === 'seller_approved' && 
                   !$this->isReadyForDelivery();
         
         if ($isLate && !$this->is_late) {
@@ -746,7 +707,7 @@ class Order extends Model
             !$this->completion_deadline || 
             $this->isCompleted() || 
             $this->isCancelled() ||
-            !$this->work_started_at
+            !$this->seller_approved_at
         ) {
             return null;
         }

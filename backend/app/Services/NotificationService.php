@@ -143,7 +143,7 @@ class NotificationService
     {
         // Check if this notification type is enabled for users
         if (!self::isUserNotificationEnabled($type)) {
-            // Still create the notification but don't send email
+            // Still create the notification but don't send email or web push
             $notification = Notification::create([
                 'user_id' => $userId,
                 'notification_type' => $type,
@@ -152,7 +152,7 @@ class NotificationService
                 'is_read' => false,
             ]);
             
-            // Fire the notification event for real-time broadcasting
+            // Fire the notification event for real-time broadcasting (Pusher)
             event(new NotificationCreated($notification));
             
             return $notification;
@@ -166,8 +166,13 @@ class NotificationService
             'is_read' => false,
         ]);
 
-        // Fire the notification event for real-time broadcasting
+        // Fire the notification event for real-time broadcasting (Pusher)
+        // This handles notifications when the app is OPEN
         event(new NotificationCreated($notification));
+
+        // Send Web Push notification for when the app is CLOSED
+        // This uses the service worker to show browser notifications
+        self::sendWebPushNotification($notification);
 
         // Send email notification if user has enabled email notifications
         $user = User::find($userId);
@@ -176,6 +181,32 @@ class NotificationService
         }
 
         return $notification;
+    }
+
+    /**
+     * Send Web Push notification to user
+     * This handles notifications when the app/browser tab is closed
+     */
+    private static function sendWebPushNotification(Notification $notification): void
+    {
+        try {
+            $webPushService = app(WebPushService::class);
+            
+            // Only send if Web Push is configured
+            if (!$webPushService->isConfigured()) {
+                return;
+            }
+
+            $payload = $webPushService->createPayloadFromNotification($notification);
+            $webPushService->sendToUser($notification->user_id, $payload);
+            
+        } catch (\Exception $e) {
+            Log::error('Failed to send Web Push notification', [
+                'notification_id' => $notification->id,
+                'user_id' => $notification->user_id,
+                'error' => $e->getMessage()
+            ]);
+        }
     }
 
     /**

@@ -378,6 +378,22 @@ export const api = {
   markAllNotificationsAsRead: () => apiFetch('notifications/mark-all-read', { method: 'POST' }),
   deleteNotification: (id) => apiFetch(`notifications/${id}`, { method: 'DELETE' }),
 
+  // Web Push Notification API functions
+  // These endpoints manage browser push notification subscriptions
+  getWebPushPublicKey: () => apiFetch('webpush/public-key'),
+  subscribeWebPush: (subscription) => 
+    apiFetch('webpush/subscribe', {
+      method: 'POST',
+      body: JSON.stringify({ subscription }),
+    }),
+  unsubscribeWebPush: (endpoint = null) => 
+    apiFetch('webpush/unsubscribe', {
+      method: 'POST',
+      body: JSON.stringify({ endpoint }),
+    }),
+  getWebPushStatus: () => apiFetch('webpush/status'),
+  testWebPush: () => apiFetch('webpush/test', { method: 'POST' }),
+
   // Withdrawal requests for sellers
   getWithdrawalRequests: () => apiFetch('withdrawals'),
   createWithdrawalRequest: (data) => 

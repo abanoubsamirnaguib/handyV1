@@ -39,9 +39,14 @@ use App\Http\Controllers\Api\AdminAnnouncementController;
 use App\Http\Controllers\Api\CityCrudController;
 use App\Http\Controllers\Api\PlatformProfitController;
 use App\Http\Controllers\Api\AIAssistantController;
+use App\Http\Controllers\Api\WebPushController;
 
 
 Broadcast::routes(['middleware' => ['broadcast.auth']]);
+
+// Web Push Notification Routes
+// Public route to get VAPID public key (needed before user authentication)
+Route::get('webpush/public-key', [WebPushController::class, 'getPublicKey']);
 
 Route::prefix('listsellers')->group(function () {
     Route::get('{id}', [SellerController::class, 'show'])->middleware('optional.auth');
@@ -218,6 +223,14 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('notifications/unread-count', [NotificationCrudController::class, 'unreadCount']);
     Route::post('notifications/{id}/mark-read', [NotificationCrudController::class, 'markAsRead']);
     Route::post('notifications/mark-all-read', [NotificationCrudController::class, 'markAllAsRead']);
+    
+    // Web Push Notification Routes (requires authentication)
+    Route::prefix('webpush')->group(function () {
+        Route::post('subscribe', [WebPushController::class, 'subscribe']);
+        Route::post('unsubscribe', [WebPushController::class, 'unsubscribe']);
+        Route::get('status', [WebPushController::class, 'status']);
+        Route::post('test', [WebPushController::class, 'test']);
+    });
     
     // Activity Log CRUD
     Route::apiResource('activity-logs', ActivityLogCrudController::class)->except(['show']);

@@ -18,6 +18,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { api } from '@/lib/api';
+import { urlBase64ToUint8Array, extractSubscriptionKeys } from '@/lib/webPushUtils';
 import echo from '@/lib/echo';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -30,24 +31,6 @@ export const useNotifications = () => {
   }
   return context;
 };
-
-/**
- * Convert base64 string to Uint8Array for Web Push subscription
- */
-function urlBase64ToUint8Array(base64String) {
-  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
-  const base64 = (base64String + padding)
-    .replace(/-/g, '+')
-    .replace(/_/g, '/');
-
-  const rawData = window.atob(base64);
-  const outputArray = new Uint8Array(rawData.length);
-
-  for (let i = 0; i < rawData.length; ++i) {
-    outputArray[i] = rawData.charCodeAt(i);
-  }
-  return outputArray;
-}
 
 export const NotificationProvider = ({ children }) => {
   const [notifications, setNotifications] = useState([]);
@@ -178,15 +161,10 @@ export const NotificationProvider = ({ children }) => {
 
       console.log('[Notifications] Push subscription created');
 
-      // Prepare subscription data for backend
+      // Prepare subscription data for backend using shared utility
       const subscriptionData = {
         endpoint: subscription.endpoint,
-        keys: {
-          p256dh: btoa(String.fromCharCode.apply(null, 
-            new Uint8Array(subscription.getKey('p256dh')))),
-          auth: btoa(String.fromCharCode.apply(null, 
-            new Uint8Array(subscription.getKey('auth'))))
-        }
+        keys: extractSubscriptionKeys(subscription)
       };
 
       // Save to backend

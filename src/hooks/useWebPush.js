@@ -28,24 +28,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { api } from '@/lib/api';
-
-/**
- * Convert a base64 string to Uint8Array for applicationServerKey
- */
-function urlBase64ToUint8Array(base64String) {
-  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
-  const base64 = (base64String + padding)
-    .replace(/-/g, '+')
-    .replace(/_/g, '/');
-
-  const rawData = window.atob(base64);
-  const outputArray = new Uint8Array(rawData.length);
-
-  for (let i = 0; i < rawData.length; ++i) {
-    outputArray[i] = rawData.charCodeAt(i);
-  }
-  return outputArray;
-}
+import { urlBase64ToUint8Array, extractSubscriptionKeys } from '@/lib/webPushUtils';
 
 /**
  * useWebPush Hook
@@ -107,7 +90,7 @@ export function useWebPush() {
    */
   const fetchVapidKey = useCallback(async () => {
     try {
-      const response = await api.get('webpush/public-key');
+      const response = await api.getWebPushPublicKey();
       if (response.publicKey) {
         setVapidPublicKey(response.publicKey);
         return response.publicKey;
@@ -194,19 +177,14 @@ export function useWebPush() {
 
       console.log('[WebPush] Push subscription created:', pushSubscription);
 
-      // Send subscription to backend
+      // Send subscription to backend using shared utility
       const subscriptionData = {
         endpoint: pushSubscription.endpoint,
-        keys: {
-          p256dh: btoa(String.fromCharCode.apply(null, 
-            new Uint8Array(pushSubscription.getKey('p256dh')))),
-          auth: btoa(String.fromCharCode.apply(null, 
-            new Uint8Array(pushSubscription.getKey('auth'))))
-        }
+        keys: extractSubscriptionKeys(pushSubscription)
       };
 
       // Store subscription on backend
-      await api.post('webpush/subscribe', { subscription: subscriptionData });
+      await api.subscribeWebPush(subscriptionData);
       console.log('[WebPush] Subscription saved to backend');
 
       // Update state
@@ -245,7 +223,7 @@ export function useWebPush() {
         console.log('[WebPush] Unsubscribed from push manager');
 
         // Remove subscription from backend
-        await api.post('webpush/unsubscribe', { endpoint: subscription.endpoint });
+        await api.unsubscribeWebPush(subscription.endpoint);
         console.log('[WebPush] Subscription removed from backend');
       }
 
@@ -269,7 +247,7 @@ export function useWebPush() {
   const testNotification = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await api.post('webpush/test');
+      const response = await api.testWebPush();
       console.log('[WebPush] Test notification sent:', response);
       return response;
     } catch (err) {

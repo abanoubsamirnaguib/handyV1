@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { User, Lock, Bell, CreditCard, Save } from 'lucide-react';
+import { User, Lock, Bell, CreditCard, Save, Smartphone, BellRing, BellOff } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNotifications } from '@/contexts/NotificationContext';
 import { useToast } from '@/components/ui/use-toast';
 import { apiUrl } from '@/lib/api';
 
@@ -35,6 +36,15 @@ const SettingsSection = ({ title, description, icon, children }) => (
 
 const DashboardSettings = () => {
   const { user, updateProfile, changePassword, uploadProfileImage } = useAuth();
+  const { 
+    pushSupported, 
+    pushPermission, 
+    pushSubscribed,
+    requestNotificationPermission,
+    subscribeToPush,
+    unsubscribeFromPush,
+    testPushNotification
+  } = useNotifications();
   const { toast } = useToast();
 
   const [profileData, setProfileData] = useState({
@@ -61,6 +71,7 @@ const DashboardSettings = () => {
     show_ai_assistant: user?.show_ai_assistant !== false, // True by default unless explicitly set to false
   });
   const [savingNotifications, setSavingNotifications] = useState(false);
+  const [pushLoading, setPushLoading] = useState(false);
 
   const handleProfileChange = (e) => {
     setProfileData({ ...profileData, [e.target.name]: e.target.value });
@@ -246,6 +257,70 @@ const DashboardSettings = () => {
       });
     } finally {
       setSavingNotifications(false);
+    }
+  };
+
+  /**
+   * Handle Web Push notification toggle
+   */
+  const handlePushToggle = async () => {
+    setPushLoading(true);
+    try {
+      if (pushSubscribed) {
+        // Unsubscribe
+        const success = await unsubscribeFromPush();
+        if (success) {
+          toast({
+            title: "تم إلغاء الاشتراك",
+            description: "لن تتلقى إشعارات المتصفح بعد الآن.",
+          });
+        }
+      } else {
+        // Subscribe
+        const subscription = await subscribeToPush();
+        if (subscription) {
+          toast({
+            title: "تم تفعيل الإشعارات",
+            description: "ستتلقى إشعارات المتصفح حتى عندما يكون التطبيق مغلقاً.",
+          });
+        } else if (pushPermission === 'denied') {
+          toast({
+            variant: "destructive",
+            title: "تم رفض الإذن",
+            description: "يرجى تفعيل الإشعارات من إعدادات المتصفح.",
+          });
+        }
+      }
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "خطأ",
+        description: "حدث خطأ أثناء تحديث إعدادات الإشعارات.",
+      });
+    } finally {
+      setPushLoading(false);
+    }
+  };
+
+  /**
+   * Send test push notification
+   */
+  const handleTestPush = async () => {
+    if (!pushSubscribed) {
+      toast({
+        variant: "destructive",
+        title: "خطأ",
+        description: "يرجى تفعيل إشعارات المتصفح أولاً.",
+      });
+      return;
+    }
+
+    const result = await testPushNotification();
+    if (result) {
+      toast({
+        title: "تم إرسال الإشعار",
+        description: "تحقق من إشعارات المتصفح.",
+      });
     }
   };
 
@@ -445,6 +520,67 @@ const DashboardSettings = () => {
                 }
               />
             </div>
+
+            {/* Browser Push Notifications */}
+            {pushSupported && (
+              <div className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <Smartphone className="h-5 w-5 text-gray-500" />
+                    <Label htmlFor="pushNotifications" className="text-base font-medium cursor-pointer">
+                      إشعارات المتصفح
+                    </Label>
+                  </div>
+                  <p className="text-sm text-gray-500 mt-1">
+                    {pushSubscribed 
+                      ? 'ستتلقى إشعارات حتى عندما يكون التطبيق مغلقاً'
+                      : 'تفعيل الإشعارات عندما يكون التطبيق مغلقاً'}
+                  </p>
+                  {pushPermission === 'denied' && (
+                    <p className="text-xs text-red-500 mt-1">
+                      تم رفض الإذن. يرجى تفعيل الإشعارات من إعدادات المتصفح.
+                    </p>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  {pushSubscribed && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleTestPush}
+                      disabled={pushLoading}
+                      className="text-xs"
+                    >
+                      اختبار
+                    </Button>
+                  )}
+                  <Switch
+                    id="pushNotifications"
+                    checked={pushSubscribed}
+                    onCheckedChange={handlePushToggle}
+                    disabled={pushLoading || pushPermission === 'denied'}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Push not supported message */}
+            {!pushSupported && (
+              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-dashed border-gray-300">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <BellOff className="h-5 w-5 text-gray-400" />
+                    <Label className="text-base font-medium text-gray-500">
+                      إشعارات المتصفح
+                    </Label>
+                  </div>
+                  <p className="text-sm text-gray-400 mt-1">
+                    متصفحك لا يدعم إشعارات الدفع
+                  </p>
+                </div>
+              </div>
+            )}
 
             {/* AI Assistant Settings */}
             <div className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg">

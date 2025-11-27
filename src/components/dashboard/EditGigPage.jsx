@@ -167,39 +167,91 @@ const EditGigPage = () => {  const { gigId } = useParams();
     const files = Array.from(e.target.files);
     if (!files.length) return;
     
-    // Check if we're going to exceed the 5 image limit
-    if (imagePreviews.length + files.length > 5) {
+    const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    
+    // Validate each file
+    const validFiles = [];
+    const errors = [];
+    
+    files.forEach((file) => {
+      // Check file type
+      if (!allowedTypes.includes(file.type)) {
+        errors.push(`الملف "${file.name}" ليس صورة صالحة. الأنواع المسموحة: JPG, PNG, GIF, WebP`);
+        return;
+      }
+      
+      // Check file size
+      if (file.size > maxSize) {
+        const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
+        errors.push(`الملف "${file.name}" كبير جداً (${fileSizeMB} ميجا). الحد الأقصى 5 ميجا`);
+        return;
+      }
+      
+      validFiles.push(file);
+    });
+    
+    // Show errors if any
+    if (errors.length > 0) {
+      toast({
+        variant: "destructive",
+        title: "خطأ في رفع الصور",
+        description: errors.join('\n'),
+        duration: 5000
+      });
+    }
+    
+    // Check total number of images (existing + new)
+    const totalImages = imagePreviews.length + validFiles.length;
+    if (totalImages > 5) {
       toast({
         variant: "destructive",
         title: "الحد الأقصى للصور",
-        description: "يمكنك إضافة 5 صور كحد أقصى. يرجى حذف بعض الصور أولاً."
+        description: `يمكنك إضافة 5 صور كحد أقصى. لديك ${imagePreviews.length} صورة، حاولت إضافة ${validFiles.length}`,
+        duration: 4000
       });
+      
+      // Take only the allowed number of new files
+      const allowedNewFiles = validFiles.slice(0, 5 - imagePreviews.length);
+      if (allowedNewFiles.length > 0) {
+        processValidFiles(allowedNewFiles);
+      }
       return;
     }
     
+    // Process valid files
+    if (validFiles.length > 0) {
+      processValidFiles(validFiles);
+      
+      // Show success message
+      toast({
+        title: "تم رفع الصور بنجاح",
+        description: `تم إضافة ${validFiles.length} صورة`,
+        duration: 2000
+      });
+    }
+    
+    // Reset the input value to allow re-uploading the same file if needed
+    e.target.value = '';
+  };
+  
+  // Helper function to process valid files
+  const processValidFiles = (validFiles) => {
     // Store actual File objects in the gigData state
     setGigData(prev => {
-      // Initialize images array if it doesn't exist
       const currentImages = Array.isArray(prev.images) ? [...prev.images] : [];
       return { 
         ...prev, 
-        // Append new file objects to existing array
-        images: [...currentImages, ...files].slice(0, 5),
-        // Flag to indicate there are new images that need to be uploaded
+        images: [...currentImages, ...validFiles].slice(0, 5),
         hasNewImages: true
       };
     });
 
     // Create object URLs for new files to show as previews
-    const newPreviewUrls = files.map(file => {
-      const preview = URL.createObjectURL(file);
-      return preview;
-    });
+    const newPreviewUrls = validFiles.map(file => URL.createObjectURL(file));
     
     // Add new previews
-    setImagePreviews(prev => {
-      return [...prev, ...newPreviewUrls].slice(0, 5);
-    });
+    setImagePreviews(prev => [...prev, ...newPreviewUrls].slice(0, 5));
   };
   const removeImage = (index) => {
     // Remove from previews
@@ -324,11 +376,12 @@ const EditGigPage = () => {  const { gigId } = useParams();
       
       // Make API call to update the gig
       console.log('Sending update for gig:', gigId, updatedData);
-      await sellerApi.updateProduct(gigId, updatedData);
+      const response = await sellerApi.updateProduct(gigId, updatedData);
       
       toast({ 
         title: "تم تحديث الخدمة بنجاح!", 
-        description: `تم حفظ التغييرات على خدمة "${gigData.title}".`
+        description: response?.notification || `تم حفظ التغييرات على خدمة "${gigData.title}". المنتج الآن قيد المراجعة.`,
+        duration: 5000
       });
       
       navigate('/dashboard/gigs');

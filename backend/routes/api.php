@@ -340,6 +340,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('seller/products/{id}', [ProductController::class, 'show']);
     Route::put('seller/products/{id}', [ProductController::class, 'update']);
     Route::delete('seller/products/{id}', [ProductController::class, 'destroy']);
+    Route::post('seller/products/{id}/toggle-status', [ProductController::class, 'toggleStatus']);
     
     // Withdrawal routes for sellers
     Route::get('withdrawals', [WithdrawalRequestController::class, 'index']);

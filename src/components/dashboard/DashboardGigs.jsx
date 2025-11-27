@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ShoppingBag, PlusCircle, Edit, Trash2, Eye, BarChart2, Loader2, AlertCircle, RefreshCw, Filter } from 'lucide-react';
+import { ShoppingBag, PlusCircle, Edit, Trash2, Eye, BarChart2, Loader2, AlertCircle, RefreshCw, Filter, Power, PowerOff } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -27,6 +27,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Switch } from "@/components/ui/switch";
 
 
 const DashboardGigs = () => {
@@ -38,7 +39,9 @@ const DashboardGigs = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [deletingGigs, setDeletingGigs] = useState(new Set());
+  const [togglingGigs, setTogglingGigs] = useState(new Set());
   const [typeFilter, setTypeFilter] = useState('all'); // 'all', 'gig', or 'product'
+  const [activeProductsCount, setActiveProductsCount] = useState(0);
 
   // Fetch seller's gigs from backend
   useEffect(() => {
@@ -88,6 +91,10 @@ const DashboardGigs = () => {
     } else {
       setFilteredGigs(userGigs.filter(gig => gig.type === typeFilter));
     }
+    
+    // Count active products
+    const activeCount = userGigs.filter(gig => gig.status === 'active').length;
+    setActiveProductsCount(activeCount);
   }, [userGigs, typeFilter]);
 
   const handleDeleteGig = async (gigId) => {
@@ -114,6 +121,50 @@ const DashboardGigs = () => {
     } finally {
       // Remove gig from deleting set
       setDeletingGigs(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(gigId);
+        return newSet;
+      });
+    }
+  };
+
+  const handleToggleStatus = async (gigId, currentStatus) => {
+    try {
+      // Add gig to toggling set
+      setTogglingGigs(prev => new Set([...prev, gigId]));
+      
+      const response = await sellerApi.toggleProductStatus(gigId);
+      
+      // Update local state with the new product data
+      setUserGigs(prevGigs => 
+        prevGigs.map(gig => 
+          gig.id === gigId 
+            ? { ...gig, status: response.product.status }
+            : gig
+        )
+      );
+      
+      // Update active count
+      if (response.active_count !== undefined) {
+        setActiveProductsCount(response.active_count);
+      }
+      
+      toast({
+        title: response.message || "تم تحديث الحالة",
+        description: response.active_count !== undefined 
+          ? `المنتجات النشطة: ${response.active_count} من ${response.total_slots || 10}`
+          : '',
+      });
+    } catch (error) {
+      console.error('Error toggling gig status:', error);
+      toast({
+        variant: "destructive",
+        title: "خطأ في تغيير الحالة",
+        description: error.message || "فشل في تغيير حالة المنتج. يرجى المحاولة مرة أخرى.",
+      });
+    } finally {
+      // Remove gig from toggling set
+      setTogglingGigs(prev => {
         const newSet = new Set(prev);
         newSet.delete(gigId);
         return newSet;
@@ -210,6 +261,9 @@ const DashboardGigs = () => {
         animate={{ opacity: 1, y: 0 }}
       >        <div>
           <h1 className="text-3xl font-bold text-gray-800">خدماتي</h1>
+          <p className="text-sm text-gray-600 mt-1">
+            المنتجات النشطة: <span className="font-bold text-green-600">{activeProductsCount}</span> من <span className="font-bold">10</span>
+          </p>
         </div>
         <div className="flex items-center gap-2">          
           <DropdownMenu>
@@ -332,11 +386,43 @@ const DashboardGigs = () => {
                   <CardDescription className="text-sm text-primary font-bold">{gig.price} جنيه</CardDescription>
                 </CardHeader>
                 <CardContent className="flex-grow space-y-2 text-sm">
-                  <div className="flex items-center text-gray-600">
-                    <Badge variant={gig.status === 'active' ? 'default' : 'secondary'} className="text-xs">
-                      {gig.status === 'active' ? 'نشط' : gig.status === 'pending' ? 'قيد المراجعة' : 'غير نشط'}
+                  <div className="flex items-center justify-between">
+                    <Badge 
+                      variant={
+                        gig.status === 'active' ? 'default' : 
+                        gig.status === 'inactive' ? 'secondary' :
+                        gig.status === 'pending_review' ? 'outline' :
+                        'destructive'
+                      } 
+                      className="text-xs"
+                    >
+                      {
+                        gig.status === 'active' ? 'نشط' : 
+                        gig.status === 'inactive' ? 'معطّل' :
+                        gig.status === 'pending_review' ? 'قيد المراجعة' : 
+                        gig.status === 'rejected' ? 'مرفوض' :
+                        'غير نشط'
+                      }
                     </Badge>
+                    {(gig.status === 'active' || gig.status === 'inactive') && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-gray-600 mx-4">
+                          {gig.status === 'active' ? 'مفعّل' : 'معطّل'}
+                        </span>
+                        <Switch
+                          checked={gig.status === 'active'}
+                          onCheckedChange={() => handleToggleStatus(gig.id, gig.status)}
+                          disabled={togglingGigs.has(gig.id)}
+                          className={togglingGigs.has(gig.id) ? 'opacity-50' : ''}
+                        />
+                      </div>
+                    )}
                   </div>
+                  {gig.status === 'rejected' && gig.rejection_reason && (
+                    <p className="text-xs text-red-600 mt-1">
+                      السبب: {gig.rejection_reason}
+                    </p>
+                  )}
                 </CardContent>
                 <CardFooter className="grid grid-cols-2 gap-2 pt-4 border-t">                  <Button 
                     variant="outline" 

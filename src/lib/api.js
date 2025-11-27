@@ -59,14 +59,15 @@ export async function apiFetch(path, options = {}) {
   const res = await fetch(apiUrl(path), { ...defaultOptions, ...options });
   if (!res.ok) {
     let errorMessage = `API error: ${res.status}`;
+    let errorData = null;
     let errorText = '';
     try {
       errorText = await res.text();
       // Try to parse as JSON
       try {
-        const errorJson = JSON.parse(errorText);
-        if (errorJson.message) {
-          errorMessage = errorJson.message;
+        errorData = JSON.parse(errorText);
+        if (errorData.message) {
+          errorMessage = errorData.message;
         } else {
           errorMessage = errorText;
         }
@@ -79,7 +80,7 @@ export async function apiFetch(path, options = {}) {
     }
     const error = new Error(errorMessage);
     error.status = res.status;
-    error.response = errorText;
+    error.response = errorData || { data: errorText };
     throw error;
   }
   return res.json();
@@ -99,14 +100,15 @@ export async function apiFormFetch(path, options = {}) {
   });
   if (!res.ok) {
     let errorMessage = `API error: ${res.status}`;
+    let errorData = null;
     let errorText = '';
     try {
       errorText = await res.text();
       // Try to parse as JSON
       try {
-        const errorJson = JSON.parse(errorText);
-        if (errorJson.message) {
-          errorMessage = errorJson.message;
+        errorData = JSON.parse(errorText);
+        if (errorData.message) {
+          errorMessage = errorData.message;
         } else {
           errorMessage = errorText;
         }
@@ -119,7 +121,7 @@ export async function apiFormFetch(path, options = {}) {
     }
     const error = new Error(errorMessage);
     error.status = res.status;
-    error.response = errorText;
+    error.response = errorData || { data: errorText };
     throw error;
   }
   return res.json();
@@ -851,6 +853,12 @@ export const sellerApi = {
   deleteProduct: async (id) => {
     return apiFetch(`seller/products/${id}`, {
       method: 'DELETE',
+    });
+  },
+
+  toggleProductStatus: async (id) => {
+    return apiFetch(`seller/products/${id}/toggle-status`, {
+      method: 'POST',
     });
   },
 

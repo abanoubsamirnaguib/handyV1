@@ -73,17 +73,14 @@ import AdminPlatformProfits from '@/components/admin/AdminPlatformProfits';
 
 import './styles/rtl-dropdown.css'; // Import our RTL dropdown styles
 
-function App() {
+// Create a wrapper component that uses useLocation inside Router context
+function AppRoutes() {
   const location = useLocation();
 
   return (
-    <SiteSettingsProvider>
-      <AuthProvider>
-        <CartProvider>
-          <ChatProvider>
-            <NotificationProvider>
-              <ScrollToTop />
-            <Routes>
+    <>
+      <ScrollToTop />
+      <Routes>
               <Route path="/" element={<MainLayout />}>
                 <Route index element={<HomePage />} />
                 <Route path="explore" element={<ExplorePage />} />
@@ -233,6 +230,18 @@ function App() {
             </Routes>
             <Toaster />
             {!location.pathname.startsWith('/admin') && !location.pathname.startsWith('/delivery') && <AIAssistant />}
+    </>
+  );
+}
+
+function App() {
+  return (
+    <SiteSettingsProvider>
+      <AuthProvider>
+        <CartProvider>
+          <ChatProvider>
+            <NotificationProvider>
+              <AppRoutes />
           </NotificationProvider>
         </ChatProvider>
       </CartProvider>

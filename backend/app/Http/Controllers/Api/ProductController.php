@@ -128,7 +128,7 @@ class ProductController extends Controller
             'tags' => 'array',
             'tags.*' => 'string|max:50',
             'images' => 'array',
-            'images.*' => 'image|max:2048',
+            'images.*' => 'image|mimes:jpeg,jpg,png,gif,webp|max:5120',
         ]);
         $product = new Product($validated);
         $product->seller_id = Auth::user()->seller_id;
@@ -205,6 +205,15 @@ class ProductController extends Controller
             'existing_images' => 'array',
             'existing_images.*' => 'string',
         ]);
+        
+        // Store old status to check if product was active before edit
+        $oldStatus = $product->status;
+        
+        // Set status to pending_review when product is edited
+        $validated['status'] = 'pending_review';
+        // Clear rejection reason when re-submitting for review
+        $validated['rejection_reason'] = null;
+        
         $product->update($validated);
         // Update tags
         if ($request->has('tags')) {
@@ -252,7 +261,38 @@ class ProductController extends Controller
             }
             }
         }
-        return response()->json(['message' => 'Product updated', 'product' => $product->load(['images', 'tags'])]);
+        
+        // Send notification to seller that product is pending review again
+        $seller = \App\Models\Seller::find(Auth::user()->seller_id);
+        if ($seller && $seller->user_id) {
+            \App\Services\NotificationService::productPendingReview(
+                userId: $seller->user_id,
+                productTitle: $product->title,
+                productType: $product->type
+            );
+        }
+        
+        // Notify admin about edited product needing review
+        try {
+            $productTypeText = $product->type === 'gig' ? 'خدمة' : 'منتج';
+            $statusText = $oldStatus === 'active' ? 'معدل' : 'محدّث';
+            \App\Services\NotificationService::notifyAdmin(
+                'product_pending',
+                "{$productTypeText} {$statusText} يحتاج مراجعة: {$product->title}",
+                "/admin/products"
+            );
+        } catch (\Exception $e) {
+            \Log::warning('Failed to send admin notification for edited product', [
+                'product_id' => $product->id,
+                'error' => $e->getMessage()
+            ]);
+        }
+        
+        return response()->json([
+            'message' => 'Product updated successfully', 
+            'product' => $product->load(['images', 'tags']),
+            'notification' => 'تم تحديث المنتج بنجاح وهو الآن قيد المراجعة. سيتم تفعيله خلال 48-72 ساعة.'
+        ]);
     }
 
     /**
@@ -282,5 +322,65 @@ class ProductController extends Controller
         $product->delete();
 
         return response()->json(['message' => 'Product deleted']);
+    }
+
+    /**
+     * Toggle product status between active and inactive.
+     * Only products that were previously approved (had status 'active') can be toggled.
+     */
+    public function toggleStatus($id)
+    {
+        $product = Product::findOrFail($id);
+        
+        // Verify ownership
+        if ($product->seller_id !== Auth::user()->seller_id) {
+            return response()->json([
+                'message' => 'غير مصرح لك بتعديل هذا المنتج.'
+            ], 403);
+        }
+
+        // Can only toggle products that are either active or inactive
+        // Cannot toggle pending_review or rejected products
+        if (!in_array($product->status, ['active', 'inactive'])) {
+            return response()->json([
+                'message' => 'لا يمكن تفعيل/تعطيل هذا المنتج. يجب أن تتم الموافقة عليه من الإدارة أولاً.',
+                'current_status' => $product->status
+            ], 422);
+        }
+
+        // If trying to activate the product, check the limit
+        if ($product->status === 'inactive') {
+            // Count currently active products for this seller
+            $activeCount = Product::where('seller_id', Auth::user()->seller_id)
+                ->where('status', 'active')
+                ->count();
+
+            if ($activeCount >= 10) {
+                return response()->json([
+                    'message' => 'لقد وصلت للحد الأقصى من المنتجات المفعلة (10 منتجات). يرجى تعطيل منتج آخر أولاً.',
+                    'active_count' => $activeCount,
+                    'limit' => 10
+                ], 422);
+            }
+        }
+
+        // Toggle the status
+        $newStatus = $product->status === 'active' ? 'inactive' : 'active';
+        $product->status = $newStatus;
+        $product->save();
+
+        // Count active products after toggle
+        $activeCount = Product::where('seller_id', Auth::user()->seller_id)
+            ->where('status', 'active')
+            ->count();
+
+        return response()->json([
+            'message' => $newStatus === 'active' 
+                ? 'تم تفعيل المنتج بنجاح' 
+                : 'تم تعطيل المنتج بنجاح',
+            'product' => $product,
+            'active_count' => $activeCount,
+            'total_slots' => 10
+        ]);
     }
 }

@@ -122,10 +122,76 @@ const CreateGigPage = () => {
 
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
-    setGigData(prev => ({ ...prev, images: [...prev.images, ...files].slice(0, 5) })); 
-
-    const newPreviews = files.map(file => URL.createObjectURL(file));
-    setImagePreviews(prev => [...prev, ...newPreviews].slice(0, 5));
+    const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    
+    // Validate each file
+    const validFiles = [];
+    const errors = [];
+    
+    files.forEach((file, index) => {
+      // Check file type
+      if (!allowedTypes.includes(file.type)) {
+        errors.push(`الملف "${file.name}" ليس صورة صالحة. الأنواع المسموحة: JPG, PNG, GIF, WebP`);
+        return;
+      }
+      
+      // Check file size
+      if (file.size > maxSize) {
+        const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
+        errors.push(`الملف "${file.name}" كبير جداً (${fileSizeMB} ميجا). الحد الأقصى 5 ميجا`);
+        return;
+      }
+      
+      validFiles.push(file);
+    });
+    
+    // Show errors if any
+    if (errors.length > 0) {
+      toast({
+        variant: "destructive",
+        title: "خطأ في رفع الصور",
+        description: errors.join('\n'),
+        duration: 5000
+      });
+    }
+    
+    // Check total number of images (existing + new)
+    const totalImages = gigData.images.length + validFiles.length;
+    if (totalImages > 5) {
+      toast({
+        variant: "destructive",
+        title: "تجاوز الحد الأقصى",
+        description: `يمكنك رفع 5 صور فقط. لديك ${gigData.images.length} صورة، حاولت إضافة ${validFiles.length}`,
+        duration: 4000
+      });
+      
+      // Take only the allowed number of new files
+      const allowedNewFiles = validFiles.slice(0, 5 - gigData.images.length);
+      if (allowedNewFiles.length > 0) {
+        setGigData(prev => ({ ...prev, images: [...prev.images, ...allowedNewFiles] }));
+        const newPreviews = allowedNewFiles.map(file => URL.createObjectURL(file));
+        setImagePreviews(prev => [...prev, ...newPreviews]);
+      }
+      return;
+    }
+    
+    // Add valid files
+    if (validFiles.length > 0) {
+      setGigData(prev => ({ ...prev, images: [...prev.images, ...validFiles].slice(0, 5) }));
+      const newPreviews = validFiles.map(file => URL.createObjectURL(file));
+      setImagePreviews(prev => [...prev, ...newPreviews].slice(0, 5));
+      
+      // Show success message
+      toast({
+        title: "تم رفع الصور بنجاح",
+        description: `تم إضافة ${validFiles.length} صورة`,
+        duration: 2000
+      });
+    }
+    
+    // Reset the input value to allow re-uploading the same file if needed
+    e.target.value = '';
   };
 
   const removeImage = (index) => {
@@ -189,7 +255,24 @@ const CreateGigPage = () => {
       
       navigate('/dashboard/gigs');
     } catch (err) {
-      toast({ variant: "destructive", title: "خطأ في الإنشاء", description: err.message });
+      console.error('Error creating product:', err);
+      
+      // Handle specific error messages
+      let errorMessage = err.message || "حدث خطأ أثناء إنشاء الخدمة";
+      
+      // Check if the error is about reaching the active products limit
+      if (err.message && err.message.includes('الحد الأقصى')) {
+        errorMessage = err.message;
+      } else if (err.message && err.message.includes('10 منتجات')) {
+        errorMessage = err.message;
+      }
+      
+      toast({ 
+        variant: "destructive", 
+        title: "خطأ في الإنشاء", 
+        description: errorMessage,
+        duration: 5000
+      });
     } finally {
       setLoading(false);
     }
@@ -375,7 +458,7 @@ const CreateGigPage = () => {
             <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}>
               <CardHeader className="px-0 pt-6 pb-4">
                 <CardTitle className="text-xl text-gray-700">صور الخدمة</CardTitle>
-                <CardDescription>أضف صورًا عالية الجودة تعرض خدمتك (حتى 5 صور).</CardDescription>
+                <CardDescription>أضف صورًا عالية الجودة تعرض خدمتك (حتى 5 صور - حد أقصى 5 ميجا لكل صورة).</CardDescription>
               </CardHeader>
               <div>
                 <Label htmlFor="images" className="flex items-center cursor-pointer border-2 border-dashed border-gray-300 rounded-md p-6 justify-center hover:border-primary transition-colors">
@@ -383,6 +466,9 @@ const CreateGigPage = () => {
                   <span className="text-gray-500">انقر هنا لاختيار الصور</span>
                 </Label>
                 <Input id="images" type="file" multiple accept="image/*" onChange={handleImageChange} className="hidden" />
+                <p className="text-xs text-gray-500 mt-2 text-center">
+                  الحد الأقصى لحجم كل صورة 5 ميجا
+                </p>
                 {imagePreviews.length > 0 && (
                   <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
                     {imagePreviews.map((preview, index) => (

@@ -249,11 +249,22 @@ const AdminProducts = () => {
       await fetchProducts();
     } catch (error) {
       console.error('Error approving product:', error);
-      toast({
-        variant: "destructive",
-        title: "خطأ",
-        description: "حدث خطأ أثناء الموافقة على المنتج"
-      });
+      
+      // Check if error is due to seller limit
+      if (error.response?.error === 'seller_limit_reached') {
+        toast({
+          variant: "destructive",
+          title: "تعذر الموافقة على المنتج",
+          description: error.response.message || error.message || "البائع وصل للحد الأقصى من المنتجات المفعلة (10 منتجات).",
+          duration: 5000
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "خطأ",
+          description: error.message || "حدث خطأ أثناء الموافقة على المنتج"
+        });
+      }
     } finally {
       setUpdating(false);
     }

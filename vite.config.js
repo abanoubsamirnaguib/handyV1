@@ -199,6 +199,12 @@ export default defineConfig({
     },
   })],
 	server: {
+		port: 5173,
+		strictPort: false,
+		host: true,
+		hmr: {
+			port: 5173,
+		},
 		cors: true,
 		headers: {
 			'Cross-Origin-Embedder-Policy': 'credentialless',

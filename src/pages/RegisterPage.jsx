@@ -155,7 +155,7 @@ const RegisterPage = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-neutral-100 p-4 py-12"
-    style={{ backgroundImage: 'url("public/bgimages2.jpg")', backgroundSize: 'cover', backgroundPosition: 'center' }}
+    style={{ backgroundImage: 'url("public/bgimages2.svg")', backgroundSize: 'cover', backgroundPosition: 'center' }}
     >
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}

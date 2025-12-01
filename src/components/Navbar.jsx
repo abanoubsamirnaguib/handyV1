@@ -174,7 +174,7 @@ const Navbar = () => {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
                   <a
-                    href="https://www.instagram.com/official646588/"
+                    href="https://www.instagram.com/bazar__official"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-2 cursor-pointer"
@@ -380,7 +380,7 @@ const Navbar = () => {
                 <p className="text-sm font-medium text-neutral-600 mb-3 px-3">تابعنا على</p>
                 <div className="flex justify-center space-x-6 space-x-reverse">
                   <a
-                    href="https://www.instagram.com/official646588/"
+                    href="https://www.instagram.com/bazar__official"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex flex-col items-center space-y-1 text-neutral-600 hover:text-roman-500 transition-colors duration-200"

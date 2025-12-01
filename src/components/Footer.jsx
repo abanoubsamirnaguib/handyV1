@@ -35,7 +35,7 @@ const Footer = () => {
               <a href="https://www.facebook.com/share/17NFcvrTN2/" target="_blank" rel="noopener noreferrer" className="text-neutral-200 hover:text-roman-500 transition-colors">
                 <Facebook size={20} />
               </a>
-              <a href="https://www.instagram.com/official646588/" target="_blank" rel="noopener noreferrer" className="text-neutral-200 hover:text-roman-500 transition-colors">
+              <a href="https://www.instagram.com/bazar__official" target="_blank" rel="noopener noreferrer" className="text-neutral-200 hover:text-roman-500 transition-colors">
                 <Instagram size={20} />
               </a>
               <a href="https://www.youtube.com/@OfficialBAZAR-s4p" target="_blank" rel="noopener noreferrer" className="text-neutral-200 hover:text-roman-500 transition-colors">

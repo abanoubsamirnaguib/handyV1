@@ -3,10 +3,18 @@
 // Use import.meta.env for Vite env variables with fallback for different environments
 const getApiBaseUrl = () => {
   // Production
+  // Production - get from environment variable or fallback to domain detection
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL + '/api';
+  }
+  
+  // Fallback to domain detection if env var not set
   if (window.location.hostname === 'handy3.abanoubsamir.com') {
     return 'https://handy3.abanoubsamir.com/backend/public/api';
   }
-  
+  if (window.location.hostname === 'bazar.abanoubsamir.com') {
+    return 'https://bazar.abanoubsamir.com/backend/public/api';
+  }
   // Development - from environment variable or default
   return import.meta.env.VITE_API_BASE_URL + '/api' || 'http://localhost:8000/api';
 };

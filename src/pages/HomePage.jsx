@@ -98,7 +98,7 @@ const HomePage = () => {
     return () => { isMounted = false; };
   }, []);
 
-  // Fetch featured products from backend
+  // Fetch featured products from backend 
   useEffect(() => {
     let isMounted = true;
     setLoadingFeatured(true);

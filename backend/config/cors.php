@@ -23,7 +23,9 @@ return [
         'http://127.0.0.1:5173',
         'http://127.0.0.1:5174',
         'https://handy3.abanoubsamir.com',  // Your frontend domain
-        'https://www.handy3.abanoubsamir.com'  // Include www variant
+        'https://www.handy3.abanoubsamir.com', // Include www variant
+        'https://bazar.abanoubsamir.com',  // Your frontend domain
+        'https://www.bazar.abanoubsamir.com', // Include www variant
     ],
 
     'allowed_origins_patterns' => [],

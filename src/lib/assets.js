@@ -13,6 +13,10 @@ export const getAssetUrl = (path) => {
     const cleanPath = path.startsWith('/') ? path.substring(1) : path;
     return `https://handy3.abanoubsamir.com/backend/public/${cleanPath}`;
   }
+  if (window.location.hostname === 'bazar.abanoubsamir.com') {
+    const cleanPath = path.startsWith('/') ? path.substring(1) : path;
+    return `https://bazar.abanoubsamir.com/backend/public/${cleanPath}`;
+  }
   
   // For development, use localhost
   const cleanPath = path.startsWith('/') ? path.substring(1) : path;

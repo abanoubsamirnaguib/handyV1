@@ -113,6 +113,7 @@ const HomePage = () => {
                 title: prod.title,
                 description: prod.description,
                 price: prod.price,
+                type: prod.type || 'product', // Map type from backend
                 images: Array.isArray(prod.images) && prod.images.length > 0
                   ? prod.images.map(img => img.image_url || img.url || img)
                   : [],
@@ -484,7 +485,7 @@ const HomePage = () => {
                           </div>
                           <div className="absolute bottom-2 right-2 flex flex-col gap-1">
                             <Badge variant="outline" className={`text-xs ${gig.type === 'gig' ? 'bg-warning-500/50 text-white border-warning-500' : 'bg-blue-100 text-blue-600 border-blue-300'}`}>
-                              {gig.type === 'gig' ? 'منتج جاهز' : 'خدمة مخصصة'}
+                              {gig.type === 'gig' ? 'خدمة مخصصة' : 'منتج جاهز'}
                             </Badge>
                           </div>
                         </div>
@@ -504,7 +505,11 @@ const HomePage = () => {
                               <Star className="h-3 w-3 text-warning-500 ml-1" />
                               <span className="whitespace-nowrap">{gig.rating} ({gig.reviewCount})</span>
                             </div>
-                            <p className="text-sm font-bold text-roman-500 whitespace-nowrap">{gig.price} ج</p>
+                            <p className="text-sm font-bold text-roman-500 whitespace-nowrap">
+                              {gig.type === 'gig' && (gig.price === 0 || gig.price === '0' || gig.price === '0.00' || parseFloat(gig.price) === 0)
+                                ? 'قابل للتفاوض'
+                                : `${gig.price} ج`}
+                            </p>
                           </div>
                         </CardContent>
                       </Card>

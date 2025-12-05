@@ -13,8 +13,9 @@ import { useAuth } from '@/contexts/AuthContext';
 const AIAssistant = () => {
   const { user } = useAuth();
   
+  // Hide AI Assistant for guests (non-logged-in users)
   // Don't render if user has explicitly disabled AI assistant
-  if (user && user.show_ai_assistant === false) {
+  if (!user || user.show_ai_assistant === false) {
     return null;
   }
   
@@ -29,7 +30,7 @@ const AIAssistant = () => {
   // Drag and visibility states
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
-  const [isHidden, setIsHidden] = useState(false);
+  const [isHidden, setIsHidden] = useState(true); // Default to hidden
   const [showDeleteButton, setShowDeleteButton] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [hasMoved, setHasMoved] = useState(false);

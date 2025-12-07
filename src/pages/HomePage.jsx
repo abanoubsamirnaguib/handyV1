@@ -485,7 +485,7 @@ const HomePage = () => {
                           </div>
                           <div className="absolute bottom-2 right-2 flex flex-col gap-1">
                             <Badge variant="outline" className={`text-xs ${gig.type === 'gig' ? 'bg-warning-500/50 text-white border-warning-500' : 'bg-blue-100 text-blue-600 border-blue-300'}`}>
-                              {gig.type === 'gig' ? 'خدمة مخصصة' : 'منتج جاهز'}
+                              {gig.type === 'gig' ? 'حرفة مخصصة' : 'منتج جاهز'}
                             </Badge>
                           </div>
                         </div>

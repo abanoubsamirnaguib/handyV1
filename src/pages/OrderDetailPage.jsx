@@ -1558,7 +1558,7 @@ const OrderDetailPage = () => {
                           <div className="flex justify-between">
                             <span className="text-gray-600">نوع الطلب:</span>
                             <Badge className="bg-blue-100 text-blue-800 border-blue-200">
-                              طلب خدمة
+                              طلب حرفة
                             </Badge>
                           </div>
                           <div className="flex justify-between">
@@ -1656,7 +1656,7 @@ const OrderDetailPage = () => {
                   <CardContent className="pt-6">
                     {order.is_service_order && order.service_requirements && (
                       <div className="mb-4">
-                        <h4 className="font-semibold text-gray-800 mb-2">متطلبات الخدمة:</h4>
+                        <h4 className="font-semibold text-gray-800 mb-2">متطلبات الحرفة:</h4>
                         <p className="text-gray-600 bg-blue-50 p-4 rounded-lg border-r-4 border-blue-500">
                           {order.service_requirements}
                         </p>

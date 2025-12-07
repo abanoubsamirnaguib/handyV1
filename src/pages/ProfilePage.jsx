@@ -938,7 +938,7 @@ const ProfilePage = () => {
                     <span className="font-semibold">{profileData?.reviewCount || 0}</span>
                   </div>
                    <div className="flex items-center justify-between">
-                    <span className="flex items-center"><Briefcase className="h-5 w-5 ml-2 text-purple-500" /> عدد الخدمات</span>
+                    <span className="flex items-center"><Briefcase className="h-5 w-5 ml-2 text-purple-500" /> عدد الحرف</span>
                     <span className="font-semibold">{userGigs?.length || 0}</span>
                   </div>
                 </CardContent>
@@ -954,11 +954,11 @@ const ProfilePage = () => {
           >
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-2xl font-bold text-gray-800">
-                {profileData?.active_role === 'seller' ? 'خدماتي' : 'طلباتي'} ({profileData?.active_role === 'seller' ? (userGigs?.length || 0) : (userOrders?.length || 0)})
+                {profileData?.active_role === 'seller' ? 'حرفي' : 'طلباتي'} ({profileData?.active_role === 'seller' ? (userGigs?.length || 0) : (userOrders?.length || 0)})
               </h2>
               {isOwnProfile && profileData?.active_role === 'seller' && (
                 <Button onClick={() => navigate('/dashboard/gigs/new')} className="bg-green-500 hover:bg-green-600">
-                  <PlusCircle className="ml-2 h-4 w-4" /> أضف خدمة جديدة
+                  <PlusCircle className="ml-2 h-4 w-4" /> أضف حرفة جديدة
                 </Button>
               )}
             </div>
@@ -1112,10 +1112,10 @@ const ProfilePage = () => {
                 <CardContent>
                   <Briefcase className="h-16 w-16 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-xl font-semibold text-gray-700 mb-2">
-                    {profileData?.active_role === 'seller' ? 'لا توجد خدمات معروضة حالياً' : 'لا توجد طلبات حالياً'}
+                    {profileData?.active_role === 'seller' ? 'لا توجد حرف معروضة حالياً' : 'لا توجد طلبات حالياً'}
                   </h3>
                   <p className="text-gray-500">
-                    {profileData?.active_role === 'seller' ? 'ابدأ بإضافة خدماتك ليراها العملاء!' : 'تصفح المنتجات وقم بطلبك الأول!'}
+                    {profileData?.active_role === 'seller' ? 'ابدأ بإضافة حرفك ليراها العملاء!' : 'تصفح المنتجات وقم بطلبك الأول!'}
                   </p>
                   {profileData?.active_role === 'buyer' && (
                     <Button asChild className="mt-4 bg-roman-500 hover:bg-roman-500/90 text-white">

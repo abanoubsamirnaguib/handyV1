@@ -69,12 +69,12 @@ const DashboardGigs = () => {
         }
       } catch (error) {
         console.error('Error fetching seller gigs:', error);
-        setError('فشل في تحميل الخدمات. يرجى المحاولة مرة أخرى.');
+        setError('فشل في تحميل الحرف. يرجى المحاولة مرة أخرى.');
         setUserGigs([]);
         toast({
           variant: "destructive",
           title: "خطأ في التحميل",
-          description: "فشل في تحميل خدماتك. يرجى المحاولة مرة أخرى.",
+          description: "فشل في تحميل حرفك. يرجى المحاولة مرة أخرى.",
         });
       } finally {
         setLoading(false);
@@ -108,15 +108,15 @@ const DashboardGigs = () => {
       setUserGigs(prevGigs => prevGigs.filter(gig => gig.id !== gigId));
       
       toast({
-        title: "تم حذف الخدمة",
-        description: "تم حذف الخدمة بنجاح.",
+        title: "تم حذف الحرفة",
+        description: "تم حذف الحرفة بنجاح.",
       });
     } catch (error) {
       console.error('Error deleting gig:', error);
       toast({
         variant: "destructive",
         title: "خطأ في الحذف",
-        description: error.message || "فشل في حذف الخدمة. يرجى المحاولة مرة أخرى.",
+        description: error.message || "فشل في حذف الحرفة. يرجى المحاولة مرة أخرى.",
       });
     } finally {
       // Remove gig from deleting set
@@ -185,14 +185,14 @@ const DashboardGigs = () => {
     return (
       <div className="p-6 md:p-8">
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold text-gray-800">خدماتي</h1>
+          <h1 className="text-3xl font-bold text-gray-800">حرفي</h1>
           <Button disabled className="bg-green-500">
-            <PlusCircle className="ml-2 h-5 w-5" /> أضف خدمة جديدة
+            <PlusCircle className="ml-2 h-5 w-5" /> أضف حرفة جديدة
           </Button>
         </div>
         <div className="flex flex-col items-center justify-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
-          <p className="text-gray-600">جاري تحميل خدماتك...</p>
+          <p className="text-gray-600">جاري تحميل حرفك...</p>
         </div>
       </div>
     );
@@ -203,9 +203,9 @@ const DashboardGigs = () => {
     return (
       <div className="p-6 md:p-8">
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold text-gray-800">خدماتي</h1>
+          <h1 className="text-3xl font-bold text-gray-800">حرفي</h1>
           <Button onClick={() => navigate('/dashboard/gigs/new')} className="bg-green-500 hover:bg-green-600">
-            <PlusCircle className="ml-2 h-5 w-5" /> أضف خدمة جديدة
+            <PlusCircle className="ml-2 h-5 w-5" /> أضف حرفة جديدة
           </Button>
         </div>
         <div className="flex flex-col items-center justify-center py-12">
@@ -238,16 +238,16 @@ const DashboardGigs = () => {
       }
       
       toast({
-        title: "تم تحديث الخدمات",
-        description: "تم تحديث قائمة خدماتك بنجاح.",
+        title: "تم تحديث الحرف",
+        description: "تم تحديث قائمة حرفك بنجاح.",
       });
     } catch (error) {
       console.error('Error refreshing gigs:', error);
-      setError('فشل في تحديث الخدمات. يرجى المحاولة مرة أخرى.');
+      setError('فشل في تحديث الحرف. يرجى المحاولة مرة أخرى.');
       toast({
         variant: "destructive",
         title: "خطأ في التحديث",
-        description: "فشل في تحديث خدماتك. يرجى المحاولة مرة أخرى.",
+        description: "فشل في تحديث حرفك. يرجى المحاولة مرة أخرى.",
       });
     } finally {
       setLoading(false);
@@ -260,7 +260,7 @@ const DashboardGigs = () => {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
       >        <div>
-          <h1 className="text-3xl font-bold text-gray-800">خدماتي</h1>
+          <h1 className="text-3xl font-bold text-gray-800">حرفي</h1>
           <p className="text-sm text-gray-600 mt-1">
             المنتجات النشطة: <span className="font-bold text-green-600">{activeProductsCount}</span> من <span className="font-bold">10</span>
           </p>
@@ -270,7 +270,7 @@ const DashboardGigs = () => {
             <DropdownMenuTrigger asChild>
               <Button variant="outline" className="flex items-center gap-2">
                 <Filter className="h-4 w-4" />
-                {typeFilter === 'all' ? 'الكل' : typeFilter === 'gig' ? 'خدمات/حرف' : 'منتجات'}
+                {typeFilter === 'all' ? 'الكل' : typeFilter === 'gig' ? 'حرف' : 'منتجات'}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -280,7 +280,7 @@ const DashboardGigs = () => {
                 الكل {typeFilter === 'all' && '✓'}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setTypeFilter('gig')}>
-                خدمات/حرف {typeFilter === 'gig' && '✓'}
+                حرف {typeFilter === 'gig' && '✓'}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setTypeFilter('product')}>
                 منتجات {typeFilter === 'product' && '✓'}
@@ -298,7 +298,7 @@ const DashboardGigs = () => {
             تحديث
           </Button>
           <Button onClick={() => navigate('/dashboard/gigs/new')} className="bg-green-500 hover:bg-green-600">
-            <PlusCircle className="ml-2 h-5 w-5" /> أضف خدمة جديدة
+            <PlusCircle className="ml-2 h-5 w-5" /> أضف حرفة جديدة
           </Button>
         </div>
       </motion.div>
@@ -312,13 +312,13 @@ const DashboardGigs = () => {
           <ShoppingBag className="h-24 w-24 text-gray-300 mx-auto mb-6" />
           <h2 className="text-2xl font-semibold text-gray-700 mb-2">
             {userGigs.length === 0 
-              ? 'ليس لديك خدمات معروضة بعد'
-              : 'لا توجد خدمات تطابق الفلتر المحدد'}
+              ? 'ليس لديك حرف معروضة بعد'
+              : 'لا توجد حرف تطابق الفلتر المحدد'}
           </h2>
           <p className="text-gray-500">
             {userGigs.length === 0 
-              ? 'ابدأ بإضافة خدماتك ليراها العملاء!'
-              : 'اختر فلتر مختلف لعرض الخدمات المتاحة.'}
+              ? 'ابدأ بإضافة حرفك ليراها العملاء!'
+              : 'اختر فلتر مختلف لعرض الحرف المتاحة.'}
           </p>
           {userGigs.length === 0 && (
             <Button onClick={() => navigate('/dashboard/gigs/new')} className="mt-6 bg-roman-500 hover:bg-roman-500/90 text-white">
@@ -378,7 +378,7 @@ const DashboardGigs = () => {
                         : 'bg-blue-100 text-blue-800 border-blue-200'
                     }`}
                   >
-                    {gig.type === 'product' ? 'منتج' : 'خدمة/حرفة'}
+                    {gig.type === 'product' ? 'منتج' : 'حرفة'}
                   </Badge>
                 </div>
                 <CardHeader className="pb-2">
@@ -443,16 +443,16 @@ const DashboardGigs = () => {
                       </Button>
                     </AlertDialogTrigger>                    <AlertDialogContent>
                       <AlertDialogHeader>
-                        <AlertDialogTitle>هل أنت متأكد من حذف هذه الخدمة؟</AlertDialogTitle>
+                        <AlertDialogTitle>هل أنت متأكد من حذف هذه الحرفة؟</AlertDialogTitle>
                         <AlertDialogDescription className="space-y-2">
-                          <p>لا يمكن التراجع عن هذا الإجراء. سيتم حذف الخدمة "{gig.title}" نهائياً.</p>
+                          <p>لا يمكن التراجع عن هذا الإجراء. سيتم حذف الحرفة "{gig.title}" نهائياً.</p>
                           <div className="bg-yellow-50 p-3 rounded-md">
                             <p className="text-sm text-yellow-800">
                               <strong>سيتم حذف:</strong>
                             </p>
                             <ul className="text-sm text-yellow-700 mt-1 list-disc list-inside">
-                              <li>جميع صور الخدمة</li>
-                              <li>تفاصيل الخدمة والوصف</li>
+                              <li>جميع صور الحرفة</li>
+                              <li>تفاصيل الحرفة والوصف</li>
                               <li>الكلمات المفتاحية المرتبطة</li>
                             </ul>
                           </div>

@@ -493,7 +493,7 @@ const ChatPage = () => {
                     className="text-blue-600 border-blue-600 hover:bg-blue-50"
                   >
                     <ShoppingBag className="h-4 w-4 mr-1" />
-                    طلب خدمة
+                    طلب حرفة
                   </Button>
                 )}
                         
@@ -501,7 +501,7 @@ const ChatPage = () => {
                 {loadingServices && (
                   <div className="text-xs text-gray-500 flex items-center">
                     <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-gray-400 mr-1"></div>
-                    جاري التحقق من الخدمات...
+                    جاري التحقق من الحرف...
                   </div>
                 )}
                 

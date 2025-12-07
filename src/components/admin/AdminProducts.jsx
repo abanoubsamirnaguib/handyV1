@@ -444,13 +444,13 @@ const AdminProducts = () => {
                       <div className="flex justify-between">
                         <span className="text-gray-600">النوع:</span>
                         <Badge variant="outline" className={product.type === 'gig' ? "border-purple-200 text-purple-600" : "border-orange-200 text-orange-600"}>
-                          {product.type === 'gig' ? 'خدمة' : 'منتج جاهز'}
+                          {product.type === 'gig' ? 'حرفة' : 'منتج جاهز'}
                         </Badge>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">السعر:</span>
                         {product.price == 0 ? (
-                          <span className="font-semibold text-blue-600">خدمة قابلة للتفاوض</span>
+          <span className="font-semibold text-blue-600">حرفة قابلة للتفاوض</span>
                         ) : (
                           <span className="font-semibold text-green-600">{product.price} جنيه</span>
                         )}

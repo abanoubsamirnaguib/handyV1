@@ -101,7 +101,7 @@ const CreateGigPage = () => {
         }
       } catch (error) {
         console.error('Error fetching seller gigs:', error);
-        setGigsError('فشل في تحميل الخدمات');
+        setGigsError('فشل في تحميل الحرف');
         setSellerGigs([]);
       } finally {
         setGigsLoading(false);
@@ -201,7 +201,7 @@ const CreateGigPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!user || user.active_role !== 'seller') {
-      toast({ variant: "destructive", title: "غير مصرح به", description: "يجب أن تكون في وضع البائع لإنشاء خدمة." });
+      toast({ variant: "destructive", title: "غير مصرح به", description: "يجب أن تكون في وضع البائع لإنشاء حرفة." });
       return;
     }
     if (!gigData.title || !gigData.description || !gigData.price || !gigData.category) {
@@ -229,10 +229,10 @@ const CreateGigPage = () => {
       });
       
       const newGig = response.product || response;
-      const notificationMessage = response.notification || `خدمة "${gigData.title}" أصبحت جاهزة.`;
+      const notificationMessage = response.notification || `حرفة "${gigData.title}" أصبحت جاهزة.`;
       
       toast({ 
-        title: "تم إنشاء الخدمة بنجاح!", 
+        title: "تم إنشاء الحرفة بنجاح!", 
         description: notificationMessage,
         duration: 6000 // عرض الرسالة لمدة أطول
       });
@@ -258,7 +258,7 @@ const CreateGigPage = () => {
       console.error('Error creating product:', err);
       
       // Handle specific error messages
-      let errorMessage = err.message || "حدث خطأ أثناء إنشاء الخدمة";
+      let errorMessage = err.message || "حدث خطأ أثناء إنشاء الحرفة";
       
       // Check if the error is about reaching the active products limit
       if (err.message && err.message.includes('الحد الأقصى')) {
@@ -295,9 +295,9 @@ const CreateGigPage = () => {
         className="flex items-center justify-between mb-8"
       >
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">إنشاء خدمة جديدة</h1>
+          <h1 className="text-3xl font-bold text-gray-800">إنشاء حرفة جديدة</h1>
           <p className="text-gray-600 mt-2">
-            لديك {sellerGigs.length} خدمة منشورة
+            لديك {sellerGigs.length} حرفة منشورة
           </p>
         </div>
         <div className="flex items-center gap-4">
@@ -307,7 +307,7 @@ const CreateGigPage = () => {
             className="flex items-center gap-2"
           >
             <Eye className="h-4 w-4" />
-            عرض خدماتي
+            عرض حرفي
           </Button>
           <PlusCircle className="h-8 w-8 text-primary" />
         </div>
@@ -320,20 +320,20 @@ const CreateGigPage = () => {
           animate={{ opacity: 1, y: 0 }} 
           className="mb-8"
         >
-          <h2 className="text-lg font-semibold text-gray-700 mb-4">خدماتك الحالية</h2>
+          <h2 className="text-lg font-semibold text-gray-700 mb-4">حرفك الحالية</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {sellerGigs.slice(0, 4).map((gig) => (
               <div key={gig.id} className="bg-white border rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
                 <h3 className="font-medium text-gray-800 truncate">{gig.title}</h3>
                 <p className="text-sm text-gray-600 mt-1">{gig.price} جنيه</p>
                 <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded mt-2 inline-block">
-                  {gig.type === 'gig' ? 'خدمة/حرفة' : 'منتج'}
+                  {gig.type === 'gig' ? 'حرفة' : 'منتج'}
                 </span>
               </div>
             ))}
             {sellerGigs.length > 4 && (
               <div className="bg-gray-50 border rounded-lg p-4 flex items-center justify-center">
-                <span className="text-gray-500 text-sm">+{sellerGigs.length - 4} خدمة أخرى</span>
+                <span className="text-gray-500 text-sm">+{sellerGigs.length - 4} حرفة أخرى</span>
               </div>
             )}
           </div>
@@ -347,16 +347,16 @@ const CreateGigPage = () => {
             <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }}>
               <CardHeader className="px-0 pt-0 pb-4">
                 <CardTitle className="text-xl text-gray-700">المعلومات الأساسية</CardTitle>
-                <CardDescription>صف خدمتك بوضوح لجذب العملاء.</CardDescription>
+                <CardDescription>صف حرفتك بوضوح لجذب العملاء.</CardDescription>
               </CardHeader>
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="title" className="flex items-center"><ArrowRight className="ml-2 h-4 w-4 text-gray-500" />عنوان الخدمة</Label>
-                  <Input id="title" name="title" value={gigData.title} onChange={handleChange} placeholder="مثال: تصميم شعار احترافي لشركتك" required />
+                  <Label htmlFor="title" className="flex items-center"><ArrowRight className="ml-2 h-4 w-4 text-gray-500" />عنوان الحرفة</Label>
+                  <Input id="title" name="title" value={gigData.title} onChange={handleChange} placeholder="مثال: صنع شنطة كروشيه مخصصة" required />
                 </div>
                 <div>
-                  <Label htmlFor="description" className="flex items-center"><ArrowRight className="ml-2 h-4 w-4 text-gray-500" />وصف الخدمة</Label>
-                  <Textarea id="description" name="description" value={gigData.description} onChange={handleChange} rows={5} placeholder="اشرح بالتفصيل ما تقدمه في هذه الخدمة..." required />
+                  <Label htmlFor="description" className="flex items-center"><ArrowRight className="ml-2 h-4 w-4 text-gray-500" />وصف الحرفة</Label>
+                  <Textarea id="description" name="description" value={gigData.description} onChange={handleChange} rows={5} placeholder="اشرح بالتفصيل ما تقدمه في هذه الحرفة... مثال: أقوم بصنع شنط كروشيه مخصصة بألوان وأشكال مختلفة، باستخدام خيوط عالية الجودة. يمكن تخصيص الحجم والتصميم حسب طلب العميل، مع إمكانية إضافة زخارف أو تطريزات." required />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
@@ -379,7 +379,7 @@ const CreateGigPage = () => {
                               ? "جاري تحميل التصنيفات..." 
                               : categoriesError 
                               ? "خطأ في تحميل التصنيفات" 
-                              : "اختر تصنيف الخدمة"
+                              : "اختر تصنيف الحرفة"
                           } 
                           dir="rtl" 
                         />
@@ -433,20 +433,20 @@ const CreateGigPage = () => {
                 </div>
                 <div>
                   <Label htmlFor="tags" className="flex items-center"><Tag className="ml-2 h-4 w-4 text-gray-500" />الكلمات المفتاحية (مفصولة بفاصلة)</Label>
-                  <Input id="tags" name="tags" value={gigData.tags} onChange={handleChange} placeholder="مثال: تصميم, شعار, هوية بصرية" />
+                  <Input id="tags" name="tags" value={gigData.tags} onChange={handleChange} placeholder="مثال: كروشيه, شنطة, حقيبة, خيوط, حرف يدوية" />
                 </div>
                 <div>
                   <Label htmlFor="deliveryTime" className="flex items-center"><Clock className="ml-2 h-4 w-4 text-gray-500" />مدة التسليم المتوقعة</Label>
-                  <Input id="deliveryTime" name="deliveryTime" value={gigData.deliveryTime} onChange={handleChange} placeholder="مثال: 3-5 أيام عمل" />
+                  <Input id="deliveryTime" name="deliveryTime" value={gigData.deliveryTime} onChange={handleChange} placeholder="مثال: 7-10 أيام عمل" />
                 </div>
                 <div>
-                  <Label htmlFor="type" className="flex items-center"><ArrowRight className="ml-2 h-4 w-4 text-gray-500" />نوع الخدمة</Label>
+                  <Label htmlFor="type" className="flex items-center"><ArrowRight className="ml-2 h-4 w-4 text-gray-500" />نوع المنتج</Label>
                   <Select id="type" value={gigData.type} onValueChange={value => setGigData(prev => ({ ...prev, type: value }))} required dir="rtl">
                     <SelectTrigger dir="rtl">
-                      <SelectValue placeholder="اختر نوع الخدمة" dir="rtl" />
+                      <SelectValue placeholder="اختر نوع المنتج" dir="rtl" />
                     </SelectTrigger>
                     <SelectContent dir="rtl">
-                      <SelectItem value="gig" dir="rtl">خدمة/حرفة</SelectItem>
+                      <SelectItem value="gig" dir="rtl">حرفة</SelectItem>
                       <SelectItem value="product" dir="rtl">منتج قابل للبيع</SelectItem>
                     </SelectContent>
                   </Select>
@@ -457,8 +457,8 @@ const CreateGigPage = () => {
             
             <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}>
               <CardHeader className="px-0 pt-6 pb-4">
-                <CardTitle className="text-xl text-gray-700">صور الخدمة</CardTitle>
-                <CardDescription>أضف صورًا عالية الجودة تعرض خدمتك (حتى 5 صور - حد أقصى 5 ميجا لكل صورة).</CardDescription>
+                <CardTitle className="text-xl text-gray-700">صور الحرفة</CardTitle>
+                <CardDescription>أضف صورًا عالية الجودة تعرض حرفتك (حتى 5 صور - حد أقصى 5 ميجا لكل صورة).</CardDescription>
               </CardHeader>
               <div>
                 <Label htmlFor="images" className="flex items-center cursor-pointer border-2 border-dashed border-gray-300 rounded-md p-6 justify-center hover:border-primary transition-colors">
@@ -474,7 +474,7 @@ const CreateGigPage = () => {
                     {imagePreviews.map((preview, index) => (
                       <div key={index} className="relative group aspect-square">
                         <img 
-                          src={preview || "https://images.unsplash.com/photo-1690721606848-ac5bdcde45ea"} 
+                          src={preview || "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80"} 
                           alt={`معاينة ${index + 1}`} 
                           className="w-full h-full object-cover rounded-md shadow" 
                         />
@@ -496,7 +496,7 @@ const CreateGigPage = () => {
             
             <motion.div className="pt-6 flex justify-end" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>
               <Button type="submit" size="lg" className="bg-green-500 hover:bg-green-600" disabled={loading}>
-                {loading ? "جاري النشر..." : <><Save className="ml-2 h-5 w-5" /> نشر الخدمة</>}
+                {loading ? "جاري النشر..." : <><Save className="ml-2 h-5 w-5" /> نشر الحرفة</>}
               </Button>
             </motion.div>
           </CardContent>

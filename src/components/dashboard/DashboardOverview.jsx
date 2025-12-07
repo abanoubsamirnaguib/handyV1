@@ -135,7 +135,7 @@ const DashboardOverview = () => {
       path: "/dashboard/orders"
     },
     { 
-      title: "إجمالي الخدمات", 
+      title: "إجمالي الحرف", 
       value: dashboardStats?.total_products?.toString() || "0", 
       icon: BarChart3, 
       color: "orange", 

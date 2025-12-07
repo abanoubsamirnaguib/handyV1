@@ -248,7 +248,7 @@ class Order extends Model
             throw new \Exception('لا يمكن الموافقة على هذا الطلب في الوقت الحالي');
         }
         
-        // إذا كان طلب خدمة ولديه صورة باقي المبلغ، نرجع للحالة السابقة
+        // إذا كان طلب حرفة ولديه صورة باقي المبلغ، نرجع للحالة السابقة
         if ($this->is_service_order && $this->remaining_payment_proof && $this->previous_status) {
             $finalApprovalData = [
                 'status' => $this->previous_status, // الرجوع للحالة السابقة
@@ -273,7 +273,7 @@ class Order extends Model
                 'admin_notes' => $notes
             ];
 
-            // أي طلب خدمة يحتوي على عربون وصورة إثبات للعربون يعتبر مدفوعاً للعربون
+            // أي طلب حرفة يحتوي على عربون وصورة إثبات للعربون يعتبر مدفوعاً للعربون
             if ($this->requires_deposit && $this->deposit_image) {
                 if ($this->deposit_status !== 'paid') {
                     $approvalData['deposit_status'] = 'paid';
@@ -283,7 +283,7 @@ class Order extends Model
                 }
             }
 
-            // الطلبات الجاهزة (غير الخدمات) والتي لديها إثبات دفع تصبح مدفوعة بعد موافقة الأدمن
+            // الطلبات الجاهزة (غير الحرف) والتي لديها إثبات دفع تصبح مدفوعة بعد موافقة الأدمن
             if (
                 !$this->is_service_order && 
                 $this->payment_method !== 'cash_on_delivery' && 
@@ -841,7 +841,7 @@ class Order extends Model
     }
     
     /**
-     * التحقق من أن الخدمة قابلة للتفاوض (السعر الأصلي 0)
+     * التحقق من أن الحرفة قابلة للتفاوض (السعر الأصلي 0)
      */
     public function isNegotiableService()
     {

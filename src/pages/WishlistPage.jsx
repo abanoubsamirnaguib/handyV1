@@ -215,7 +215,7 @@ const WishlistPage = () => {
                         variant={item.product.type === 'product' ? 'default' : 'secondary'}
                         className="absolute top-2 left-2"
                       >
-                        {item.product.type === 'product' ? 'منتج' : 'خدمة'}
+                        {item.product.type === 'product' ? 'منتج' : 'حرفة'}
                       </Badge>
                     </div>
                   </CardHeader>
@@ -252,7 +252,7 @@ const WishlistPage = () => {
                         ) : (
                           <>
                             <MessageSquare className="h-4 w-4 ml-1" />
-                            اطلب الخدمة
+                            اطلب الحرفة
                           </>
                         )}
                       </Button>

@@ -219,8 +219,8 @@ class NotificationService
     public static function welcome(int $userId, string $userName, bool $isSeller = false): Notification
     {
         $message = $isSeller 
-            ? "مرحباً {$userName}! 🎉 نحن سعداء بانضمامك كبائع. يمكنك الآن البدء في عرض منتجاتك وخدماتك!"
-            : "مرحباً {$userName}! 🎉 نحن سعداء بانضمامك إلى بازار. ابدأ الآن في استكشاف المنتجات والخدمات المميزة!";
+            ? "مرحباً {$userName}! 🎉 نحن سعداء بانضمامك كبائع. يمكنك الآن البدء في عرض منتجاتك وحرفك!"
+            : "مرحباً {$userName}! 🎉 نحن سعداء بانضمامك إلى بازار. ابدأ الآن في استكشاف المنتجات والحرف المميزة!";
         
         return self::create(
             userId: $userId,
@@ -248,7 +248,7 @@ class NotificationService
      */
     public static function productPendingReview(int $userId, string $productTitle, string $productType = 'منتج'): Notification
     {
-        $typeText = $productType === 'gig' ? 'خدمة' : 'منتج';
+        $typeText = $productType === 'gig' ? 'حرفة' : 'منتج';
         $message = "تم إضافة {$typeText} بعنوان \"{$productTitle}\". 
 الآن قيد المراجعة لدى الإدارة، وعادةً ما تستغرق الموافقة والنشر حوالي 48–72 ساعة.";
         
@@ -281,9 +281,9 @@ class NotificationService
      */
     public static function productRejected(int $userId, string $productTitle, string $productType = 'منتج', string $rejectionReason = ''): Notification
     {
-        $typeText = $productType === 'gig' ? 'خدمتك' : 'منتجك';
+        $typeText = $productType === 'gig' ? 'حرفتك' : 'منتجك';
         $reasonText = $rejectionReason ? "\n\nسبب الرفض: {$rejectionReason}" : '';
-        $message = "❌ تم رفض {$typeText}: \"{$productTitle}\".{$reasonText}\n\nيرجى مراجعة السبب وإعادة إنشاء المنتج/الخدمة مرة أخرى.";
+        $message = "❌ تم رفض {$typeText}: \"{$productTitle}\".{$reasonText}\n\nيرجى مراجعة السبب وإعادة إنشاء المنتج/الحرفة مرة أخرى.";
         
         return self::create(
             userId: $userId,

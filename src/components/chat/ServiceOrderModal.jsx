@@ -92,7 +92,7 @@ const ServiceOrderModal = ({ isOpen, onClose, sellerId, sellerUserId, sellerName
       toast({
         variant: "destructive",
         title: "خطأ",
-        description: "خطأ في تحميل الخدمات"
+        description: "خطأ في تحميل الحرف"
       });
       setServices([]); // Set to empty array on error
     } finally {
@@ -166,14 +166,14 @@ const ServiceOrderModal = ({ isOpen, onClose, sellerId, sellerUserId, sellerName
       toast({
         variant: "destructive",
         title: "خطأ في قيمة العربون",
-        description: `قيمة العربون لا يمكن أن تكون أقل من 20% من قيمة الخدمة (${minDeposit.toFixed(2)} جنيه). تم تعديل القيمة تلقائياً.`
+        description: `قيمة العربون لا يمكن أن تكون أقل من 20% من قيمة الحرفة (${minDeposit.toFixed(2)} جنيه). تم تعديل القيمة تلقائياً.`
       });
     } else if (numValue > maxDeposit) {
       handleInputChange('deposit_amount', maxDeposit.toFixed(2));
       toast({
         variant: "destructive",
         title: "خطأ في قيمة العربون",
-        description: `قيمة العربون لا يمكن أن تتجاوز 80% من قيمة الخدمة (${maxDeposit.toFixed(2)} جنيه). تم تعديل القيمة تلقائياً.`
+        description: `قيمة العربون لا يمكن أن تتجاوز 80% من قيمة الحرفة (${maxDeposit.toFixed(2)} جنيه). تم تعديل القيمة تلقائياً.`
       });
     }
   };
@@ -197,7 +197,7 @@ const ServiceOrderModal = ({ isOpen, onClose, sellerId, sellerUserId, sellerName
       toast({
         variant: "destructive",
         title: "خطأ",
-        description: "يرجى اختيار خدمة"
+        description: "يرجى اختيار حرفة"
       });
       return;
     }
@@ -217,7 +217,7 @@ const ServiceOrderModal = ({ isOpen, onClose, sellerId, sellerUserId, sellerName
       toast({
         variant: "destructive",
         title: "خطأ",
-        description: "يرجى إدخال سعر الخدمة أولاً"
+        description: "يرجى إدخال سعر الحرفة أولاً"
       });
       return;
     }
@@ -226,22 +226,22 @@ const ServiceOrderModal = ({ isOpen, onClose, sellerId, sellerUserId, sellerName
     const minDepositAmount = effectivePrice * 0.2;
     const maxDepositAmount = effectivePrice * 0.8;
     
-    // التحقق من أن العربون لا يقل عن 20% من قيمة الخدمة
+    // التحقق من أن العربون لا يقل عن 20% من قيمة الحرفة
     if (depositAmount < minDepositAmount) {
       toast({
         variant: "destructive",
         title: "خطأ في قيمة العربون",
-        description: `قيمة العربون لا يمكن أن تكون أقل من 20% من قيمة الخدمة (${minDepositAmount.toFixed(2)} جنيه)`
+        description: `قيمة العربون لا يمكن أن تكون أقل من 20% من قيمة الحرفة (${minDepositAmount.toFixed(2)} جنيه)`
       });
       return;
     }
     
-    // التحقق من أن العربون لا يتجاوز 80% من قيمة الخدمة
+    // التحقق من أن العربون لا يتجاوز 80% من قيمة الحرفة
     if (depositAmount > maxDepositAmount) {
       toast({
         variant: "destructive",
         title: "خطأ في قيمة العربون",
-        description: `قيمة العربون لا يمكن أن تتجاوز 80% من قيمة الخدمة (${maxDepositAmount.toFixed(2)} جنيه)`
+        description: `قيمة العربون لا يمكن أن تتجاوز 80% من قيمة الحرفة (${maxDepositAmount.toFixed(2)} جنيه)`
       });
       return;
     }
@@ -313,8 +313,8 @@ const ServiceOrderModal = ({ isOpen, onClose, sellerId, sellerUserId, sellerName
       toast({
         title: "نجح",
         description: enablePriceChange && proposedPrice 
-          ? "تم إرسال طلب الخدمة بنجاح. في انتظار موافقة البائع على السعر المقترح."
-          : "تم إرسال طلب الخدمة بنجاح"
+          ? "تم إرسال طلب الحرفة بنجاح. في انتظار موافقة البائع على السعر المقترح."
+          : "تم إرسال طلب الحرفة بنجاح"
       });
       onClose();
       
@@ -339,7 +339,7 @@ const ServiceOrderModal = ({ isOpen, onClose, sellerId, sellerUserId, sellerName
       toast({
         variant: "destructive",
         title: "خطأ",
-        description: "خطأ في إرسال طلب الخدمة"
+        description: "خطأ في إرسال طلب الحرفة"
       });
     } finally {
       setSubmitting(false);
@@ -364,8 +364,8 @@ const ServiceOrderModal = ({ isOpen, onClose, sellerId, sellerUserId, sellerName
               <AvatarFallback>{sellerName?.charAt(0)}</AvatarFallback>
             </Avatar>
             <div>
-              <h2 className="text-xl font-bold">طلب خدمة من {sellerName}</h2>
-              <p className="text-sm text-gray-500">اختر خدمة وأدخل بيانات الطلب</p>
+              <h2 className="text-xl font-bold">طلب حرفة من {sellerName}</h2>
+              <p className="text-sm text-gray-500">اختر حرفة وأدخل بيانات الطلب</p>
             </div>
           </div>
           <Button
@@ -382,15 +382,15 @@ const ServiceOrderModal = ({ isOpen, onClose, sellerId, sellerUserId, sellerName
           {/* Services List */}
           {!selectedService && (
             <div className="mb-6">
-              <h3 className="text-lg font-semibold mb-4">اختر الخدمة المطلوبة</h3>
+              <h3 className="text-lg font-semibold mb-4">اختر الحرفة المطلوبة</h3>
               {loading ? (
                 <div className="text-center py-8">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-                  <p className="mt-2 text-gray-500">جاري تحميل الخدمات...</p>
+                  <p className="mt-2 text-gray-500">جاري تحميل الحرف...</p>
                 </div>
               ) : !Array.isArray(services) || services.length === 0 ? (
                 <div className="text-center py-8">
-                  <p className="text-gray-500">لا توجد خدمات متاحة</p>
+                  <p className="text-gray-500">لا توجد حرف متاحة</p>
                 </div>
               ) : (
                 <div className="grid gap-4">
@@ -497,7 +497,7 @@ const ServiceOrderModal = ({ isOpen, onClose, sellerId, sellerUserId, sellerName
                         <svg className="h-4 w-4 ml-1" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                         </svg>
-                        هذه الخدمة قابلة للتفاوض. يرجى إدخال السعر المتفق عليه مع البائع في الشات.
+                        هذه الحرفة قابلة للتفاوض. يرجى إدخال السعر المتفق عليه مع البائع في الشات.
                       </p>
                     </div>
                   )}
@@ -509,7 +509,7 @@ const ServiceOrderModal = ({ isOpen, onClose, sellerId, sellerUserId, sellerName
                     onClick={() => setSelectedService(null)}
                     className="mt-2"
                   >
-                    تغيير الخدمة
+                    تغيير الحرفة
                   </Button>
                 </CardContent>
               </Card>
@@ -559,12 +559,12 @@ const ServiceOrderModal = ({ isOpen, onClose, sellerId, sellerUserId, sellerName
               <div>
                 <label className="block text-sm font-medium mb-2">
                   <FileText className="w-4 h-4 inline mr-1" />
-                  متطلبات الخدمة
+                  متطلبات الحرفة
                 </label>
                 <Textarea
                   value={formData.service_requirements}
                   onChange={(e) => handleInputChange('service_requirements', e.target.value)}
-                  placeholder="أدخل تفاصيل ومتطلبات الخدمة..."
+                  placeholder="أدخل تفاصيل ومتطلبات الحرفة..."
                   rows={4}
                 />
               </div>
@@ -603,7 +603,7 @@ const ServiceOrderModal = ({ isOpen, onClose, sellerId, sellerUserId, sellerName
                       const maxDeposit = effectivePrice * 0.8;
                       return (
                         <p className="text-xs text-gray-500 mt-1">
-                          نطاق العربون المسموح: من {minDeposit.toFixed(2)} إلى {maxDeposit.toFixed(2)} جنيه (20% - 80% من قيمة الخدمة)
+                          نطاق العربون المسموح: من {minDeposit.toFixed(2)} إلى {maxDeposit.toFixed(2)} جنيه (20% - 80% من قيمة الحرفة)
                         </p>
                       );
                     })()}

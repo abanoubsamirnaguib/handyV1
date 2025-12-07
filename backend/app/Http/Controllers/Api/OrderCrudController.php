@@ -123,7 +123,7 @@ class OrderCrudController extends Controller
                 
                 // Verify service belongs to seller
                 if ($service->seller_id != $seller_id) {
-                    throw new \Exception('الخدمة لا تنتمي لهذا البائع');
+                    throw new \Exception('الحرفة لا تنتمي لهذا البائع');
                 }
                 
                 // تحديد السعر الفعلي المستخدم
@@ -135,7 +135,7 @@ class OrderCrudController extends Controller
                 
                 // إذا السعر الأصلي 0 ولا يوجد سعر مقترح، نرفض الطلب
                 if ($validated['total_price'] == 0 && !$hasBuyerProposedPrice) {
-                    throw new \Exception('يجب إدخال سعر مقترح للخدمات القابلة للتفاوض');
+                    throw new \Exception('يجب إدخال سعر مقترح للحرف القابلة للتفاوض');
                 }
                 
                 // التحقق من أن العربون لا يتجاوز 80% من قيمة المنتج
@@ -156,7 +156,7 @@ class OrderCrudController extends Controller
                     'seller_id' => $seller_id,
                     'status' => 'pending',
                     'total_price' => $validated['total_price'], // السعر الأصلي
-                    'original_service_price' => $service->price, // حفظ سعر الخدمة الأصلي
+                    'original_service_price' => $service->price, // حفظ سعر الحرفة الأصلي
                     'order_date' => now(),
                     'customer_name' => $validated['customer_name'],
                     'customer_phone' => $validated['customer_phone'],
@@ -195,9 +195,9 @@ class OrderCrudController extends Controller
                 // Add order history
                 if ($hasBuyerProposedPrice) {
                     $order->addToHistory('pending', Auth::id(), 'service_order_created', 
-                        "تم إنشاء طلب خدمة مع دفع العربون - السعر المقترح: {$validated['buyer_proposed_price']} ج.م (في انتظار موافقة البائع)");
+                        "تم إنشاء طلب حرفة مع دفع العربون - السعر المقترح: {$validated['buyer_proposed_price']} ج.م (في انتظار موافقة البائع)");
                 } else {
-                    $order->addToHistory('pending', Auth::id(), 'service_order_created', 'تم إنشاء طلب خدمة مع دفع العربون');
+                    $order->addToHistory('pending', Auth::id(), 'service_order_created', 'تم إنشاء طلب حرفة مع دفع العربون');
                 }
                 
                 // Send notification to seller
@@ -207,7 +207,7 @@ class OrderCrudController extends Controller
                         NotificationService::create(
                             $order->seller->user_id,
                             'new_price_proposal',
-                            "طلب خدمة جديد #{$order->id} يحتوي على سعر مقترح {$validated['buyer_proposed_price']} ج.م (السعر الأصلي: {$validated['total_price']} ج.م). يرجى مراجعة الطلب والموافقة على السعر.",
+                            "طلب حرفة جديد #{$order->id} يحتوي على سعر مقترح {$validated['buyer_proposed_price']} ج.م (السعر الأصلي: {$validated['total_price']} ج.م). يرجى مراجعة الطلب والموافقة على السعر.",
                             "/orders/{$order->id}"
                         );
                     } else {
@@ -560,7 +560,7 @@ class OrderCrudController extends Controller
                 Notification::create([
                     'user_id' => $admin->id,
                     'notification_type' => 'order_pending_admin',
-                    'message' => "طلب خدمة جديد #{$order->id} بسعر متفاوض عليه ({$order->buyer_proposed_price} ج.م) في انتظار موافقتك.",
+                    'message' => "طلب حرفة جديد #{$order->id} بسعر متفاوض عليه ({$order->buyer_proposed_price} ج.م) في انتظار موافقتك.",
                     'is_read' => false,
                     'link' => '/orders/' . $order->id,
                     'created_at' => now(),
@@ -1200,7 +1200,7 @@ class OrderCrudController extends Controller
                     'average_rating' => round($averageRating, 1),
                     'total_earnings_formatted' => number_format($totalEarnings, 2) . ' جنيه',
                     'new_orders_today_text' => $newOrdersToday > 0 ? "+{$newOrdersToday} طلبات اليوم" : "لا توجد طلبات جديدة اليوم",
-                    'inactive_products_text' => $inactiveProducts > 0 ? "{$inactiveProducts} خدمة غير نشطة" : "جميع الخدمات نشطة",
+                    'inactive_products_text' => $inactiveProducts > 0 ? "{$inactiveProducts} حرفة غير نشطة" : "جميع الحرف نشطة",
                     'average_rating_text' => "متوسط تقييم " . round($averageRating, 1),
                     'top_selling_products' => $topSellingProducts
                 ]

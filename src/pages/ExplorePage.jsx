@@ -276,7 +276,7 @@ const ExplorePage = () => {
       completedOrders: seller.completedOrders || 0,
     });
 
-    if (tab === 'products') {
+    if (tab === 'products' || tab === 'gigs') {
       // Build query params for products
       let params = [];
       if (query) params.push(`search=${encodeURIComponent(query)}`);
@@ -288,7 +288,12 @@ const ExplorePage = () => {
         if (found) categoryId = found.id;
         params.push(`category=${encodeURIComponent(categoryId)}`);
       }
-      if (type !== 'all') params.push(`type=${encodeURIComponent(type)}`);
+      // For gigs tab force type=gig, otherwise use selected type
+      if (tab === 'gigs') {
+        params.push(`type=gig`);
+      } else if (type !== 'all') {
+        params.push(`type=${encodeURIComponent(type)}`);
+      }
       if (minPrice > 0) params.push(`min_price=${minPrice}`);
       if (maxPrice < 1000) params.push(`max_price=${maxPrice}`);
       if (rating > 0) params.push(`min_rating=${rating}`);
@@ -301,7 +306,7 @@ const ExplorePage = () => {
         })
         .catch(() => {
           setGigs([]);
-          setError('تعذر تحميل المنتجات');
+          setError(tab === 'gigs' ? 'تعذر تحميل الحرف (Gigs)' : 'تعذر تحميل المنتجات');
           setLoading(false);
         });
     } else if (tab === 'sellers') {
@@ -490,7 +495,7 @@ const ExplorePage = () => {
             </div>
             <div className="absolute bottom-2 right-2 flex flex-col gap-1">
               <Badge variant="outline" className={`text-xs ${gig.type === 'gig' ? 'bg-warning-500/50 text-white border-warning-500' : 'bg-blue-100 text-blue-600 border-blue-300'}`}>
-                {gig.type === 'gig' ? 'خدمة مخصصة' : 'منتج جاهز'}
+                {gig.type === 'gig' ? 'حرفة مخصصة' : 'منتج جاهز'}
               </Badge>
             </div>
           </div>
@@ -551,7 +556,7 @@ const ExplorePage = () => {
             </div>
             <div className="absolute bottom-2 right-2 flex flex-col gap-1">
               <Badge variant="outline" className={`text-xs ${gig.type === 'gig' ? 'bg-warning-500/50 text-warning-500 border-warning-500' : 'bg-blue-10 text-blue-600 border-blue-300'}`}>
-                {gig.type === 'gig' ? 'خدمة مخصصة' : 'منتج جاهز'}
+                {gig.type === 'gig' ? 'حرفة مخصصة' : 'منتج جاهز'}
               </Badge>
             </div>
           </div>
@@ -715,12 +720,12 @@ const ExplorePage = () => {
       >
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-neutral-900 mb-2">
-            {activeTab === 'products' ? 'استكشف التصنيفات' : 'تصنيفات الحرفيين'}
+            {activeTab === 'sellers' ? 'تصنيفات الحرفيين' : 'استكشف التصنيفات'}
           </h2>
           <p className="text-roman-500">
-            {activeTab === 'products' 
-              ? 'اختر التصنيف المناسب لإيجاد ما تبحث عنه' 
-              : 'استكشف مختلف تخصصات الحرفيين'}
+            {activeTab === 'sellers' 
+              ? 'استكشف مختلف تخصصات الحرفيين' 
+              : 'اختر التصنيف المناسب لإيجاد ما تبحث عنه'}
           </p>
         </div>
         
@@ -768,7 +773,8 @@ const ExplorePage = () => {
       </motion.div>
 
       <Tabs defaultValue={activeTab} onValueChange={handleTabChange} className="w-full mb-6">
-        <TabsList className="w-full grid grid-cols-2 mb-6 bg-neutral-100">
+        <TabsList className="w-full grid grid-cols-3 mb-6 bg-neutral-100">
+          <TabsTrigger value="gigs" className="text-lg data-[state=active]:bg-roman-500 data-[state=active]:text-white">الحرف</TabsTrigger>
           <TabsTrigger value="products" className="text-lg data-[state=active]:bg-roman-500 data-[state=active]:text-white">المنتجات</TabsTrigger>
           <TabsTrigger value="sellers" className="text-lg data-[state=active]:bg-roman-500 data-[state=active]:text-white">الحرفيين</TabsTrigger>
         </TabsList>
@@ -781,7 +787,13 @@ const ExplorePage = () => {
               type="text"
               value={quickSearchTerm}
               onChange={(e) => handleQuickSearch(e.target.value)}
-              placeholder={activeTab === 'products' ? 'بحث سريع في المنتجات...' : 'بحث سريع في الحرفيين...'}
+              placeholder={
+                activeTab === 'products'
+                  ? 'بحث سريع في المنتجات...'
+                  : activeTab === 'gigs'
+                  ? 'بحث سريع في الحرف ...'
+                  : 'بحث سريع في الحرفيين...'
+              }
               className="pl-10 pr-12 border-roman-500/30 focus:border-roman-500 focus:ring-roman-500/20 text-right text-base h-12 bg-white shadow-sm"
               dir="rtl"
             />
@@ -846,7 +858,7 @@ const ExplorePage = () => {
                       <SelectContent className="border-roman-500/30 text-right" dir="rtl">
                         <SelectItem value="all">كل الأنواع</SelectItem>
                         <SelectItem value="product">منتجات جاهزة</SelectItem>
-                        <SelectItem value="gig">خدمات مخصصة</SelectItem>
+                        <SelectItem value="gig">حرف مخصصة</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -940,6 +952,144 @@ const ExplorePage = () => {
                 <div className="text-center py-12">
                   <img src="https://images.unsplash.com/photo-1675023112817-52b789fd2ef0" alt="لا توجد نتائج" className="mx-auto mb-4 w-48 h-48 text-gray-400" />
                   <h3 className="text-2xl font-semibold text-neutral-900 mb-2">لا توجد منتجات تطابق بحثك</h3>
+                  <p className="text-neutral-900/70">حاول تعديل الفلاتر أو البحث بكلمات أخرى.</p>
+                </div>
+              )}
+            </main>
+          </div>
+        </TabsContent>
+        {/* Gigs-only tab (filters pre-set to type=gig) */}
+          <TabsContent value="gigs" className="mt-0">          <div className="flex flex-col md:flex-row-reverse gap-8">
+            {/* Filters Sidebar */}
+            <motion.aside 
+              className={`md:w-1/4 ${isFiltersOpen ? 'block' : 'hidden'} md:block fixed inset-0 z-40 bg-white p-6 md:relative md:bg-transparent md:p-0 md:z-auto transition-transform duration-300 ease-in-out transform ${isFiltersOpen ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}`}
+              initial={{ x: -200, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ duration: 0.5 }}
+            >
+              <Card className="shadow-lg border-roman-500/20">
+                <CardHeader className="flex flex-row-reverse items-center justify-between">
+                  <CardTitle className="text-xl text-roman-500 text-right">تصفية النتائج</CardTitle>
+                  <Button variant="ghost" size="icon" className="md:hidden hover:bg-success-100/50 text-roman-500" onClick={() => setIsFiltersOpen(false)}>
+                    <X className="h-5 w-5" />
+                  </Button>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div>
+                    <Label htmlFor="search-filter-gigs" className="text-neutral-900 block text-right">بحث بالاسم</Label>                    <Input 
+                      id="search-filter-gigs" 
+                      type="text" 
+                      value={searchTerm} 
+                      onChange={(e) => setSearchTerm(e.target.value)} 
+                      placeholder="اسم الحرفة، وصف..." 
+                      className="mt-1 border-roman-500/30 focus:border-roman-500 focus:ring-roman-500/20 text-right"
+                      dir="rtl"
+                    />
+                  </div>                  <div>
+                    <Label htmlFor="category-filter-gigs" className="text-neutral-900 block text-right">التصنيف</Label>
+                    <Select value={selectedCategory} onValueChange={value => handleCategoryChange(String(value))} dir="rtl">
+                      <SelectTrigger id="category-filter-gigs" className="mt-1 border-roman-500/30 focus:border-roman-500 focus:ring-roman-500/20 text-right">
+                        <SelectValue placeholder="اختر تصنيف" />
+                      </SelectTrigger>
+                      <SelectContent className="border-roman-500/30 text-right" dir="rtl">
+                        <SelectItem value="all">كل التصنيفات</SelectItem>
+                        {categories.map(cat => (
+                          <SelectItem key={cat.id} value={String(cat.id)}>{cat.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {/* Type is fixed to gig in this tab; no type selector */}
+                  <div>
+                    <Label className="text-neutral-900 block text-right">نطاق السعر: {priceRange[0]} - {priceRange[1]} جنيه</Label>
+                    <Slider
+                      defaultValue={priceRange}
+                      min={0}
+                      max={1000}
+                      step={50}
+                      onValueChange={setPriceRange}
+                      className="mt-2 [&>span:first-child]:h-1 [&>span:first-child]:bg-roman-500/20 [&_[role=slider]]:bg-roman-500 [&_[role=slider]]:w-4 [&_[role=slider]]:h-4 [&_[role=slider]]:border-2 [&_[role=slider]]:border-neutral-200"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-neutral-900 block text-right">التقييم الأدنى: {minRating} نجوم</Label>
+                    <div className="flex space-x-1 space-x-reverse mt-1">
+                      {[1, 2, 3, 4, 5].map(star => (
+                        <Button 
+                          key={star} 
+                          variant={minRating >= star ? "default" : "outline"} 
+                          size="icon" 
+                          onClick={() => setMinRating(star === minRating ? 0 : star)}
+                          className={`p-2 ${minRating >= star ? 'bg-roman-500 border-roman-500 hover:bg-roman-500/90' : 'border-roman-500/30'}`}
+                        >
+                          <Star className={`h-5 w-5 ${minRating >= star ? 'text-white' : 'text-warning-500'}`} />
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                  <Separator />                  <Button onClick={handleFilterChange} className="w-full bg-roman-500 hover:bg-roman-500/90 text-white">
+                    <Filter className="ml-2 h-4 w-4" /> تطبيق الفلاتر
+                  </Button>
+                  <Button onClick={resetFilters} variant="outline" className="w-full border-roman-500/50 text-roman-500 hover:bg-roman-500 hover:text-white">
+                    إعادة تعيين الفلاتر
+                  </Button>
+                </CardContent>
+              </Card>
+            </motion.aside>
+
+            {/* Gigs List */}
+            <main className="w-full md:w-3/4">
+              <div className="flex items-center justify-between mb-6">
+                <p className="text-neutral-900/70">تم العثور على {gigs.length} حرفة</p>                <div className="flex items-center gap-2">                  <Button variant="outline" size="icon" className="md:hidden ml-2 border-roman-500/50 text-roman-500 hover:bg-roman-500 hover:text-white" onClick={() => setIsFiltersOpen(true)}>
+                    <Filter className="h-5 w-5" />
+                  </Button>                  <Select value={sortBy} onValueChange={handleSortChange} dir="rtl">
+                    <SelectTrigger className="w-[180px] border-roman-500/30 focus:border-roman-500 focus:ring-roman-500/20 text-right">
+                      <SelectValue placeholder="الترتيب حسب" />
+                    </SelectTrigger>
+                    <SelectContent className="border-roman-500/30 text-right" dir="rtl">
+                      <SelectItem value="relevance">الأكثر صلة</SelectItem>
+                      <SelectItem value="price_low">السعر: من الأقل للأعلى</SelectItem>
+                      <SelectItem value="price_high">السعر: من الأعلى للأقل</SelectItem>
+                      <SelectItem value="rating">الأعلى تقييماً</SelectItem>
+                      <SelectItem value="newest">الأحدث</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button variant="outline" size="icon" className="border-roman-500/50 text-roman-500 hover:bg-roman-500 hover:text-white" onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}>
+                    {viewMode === 'grid' ? <ListFilter className="h-5 w-5" /> : <LayoutGrid className="h-5 w-5" />}
+                  </Button>
+                </div>
+              </div>
+
+              {loading ? (
+                <div className="text-center py-12">
+                  <p className="text-lg text-neutral-900">جاري تحميل الحرف...</p>
+                </div>
+              ) : error ? (
+                <div className="text-center py-12">
+                  <p className="text-lg text-red-500">{error}</p>
+                </div>              ) : gigs.length > 0 ? (
+                <motion.div 
+                  className={viewMode === 'grid' ? "grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-2 rtl" : "space-y-6"}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.5 }}
+                  dir="rtl"
+                >
+                  {gigs.map((gig, index) => (
+                    <motion.div
+                      key={gig.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3, delay: index * 0.05 }}
+                    >
+                      {viewMode === 'grid' ? <GigCard gig={gig} /> : <GigListItem gig={gig} />}
+                    </motion.div>
+                  ))}
+                </motion.div>
+              ) : (
+                <div className="text-center py-12">
+                  <img src="https://images.unsplash.com/photo-1675023112817-52b789fd2ef0" alt="لا توجد نتائج" className="mx-auto mb-4 w-48 h-48 text-gray-400" />
+                  <h3 className="text-2xl font-semibold text-neutral-900 mb-2">لا توجد حرف تطابق بحثك</h3>
                   <p className="text-neutral-900/70">حاول تعديل الفلاتر أو البحث بكلمات أخرى.</p>
                 </div>
               )}

@@ -139,7 +139,7 @@ const AdminDeliveryAssignment = () => {
   const handleAssignDelivery = async () => {
     if (!selectedOrder || !selectedDeliveryPerson) return;
 
-    // تحقق من حالة الطلب: إذا كان خدمة ويحتاج عربون ولم يتم دفع باقي المبلغ النهائي
+    // تحقق من حالة الطلب: إذا كان حرفة ويحتاج عربون ولم يتم دفع باقي المبلغ النهائي
     if (
       selectedOrder.is_service_order &&
       selectedOrder.requires_deposit &&

@@ -162,7 +162,7 @@ class ProductController extends Controller
 
         // إشعار المشرف بمنتج جديد يحتاج مراجعة
         try {
-            $productTypeText = $product->type === 'gig' ? 'خدمة' : 'منتج';
+            $productTypeText = $product->type === 'gig' ? 'حرفة' : 'منتج';
             \App\Services\NotificationService::notifyAdmin(
                 'product_pending',
                 "{$productTypeText} جديد يحتاج مراجعة: {$product->title}",
@@ -274,7 +274,7 @@ class ProductController extends Controller
         
         // Notify admin about edited product needing review
         try {
-            $productTypeText = $product->type === 'gig' ? 'خدمة' : 'منتج';
+            $productTypeText = $product->type === 'gig' ? 'حرفة' : 'منتج';
             $statusText = $oldStatus === 'active' ? 'معدل' : 'محدّث';
             \App\Services\NotificationService::notifyAdmin(
                 'product_pending',

@@ -54,7 +54,7 @@ class OrderHistoryResource extends JsonResource
     {
         $actionTypeLabels = [
             'order_created' => 'إنشاء الطلب',
-            'service_order_created' => 'إنشاء طلب خدمة',
+            'service_order_created' => 'إنشاء طلب حرفة',
             'admin_approval' => 'موافقة الإدارة',
             'seller_approval' => 'موافقة البائع',
             'work_completed' => 'إكمال العمل',

@@ -132,7 +132,7 @@ const EditGigPage = () => {  const { gigId } = useParams();
           toast({ 
             variant: "destructive",
             title: "خطأ في تحميل البيانات",
-            description: "لم يتم العثور على الخدمة المطلوبة."
+            description: "لم يتم العثور على الحرفة المطلوبة."
           });
           navigate('/dashboard/gigs');
         }
@@ -141,7 +141,7 @@ const EditGigPage = () => {  const { gigId } = useParams();
         toast({
           variant: "destructive", 
           title: "خطأ في تحميل البيانات",
-          description: error.message || "فشل في تحميل تفاصيل الخدمة."
+          description: error.message || "فشل في تحميل تفاصيل الحرفة."
         });
         navigate('/dashboard/gigs');
       } finally {
@@ -284,17 +284,17 @@ const EditGigPage = () => {  const { gigId } = useParams();
     e.preventDefault();
     if (!gigData) return;    // Basic validation
     if (!gigData.title || !gigData.title.trim()) {
-      toast({ variant: "destructive", title: "حقل العنوان مطلوب", description: "يرجى إدخال عنوان للخدمة." });
+      toast({ variant: "destructive", title: "حقل العنوان مطلوب", description: "يرجى إدخال عنوان للحرفة." });
       return;
     }
     
     if (!gigData.description || !gigData.description.trim()) {
-      toast({ variant: "destructive", title: "حقل الوصف مطلوب", description: "يرجى إدخال وصف للخدمة." });
+      toast({ variant: "destructive", title: "حقل الوصف مطلوب", description: "يرجى إدخال وصف للحرفة." });
       return;
     }
     
     if (!gigData.price || (parseFloat(gigData.price) < 0)) {
-      toast({ variant: "destructive", title: "السعر غير صحيح", description: "يرجى إدخال سعر صحيح للخدمة." });
+      toast({ variant: "destructive", title: "السعر غير صحيح", description: "يرجى إدخال سعر صحيح للحرفة." });
       return;
     }
     
@@ -306,7 +306,7 @@ const EditGigPage = () => {  const { gigId } = useParams();
     }
     
     if (!gigData.category) {
-      toast({ variant: "destructive", title: "التصنيف مطلوب", description: "يرجى اختيار تصنيف للخدمة." });
+      toast({ variant: "destructive", title: "التصنيف مطلوب", description: "يرجى اختيار تصنيف للحرفة." });
       return;
     }
     
@@ -315,7 +315,7 @@ const EditGigPage = () => {  const { gigId } = useParams();
       toast({ 
         variant: "destructive", 
         title: "الصور مطلوبة", 
-        description: "يرجى إضافة صورة واحدة على الأقل للخدمة."
+        description: "يرجى إضافة صورة واحدة على الأقل للحرفة."
       });
       return;
     }
@@ -379,18 +379,19 @@ const EditGigPage = () => {  const { gigId } = useParams();
       const response = await sellerApi.updateProduct(gigId, updatedData);
       
       toast({ 
-        title: "تم تحديث الخدمة بنجاح!", 
-        description: response?.notification || `تم حفظ التغييرات على خدمة "${gigData.title}". المنتج الآن قيد المراجعة.`,
+        title: "تم تحديث الحرفة بنجاح!", 
+        description: response?.notification || `تم حفظ التغييرات على حرفة "${gigData.title}". المنتج الآن قيد المراجعة.",`,
         duration: 5000
       });
       
+ 
       navigate('/dashboard/gigs');
     } catch (error) {
       console.error('Error updating gig:', error);
       toast({
         variant: "destructive",
-        title: "خطأ في تحديث الخدمة",
-        description: error.message || "فشل في تحديث الخدمة. يرجى المحاولة مرة أخرى."
+        title: "خطأ في تحديث الحرفة",
+        description: error.message || "فشل في تحديث الحرفة. يرجى المحاولة مرة أخرى."
       });
     } finally {
       setIsSubmitting(false);
@@ -401,7 +402,7 @@ const EditGigPage = () => {  const { gigId } = useParams();
     return (
       <div className="p-6 md:p-8 text-center">
         <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
-        <p className="mt-4 text-lg">جاري تحميل الخدمة...</p>
+        <p className="mt-4 text-lg">جاري تحميل الحرفة...</p>
       </div>
     );
   }
@@ -410,8 +411,8 @@ const EditGigPage = () => {  const { gigId } = useParams();
   if (!gigData) {
     return (
       <div className="p-6 md:p-8 text-center">
-        <h1 className="text-2xl font-bold text-gray-700">لا يمكن تحميل الخدمة</h1>
-        <p className="text-gray-500">لم يتم العثور على الخدمة المطلوبة أو تم حذفها.</p>
+        <h1 className="text-2xl font-bold text-gray-700">لا يمكن تحميل الحرفة</h1>
+        <p className="text-gray-500">لم يتم العثور على الحرفة المطلوبة أو تم حذفها.</p>
         <Button onClick={() => navigate('/dashboard/gigs')} className="mt-4">العودة للوحة التحكم</Button>
       </div>
     );
@@ -436,7 +437,7 @@ const EditGigPage = () => {  const { gigId } = useParams();
         animate={{ opacity: 1, y: 0 }}
         className="flex items-center justify-between mb-8"
       >
-        <h1 className="text-3xl font-bold text-gray-800">تعديل الخدمة</h1>
+        <h1 className="text-3xl font-bold text-gray-800">تعديل الحرفة</h1>
         <Edit className="h-8 w-8 text-primary" />
       </motion.div>
 
@@ -450,11 +451,11 @@ const EditGigPage = () => {  const { gigId } = useParams();
               </CardHeader>
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="title" className="flex items-center"><ArrowRight className="ml-2 h-4 w-4 text-gray-500" />عنوان الخدمة</Label>
+                  <Label htmlFor="title" className="flex items-center"><ArrowRight className="ml-2 h-4 w-4 text-gray-500" />عنوان الحرفة</Label>
                   <Input id="title" name="title" value={gigData.title} onChange={handleChange} required />
                 </div>
                 <div>
-                  <Label htmlFor="description" className="flex items-center"><ArrowRight className="ml-2 h-4 w-4 text-gray-500" />وصف الخدمة</Label>
+                  <Label htmlFor="description" className="flex items-center"><ArrowRight className="ml-2 h-4 w-4 text-gray-500" />وصف الحرفة</Label>
                   <Textarea id="description" name="description" value={gigData.description} onChange={handleChange} rows={5} required />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -466,7 +467,7 @@ const EditGigPage = () => {  const { gigId } = useParams();
                       required
                     >
                       <RTLSelectTrigger id="category">
-                        <SelectValue placeholder="اختر تصنيف الخدمة" />
+                        <SelectValue placeholder="اختر تصنيف الحرفة" />
                       </RTLSelectTrigger>
                       <RTLSelectContent>
                         {categories.length > 0 ? (
@@ -513,13 +514,13 @@ const EditGigPage = () => {  const { gigId } = useParams();
                   <Input id="deliveryTime" name="deliveryTime" value={gigData.deliveryTime} onChange={handleChange} />
                 </div>
                 <div>
-                  <Label htmlFor="type" className="flex items-center"><ArrowRight className="ml-2 h-4 w-4 text-gray-500" />نوع الخدمة</Label>
+                  <Label htmlFor="type" className="flex items-center"><ArrowRight className="ml-2 h-4 w-4 text-gray-500" />نوع المنتج</Label>
                   <RTLSelect id="type" value={gigData.type} onValueChange={handleTypeChange}>
                     <RTLSelectTrigger>
-                      <SelectValue placeholder="اختر نوع الخدمة" />
+                      <SelectValue placeholder="اختر نوع المنتج" />
                     </RTLSelectTrigger>
                     <RTLSelectContent>
-                      <RTLSelectItem value="gig">خدمة/حرفة</RTLSelectItem>
+                      <RTLSelectItem value="gig">حرفة</RTLSelectItem>
                       <RTLSelectItem value="product">منتج قابل للبيع</RTLSelectItem>
                     </RTLSelectContent>
                   </RTLSelect>
@@ -529,8 +530,8 @@ const EditGigPage = () => {  const { gigId } = useParams();
 
             <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}>
               <CardHeader className="px-0 pt-6 pb-4">
-                <CardTitle className="text-xl text-gray-700">صور الخدمة</CardTitle>
-                <CardDescription>أضف أو عدّل صور خدمتك (حتى 5 صور).</CardDescription>
+                <CardTitle className="text-xl text-gray-700">صور الحرفة</CardTitle>
+                <CardDescription>أضف أو عدّل صور حرفتك (حتى 5 صور).</CardDescription>
               </CardHeader>
               <div>
                 <Label htmlFor="images" className="flex items-center cursor-pointer border-2 border-dashed border-gray-300 rounded-md p-6 justify-center hover:border-primary transition-colors">
@@ -543,7 +544,7 @@ const EditGigPage = () => {  const { gigId } = useParams();
                       <div key={index} className="relative group aspect-square">
                         <img 
                           src={typeof preview === 'string' ? preview : "https://images.unsplash.com/photo-1690721606848-ac5bdcde45ea"} 
-                          alt={`معاينة ${index + 1}`} 
+                          alt={`معاينة ${index + 1}`}
                           className="w-full h-full object-cover rounded-md shadow" 
                         />
                         <Button

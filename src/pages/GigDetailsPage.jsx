@@ -392,7 +392,7 @@ const GigDetailsPage = () => {
             
             <div className="text-2xl font-bold text-roman-500">
               {(gig.type === 'gig') && (gig.price === '0.00') 
-                ? 'المنتج خدمة قابل للتفاوض'
+                ? 'الحرفة قابلة للتفاوض'
                 : `${gig.price} جنيه`}
             </div>
 

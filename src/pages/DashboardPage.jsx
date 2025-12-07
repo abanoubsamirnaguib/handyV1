@@ -32,7 +32,7 @@ const DashboardSidebar = ({ user }) => {
 
   const sellerLinks = [
     { path: '/dashboard/overview', label: 'نظرة عامة', icon: LayoutDashboard },
-    { path: '/dashboard/gigs', label: 'خدماتي', icon: ShoppingBag },
+    { path: '/dashboard/gigs', label: 'حرفي', icon: ShoppingBag },
     { path: '/dashboard/orders', label: 'الطلبات الواردة', icon: DollarSign },
     { path: '/dashboard/earnings', label: 'الأرباح', icon: BarChart2 },
     { path: '/dashboard/messages', label: 'الرسائل', icon: MessageCircle },
@@ -194,13 +194,13 @@ const DashboardHome = ({ user }) => (
     <RoleSwitcher />
     <h1 className="text-3xl font-bold text-neutral-900 mb-6">مرحباً بك في لوحة التحكم، {user.name}!</h1>
     <p className="text-neutral-900/70 mb-8">
-      هنا يمكنك إدارة {user.active_role === 'seller' ? 'خدماتك وطلباتك وأرباحك' : 'طلباتك ورسائلك وإعدادات حسابك'}.
+      هنا يمكنك إدارة {user.active_role === 'seller' ? 'حرفك وطلباتك وأرباحك' : 'طلباتك ورسائلك وإعدادات حسابك'}.
       استخدم القائمة الجانبية للتنقل.
     </p>
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {user.active_role === 'seller' ? (
         <>
-          <DashboardCard title="إدارة خدماتك" description="أضف خدمات جديدة أو قم بتعديل الخدمات الحالية." link="/dashboard/gigs" icon={ShoppingBag} />
+          <DashboardCard title="إدارة حرفك" description="أضف حرف جديدة أو قم بتعديل الحرف الحالية." link="/dashboard/gigs" icon={ShoppingBag} />
           <DashboardCard title="الطلبات الواردة" description="تابع طلبات العملاء وقم بإدارتها." link="/dashboard/orders" icon={DollarSign} />
           <DashboardCard title="الأرباح" description="اطلع على تقارير الأرباح الخاصة بك." link="/dashboard/earnings" icon={BarChart2} />
         </>
@@ -250,7 +250,7 @@ const DashboardContent = ({ user }) => {
 
   const sellerLinks = [
     { path: '/dashboard/overview', label: 'نظرة عامة', icon: LayoutDashboard },
-    { path: '/dashboard/gigs', label: 'خدماتي', icon: ShoppingBag },
+    { path: '/dashboard/gigs', label: 'حرفي', icon: ShoppingBag },
     { path: '/dashboard/orders', label: 'الطلبات الواردة', icon: DollarSign },
     { path: '/dashboard/earnings', label: 'الأرباح', icon: BarChart2 },
     { path: '/dashboard/messages', label: 'الرسائل', icon: MessageCircle },

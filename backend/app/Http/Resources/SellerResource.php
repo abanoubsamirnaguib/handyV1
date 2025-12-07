@@ -29,7 +29,7 @@ class SellerResource extends JsonResource
             'in_progress_orders_count' => $this->in_progress_orders_count ?? 0,
             'skills' => $skills,
             'products' => $this->relationLoaded('products')
-                ? ProductResource::collection($this->products->active()->map(function ($product) {
+                ? ProductResource::collection($this->products->where('status', 'active')->map(function ($product) {
                     return $product->load(['images', 'category']);
                 }))
                 : [],

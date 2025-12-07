@@ -18,7 +18,7 @@ class SellerController extends Controller
     public function products($id)
     {
         $seller = Seller::findOrFail($id);
-        $products = $seller->products()->with(['images', 'tags', 'category'])->get();
+        $products = $seller->products()->active()->with(['images', 'tags', 'category'])->get();
         return ProductResource::collection($products);
     }
 

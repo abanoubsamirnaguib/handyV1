@@ -78,4 +78,10 @@ class Product extends Model
             'review_count' => $this->getReviewCount()
         ]);
     }
+
+    // Scope for active products
+    public function scopeActive($query)
+    {
+        return $query->where('status', 'active');
+    }   
 }

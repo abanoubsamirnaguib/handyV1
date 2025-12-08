@@ -8,17 +8,27 @@ import { usePWA } from '@/hooks/usePWA';
 import '@/styles/pwa.css';
 
 const PWAInstallSection = () => {
-  const { isInstallable, isInstalled, installApp, getInstallInstructions, canInstall } = usePWA();
+  const { isInstallable, isInstalled, installApp, getInstallInstructions, canInstall, showManualInstructions, clearPWAState } = usePWA();
   const [showInstructions, setShowInstructions] = useState(false);
   const [isInstalling, setIsInstalling] = useState(false);
 
   const handleInstall = async () => {
     setIsInstalling(true);
     try {
-      await installApp();
+      const success = await installApp();
+      if (!success && canInstall) {
+        // If install failed but app is installable, show instructions
+        setShowInstructions(true);
+      }
     } finally {
       setIsInstalling(false);
     }
+  };
+
+  const handleRefreshForInstall = () => {
+    // Clear the PWA state and reload to try getting the install prompt again
+    clearPWAState();
+    window.location.reload();
   };
 
   const mockupGallery = [
@@ -36,7 +46,7 @@ const PWAInstallSection = () => {
     }
   ];
 
-
+  // dont uncomment this part yet
   // if (isInstalled) {
   //   return (
   //     <section className="py-16 bg-gradient-to-br from-roman-50 to-roman-100">
@@ -232,7 +242,7 @@ const PWAInstallSection = () => {
                       <Button 
                         onClick={handleInstall}
                         disabled={isInstalling}
-                        className="w-full bg-gradient-to-r from-roman-500 to-roman-600 hover:from-roman-600 hover:to-roman-700 text-white py-3 text-lg font-semibold shadow-lg"
+                        className="w-full bg-gradient-to-r from-roman-500 to-roman-600 hover:from-roman-600 hover:to-roman-700 text-white py-3 text-lg font-semibold shadow-lg pwa-install-button"
                         size="lg"
                       >
                         {isInstalling ? (
@@ -248,7 +258,7 @@ const PWAInstallSection = () => {
                         )}
                       </Button>
                     </>
-                  ) : (
+                  ) : showManualInstructions ? (
                     <>
                       <div className="text-center">
                         <p className="text-gray-600 text-sm mb-2">
@@ -268,7 +278,27 @@ const PWAInstallSection = () => {
                         شرح طريقة التثبيت
                       </Button>
                     </>
-                  )}
+                  ) : !isInstalled ? (
+                    <>
+                      <div className="text-center">
+                        <p className="text-gray-600 text-sm mb-2">
+                          التطبيق متاح للتثبيت على هذا الجهاز
+                        </p>
+                        <p className="text-gray-500 text-xs">
+                          قم بزيارة الصفحة الرئيسية مرة أخرى أو حدث الصفحة لإظهار زر التثبيت
+                        </p>
+                      </div>
+                      <Button 
+                        onClick={handleRefreshForInstall}
+                        variant="outline"
+                        className="w-full border-2 border-roman-500 text-roman-600 hover:bg-roman-50 hover:border-roman-600 transition-colors py-3 text-lg font-semibold"
+                        size="lg"
+                      >
+                        <Info className="ml-2 h-5 w-5" />
+                        تحديث الصفحة
+                      </Button>
+                    </>
+                  ) : null}
                 </div>
 
                 {/* Security Note */}

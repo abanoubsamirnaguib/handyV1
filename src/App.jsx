@@ -9,6 +9,7 @@ import { SiteSettingsProvider } from '@/contexts/SiteSettingsContext';
 import ScrollToTop from '@/components/ScrollToTop';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import DeliveryProtectedRoute from '@/components/DeliveryProtectedRoute';
+import PWAInstallPopup from '@/components/PWAInstallPopup';
 
 import MainLayout from '@/layouts/MainLayout';
 import AdminLayout from '@/layouts/AdminLayout';
@@ -230,6 +231,7 @@ function AppRoutes() {
             </Routes>
             <Toaster />
             {!location.pathname.startsWith('/admin') && !location.pathname.startsWith('/delivery') && <AIAssistant />}
+            {!location.pathname.startsWith('/admin') && !location.pathname.startsWith('/delivery') && <PWAInstallPopup />}
     </>
   );
 }

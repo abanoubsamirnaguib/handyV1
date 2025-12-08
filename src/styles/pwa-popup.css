@@ -1,0 +1,48 @@
+/* PWA Install Popup Styles */
+.pwa-popup-feature-green {
+  background-color: #dcfce7; /* bg-green-100 */
+}
+
+.pwa-popup-feature-green .pwa-popup-icon {
+  color: #16a34a; /* text-green-600 */
+}
+
+.pwa-popup-feature-blue {
+  background-color: #dbeafe; /* bg-blue-100 */
+}
+
+.pwa-popup-feature-blue .pwa-popup-icon {
+  color: #2563eb; /* text-blue-600 */
+}
+
+.pwa-popup-feature-purple {
+  background-color: #f3e8ff; /* bg-purple-100 */
+}
+
+.pwa-popup-feature-purple .pwa-popup-icon {
+  color: #9333ea; /* text-purple-600 */
+}
+
+/* Mobile-specific styles */
+@media (max-width: 768px) {
+  .pwa-popup-mobile {
+    margin-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* Android Chrome specific styles */
+@media screen and (max-width: 767px) {
+  .pwa-popup-android {
+    border-radius: 1.5rem 1.5rem 0 0;
+    margin: 0;
+    width: 100%;
+    max-width: none;
+  }
+}
+
+/* iOS Safari specific styles */
+@supports (-webkit-touch-callout: none) {
+  .pwa-popup-ios {
+    padding-bottom: calc(1.5rem + env(safe-area-inset-bottom));
+  }
+}

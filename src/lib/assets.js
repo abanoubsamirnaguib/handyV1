@@ -14,6 +14,7 @@ export const getAssetUrl = (path) => {
     return `https://handy3.abanoubsamir.com/backend/public/${cleanPath}`;
   }
   if (window.location.hostname === 'bazar.abanoubsamir.com') {
+    // Remove leading slash if present
     const cleanPath = path.startsWith('/') ? path.substring(1) : path;
     return `https://bazar.abanoubsamir.com/backend/public/${cleanPath}`;
   }

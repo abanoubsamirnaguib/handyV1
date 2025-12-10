@@ -10,15 +10,7 @@ import { api, assetUrl } from '@/lib/api';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 
-const AIAssistant = () => {
-  const { user } = useAuth();
-  
-  // Hide AI Assistant for guests (non-logged-in users)
-  // Don't render if user has explicitly disabled AI assistant
-  if (!user || user.show_ai_assistant === false) {
-    return null;
-  }
-  
+const AIAssistantContent = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
@@ -368,7 +360,7 @@ const AIAssistant = () => {
   return (
     <>
       {/* Restore Button - shown when button is hidden */}
-      {isHidden && (
+      {isHidden || user?.role === 'super_admin' && (
         <motion.button
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -658,6 +650,19 @@ const AIAssistant = () => {
       </AnimatePresence>
     </>
   );
+};
+
+const AIAssistant = () => {
+  const { user } = useAuth();
+  
+  // Hide AI Assistant for guests (non-logged-in users)
+  // Hide AI Assistant for admin users completely
+  // Don't render if user has explicitly disabled AI assistant
+  if (!user || user.role === 'super_admin' || user.show_ai_assistant === false) {
+    return null;
+  }
+
+  return <AIAssistantContent />;
 };
 
 export default AIAssistant;

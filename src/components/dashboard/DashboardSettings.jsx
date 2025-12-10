@@ -446,24 +446,26 @@ const DashboardSettings = () => {
               />
             </div>
 
-            {/* AI Assistant Settings */}
-            <div className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg">
-              <div className="flex-1">
-                <Label htmlFor="showAiAssistant" className="text-base font-medium cursor-pointer">
-                  إظهار ميرنا (المساعد الذكي)
-                </Label>
-                <p className="text-sm text-gray-500 mt-1">
-                  ميرنا مخفية بشكل افتراضي. فعّل هذا الخيار لإظهار مساعدك الذكي في الموقع
-                </p>
+            {/* AI Assistant Settings - Hidden for admin users */}
+            {user?.role !== 'super_admin' && (
+              <div className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg">
+                <div className="flex-1">
+                  <Label htmlFor="showAiAssistant" className="text-base font-medium cursor-pointer">
+                    إظهار ميرنا (المساعد الذكي)
+                  </Label>
+                  <p className="text-sm text-gray-500 mt-1">
+                    ميرنا مخفية بشكل افتراضي. فعّل هذا الخيار لإظهار مساعدك الذكي في الموقع
+                  </p>
+                </div>
+                <Switch
+                  id="showAiAssistant"
+                  checked={notificationSettings.show_ai_assistant}
+                  onCheckedChange={(checked) => 
+                    setNotificationSettings(prev => ({ ...prev, show_ai_assistant: checked }))
+                  }
+                />
               </div>
-              <Switch
-                id="showAiAssistant"
-                checked={notificationSettings.show_ai_assistant}
-                onCheckedChange={(checked) => 
-                  setNotificationSettings(prev => ({ ...prev, show_ai_assistant: checked }))
-                }
-              />
-            </div>
+            )}
           </div>
 
           <Button 

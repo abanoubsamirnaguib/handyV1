@@ -28,12 +28,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Switch } from "@/components/ui/switch";
+import ProductGigSelectionModal from '@/components/ui/product-gig-selection-modal';
 
 
 const DashboardGigs = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { toast } = useToast();  
+  const { toast } = useToast();
   const [userGigs, setUserGigs] = useState([]);
   const [filteredGigs, setFilteredGigs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -42,6 +43,7 @@ const DashboardGigs = () => {
   const [togglingGigs, setTogglingGigs] = useState(new Set());
   const [typeFilter, setTypeFilter] = useState('all'); // 'all', 'gig', or 'product'
   const [activeProductsCount, setActiveProductsCount] = useState(0);
+  const [showSelectionModal, setShowSelectionModal] = useState(false);
 
   // Fetch seller's gigs from backend
   useEffect(() => {
@@ -170,7 +172,21 @@ const DashboardGigs = () => {
         return newSet;
       });
     }
-  };if (user?.active_role !== 'seller') {
+  };
+
+  const handleAddNewClick = () => {
+    setShowSelectionModal(true);
+  };
+
+  const handleSelectProduct = () => {
+    navigate('/dashboard/gigs/new?type=product');
+  };
+
+  const handleSelectGig = () => {
+    navigate('/dashboard/gigs/new?type=gig');
+  };
+
+  if (user?.active_role !== 'seller') {
     return (
       <div className="p-6 md:p-8 text-center">
         <h1 className="text-2xl font-bold text-gray-700">غير مصرح لك بالدخول</h1>
@@ -205,7 +221,7 @@ const DashboardGigs = () => {
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-bold text-gray-800">حرفي</h1>
           <Button onClick={() => navigate('/dashboard/gigs/new')} className="bg-green-500 hover:bg-green-600">
-            <PlusCircle className="ml-2 h-5 w-5" /> أضف حرفة جديدة
+            <PlusCircle className="ml-2 h-5 w-5" /> أضف منتج/حرفة جديدة
           </Button>
         </div>
         <div className="flex flex-col items-center justify-center py-12">
@@ -297,8 +313,8 @@ const DashboardGigs = () => {
             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
             تحديث
           </Button>
-          <Button onClick={() => navigate('/dashboard/gigs/new')} className="bg-green-500 hover:bg-green-600">
-            <PlusCircle className="ml-2 h-5 w-5" /> أضف حرفة جديدة
+          <Button onClick={handleAddNewClick} className="bg-green-500 hover:bg-green-600">
+            <PlusCircle className="ml-2 h-5 w-5" /> أضف منتج/حرفة جديد
           </Button>
         </div>
       </motion.div>
@@ -321,8 +337,8 @@ const DashboardGigs = () => {
               : 'اختر فلتر مختلف لعرض الحرف المتاحة.'}
           </p>
           {userGigs.length === 0 && (
-            <Button onClick={() => navigate('/dashboard/gigs/new')} className="mt-6 bg-roman-500 hover:bg-roman-500/90 text-white">
-              <PlusCircle className="ml-2 h-4 w-4" /> أضف خدمتك الأولى
+            <Button onClick={handleAddNewClick} className="mt-6 bg-roman-500 hover:bg-roman-500/90 text-white">
+              <PlusCircle className="ml-2 h-4 w-4" /> أضف منتجك/حرفتك الأول
             </Button>
           )}
         </motion.div>
@@ -483,6 +499,13 @@ const DashboardGigs = () => {
           ))}
         </div>
       )}
+
+      <ProductGigSelectionModal
+        isOpen={showSelectionModal}
+        onClose={() => setShowSelectionModal(false)}
+        onSelectProduct={handleSelectProduct}
+        onSelectGig={handleSelectGig}
+      />
     </div>
   );
 };

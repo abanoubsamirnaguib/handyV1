@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { PlusCircle, Image as ImageIcon, DollarSign, Tag, Clock, Save, ArrowRight, Trash2, Loader2, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,13 @@ const CreateGigPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
+  const preSelectedType = searchParams.get('type'); // 'product' or 'gig'
+
+  // Helper functions for dynamic text based on product type
+  const getItemTypeText = () => gigData.type === 'product' ? 'المنتج' : 'الحرفة';
+  const getItemTypeTextPlural = () => gigData.type === 'product' ? 'المنتجات' : 'الحرف';
+  const getItemTypeVerb = () => gigData.type === 'product' ? 'منتجك' : 'حرفتك';
 
   const [categories, setCategories] = useState([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
@@ -30,10 +37,10 @@ const CreateGigPage = () => {
     description: '',
     price: '',
     category: '',
-    tags: '', 
+    tags: '',
     deliveryTime: '',
-    images: [], 
-    type: 'gig', // default to gig
+    images: [],
+    type: preSelectedType || 'gig', // use pre-selected type or default to gig
   });
   const [imagePreviews, setImagePreviews] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -347,16 +354,16 @@ const CreateGigPage = () => {
             <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }}>
               <CardHeader className="px-0 pt-0 pb-4">
                 <CardTitle className="text-xl text-gray-700">المعلومات الأساسية</CardTitle>
-                <CardDescription>صف حرفتك بوضوح لجذب العملاء.</CardDescription>
+                <CardDescription>صف {getItemTypeVerb()} بوضوح لجذب العملاء.</CardDescription>
               </CardHeader>
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="title" className="flex items-center"><ArrowRight className="ml-2 h-4 w-4 text-gray-500" />عنوان الحرفة</Label>
-                  <Input id="title" name="title" value={gigData.title} onChange={handleChange} placeholder="مثال: صنع شنطة كروشيه مخصصة" required />
+                  <Label htmlFor="title" className="flex items-center"><ArrowRight className="ml-2 h-4 w-4 text-gray-500" />عنوان {getItemTypeText()}</Label>
+                  <Input id="title" name="title" value={gigData.title} onChange={handleChange} placeholder={gigData.type === 'product' ? "مثال: شنطة كروشيه جاهزة باللون الأحمر" : "مثال: صنع شنطة كروشيه مخصصة"} required />
                 </div>
                 <div>
-                  <Label htmlFor="description" className="flex items-center"><ArrowRight className="ml-2 h-4 w-4 text-gray-500" />وصف الحرفة</Label>
-                  <Textarea id="description" name="description" value={gigData.description} onChange={handleChange} rows={5} placeholder="اشرح بالتفصيل ما تقدمه في هذه الحرفة... مثال: أقوم بصنع شنط كروشيه مخصصة بألوان وأشكال مختلفة، باستخدام خيوط عالية الجودة. يمكن تخصيص الحجم والتصميم حسب طلب العميل، مع إمكانية إضافة زخارف أو تطريزات." required />
+                  <Label htmlFor="description" className="flex items-center"><ArrowRight className="ml-2 h-4 w-4 text-gray-500" />وصف {getItemTypeText()}</Label>
+                  <Textarea id="description" name="description" value={gigData.description} onChange={handleChange} rows={5} placeholder={gigData.type === 'product' ? "اشرح بالتفصيل منتجك... مثال: شنطة كروشيه جاهزة باللون الأحمر، مصنوعة من خيوط عالية الجودة، حجم متوسط مناسب للاستخدام اليومي." : "اشرح بالتفصيل ما تقدمه في هذه الحرفة... مثال: أقوم بصنع شنط كروشيه مخصصة بألوان وأشكال مختلفة، باستخدام خيوط عالية الجودة. يمكن تخصيص الحجم والتصميم حسب طلب العميل، مع إمكانية إضافة زخارف أو تطريزات."} required />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
@@ -375,11 +382,11 @@ const CreateGigPage = () => {
                       <SelectTrigger id="category" dir="rtl">
                         <SelectValue 
                           placeholder={
-                            categoriesLoading 
-                              ? "جاري تحميل التصنيفات..." 
-                              : categoriesError 
-                              ? "خطأ في تحميل التصنيفات" 
-                              : "اختر تصنيف الحرفة"
+                            categoriesLoading
+                              ? "جاري تحميل التصنيفات..."
+                              : categoriesError
+                              ? "خطأ في تحميل التصنيفات"
+                              : `اختر تصنيف ${getItemTypeText()}`
                           } 
                           dir="rtl" 
                         />
@@ -439,26 +446,28 @@ const CreateGigPage = () => {
                   <Label htmlFor="deliveryTime" className="flex items-center"><Clock className="ml-2 h-4 w-4 text-gray-500" />مدة التسليم المتوقعة</Label>
                   <Input id="deliveryTime" name="deliveryTime" value={gigData.deliveryTime} onChange={handleChange} placeholder="مثال: 7-10 أيام عمل" />
                 </div>
-                <div>
-                  <Label htmlFor="type" className="flex items-center"><ArrowRight className="ml-2 h-4 w-4 text-gray-500" />نوع المنتج</Label>
-                  <Select id="type" value={gigData.type} onValueChange={value => setGigData(prev => ({ ...prev, type: value }))} required dir="rtl">
-                    <SelectTrigger dir="rtl">
-                      <SelectValue placeholder="اختر نوع المنتج" dir="rtl" />
-                    </SelectTrigger>
-                    <SelectContent dir="rtl">
-                      <SelectItem value="gig" dir="rtl">حرفة</SelectItem>
-                      <SelectItem value="product" dir="rtl">منتج قابل للبيع</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                {!preSelectedType && (
+                  <div>
+                    <Label htmlFor="type" className="flex items-center"><ArrowRight className="ml-2 h-4 w-4 text-gray-500" />نوع المنتج</Label>
+                    <Select id="type" value={gigData.type} onValueChange={value => setGigData(prev => ({ ...prev, type: value }))} required dir="rtl">
+                      <SelectTrigger dir="rtl">
+                        <SelectValue placeholder="اختر نوع المنتج/حرفة" dir="rtl" />
+                      </SelectTrigger>
+                      <SelectContent dir="rtl">
+                        <SelectItem value="gig" dir="rtl">حرفة</SelectItem>
+                        <SelectItem value="product" dir="rtl">منتج قابل للبيع</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
               </div>
             </motion.div>
 
             
             <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}>
               <CardHeader className="px-0 pt-6 pb-4">
-                <CardTitle className="text-xl text-gray-700">صور الحرفة</CardTitle>
-                <CardDescription>أضف صورًا عالية الجودة تعرض حرفتك (حتى 5 صور - حد أقصى 5 ميجا لكل صورة).</CardDescription>
+                <CardTitle className="text-xl text-gray-700">صور {getItemTypeText()}</CardTitle>
+                <CardDescription>أضف صورًا عالية الجودة تعرض {getItemTypeVerb()} (حتى 5 صور - حد أقصى 5 ميجا لكل صورة).</CardDescription>
               </CardHeader>
               <div>
                 <Label htmlFor="images" className="flex items-center cursor-pointer border-2 border-dashed border-gray-300 rounded-md p-6 justify-center hover:border-primary transition-colors">
@@ -496,7 +505,7 @@ const CreateGigPage = () => {
             
             <motion.div className="pt-6 flex justify-end" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>
               <Button type="submit" size="lg" className="bg-green-500 hover:bg-green-600" disabled={loading}>
-                {loading ? "جاري النشر..." : <><Save className="ml-2 h-5 w-5" /> نشر الحرفة</>}
+                {loading ? "جاري النشر..." : <><Save className="ml-2 h-5 w-5" /> نشر {getItemTypeText()}</>}
               </Button>
             </motion.div>
           </CardContent>

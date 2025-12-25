@@ -71,6 +71,7 @@ class OrderHistoryResource extends JsonResource
             'buyer_accepted' => 'المشتري قبل العمل',
             'work_started' => 'بدء العمل',
             'buyer_rejected' => 'رفض المشتري',
+            'admin_rejection' => 'رفض الإدارة',
 
         ];
         

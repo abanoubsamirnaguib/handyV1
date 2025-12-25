@@ -260,7 +260,8 @@ const AdminOrders = () => {
       'delivered': 'تم التوصيل',
       'completed': 'مكتمل',
       'cancelled': 'ملغى',
-      'suspended': 'معلق'
+      'suspended': 'معلق',
+      'buyer_rejected': 'رفض المشتري',
     };
     return statusMap[status] || status;
   };

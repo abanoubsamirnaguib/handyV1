@@ -640,7 +640,8 @@ class Order extends Model
             'delivered' => 'تم التوصيل',
             'completed' => 'مكتمل',
             'cancelled' => 'ملغي',
-            'suspended' => 'معلق'
+            'suspended' => 'معلق',
+            'buyer_rejected' => 'رفض المشتري',
         ];
         
         return $statusLabels[$this->status] ?? $this->status;

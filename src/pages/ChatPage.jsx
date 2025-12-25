@@ -57,8 +57,6 @@ const ChatPage = () => {
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [sending, setSending] = useState(false);
   const [showSellerServiceModal, setShowSellerServiceModal] = useState(false);
-  const [sellerServices, setSellerServices] = useState([]);
-  const [loadingServices, setLoadingServices] = useState(false);
   const [showReportDialog, setShowReportDialog] = useState(false);
   const [reportReason, setReportReason] = useState('');
   const [reportDescription, setReportDescription] = useState('');
@@ -70,38 +68,10 @@ const ChatPage = () => {
     if (activeConversation) {
       markConversationAsRead(activeConversation);
       scrollToBottom();
-      loadSellerServices();
     }
   }, [activeConversation, markConversationAsRead]);
 
-  const loadSellerServices = async () => {
-    const currentConv = conversations.find(conv => conv.id === activeConversation);
-    if (!currentConv?.participant?.id) {
-      setSellerServices([]);
-      return;
-    }
 
-    try {
-      setLoadingServices(true);
-      setSellerServices([]); // Reset services first
-      const response = await api.getSellerServices(currentConv.participant.id);
-      
-      console.log('Raw API response:', response);
-      console.log('Response type:', typeof response);
-      console.log('Is array:', Array.isArray(response));
-      
-      // Check if it's a Laravel Resource response with 'data' property
-      const services = response?.data || response || [];
-      console.log('Processed services:', services);
-      console.log('Services length:', services.length);
-      
-      setSellerServices(services);
-    } catch (error) {
-      console.error('Error loading seller services:', error);
-    } finally {
-      setLoadingServices(false);
-    }
-  };
 
   useEffect(() => {
     if (activeConversation && messages[activeConversation]) {
@@ -109,11 +79,7 @@ const ChatPage = () => {
     }
   }, [messages, activeConversation]);
 
-  // Debug: Monitor sellerServices changes
-  useEffect(() => {
-    console.log('sellerServices changed:', sellerServices);
-    console.log('sellerServices length:', sellerServices.length);
-  }, [sellerServices]);
+
 
   // Add window resize handler
   useEffect(() => {
@@ -563,14 +529,6 @@ const ChatPage = () => {
                     <ShoppingBag className="h-4 w-4 mr-1" />
                     إنشاء عرض حرفة
                   </Button>
-                )}
-                        
-                {/* Show loading indicator while checking for services */}
-                {loadingServices && (
-                  <div className="text-xs text-gray-500 flex items-center">
-                    <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-gray-400 mr-1"></div>
-                    جاري التحقق من الحرف...
-                  </div>
                 )}
                 
                 <Dialog open={showReportDialog} onOpenChange={setShowReportDialog}>

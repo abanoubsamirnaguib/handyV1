@@ -28,7 +28,7 @@ class ChatController extends Controller
         
         $conversations = Conversation::where('buyer_id', $user->id)
             ->orWhere('seller_id', $user->id)
-            ->with(['buyer', 'seller', 'latestMessage.sender'])
+            ->with(['buyer', 'seller', 'latestMessage.sender', 'products'])
             ->orderBy('last_message_time', 'desc')
             ->get();
 
@@ -59,6 +59,16 @@ class ChatController extends Controller
                 ] : null,
                 'unreadCount' => $unreadCount,
                 'lastMessageTime' => $conversation->last_message_time,
+                'products' => $conversation->products->map(function ($product) {
+                    return [
+                        'id' => $product->product_id,
+                        'type' => $product->product_type,
+                        'title' => $product->product_title,
+                        'image' => $product->product_image,
+                        'price' => $product->product_price,
+                        'added_at' => $product->added_at,
+                    ];
+                }),
             ];
         });
 
@@ -95,11 +105,11 @@ class ChatController extends Controller
                 'text' => $message->message_text,
                 'timestamp' => $message->message_time,
                 'senderId' => $message->sender_id,
-                'sender' => [
+                'sender' => $message->sender ? [
                     'id' => $message->sender->id,
                     'name' => $message->sender->name,
                     'avatar' => $message->sender->avatar,
-                ],
+                ] : null,
                 'attachments' => $message->attachments->map(function ($attachment) {
                     return [
                         'id' => $attachment->id,
@@ -237,6 +247,11 @@ class ChatController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'recipient_id' => 'required|exists:users,id',
+            'product_id' => 'nullable|integer',
+            'product_type' => 'nullable|string|in:gig,product',
+            'product_title' => 'nullable|string|max:255',
+            'product_image' => 'nullable|string',
+            'product_price' => 'nullable|numeric',
         ]);
 
         if ($validator->fails()) {
@@ -252,7 +267,7 @@ class ChatController extends Controller
             return response()->json(['error' => 'Recipient not found'], 404);
         }
 
-        // Check if conversation already exists
+        // Check if conversation already exists between buyer and seller
         $conversation = Conversation::where(function ($query) use ($user, $recipientId) {
             $query->where('buyer_id', $user->id)->where('seller_id', $recipientId);
         })->orWhere(function ($query) use ($user, $recipientId) {
@@ -260,7 +275,7 @@ class ChatController extends Controller
         })->first();
 
         if (!$conversation) {
-            // Determine roles based on user types or default behavior
+            // Create new conversation
             $buyer = $user;
             $seller = User::find($recipientId);
             
@@ -271,6 +286,36 @@ class ChatController extends Controller
             ]);
         }
 
+        // Add product to conversation if provided and not already added
+        $conversationProduct = null;
+        if ($request->product_id) {
+            $conversationProduct = \App\Models\ConversationProduct::firstOrCreate(
+                [
+                    'conversation_id' => $conversation->id,
+                    'product_id' => $request->product_id,
+                ],
+                [
+                    'product_type' => $request->product_type,
+                    'product_title' => $request->product_title,
+                    'product_image' => $request->product_image,
+                    'product_price' => $request->product_price,
+                    'added_at' => now(),
+                ]
+            );
+        }
+
+        // Load products for this conversation
+        $products = $conversation->products()->get()->map(function ($product) {
+            return [
+                'id' => $product->product_id,
+                'type' => $product->product_type,
+                'title' => $product->product_title,
+                'image' => $product->product_image,
+                'price' => $product->product_price,
+                'added_at' => $product->added_at,
+            ];
+        });
+
         return response()->json([
             'conversationId' => $conversation->id,
             'participant' => [
@@ -279,7 +324,9 @@ class ChatController extends Controller
                 'email' => $recipient->email,
                 'avatar' => $recipient->avatar,
             ],
+            'products' => $products,
         ]);
+
     }
 
     /**
@@ -457,11 +504,11 @@ class ChatController extends Controller
                 'text' => $message->message_text,
                 'timestamp' => $message->message_time,
                 'senderId' => $message->sender_id,
-                'sender' => [
+                'sender' => $message->sender ? [
                     'id' => $message->sender->id,
                     'name' => $message->sender->name,
                     'avatar' => $message->sender->avatar,
-                ],
+                ] : null,
                 'attachments' => $message->attachments->map(function ($attachment) {
                     return [
                         'id' => $attachment->id,

@@ -265,7 +265,16 @@ const GigDetailsPage = () => {
       return;
     }
     try {
-      const conversationId = await startConversation(seller.user);
+      // Prepare product info for the conversation
+      const productInfo = {
+        id: gig.id,
+        type: gig.type || 'gig', // 'gig' or 'product' - matching database values
+        title: gig.title,
+        image: gig.images && gig.images.length > 0 ? gig.images[0] : null,
+        price: gig.price,
+      };
+      
+      const conversationId = await startConversation(seller.user, productInfo);
       setActiveConversation(conversationId);
       navigate('/chat');
     } catch (error) {

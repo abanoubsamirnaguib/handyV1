@@ -21,11 +21,7 @@ class OrderResource extends JsonResource
             'status_ar' => $this->getStatusLabel(), // For OrderDetailPage compatibility
             'next_action' => $this->getNextAction(),
             'total_price' => $this->getFinalPrice(),
-            'buyer_proposed_price' => $this->buyer_proposed_price,
             'original_service_price' => $this->original_service_price,
-            'price_approval_status' => $this->price_approval_status,
-            'price_approved_at' => $this->price_approved_at,
-            'price_approval_notes' => $this->price_approval_notes,
             'final_price' => $this->getFinalPrice(),
             'total_amount' => $this->getFinalPrice() + ($this->delivery_fee ?? 0), // For AdminOrders compatibility
             'order_date' => $this->order_date,
@@ -48,6 +44,10 @@ class OrderResource extends JsonResource
             'remaining_payment_proof_url' => $this->is_service_order && $this->remaining_payment_proof ? asset('storage/' . $this->remaining_payment_proof) : null,
             'is_service_order' => $this->is_service_order,
             'service_requirements' => $this->service_requirements,
+            'is_seller_created' => $this->is_seller_created,
+            'delivery_time' => $this->delivery_time,
+            'conversation_id' => $this->conversation_id,
+            'cancellation_reason' => $this->cancellation_reason,
             'chat_conversation_id' => $this->chat_conversation_id,
             'conversation' => $this->whenLoaded('conversation'),
             

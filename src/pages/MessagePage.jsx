@@ -18,7 +18,7 @@ const MessagePage = () => {  const { id } = useParams();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { user } = useAuth();
-  const { startNewChat, sendMessage, messages, activeConversation } = useChat();
+  const { startConversation, sendMessage, messages, activeConversation } = useChat();
   const messageEndRef = useRef(null);
 
   // For local UI state
@@ -81,25 +81,31 @@ const MessagePage = () => {  const { id } = useParams();
       return;
     }
 
-    // Fetch seller data
-    try {
-      const sellerData = getSellerById(id);
-      if (!sellerData) {
-        setError('لم يتم العثور على الحرفي');
+    // Async function to handle chat initialization
+    const initChat = async () => {
+      try {
+        const sellerData = getSellerById(id);
+        if (!sellerData) {
+          setError('لم يتم العثور على الحرفي');
+          setLoading(false);
+          return;
+        }
+        
+        setSeller(sellerData);
+        // Initialize chat with the seller - create seller user object for startConversation
+        const sellerUser = { id: sellerData.id, name: sellerData.name };
+        const conversationId = await startConversation(sellerUser);
         setLoading(false);
-        return;
+      } catch (err) {
+        console.error("Error in MessagePage:", err);
+        setError('حدث خطأ أثناء تحميل البيانات');
+        setLoading(false);
       }
-      
-      setSeller(sellerData);
-      // Initialize chat with the seller ID
-      const conversationId = startNewChat(id);
-      setLoading(false);
-    } catch (err) {
-      console.error("Error in MessagePage:", err);
-      setError('حدث خطأ أثناء تحميل البيانات');
-      setLoading(false);
-    }
-  }, [id, navigate, user, startNewChat]);
+    };
+
+    // Call the async function
+    initChat();
+  }, [id, navigate, user, startConversation]);
 
   const handleSendMessage = (e) => {
     e.preventDefault();

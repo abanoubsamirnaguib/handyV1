@@ -66,7 +66,11 @@ class OrderHistoryResource extends JsonResource
             'order_suspended' => 'تعليق الطلب',
             'assigned_to_pickup' => 'تعيين موظف الاستلام',
             'assigned_to_delivery' => 'تعيين موظف التسليم',
-            'status_changed_by_admin' => 'تم تغيير الحالة بواسطة الإدارة'
+            'status_changed_by_admin' => 'تم تغيير الحالة بواسطة الإدارة',
+            'seller_created_order' => 'البائع أنشأ الطلب',
+            'buyer_accepted' => 'المشتري قبل العمل',
+            'work_started' => 'بدء العمل'
+
         ];
         
         return $actionTypeLabels[$this->action_type] ?? $this->action_type;

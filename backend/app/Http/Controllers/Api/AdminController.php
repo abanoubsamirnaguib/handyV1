@@ -249,12 +249,6 @@ class AdminController extends Controller
     {
         $query = Order::with(['user', 'seller.user', 'items.product', 'adminApprover', 'deliveryPerson', 'pickupPerson', 'history.actionUser', 'city']);
 
-        // استبعاد الطلبات التي في انتظار موافقة البائع على السعر
-        $query->where(function($q) {
-            $q->whereNull('price_approval_status')
-              ->orWhere('price_approval_status', '!=', 'pending_approval');
-        });
-
         // Search functionality
         if ($request->filled('search')) {
             $search = $request->search;

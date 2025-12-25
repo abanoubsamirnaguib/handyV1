@@ -252,8 +252,9 @@ const AdminOrders = () => {
   const getStatusInArabic = (status) => {
     const statusMap = {
       'pending': 'بانتظار المراجعة',
+      'pending_buyer_info': 'بانتظار موافقة المشتري',
       'admin_approved': 'معتمد من الإدارة',
-      'seller_approved': 'مقبول من البائع',
+      'seller_approved': 'بدء العمل من البائع',
       'ready_for_delivery': 'جاهز للتوصيل',
       'out_for_delivery': 'في الطريق',
       'delivered': 'تم التوصيل',
@@ -270,12 +271,16 @@ const AdminOrders = () => {
         label: 'بانتظار المراجعة', 
         color: 'bg-amber-100 text-amber-800' 
       },
+      'pending_buyer_info': { 
+        label: 'بانتظار موافقة المشتري', 
+        color: 'bg-purple-100 text-purple-800' 
+      },
       'admin_approved': { 
         label: 'معتمد من الإدارة', 
         color: 'bg-blue-100 text-blue-800' 
       },
       'seller_approved': { 
-        label: 'مقبول من البائع', 
+        label: 'بدء العمل من البائع', 
         color: 'bg-green-100 text-green-800' 
       },
       'ready_for_delivery': { 
@@ -996,7 +1001,8 @@ const AdminOrders = () => {
                   <RTLSelectItem value="all">جميع الحالات</RTLSelectItem>
                   <RTLSelectItem value="pending">بانتظار المراجعة</RTLSelectItem>
                   <RTLSelectItem value="admin_approved">معتمد من الإدارة</RTLSelectItem>
-                  <RTLSelectItem value="seller_approved">مقبول من البائع</RTLSelectItem>
+                  <RTLSelectItem value="seller_approved">بدء العمل من البائع</RTLSelectItem>
+                  <RTLSelectItem value="pending_buyer_info">بانتظار موافقة المشتري</RTLSelectItem>
                   <RTLSelectItem value="ready_for_delivery">جاهز للتوصيل</RTLSelectItem>
                   <RTLSelectItem value="out_for_delivery">في الطريق</RTLSelectItem>
                   <RTLSelectItem value="delivered">تم التوصيل</RTLSelectItem>
@@ -1175,7 +1181,8 @@ const AdminOrders = () => {
                                 <RTLSelectContent>
                                   <RTLSelectItem value="pending">بانتظار المراجعة</RTLSelectItem>
                                   <RTLSelectItem value="admin_approved">معتمد من الإدارة</RTLSelectItem>
-                                  <RTLSelectItem value="seller_approved">مقبول من البائع</RTLSelectItem>
+                                  <RTLSelectItem value="seller_approved">بدء العمل من البائع</RTLSelectItem>
+                                  <RTLSelectItem value="pending_buyer_info">بانتظار موافقة المشتري</RTLSelectItem>
                                   <RTLSelectItem value="ready_for_delivery">جاهز للتوصيل</RTLSelectItem>
                                   <RTLSelectItem value="out_for_delivery">في الطريق</RTLSelectItem>
                                   <RTLSelectItem value="delivered">تم التوصيل</RTLSelectItem>

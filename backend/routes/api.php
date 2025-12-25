@@ -135,6 +135,13 @@ Route::middleware(['auth:sanctum'])->group(function () {
     
     // Order workflow routes - إضافة routes جديدة لتتبع الطلبات
     Route::prefix('orders')->group(function () {
+        // Seller creates service order for buyer
+        Route::post('seller-create-service-order', [OrderCrudController::class, 'sellerCreateServiceOrder']);
+        
+        // Buyer accepts or rejects seller's service offer
+        Route::post('{id}/accept-buyer', [OrderCrudController::class, 'acceptServiceOrderByBuyer']);
+        Route::post('{id}/reject-buyer', [OrderCrudController::class, 'rejectServiceOrderByBuyer']);
+        
         // Admin actions
         Route::post('{id}/admin-approve', [OrderCrudController::class, 'adminApprove']);
         Route::get('pending-approval', [OrderCrudController::class, 'getPendingApproval']);
@@ -142,6 +149,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         
         // Seller actions  
         Route::post('{id}/seller-approve', [OrderCrudController::class, 'sellerApprove']);
+        Route::post('{id}/start-work', [OrderCrudController::class, 'startWork']);
         Route::post('{id}/approve-price', [OrderCrudController::class, 'approveProposedPrice']);
         Route::post('{id}/reject-price', [OrderCrudController::class, 'rejectProposedPrice']);
         Route::post('{id}/complete-work', [OrderCrudController::class, 'completeWork']);

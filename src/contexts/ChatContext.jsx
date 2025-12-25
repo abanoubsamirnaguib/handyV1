@@ -209,6 +209,7 @@ export const ChatProvider = ({ children }) => {
       const data = await api.getConversations();
       setConversations(data);
     } catch (error) {
+      console.error('Failed to load conversations:', error);
       toast({
         title: "خطأ",
         description: "فشل في تحميل المحادثات",
@@ -460,7 +461,7 @@ export const ChatProvider = ({ children }) => {
   };
 
   // Start a new conversation
-  const startConversation = async (recipient) => {
+  const startConversation = async (recipient, productInfo = null) => {
     if (!recipient || !recipient.id) {
       console.error('No recipient or recipient.id provided:', recipient);
       return;
@@ -469,7 +470,8 @@ export const ChatProvider = ({ children }) => {
     const recipientId = recipient.id; // Extract the ID from the recipient object
 
     try {
-      const response = await api.startConversation(recipientId);
+      const response = await api.startConversation(recipientId, productInfo);
+      console.log('Conversation started with products:', response.products);
 
       if (!response.conversationId || !response.participant) return;
 
@@ -477,18 +479,29 @@ export const ChatProvider = ({ children }) => {
       const existingConv = conversations.find(conv => conv.id === response.conversationId);
       
       if (!existingConv) {
+        // Create new conversation
         const newConversation = {
           id: response.conversationId,
           participant: response.participant,
           lastMessage: null,
           unreadCount: 0,
           lastMessageTime: new Date().toISOString(),
+          products: response.products || [], // Add products array
         };
         
         setConversations(prev => [newConversation, ...prev]);
         
         // Set up Pusher channel for this new conversation
         setupChannelForConversation(response.conversationId);
+      } else {
+        // Update existing conversation with new products list
+        setConversations(prev => 
+          prev.map(conv => 
+            conv.id === response.conversationId 
+              ? { ...conv, products: response.products || [] }
+              : conv
+          )
+        );
       }
       
       setActiveConversation(response.conversationId);

@@ -195,24 +195,24 @@ export default defineConfig({
       navigateFallbackDenylist: [/^\/api/, /^\/backend/]
     },
     devOptions: {
-      enabled: true,
+      enabled: false, // Disabled in development to prevent conflicts
     },
   })],
 	server: {
 		port: 5173,
 		strictPort: false,
-		host: true,
+		host: '127.0.0.1',
 		hmr: {
 			port: 5173,
+			overlay: false, // Disable error overlay that might cause issues
 		},
 		cors: true,
-		headers: {
-			'Cross-Origin-Embedder-Policy': 'credentialless',
-		},
-		// Only allow specific hosts in development
-		allowedHosts: process.env.NODE_ENV === 'development' 
-			? ['localhost', '127.0.0.1', 'handy3.abanoubsamir.com', 'bazar.abanoubsamir.com']
-			: ['handy3.abanoubsamir.com', 'bazar.abanoubsamir.com'],
+		// Remove potentially problematic headers in development
+		// headers: {
+		//	'Cross-Origin-Embedder-Policy': 'credentialless',
+		// },
+		// Simplify allowed hosts for development
+		allowedHosts: ['localhost', '127.0.0.1'],
 	},
 	resolve: {
 		extensions: ['.jsx', '.js', '.tsx', '.ts', '.json', ],

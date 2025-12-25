@@ -11,7 +11,8 @@ import { useChat } from '@/contexts/ChatContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import { api } from '@/lib/api';
-import ServiceOrderModal from '@/components/chat/ServiceOrderModal';
+import SellerServiceOrderModal from '@/components/chat/SellerServiceOrderModal';
+import ProductChatCard from '@/components/chat/ProductChatCard';
 import MessageAttachment from '@/components/chat/MessageAttachment';
 import {
   AlertDialog,
@@ -55,7 +56,7 @@ const ChatPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [sending, setSending] = useState(false);
-  const [showServiceModal, setShowServiceModal] = useState(false);
+  const [showSellerServiceModal, setShowSellerServiceModal] = useState(false);
   const [sellerServices, setSellerServices] = useState([]);
   const [loadingServices, setLoadingServices] = useState(false);
   const [showReportDialog, setShowReportDialog] = useState(false);
@@ -249,9 +250,30 @@ const ChatPage = () => {
 
   const renderMessage = (message) => {
     const isOwn = message.senderId === user.id;
+    const isSystemMessage = !message.senderId; // System messages have no sender
     const showDate = messages[activeConversation]?.indexOf(message) === 0 || 
       (messages[activeConversation]?.[messages[activeConversation].indexOf(message) - 1] &&
        formatDate(message.timestamp) !== formatDate(messages[activeConversation][messages[activeConversation].indexOf(message) - 1].timestamp));
+
+    // Render system message differently
+    if (isSystemMessage) {
+      return (
+        <div key={message.id}>
+          {showDate && (
+            <div className="flex justify-center my-4">
+              <span className="bg-gray-200 text-gray-600 text-xs px-3 py-1 rounded-full">
+                {formatDate(message.timestamp)}
+              </span>
+            </div>
+          )}
+          <div className="flex justify-center my-2">
+            <div className="bg-blue-50 text-blue-700 text-sm px-4 py-2 rounded-full border border-blue-200 max-w-md text-center">
+              {message.text}
+            </div>
+          </div>
+        </div>
+      );
+    }
 
     return (
       <div key={message.id}>
@@ -309,6 +331,42 @@ const ChatPage = () => {
   const filteredConversations = conversations.filter(conv => 
     conv.participant.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Merge products with messages in chronological order
+  const getTimelineItems = () => {
+    if (!activeConversation || !currentConversationDetails) return [];
+    
+    const products = currentConversationDetails.products || [];
+    const msgs = currentMessages || [];
+    
+    // Create timeline items array
+    const timeline = [];
+    
+    // Add products as timeline items
+    products.forEach(product => {
+      timeline.push({
+        type: 'product',
+        data: product,
+        timestamp: new Date(product.added_at || product.addedAt),
+      });
+    });
+    
+    // Add messages as timeline items
+    msgs.forEach(msg => {
+      timeline.push({
+        type: 'message',
+        data: msg,
+        timestamp: new Date(msg.timestamp),
+      });
+    });
+    
+    // Sort by timestamp
+    timeline.sort((a, b) => a.timestamp - b.timestamp);
+    
+    return timeline;
+  };
+
+  const timelineItems = getTimelineItems();
 
   // Function to check if a user is online based on last_seen timestamp
   const isUserOnline = (lastSeen) => {
@@ -441,6 +499,11 @@ const ChatPage = () => {
                       <Badge className="bg-primary text-primary-foreground">{conv.unreadCount}</Badge>
                     )}
                   </div>
+                  {conv.product && (
+                    <p className="text-xs text-blue-600 truncate mb-1">
+                      💼 {conv.product.title}
+                    </p>
+                  )}
                   {conv.lastMessage && (
                     <p className="text-sm text-gray-500 truncate">
                       {conv.lastMessage.senderId === user.id ? 'أنت: ' : ''}
@@ -478,22 +541,27 @@ const ChatPage = () => {
                 </Avatar>
                 <div>
                   <p className="font-semibold text-gray-800">{currentConversationDetails.participant.name}</p>
+                  {currentConversationDetails.product && (
+                    <p className="text-xs text-blue-600 font-medium mb-1">
+                      💼 {currentConversationDetails.product.title}
+                    </p>
+                  )}
                   <p className="text-xs text-gray-500">
                     {formatLastSeen(currentConversationDetails.participant.last_seen)}
                   </p>
                 </div>
               </div>
               <div className="flex items-center space-x-2 rtl:space-x-reverse">
-                {/* Show service button only if seller has services */}
-                {!loadingServices && sellerServices.length > 0 && (
+                {/* Check if current user is a seller with services */}
+                {user?.seller_id && user?.seller_id !== null && (
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    onClick={() => setShowServiceModal(true)}
-                    className="text-blue-600 border-blue-600 hover:bg-blue-50"
+                    onClick={() => setShowSellerServiceModal(true)}
+                    className="text-green-600 border-green-600 hover:bg-green-50"
                   >
                     <ShoppingBag className="h-4 w-4 mr-1" />
-                    طلب حرفة
+                    إنشاء عرض حرفة
                   </Button>
                 )}
                         
@@ -589,9 +657,22 @@ const ChatPage = () => {
                 <div className="flex items-center justify-center h-full">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                 </div>
-              ) : currentMessages.length > 0 ? (
+              ) : timelineItems.length > 0 ? (
                 <>
-                  {currentMessages.map(renderMessage)}
+                  {timelineItems.map((item, index) => {
+                    if (item.type === 'product') {
+                      return (
+                        <div key={`product-${item.data.id}-${index}`} className="mb-4">
+                          <ProductChatCard
+                            product={item.data}
+                            isFromConversation={true}
+                          />
+                        </div>
+                      );
+                    } else {
+                      return renderMessage(item.data);
+                    }
+                  })}
                   <div ref={messagesEndRef} />
                 </>
               ) : (
@@ -599,6 +680,11 @@ const ChatPage = () => {
                   <div className="text-center">
                     <MessageCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                     <p className="text-gray-500">ابدأ محادثة جديدة</p>
+                    {!activeConversation && (
+                      <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700">
+                        💡 لرؤية كارد المنتج في الدردشة، اذهب إلى صفحة منتج أو خدمة واضغط على "تواصل مع البائع"
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -695,15 +781,14 @@ const ChatPage = () => {
         )}
       </main>
 
-      {/* Service Order Modal */}
-      <ServiceOrderModal
-        isOpen={showServiceModal}
-        onClose={() => setShowServiceModal(false)}
-        sellerId={currentConversationDetails?.participant?.id}
-        sellerUserId={currentConversationDetails?.participant?.id}
-        sellerName={currentConversationDetails?.participant?.name}
-        sellerAvatar={currentConversationDetails?.participant?.avatar}
-        preloadedServices={sellerServices}
+      {/* Seller Service Order Modal */}
+      <SellerServiceOrderModal
+        isOpen={showSellerServiceModal}
+        onClose={() => setShowSellerServiceModal(false)}
+        buyerId={currentConversationDetails?.participant?.id}
+        buyerName={currentConversationDetails?.participant?.name}
+        buyerAvatar={currentConversationDetails?.participant?.avatar}
+        conversationId={activeConversation}
       />
     </div>
   );

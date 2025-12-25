@@ -29,6 +29,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { api, adminApi, sellerApi, deliveryApi } from '@/lib/api';
 import { useSiteSettings } from '@/contexts/SiteSettingsContext';
+import BuyerAcceptServiceOrderModal from '@/components/chat/BuyerAcceptServiceOrderModal';
 
 const OrderDetailPage = () => {
   const { orderId } = useParams();
@@ -68,6 +69,9 @@ const OrderDetailPage = () => {
   const [isUpdatingReview, setIsUpdatingReview] = useState(false);
   const [isDeletingReview, setIsDeletingReview] = useState(false);
   const [reviewToDelete, setReviewToDelete] = useState(null);
+  
+  // Buyer accept service order modal state
+  const [showBuyerAcceptModal, setShowBuyerAcceptModal] = useState(false);
   
   // Card collapse/expand state - default all cards expanded
   const [expandedCards, setExpandedCards] = useState({
@@ -277,6 +281,76 @@ const OrderDetailPage = () => {
         title: "خطأ في الاعتماد",
         description: "حدث خطأ أثناء اعتماد الطلب.",
       });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleStartWork = async () => {
+    if (!sellerAddress.trim()) {
+      toast({
+        variant: "destructive",
+        title: "خطأ في البيانات",
+        description: "يرجى إدخال عنوان التسليم للدليفري.",
+      });
+      return;
+    }
+
+    if (!completionDeadline) {
+      toast({
+        variant: "destructive",
+        title: "خطأ في البيانات",
+        description: "يرجى تحديد الموعد المتوقع لإنجاز الطلب.",
+      });
+      return;
+    }
+
+    // Check if the deadline is in the future
+    const deadline = new Date(completionDeadline);
+    const now = new Date();
+    if (deadline <= now) {
+      toast({
+        variant: "destructive",
+        title: "خطأ في التاريخ",
+        description: "يجب أن يكون الموعد المتوقع للإنجاز في المستقبل.",
+      });
+      return;
+    }
+
+    setIsUpdating(true);
+    try {
+      await sellerApi.startWork(orderId, {
+        notes,
+        seller_address: sellerAddress,
+        completion_deadline: completionDeadline
+      });
+      toast({
+        title: "تم بدء العمل",
+        description: "تم بدء العمل على الطلب بنجاح.",
+      });
+      setNotes('');
+      setSellerAddress('');
+      setCompletionDeadline('');
+      loadOrder();
+    } catch (error) {
+      console.error('Error starting work:', error);
+      
+      // Handle validation errors
+      if (error.response?.status === 422 && error.response?.data?.errors) {
+        const errors = error.response.data.errors;
+        const errorMessages = Object.values(errors).flat();
+        toast({
+          variant: "destructive",
+          title: "خطأ في البيانات",
+          description: errorMessages.join('. '),
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "خطأ في بدء العمل",
+          description: error.response?.data?.message || "حدث خطأ أثناء بدء العمل على الطلب.",
+        });
+      }
     } finally {
       setIsUpdating(false);
     }
@@ -728,6 +802,12 @@ const OrderDetailPage = () => {
         color: 'bg-amber-100 text-amber-700 border-amber-200 shadow-md',
         pulse: true
       },
+      'pending_buyer_info': { 
+        label: 'بانتظار موافقة المشتري', 
+        icon: <Clock className="h-4 w-4 ml-1" />, 
+        color: 'bg-purple-100 text-purple-700 border-purple-200 shadow-md',
+        pulse: true
+      },
       'admin_approved': { 
         label: 'معتمد من الإدارة', 
         icon: <CheckCircle className="h-4 w-4 ml-1" />, 
@@ -853,6 +933,7 @@ const OrderDetailPage = () => {
     
     // Check if there are any actions available - if not, don't render the card
     const hasCustomerActions = isCustomer && (
+      order.status === 'pending_buyer_info' ||
       (order.status === 'pending' && !order.payment_proof && !(order.is_service_order && order.requires_deposit)) ||
       (order.is_service_order && order.requires_deposit && order.deposit_status === 'paid' && !order.remaining_payment_proof && ['admin_approved', 'seller_approved', 'work_completed', 'ready_for_delivery', 'out_for_delivery', 'delivered'].includes(order.status)) ||
       (order.is_service_order && order.requires_deposit && order.deposit_status === 'paid' && order.remaining_payment_proof) ||
@@ -904,6 +985,32 @@ const OrderDetailPage = () => {
           {/* Customer Actions */}
           {isCustomer && (
             <>
+              {/* Show accept/reject button for pending_buyer_info orders */}
+              {order.status === 'pending_buyer_info' && order.is_seller_created && (
+                <div className="space-y-3">
+                  <div className="p-4 bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-300 rounded-xl shadow-lg">
+                    <div className="flex items-center mb-3">
+                      <div className="p-2 bg-purple-500 rounded-full ml-3">
+                        <CheckCircle className="h-5 w-5 text-white" />
+                      </div>
+                      <h4 className="font-bold text-purple-900 text-lg">عرض حرفة جديد 🎨</h4>
+                    </div>
+                    <p className="text-sm text-purple-800 mb-4 leading-relaxed">
+                      لديك عرض حرفة جديد من البائع <strong>{order.seller?.user?.name}</strong>.
+                      <br />
+                      يرجى مراجعة التفاصيل والموافقة أو الرفض.
+                    </p>
+                    <Button 
+                      onClick={() => setShowBuyerAcceptModal(true)}
+                      className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-md"
+                    >
+                      <CheckCircle className="h-5 w-5 ml-2" />
+                      مراجعة العرض والموافقة
+                    </Button>
+                  </div>
+                </div>
+              )}
+              
               {order.status === 'pending' && 
                !order.payment_proof && 
                !(order.is_service_order && order.requires_deposit) && ( // لا تظهر للطلبات التي تتطلب عربون
@@ -1112,49 +1219,108 @@ const OrderDetailPage = () => {
               
               {order.status === 'admin_approved' && (
                 <div className="space-y-4">
-                  <div>
-                    <Label>عنوان البائع لاستلام الطلب</Label>
-                    <Textarea
-                      value={sellerAddress}
-                      onChange={(e) => setSellerAddress(e.target.value)}
-                      placeholder="أدخل عنوانك الكامل لاستلام الطلب من قبل الدليفري..."
-                      className="mt-2"
-                      rows={3}
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label>الموعد النهائي لإنجاز الطلب</Label>
-                    <Input
-                      type="datetime-local"
-                      value={completionDeadline}
-                      onChange={(e) => setCompletionDeadline(e.target.value)}
-                      className="mt-2"
-                      min={new Date().toISOString().slice(0, 16)}
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                      يجب أن يكون الموعد في المستقبل
-                    </p>
-                  </div>
-                  
-                  <div>
-                    <Label>ملاحظات البائع</Label>
-                    <Textarea
-                      value={notes}
-                      onChange={(e) => setNotes(e.target.value)}
-                      placeholder="أدخل ملاحظات قبول الطلب..."
-                      className="mt-2"
-                    />
-                  </div>
-                  
-                  <Button 
-                    onClick={handleSellerApprove}
-                    disabled={isUpdating}
-                    className="w-full bg-green-600 hover:bg-green-700"
-                  >
-                    {isUpdating ? <Loader2 className="h-4 w-4 animate-spin ml-2" /> : <Check className="h-4 w-4 ml-2" />}
-                    قبول الطلب
-                  </Button>
+                  {order.is_seller_created ? (
+                    // للطلبات التي أنشأها البائع - يطلب بدء العمل مع إدخال عنوان ومعاد التسليم
+                    <>
+                      <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg mb-4">
+                        <h4 className="font-semibold text-blue-800 mb-1">بدء العمل على الطلب</h4>
+                        <p className="text-sm text-blue-700">
+                          يرجى إدخال عنوان التسليم وموعد الإنجاز المتوقع قبل بدء العمل
+                        </p>
+                      </div>
+                      
+                      <div>
+                        <Label>عنوان التسليم للدليفري</Label>
+                        <Textarea
+                          value={sellerAddress}
+                          onChange={(e) => setSellerAddress(e.target.value)}
+                          placeholder="أدخل عنوانك الكامل لاستلام الطلب من قبل الدليفري..."
+                          className="mt-2"
+                          rows={3}
+                        />
+                      </div>
+                      
+                      <div>
+                        <Label>الموعد المتوقع لإنجاز الطلب</Label>
+                        <Input
+                          type="datetime-local"
+                          value={completionDeadline}
+                          onChange={(e) => setCompletionDeadline(e.target.value)}
+                          className="mt-2"
+                          min={new Date().toISOString().slice(0, 16)}
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          يجب أن يكون الموعد في المستقبل
+                        </p>
+                      </div>
+                      
+                      <div>
+                        <Label>ملاحظات (اختياري)</Label>
+                        <Textarea
+                          value={notes}
+                          onChange={(e) => setNotes(e.target.value)}
+                          placeholder="ملاحظات حول الطلب..."
+                          className="mt-2"
+                        />
+                      </div>
+                      
+                      <Button 
+                        onClick={handleStartWork}
+                        disabled={isUpdating}
+                        className="w-full bg-green-600 hover:bg-green-700"
+                      >
+                        {isUpdating ? <Loader2 className="h-4 w-4 animate-spin ml-2" /> : <Check className="h-4 w-4 ml-2" />}
+                        بدء العمل على الطلب
+                      </Button>
+                    </>
+                  ) : (
+                    // للطلبات العادية - نفس المنطق القديم
+                    <>
+                      <div>
+                        <Label>عنوان البائع لاستلام الطلب</Label>
+                        <Textarea
+                          value={sellerAddress}
+                          onChange={(e) => setSellerAddress(e.target.value)}
+                          placeholder="أدخل عنوانك الكامل لاستلام الطلب من قبل الدليفري..."
+                          className="mt-2"
+                          rows={3}
+                        />
+                      </div>
+                      
+                      <div>
+                        <Label>الموعد النهائي لإنجاز الطلب</Label>
+                        <Input
+                          type="datetime-local"
+                          value={completionDeadline}
+                          onChange={(e) => setCompletionDeadline(e.target.value)}
+                          className="mt-2"
+                          min={new Date().toISOString().slice(0, 16)}
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          يجب أن يكون الموعد في المستقبل
+                        </p>
+                      </div>
+                      
+                      <div>
+                        <Label>ملاحظات البائع</Label>
+                        <Textarea
+                          value={notes}
+                          onChange={(e) => setNotes(e.target.value)}
+                          placeholder="أدخل ملاحظات قبول الطلب..."
+                          className="mt-2"
+                        />
+                      </div>
+                      
+                      <Button 
+                        onClick={handleSellerApprove}
+                        disabled={isUpdating}
+                        className="w-full bg-green-600 hover:bg-green-700"
+                      >
+                        {isUpdating ? <Loader2 className="h-4 w-4 animate-spin ml-2" /> : <Check className="h-4 w-4 ml-2" />}
+                        قبول الطلب
+                      </Button>
+                    </>
+                  )}
                 </div>
               )}
 
@@ -1340,6 +1506,19 @@ const OrderDetailPage = () => {
                       )}
                       {order.next_action && (
                         <p className="text-gray-600">{order.next_action}</p>
+                      )}
+                      
+                      {/* عرض سبب الإلغاء إذا كان الطلب ملغياً */}
+                      {order.status === 'cancelled' && order.cancellation_reason && (
+                        <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                          <div className="flex items-start gap-2">
+                            <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
+                            <div>
+                              <p className="text-sm font-semibold text-red-800 mb-1">سبب الإلغاء:</p>
+                              <p className="text-sm text-red-700">{order.cancellation_reason}</p>
+                            </div>
+                          </div>
+                        </div>
                       )}
                     </div>
                     <div className="text-right">
@@ -2343,6 +2522,14 @@ const OrderDetailPage = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Buyer Accept Service Order Modal */}
+      <BuyerAcceptServiceOrderModal
+        isOpen={showBuyerAcceptModal}
+        onClose={() => setShowBuyerAcceptModal(false)}
+        order={order}
+        onOrderUpdated={loadOrder}
+      />
     </div>
   );
 };

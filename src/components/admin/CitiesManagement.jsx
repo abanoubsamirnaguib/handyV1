@@ -226,7 +226,7 @@ const CitiesManagement = () => {
                 <Input
                   id="delivery_fee"
                   type="number"
-                  step="0.01"
+                  step="1"
                   min="0"
                   value={formData.delivery_fee}
                   onChange={(e) => handleInputChange('delivery_fee', e.target.value)}
@@ -240,7 +240,7 @@ const CitiesManagement = () => {
                 <Input
                   id="platform_commission_percent"
                   type="number"
-                  step="0.01"
+                  step="1"
                   min="0"
                   max="100"
                   value={formData.platform_commission_percent}

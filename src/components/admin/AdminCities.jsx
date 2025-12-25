@@ -161,11 +161,11 @@ const AdminCities = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">رسوم التوصيل (ج.م)</label>
-                <Input type="number" step="0.01" value={newCity.delivery_fee} onChange={(e) => setNewCity({ ...newCity, delivery_fee: e.target.value })} placeholder="0" />
+                <Input type="number" step="1" value={newCity.delivery_fee} onChange={(e) => setNewCity({ ...newCity, delivery_fee: e.target.value })} placeholder="0" />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">نسبة عمولة المنصة (%)</label>
-                <Input type="number" step="0.01" value={newCity.platform_commission_percent} onChange={(e) => setNewCity({ ...newCity, platform_commission_percent: e.target.value })} placeholder="0" />
+                <Input type="number" step="1" value={newCity.platform_commission_percent} onChange={(e) => setNewCity({ ...newCity, platform_commission_percent: e.target.value })} placeholder="0" />
               </div>
             </div>
             <div className="flex gap-3 mt-4 justify-end">
@@ -203,14 +203,14 @@ const AdminCities = () => {
                     </td>
                     <td className="px-4 py-2">
                       {editingId === city.id ? (
-                        <Input type="number" step="0.01" value={editForm.delivery_fee} onChange={(e) => setEditForm({ ...editForm, delivery_fee: e.target.value })} />
+                        <Input type="number" step="1" value={editForm.delivery_fee} onChange={(e) => setEditForm({ ...editForm, delivery_fee: e.target.value })} />
                       ) : (
                         <span>{Number(city.delivery_fee || 0)} ج.م</span>
                       )}
                     </td>
                     <td className="px-4 py-2">
                       {editingId === city.id ? (
-                        <Input type="number" step="0.01" value={editForm.platform_commission_percent} onChange={(e) => setEditForm({ ...editForm, platform_commission_percent: e.target.value })} />
+                        <Input type="number" step="1" value={editForm.platform_commission_percent} onChange={(e) => setEditForm({ ...editForm, platform_commission_percent: e.target.value })} />
                       ) : (
                         <span>{Number(city.platform_commission_percent || 0)}%</span>
                       )}

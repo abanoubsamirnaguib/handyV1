@@ -273,6 +273,7 @@ const DashboardEarnings = () => {
                 <Input
                   id="amount"
                   type="number"
+                  step="1"
                   min={earningsData.withdrawal_settings.min_amount}
                   max={Math.min(earningsData.available_for_withdrawal, earningsData.withdrawal_settings.max_amount)}
                   value={withdrawalForm.amount}

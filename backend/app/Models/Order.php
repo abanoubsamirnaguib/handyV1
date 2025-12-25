@@ -37,6 +37,9 @@ class Order extends Model
         'remaining_payment_proof',
         'is_service_order',
         'service_requirements',
+        'is_seller_created',
+        'delivery_time',
+        'conversation_id',
         'chat_conversation_id',
         'payment_proof',
         'admin_approved_at',
@@ -58,6 +61,7 @@ class Order extends Model
         'admin_notes',
         'seller_notes',
         'suspension_reason',
+        'cancellation_reason',
         'seller_address',
         'completion_deadline',
         'is_late',
@@ -91,6 +95,7 @@ class Order extends Model
     public $casts = [
         'requires_deposit' => 'boolean',
         'is_service_order' => 'boolean',
+        'is_seller_created' => 'boolean',
         'is_late' => 'boolean',
     ];
     public $timestamps = false;
@@ -116,6 +121,11 @@ class Order extends Model
     public function conversation()
     {
         return $this->belongsTo(Conversation::class, 'chat_conversation_id');
+    }
+    
+    public function sellerConversation()
+    {
+        return $this->belongsTo(Conversation::class, 'conversation_id');
     }
     
     public function adminApprover()
@@ -622,6 +632,7 @@ class Order extends Model
     {
         $statusLabels = [
             'pending' => 'قيد الانتظار',
+            'pending_buyer_info' => 'بانتظار موافقة المشتري',
             'admin_approved' => 'موافقة الإدارة',
             'seller_approved' => 'موافقة البائع',
             'ready_for_delivery' => 'جاهز للتوصيل',
@@ -638,6 +649,8 @@ class Order extends Model
     public function getNextAction()
     {
         switch ($this->status) {
+            case 'pending_buyer_info':
+                return 'انتظار موافقة المشتري';
             case 'pending':
                 return 'انتظار موافقة الإدارة';
             case 'admin_approved':

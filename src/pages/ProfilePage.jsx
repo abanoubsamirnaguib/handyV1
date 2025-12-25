@@ -978,6 +978,7 @@ const ProfilePage = () => {
                     const getStatusBadge = (status) => {
                       const statusConfig = {
                         'pending': { label: 'قيد الانتظار', className: 'bg-amber-100 text-amber-700', icon: Clock },
+                        'pending_buyer_info': { label: 'بانتظار موافقة المشتري', className: 'bg-purple-100 text-purple-700', icon: Clock },
                         'admin_approved': { label: 'موافق عليه', className: 'bg-blue-100 text-blue-700', icon: CheckCircle },
                         'seller_approved': { label: 'موافق عليه', className: 'bg-indigo-100 text-indigo-700', icon: CheckCircle },
                         'work_completed': { label: 'تم الإنجاز', className: 'bg-cyan-100 text-cyan-700', icon: Package },

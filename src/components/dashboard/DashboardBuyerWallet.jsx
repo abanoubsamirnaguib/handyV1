@@ -85,7 +85,7 @@ const DashboardBuyerWallet = () => {
                 <form onSubmit={submit} className="space-y-4">
                   <div>
                     <Label htmlFor="amount">المبلغ (جنيه)</Label>
-                    <Input id="amount" type="number" min={1} max={user?.buyer_wallet_balance ?? 0} value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
+                    <Input id="amount" type="number" step="1" min={1} max={user?.buyer_wallet_balance ?? 0} value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
                     <p className="text-sm text-gray-500 mt-1">الرصيد المتاح: {(user?.buyer_wallet_balance ?? 0).toFixed?.(2) || Number(user?.buyer_wallet_balance ?? 0).toFixed(2)} جنيه</p>
                   </div>
                   <div>

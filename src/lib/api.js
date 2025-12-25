@@ -363,11 +363,35 @@ export const api = {
       method: 'POST',
       body: formData,
     }),
-  startConversation: (recipientId) => 
-    apiFetch('chat/conversations/start', {
+  createSellerServiceOrder: (data) =>
+    apiFetch('orders/seller-create-service-order', {
       method: 'POST',
-      body: JSON.stringify({ recipient_id: recipientId }),
+      body: JSON.stringify(data),
     }),
+  acceptServiceOrder: (orderId, formData) =>
+    apiFormFetch(`orders/${orderId}/accept-buyer`, {
+      method: 'POST',
+      body: formData,
+    }),
+  rejectServiceOrder: (orderId, reason) =>
+    apiFetch(`orders/${orderId}/reject-buyer`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    }),
+  startConversation: (recipientId, productInfo = null) => {
+    const body = { recipient_id: recipientId };
+    if (productInfo) {
+      body.product_id = productInfo.id;
+      body.product_type = productInfo.type;
+      body.product_title = productInfo.title;
+      body.product_image = productInfo.image;
+      body.product_price = productInfo.price;
+    }
+    return apiFetch('chat/conversations/start', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  },
   markAsRead: (conversationId) => 
     apiFetch(`chat/conversations/${conversationId}/mark-read`, { method: 'POST' }),
   deleteConversation: (conversationId) => 
@@ -876,6 +900,13 @@ export const sellerApi = {
     return apiFetch(`orders/${orderId}/seller-approve`, {
       method: 'POST',
       body: JSON.stringify(payload),
+    });
+  },
+  
+  startWork: (orderId, data) => {
+    return apiFetch(`orders/${orderId}/start-work`, {
+      method: 'POST',
+      body: JSON.stringify(data),
     });
   },
   

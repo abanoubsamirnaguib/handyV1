@@ -36,4 +36,9 @@ class Conversation extends Model
     {
         return $this->hasOne(Message::class)->latest('message_time');
     }
+
+    public function products()
+    {
+        return $this->hasMany(ConversationProduct::class)->orderBy('added_at', 'desc');
+    }
 }

@@ -17,6 +17,11 @@ const OrderStatusBadge = ({ status, statusLabel }) => {
       className: 'bg-gradient-to-r from-amber-100 to-amber-50 text-amber-700 border-amber-200 shadow-sm',
       pulse: true
     },
+    'pending_buyer_info': { 
+      icon: <Clock className="ml-1 h-3 w-3" />, 
+      className: 'bg-gradient-to-r from-purple-100 to-purple-50 text-purple-700 border-purple-200 shadow-sm',
+      pulse: true
+    },
     'admin_approved': { 
       icon: <CheckCircle className="ml-1 h-3 w-3" />, 
       className: 'bg-gradient-to-r from-blue-100 to-blue-50 text-blue-700 border-blue-200 shadow-sm'
@@ -402,12 +407,6 @@ const DashboardOrders = () => {
                       </CardTitle>
                       <div className="flex items-center gap-2">
                         <OrderStatusBadge status={order.status} statusLabel={order.status_label} />
-                        {order.price_approval_status === 'pending_approval' && (
-                          <Badge className="text-xs bg-yellow-100 text-yellow-700 border-yellow-300 animate-pulse">
-                            <AlertTriangle className="ml-1 h-3 w-3" />
-                            سعر مقترح
-                          </Badge>
-                        )}
                         {(order.is_late || order.time_remaining?.is_late) && (
                           <Badge variant="destructive" className="text-xs animate-pulse">
                             <AlertTriangle className="ml-1 h-3 w-3" />

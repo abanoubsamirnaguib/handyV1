@@ -684,7 +684,7 @@ const HomePage = () => {
                       <Star size={16} className="mr-1" /> {seller.rating} ({seller.reviewCount} تقييمات)
                     </div>
                     <Button asChild variant="outline" className="border-roman-500 text-roman-500 hover:bg-roman-500 hover:text-white">
-                      <Link to={`/profile/${seller.id}`}>عرض الملف الشخصي</Link>
+                      <Link to={`/sellers/${seller.id}`}>عرض الملف الشخصي</Link>
                     </Button>
                   </Card>
                 </motion.div>

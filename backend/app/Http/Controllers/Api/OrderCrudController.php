@@ -660,6 +660,86 @@ class OrderCrudController extends Controller
         }
     }
     
+    /**
+     * بدء العمل على الطلب - للطلبات التي ينشئها البائع
+     */
+    public function startWork(Request $request, $id)
+    {
+        $validator = \Validator::make($request->all(), [
+            'seller_address' => 'required|string|max:1000',
+            'completion_deadline' => 'required|date|after:now',
+            'notes' => 'nullable|string|max:500'
+        ], [
+            'completion_deadline.after' => 'يجب أن يكون الموعد النهائي للإنجاز في المستقبل',
+            'completion_deadline.required' => 'الموعد النهائي للإنجاز مطلوب',
+            'completion_deadline.date' => 'تنسيق التاريخ غير صحيح',
+            'seller_address.required' => 'عنوان التسليم مطلوب',
+            'seller_address.max' => 'عنوان التسليم لا يمكن أن يتجاوز 1000 حرف',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'بيانات غير صحيحة',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+        
+        $order = Order::findOrFail($id);
+        
+        // التحقق من أن البائع يملك هذا الطلب
+        if ($order->seller->user_id !== Auth::id()) {
+            return response()->json(['message' => 'غير مصرح لك بهذا الإجراء'], 403);
+        }
+        
+        // التحقق من حالة الطلب - يجب أن يكون admin_approved
+        if ($order->status !== 'admin_approved') {
+            return response()->json(['message' => 'لا يمكن بدء العمل على هذا الطلب في حالته الحالية'], 400);
+        }
+        
+        try {
+            DB::beginTransaction();
+            
+            // تحديث بيانات الطلب وبدء العمل
+            $order->update([
+                'status' => 'seller_approved',
+                'seller_approved_at' => now(),
+                'work_started_at' => now(),
+                'seller_notes' => $request->notes,
+                'seller_address' => $request->seller_address,
+                'completion_deadline' => $request->completion_deadline
+            ]);
+            
+            // Add order history
+            $order->addToHistory('seller_approved', Auth::id(), 'work_started', 
+                "البائع بدأ العمل على الطلب - موعد الإنجاز: " . \Carbon\Carbon::parse($request->completion_deadline)->format('Y-m-d h:i A'));
+            
+            // إرسال إشعار للمشتري
+            if ($order->user_id) {
+                NotificationService::create(
+                    $order->user_id,
+                    'order_work_started',
+                    "البائع بدأ العمل على طلبك رقم #{$order->id}. موعد الإنجاز المتوقع: " . \Carbon\Carbon::parse($request->completion_deadline)->format('Y-m-d'),
+                    "/orders/{$order->id}"
+                );
+            }
+            
+            DB::commit();
+            
+            $order->load(['user', 'seller.user', 'items.product', 'city']);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'تم بدء العمل على الطلب بنجاح',
+                'data' => new OrderResource($order)
+            ]);
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Start work error: ' . $e->getMessage());
+            return response()->json(['message' => $e->getMessage()], 500);
+        }
+    }
+    
     // استلام الطلب من قبل الدليفري
     public function pickupByDelivery(Request $request, $id)
     {
@@ -1275,6 +1355,259 @@ class OrderCrudController extends Controller
                     'unread_messages_text' => $unreadSendersText
                 ]
             ]);
+        }
+    }
+
+    /**
+     * البائع ينشئ طلب حرفة للمشتري
+     */
+    public function sellerCreateServiceOrder(Request $request)
+    {
+        $validated = $request->validate([
+            'service_id' => 'required|exists:products,id',
+            'buyer_id' => 'required|exists:users,id',
+            'seller_id' => 'required|exists:users,id',
+            'service_price' => 'required|numeric|min:1',
+            'service_requirements' => 'required|string',
+            'delivery_time' => 'required|string',
+            'deposit_amount' => 'required|numeric|min:1',
+            'conversation_id' => 'nullable|exists:conversations,id',
+        ]);
+
+        try {
+            DB::beginTransaction();
+            
+            // التحقق من أن البائع هو صاحب الحرفة
+            $service = Product::findOrFail($validated['service_id']);
+            $seller = Auth::user()->seller;
+            
+            if (!$seller || $service->seller_id != $seller->id) {
+                throw new \Exception('غير مصرح لك بإنشاء طلب لهذه الحرفة');
+            }
+            
+            // التحقق من قيمة العربون
+            $depositAmount = $validated['deposit_amount'];
+            $servicePrice = $validated['service_price'];
+            
+            if ($depositAmount < ($servicePrice * 0.2) || $depositAmount > ($servicePrice * 0.8)) {
+                throw new \Exception('قيمة العربون يجب أن تكون بين 20% و 80% من قيمة الحرفة');
+            }
+            
+            // إنشاء الطلب بحالة pending_buyer_info
+            $order = Order::create([
+                'user_id' => $validated['buyer_id'],
+                'seller_id' => $seller->id,
+                'status' => 'pending_buyer_info',
+                'total_price' => $servicePrice,
+                'original_service_price' => $service->price,
+                'order_date' => now(),
+                'payment_method' => 'bank_transfer', // افتراضي، سيتم تحديثه عند موافقة المشتري
+                'payment_status' => 'pending',
+                'requires_deposit' => true,
+                'deposit_amount' => $depositAmount,
+                'deposit_status' => 'not_paid',
+                'is_service_order' => true,
+                'service_requirements' => $validated['service_requirements'],
+                'delivery_time' => $validated['delivery_time'],
+                'is_seller_created' => true,
+                'conversation_id' => $validated['conversation_id'] ?? null,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+            
+            // Add service as order item
+            OrderItem::create([
+                'order_id' => $order->id,
+                'product_id' => $service->id,
+                'quantity' => 1,
+                'price' => $servicePrice,
+                'subtotal' => $servicePrice,
+                'created_at' => now(),
+            ]);
+            
+            // Add order history
+            $order->addToHistory('pending_buyer_info', Auth::id(), 'seller_created_order', 
+                "البائع أنشأ عرض حرفة بقيمة {$servicePrice} ج.م وعربون {$depositAmount} ج.م");
+            
+            // إرسال إشعار للمشتري
+            NotificationService::create(
+                $validated['buyer_id'],
+                'new_service_offer',
+                "لديك عرض حرفة جديد من {$seller->user->name} بقيمة {$servicePrice} ج.م. يرجى مراجعة العرض.",
+                "/orders/{$order->id}"
+            );
+            
+            DB::commit();
+            
+            $order->load(['user', 'seller.user', 'items.product']);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'تم إنشاء عرض الحرفة بنجاح. في انتظار موافقة المشتري.',
+                'data' => new OrderResource($order)
+            ]);
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Seller service order creation error: ' . $e->getMessage());
+            return response()->json(['message' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * المشتري يقبل عرض البائع ويدخل بياناته
+     */
+    public function acceptServiceOrderByBuyer(Request $request, $id)
+    {
+        $order = Order::findOrFail($id);
+        
+        // التحقق من أن المستخدم هو المشتري
+        if ($order->user_id != Auth::id()) {
+            return response()->json(['message' => 'غير مصرح لك بهذا الإجراء'], 403);
+        }
+        
+        // التحقق من حالة الطلب
+        if ($order->status != 'pending_buyer_info') {
+            return response()->json(['message' => 'لا يمكن قبول هذا الطلب في حالته الحالية'], 400);
+        }
+        
+        $validated = $request->validate([
+            'customer_name' => 'required|string|max:100',
+            'customer_phone' => 'required|string|max:20',
+            'delivery_address' => 'required|string',
+            'additional_notes' => 'nullable|string',
+            'payment_method' => 'required|in:bank_transfer,vodafone_cash,instapay',
+            'deposit_image' => 'required|image|max:2048',
+            'city_id' => 'required|exists:cities,id',
+        ]);
+        
+        try {
+            DB::beginTransaction();
+            
+            // Upload deposit image
+            $depositImagePath = null;
+            if ($request->hasFile('deposit_image')) {
+                $depositImagePath = $request->file('deposit_image')->store('deposit_images', 'public');
+            }
+            
+            // تحديث الطلب
+            $order->update([
+                'customer_name' => $validated['customer_name'],
+                'customer_phone' => $validated['customer_phone'],
+                'delivery_address' => $validated['delivery_address'],
+                'requirements' => $validated['additional_notes'] ?? null,
+                'payment_method' => $validated['payment_method'],
+                'deposit_image' => $depositImagePath,
+                'deposit_status' => 'paid',
+                'status' => 'pending',
+                'city_id' => $validated['city_id'],
+            ]);
+            
+            // تعيين delivery_fee و commission percent من المدينة
+            $city = City::find($validated['city_id']);
+            if ($city) {
+                $order->delivery_fee = $city->delivery_fee;
+                $order->platform_commission_percent = $city->platform_commission_percent;
+                $order->buyer_total = round(($order->total_price ?? 0) + ($order->delivery_fee ?? 0), 2);
+                $order->save();
+            }
+            
+            // Add order history
+            $order->addToHistory('pending', Auth::id(), 'buyer_accepted', 
+                "المشتري قبل العرض ودفع العربون - في انتظار موافقة الإدارة");
+            
+            // إرسال إشعار للبائع
+            if ($order->seller && $order->seller->user_id) {
+                NotificationService::create(
+                    $order->seller->user_id,
+                    'order_buyer_accepted',
+                    "المشتري قبل عرض الحرفة رقم #{$order->id} ودفع العربون",
+                    "/orders/{$order->id}"
+                );
+            }
+            
+            // إرسال إشعار للأدمن
+            NotificationService::notifyAdmin(
+                'new_order',
+                "طلب حرفة جديد برقم #{$order->id} - إجمالي: {$order->total_price} جنيه - في انتظار الموافقة",
+                "/admin/orders/{$order->id}"
+            );
+            
+            DB::commit();
+            
+            $order->load(['user', 'seller.user', 'items.product', 'city']);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'تم قبول العرض بنجاح. في انتظار موافقة الإدارة.',
+                'data' => new OrderResource($order)
+            ]);
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Buyer accept service order error: ' . $e->getMessage());
+            return response()->json(['message' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * المشتري يرفض عرض البائع
+     */
+    public function rejectServiceOrderByBuyer(Request $request, $id)
+    {
+        $order = Order::findOrFail($id);
+        
+        // التحقق من أن المستخدم هو المشتري
+        if ($order->user_id != Auth::id()) {
+            return response()->json(['message' => 'غير مصرح لك بهذا الإجراء'], 403);
+        }
+        
+        // التحقق من حالة الطلب
+        if ($order->status != 'pending_buyer_info') {
+            return response()->json(['message' => 'لا يمكن رفض هذا الطلب في حالته الحالية'], 400);
+        }
+        
+        $validated = $request->validate([
+            'reason' => 'required|string',
+        ]);
+        
+        try {
+            DB::beginTransaction();
+            
+            // تحديث حالة الطلب
+            $order->update([
+                'status' => 'cancelled',
+                'cancellation_reason' => $validated['reason'],
+            ]);
+            
+            // Add order history
+            $order->addToHistory('cancelled', Auth::id(), 'buyer_rejected', 
+                "المشتري رفض العرض: {$validated['reason']}");
+            
+            // إرسال إشعار للبائع
+            if ($order->seller && $order->seller->user_id) {
+                NotificationService::create(
+                    $order->seller->user_id,
+                    'order_buyer_rejected',
+                    "المشتري رفض عرض الحرفة رقم #{$order->id}. السبب: {$validated['reason']}",
+                    "/orders/{$order->id}"
+                );
+            }
+            
+            DB::commit();
+            
+            $order->load(['user', 'seller.user', 'items.product']);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'تم رفض العرض',
+                'data' => new OrderResource($order)
+            ]);
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Buyer reject service order error: ' . $e->getMessage());
+            return response()->json(['message' => $e->getMessage()], 500);
         }
     }
 }

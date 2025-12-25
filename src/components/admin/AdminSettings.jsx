@@ -857,6 +857,7 @@ const AdminSettings = () => {
                     id="minWithdrawalAmount"
                     name="minWithdrawalAmount"
                     type="number"
+                    step="1"
                     min="1"
                     value={withdrawalSettings.minWithdrawalAmount}
                     onChange={handleWithdrawalChange}
@@ -871,6 +872,7 @@ const AdminSettings = () => {
                     id="maxWithdrawalAmount"
                     name="maxWithdrawalAmount"
                     type="number"
+                    step="1"
                     min="1"
                     value={withdrawalSettings.maxWithdrawalAmount}
                     onChange={handleWithdrawalChange}

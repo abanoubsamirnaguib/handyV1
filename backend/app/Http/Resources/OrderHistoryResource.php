@@ -69,7 +69,8 @@ class OrderHistoryResource extends JsonResource
             'status_changed_by_admin' => 'تم تغيير الحالة بواسطة الإدارة',
             'seller_created_order' => 'البائع أنشأ الطلب',
             'buyer_accepted' => 'المشتري قبل العمل',
-            'work_started' => 'بدء العمل'
+            'work_started' => 'بدء العمل',
+            'buyer_rejected' => 'رفض المشتري',
 
         ];
         

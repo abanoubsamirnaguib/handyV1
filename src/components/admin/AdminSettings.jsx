@@ -6,7 +6,8 @@ import {
   Globe,
   DollarSign,
   Image,
-  Bell
+  Bell,
+  Users
 } from 'lucide-react';
 import { 
   Card, 
@@ -118,6 +119,12 @@ const AdminSettings = () => {
     },
   });
 
+  // إعدادات الإحالة (Referral)
+  const [referralSettings, setReferralSettings] = useState({
+    enabled: true,
+    bonusAmount: 0,
+  });
+
   const handleGeneralChange = (e) => {
     const { name, value, type, checked } = e.target;
     setGeneralSettings(prev => ({
@@ -215,6 +222,14 @@ const AdminSettings = () => {
             ...response.settings.adminNotifications
           }));
         }
+
+        // Update referral settings
+        if (response.settings.referrals) {
+          setReferralSettings(prev => ({
+            ...prev,
+            ...response.settings.referrals
+          }));
+        }
       }
     } catch (error) {
       console.error('Error loading admin settings:', error);
@@ -286,6 +301,9 @@ const AdminSettings = () => {
         case 'adminNotifications':
           settings = adminNotificationSettings;
           break;
+        case 'referrals':
+          settings = referralSettings;
+          break;
         default:
           throw new Error('نوع إعدادات غير صحيح');
       }
@@ -301,6 +319,7 @@ const AdminSettings = () => {
         'general': 'تم حفظ الإعدادات العامة بنجاح',
         'userNotifications': 'تم حفظ إعدادات إشعارات المستخدمين بنجاح',
         'adminNotifications': 'تم حفظ إعدادات إشعارات المشرفين بنجاح',
+        'referrals': 'تم حفظ إعدادات الإحالة بنجاح',
       };
       
       toast({
@@ -345,7 +364,7 @@ const AdminSettings = () => {
       </motion.div>
 
       <Tabs defaultValue="general">
-        <TabsList className="grid grid-cols-3 mb-8">
+        <TabsList className="grid grid-cols-4 mb-8">
           <TabsTrigger value="general">
             <Globe className="mr-2 h-4 w-4" />
             عام
@@ -353,6 +372,10 @@ const AdminSettings = () => {
           <TabsTrigger value="notifications">
             <Bell className="mr-2 h-4 w-4" />
             الإشعارات
+          </TabsTrigger>
+          <TabsTrigger value="referrals">
+            <Users className="mr-2 h-4 w-4" />
+            الإحالة
           </TabsTrigger>
           <TabsTrigger value="withdrawals">
             <DollarSign className="mr-2 h-4 w-4" />
@@ -489,6 +512,53 @@ const AdminSettings = () => {
                 <Save className="mr-2 h-4 w-4" />
                 {loading ? 'جاري الحفظ...' : 'حفظ الإعدادات'}
               </Button>
+            </div>
+          </SettingsSection>
+        </TabsContent>
+
+        <TabsContent value="referrals">
+          <SettingsSection
+            title="إعدادات الإحالة"
+            description="تحديد بونص الإحالة وإيقاف/تشغيل النظام"
+            icon={Users}
+          >
+            <div className="space-y-4">
+              <div className="flex items-center justify-between gap-4">
+                <div className="text-right">
+                  <div className="font-medium text-gray-800">تفعيل نظام الإحالة</div>
+                  <div className="text-sm text-gray-500">عند التفعيل سيتم احتساب بونص عند التسجيل عبر رابط دعوة</div>
+                </div>
+                <Switch
+                  checked={!!referralSettings.enabled}
+                  onCheckedChange={(checked) => setReferralSettings(prev => ({ ...prev, enabled: checked }))}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="referralBonusAmount">قيمة بونص الإحالة (رصيد هدية)</Label>
+                <Input
+                  id="referralBonusAmount"
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={referralSettings.bonusAmount}
+                  onChange={(e) => setReferralSettings(prev => ({ ...prev, bonusAmount: Number(e.target.value || 0) }))}
+                  className="text-right"
+                  dir="rtl"
+                />
+                <p className="text-xs text-gray-500 mt-1">سيتم إضافة هذا الرصيد إلى محفظة الهدايا للمُحيل (لا يمكن سحبه)</p>
+              </div>
+
+              <div className="pt-2">
+                <Button
+                  onClick={() => handleSaveSettings('referrals')}
+                  disabled={loading}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  <Save className="ml-2 h-4 w-4" />
+                  {loading ? 'جاري الحفظ...' : 'حفظ إعدادات الإحالة'}
+                </Button>
+              </div>
             </div>
           </SettingsSection>
         </TabsContent>

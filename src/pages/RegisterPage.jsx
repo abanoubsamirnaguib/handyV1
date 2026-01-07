@@ -29,6 +29,7 @@ const RegisterPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const referralCode = searchParams.get('ref') || '';
 
   // Redirect authenticated users
   useEffect(() => {
@@ -85,6 +86,7 @@ const RegisterPage = () => {
         role: primaryRole,
         is_buyer: isBuyer,
         is_seller: isSeller,
+        ...(referralCode ? { referral_code: referralCode } : {}),
       };
 
       // Navigate to email verification page with registration data

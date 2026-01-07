@@ -30,6 +30,9 @@ class User extends Authenticatable
         'bio',
         'location',
         'buyer_wallet_balance',
+        'gift_wallet_balance',
+        'referral_code',
+        'referred_by_user_id',
         'avatar',
         'cover_image',
         'phone',
@@ -65,6 +68,7 @@ class User extends Authenticatable
             'show_ai_assistant' => 'boolean',
             'last_seen' => 'datetime',
             'buyer_wallet_balance' => 'decimal:2',
+            'gift_wallet_balance' => 'decimal:2',
         ];
     }
 
@@ -112,6 +116,59 @@ class User extends Authenticatable
             throw new \Exception('رصيد محفظة المشتري غير كافٍ');
         }
         $this->decrement('buyer_wallet_balance', $amount);
+    }
+
+    // Gift wallet helpers (non-withdrawable, usable for purchases only)
+    public function addToGiftWallet(float $amount): void
+    {
+        $this->increment('gift_wallet_balance', $amount);
+    }
+
+    public function deductFromGiftWallet(float $amount): void
+    {
+        if ($this->gift_wallet_balance < $amount) {
+            throw new \Exception('رصيد محفظة الهدايا غير كافٍ');
+        }
+        $this->decrement('gift_wallet_balance', $amount);
+    }
+
+    /**
+     * The user who referred this user (if any).
+     */
+    public function referredBy()
+    {
+        return $this->belongsTo(User::class, 'referred_by_user_id');
+    }
+
+    /**
+     * Users referred by this user.
+     */
+    public function referrals()
+    {
+        return $this->hasMany(User::class, 'referred_by_user_id');
+    }
+
+    public function referralRewardsEarned()
+    {
+        return $this->hasMany(ReferralReward::class, 'referrer_user_id');
+    }
+
+    public function referralRewardSource()
+    {
+        return $this->hasOne(ReferralReward::class, 'referred_user_id');
+    }
+
+    /**
+     * Referral link for frontend registration page.
+     */
+    public function getReferralLinkAttribute(): ?string
+    {
+        if (!$this->referral_code) {
+            return null;
+        }
+
+        $base = rtrim(env('FRONTEND_URL', config('app.url')), '/');
+        return "{$base}/register?ref={$this->referral_code}";
     }
 
     /**

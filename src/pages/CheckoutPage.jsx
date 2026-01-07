@@ -13,12 +13,14 @@ import { useCart } from '@/contexts/CartContext';
 import { useToast } from '@/components/ui/use-toast';
 import { api } from '@/lib/api';
 import { useSiteSettings } from '@/contexts/SiteSettingsContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 const CheckoutPage = () => {
   const { cart, clearCart, getCartTotal } = useCart();
   const { toast } = useToast();
   const navigate = useNavigate();
   const { settings } = useSiteSettings();
+  const { user } = useAuth();
 
   // Form state
   const [formData, setFormData] = useState({
@@ -195,6 +197,8 @@ const CheckoutPage = () => {
   const selectedCity = cities.find(c => String(c.id) === String(formData.city_id));
   const deliveryFee = selectedCity ? Number(selectedCity.delivery_fee || 0) : 0;
   const grandTotal = baseTotal + deliveryFee;
+  const giftBalance = Number(user?.gift_wallet_balance ?? 0);
+  const canPayWithGiftWallet = !!selectedCity && giftBalance >= grandTotal && grandTotal > 0;
 
   if (cart.length === 0) {
     return null; // Will redirect via useEffect
@@ -296,6 +300,9 @@ const CheckoutPage = () => {
                       <SelectItem value="bank_transfer">تحويل بنكي</SelectItem>
                       <SelectItem value="vodafone_cash">فودافون كاش</SelectItem>
                       <SelectItem value="instapay">انستاباي</SelectItem>
+                      <SelectItem value="gift_wallet" disabled={!canPayWithGiftWallet}>
+                        محفظة الهدايا (للشراء فقط) — المتاح: {giftBalance} ج.م
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                   {errors.payment_method && (
@@ -346,7 +353,7 @@ const CheckoutPage = () => {
                 </div>
 
                 {/* Payment Proof Upload */}
-                {formData.payment_method !== 'cash_on_delivery' && (
+                {(formData.payment_method !== 'cash_on_delivery' && formData.payment_method !== 'gift_wallet') && (
                   <div className="space-y-2">
                     <Label className="text-neutral-900 flex items-center">
                       <Upload className="ml-2 h-4 w-4 text-roman-500" />

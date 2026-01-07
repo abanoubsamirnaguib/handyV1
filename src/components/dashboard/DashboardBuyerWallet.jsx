@@ -65,6 +65,17 @@ const DashboardBuyerWallet = () => {
     }
   };
 
+  const copyReferralLink = async () => {
+    const link = user?.referral_link;
+    if (!link) return;
+    try {
+      await navigator.clipboard.writeText(link);
+      toast({ title: 'تم النسخ', description: 'تم نسخ رابط الدعوة' });
+    } catch {
+      toast({ title: 'خطأ', description: 'تعذر نسخ الرابط', variant: 'destructive' });
+    }
+  };
+
   return (
     <div className="p-6 space-y-6">
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
@@ -119,7 +130,28 @@ const DashboardBuyerWallet = () => {
                 <div className="text-sm text-neutral-900/70">الرصيد المتاح</div>
                 <div className="text-2xl font-bold text-neutral-900">{(user?.buyer_wallet_balance ?? 0).toFixed?.(2) || Number(user?.buyer_wallet_balance ?? 0).toFixed(2)} جنيه</div>
               </div>
+              <div className="p-4 rounded-lg bg-yellow-50">
+                <div className="text-sm text-neutral-900/70">رصيد الهدايا (للشراء فقط)</div>
+                <div className="text-2xl font-bold text-neutral-900">{(user?.gift_wallet_balance ?? 0).toFixed?.(2) || Number(user?.gift_wallet_balance ?? 0).toFixed(2)} جنيه</div>
+              </div>
             </div>
+
+            {user?.referral_link && (
+              <div className="mt-5 p-4 rounded-lg bg-neutral-50 border">
+                <div className="text-sm text-neutral-900/70 mb-2">رابط الدعوة الخاص بك</div>
+                <div className="flex flex-col md:flex-row gap-2">
+                  <Input readOnly value={user.referral_link} className="bg-white" />
+                  <Button type="button" variant="outline" onClick={copyReferralLink}>
+                    نسخ
+                  </Button>
+                </div>
+                {user?.referral_code && (
+                  <div className="text-xs text-neutral-900/60 mt-2">
+                    كود الدعوة: <span className="font-mono">{user.referral_code}</span>
+                  </div>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
       </motion.div>

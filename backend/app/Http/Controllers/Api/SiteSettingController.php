@@ -103,12 +103,19 @@ class SiteSettingController extends Controller
             'deliveryMethod' => SiteSetting::where('setting_key', 'admin_notification_delivery')->value('setting_value') ?? 'both',
         ];
 
+        // Referral settings
+        $referralSettings = [
+            'enabled' => SiteSetting::where('setting_key', 'referral_enabled')->value('setting_value') !== 'false',
+            'bonusAmount' => (float) (SiteSetting::where('setting_key', 'referral_bonus_amount')->value('setting_value') ?? 0),
+        ];
+
         return response()->json([
             'settings' => [
                 'general' => $generalSettings,
                 'email' => $emailSettings,
                 'userNotifications' => $userNotificationSettings,
                 'adminNotifications' => $adminNotificationSettings,
+                'referrals' => $referralSettings,
             ]
         ]);
     }
@@ -122,7 +129,7 @@ class SiteSettingController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'settingsType' => 'required|string|in:general,email,userNotifications,adminNotifications',
+            'settingsType' => 'required|string|in:general,email,userNotifications,adminNotifications,referrals',
             'settings' => 'required|array',
         ]);
 
@@ -177,6 +184,10 @@ class SiteSettingController extends Controller
                     'adminEmail' => 'admin_notification_email',
                     'deliveryMethod' => 'admin_notification_delivery',
                 ],
+                'referrals' => [
+                    'enabled' => 'referral_enabled',
+                    'bonusAmount' => 'referral_bonus_amount',
+                ],
             ];
 
             if (!isset($settingMappings[$settingsType])) {
@@ -207,6 +218,7 @@ class SiteSettingController extends Controller
                 'email' => 'تم حفظ إعدادات البريد الإلكتروني بنجاح',
                 'userNotifications' => 'تم حفظ إعدادات إشعارات المستخدمين بنجاح',
                 'adminNotifications' => 'تم حفظ إعدادات إشعارات المشرفين بنجاح',
+                'referrals' => 'تم حفظ إعدادات الإحالة بنجاح',
             ];
 
             return response()->json([

@@ -43,6 +43,23 @@
                 انتقل إلى لوحة التحكم
             </a>
         </div>
+
+        @if(!empty($body['referral_link']))
+            <div style='background-color: #fff3cd; border-right: 4px solid #ffc107; padding: 18px; margin: 20px 0; border-radius: 5px;'>
+                <h3 style='color: #856404; margin-top: 0; font-size: 16px;'>🔗 رابط الدعوة الخاص بك</h3>
+                <p style='color: #856404; font-size: 14px; line-height: 1.7; margin: 0 0 10px 0;'>
+                    شارك رابط الدعوة مع أصدقائك. عند التسجيل عبر الرابط قد تحصل على رصيد هدية (حسب إعدادات المنصة).
+                </p>
+                @if(!empty($body['referral_code']))
+                    <p style='color: #856404; font-size: 14px; margin: 0 0 8px 0;'>
+                        <strong>كود الدعوة:</strong> {{ $body['referral_code'] }}
+                    </p>
+                @endif
+                <p style='color: #856404; font-size: 13px; margin: 0; word-break: break-all; direction: ltr; text-align: left;'>
+                    {{ $body['referral_link'] }}
+                </p>
+            </div>
+        @endif
         
         <p style='color: #666; font-size: 14px; line-height: 1.6; border-top: 1px solid #e0e0e0; padding-top: 20px; margin-top: 30px;'>
             إذا كان لديك أي استفسار أو تحتاج إلى مساعدة، فريق الدعم لدينا جاهز دائماً لمساعدتك.

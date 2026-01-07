@@ -2,15 +2,19 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\ReferralReward;
+use App\Models\SiteSetting;
 use App\Models\User;
 use App\Models\Otp;
 use App\Services\EmailService;
 use App\Services\NotificationService;
 use App\Traits\EmailTrait;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Exception;
 
@@ -507,6 +511,7 @@ class AuthController extends Controller
                 'role' => 'in:admin,seller,buyer',
                 'is_seller' => 'boolean',
                 'is_buyer' => 'boolean',
+                'referral_code' => 'nullable|string|max:32|exists:users,referral_code',
             ]);
             
             // Verify OTP first
@@ -522,37 +527,100 @@ class AuthController extends Controller
             $isSeller = $validated['is_seller'] ?? ($validated['role'] === 'seller');
             $isBuyer = $validated['is_buyer'] ?? ($validated['role'] === 'buyer' || $validated['role'] === null);
             $activeRole = $validated['role'] === 'seller' ? 'seller' : 'buyer';
-            
-            $user = User::create([
-                'name' => $validated['name'],
-                'email' => $validated['email'],
-                'password' => Hash::make($validated['password']),
-                'role' => $validated['role'] ?? 'buyer',
-                'active_role' => $activeRole,
-                'is_seller' => $isSeller,
-                'is_buyer' => $isBuyer,
-                'status' => 'active',
-                'email_verified' => true, // Already verified with OTP
-            ]);
-            
-            // Create seller profile if user is or can be a seller
-            if ($isSeller) {
-                $seller = \App\Models\Seller::create([
-                    'user_id' => $user->id,
-                    'member_since' => now(),
-                ]);
-                
-                // Create seller skills if provided in the request
-                if ($request->has('skills') && is_array($request->skills)) {
-                    foreach ($request->skills as $skill) {
-                        \App\Models\SellerSkill::create([
-                            'seller_id' => $seller->id,
-                            'skill_name' => $skill,
-                            'created_at' => now(),
-                        ]);
+
+            $referrerUserId = null;
+            if (!empty($validated['referral_code'])) {
+                $referrerUserId = User::where('referral_code', $validated['referral_code'])->value('id');
+            }
+
+            $user = DB::transaction(function () use ($validated, $isSeller, $isBuyer, $activeRole, $request, $referrerUserId) {
+                // Generate unique referral code for the new user
+                $newReferralCode = null;
+                for ($i = 0; $i < 25; $i++) {
+                    $candidate = Str::upper(Str::random(10));
+                    if (!User::where('referral_code', $candidate)->exists()) {
+                        $newReferralCode = $candidate;
+                        break;
                     }
                 }
-            }
+                if (!$newReferralCode) {
+                    // Extremely unlikely fallback: longer code, still ensured unique
+                    do {
+                        $newReferralCode = Str::upper(Str::random(16));
+                    } while (User::where('referral_code', $newReferralCode)->exists());
+                }
+
+                $user = User::create([
+                    'name' => $validated['name'],
+                    'email' => $validated['email'],
+                    'password' => Hash::make($validated['password']),
+                    'role' => $validated['role'] ?? 'buyer',
+                    'active_role' => $activeRole,
+                    'is_seller' => $isSeller,
+                    'is_buyer' => $isBuyer,
+                    'status' => 'active',
+                    'email_verified' => true, // Already verified with OTP
+                    'referral_code' => $newReferralCode,
+                    'referred_by_user_id' => $referrerUserId,
+                ]);
+
+                // Create seller profile if user is or can be a seller
+                if ($isSeller) {
+                    $seller = \App\Models\Seller::create([
+                        'user_id' => $user->id,
+                        'member_since' => now(),
+                    ]);
+
+                    // Create seller skills if provided in the request
+                    if ($request->has('skills') && is_array($request->skills)) {
+                        foreach ($request->skills as $skill) {
+                            \App\Models\SellerSkill::create([
+                                'seller_id' => $seller->id,
+                                'skill_name' => $skill,
+                                'created_at' => now(),
+                            ]);
+                        }
+                    }
+                }
+
+                // Apply referral reward (gift wallet credit to referrer) if enabled
+                if ($referrerUserId && $referrerUserId !== $user->id) {
+                    $referralEnabled = SiteSetting::where('setting_key', 'referral_enabled')->value('setting_value') !== 'false';
+                    $bonusAmountRaw = SiteSetting::where('setting_key', 'referral_bonus_amount')->value('setting_value') ?? '0';
+                    $bonusAmount = (float) $bonusAmountRaw;
+
+                    if ($referralEnabled && $bonusAmount > 0) {
+                        $referrer = User::find($referrerUserId);
+                        if ($referrer) {
+                            $currency = SiteSetting::where('setting_key', 'default_currency')->value('setting_value');
+
+                            ReferralReward::create([
+                                'referrer_user_id' => $referrer->id,
+                                'referred_user_id' => $user->id,
+                                'amount' => $bonusAmount,
+                                'currency' => $currency,
+                                'created_at' => now(),
+                            ]);
+
+                            $referrer->addToGiftWallet($bonusAmount);
+
+                            // Notify referrer
+                            try {
+                                NotificationService::create(
+                                    $referrer->id,
+                                    'system',
+                                    "تم إضافة رصيد هدية بقيمة {$bonusAmount} إلى محفظتك بسبب تسجيل مستخدم جديد عبر رابطك.",
+                                    "/dashboard/wallet"
+                                );
+                            } catch (\Throwable $e) {
+                                // ignore
+                            }
+                        }
+                    }
+                }
+
+                return $user;
+            });
             
             // Create a token immediately so the user doesn't have to log in separately
             $token = $user->createToken('api-token')->plainTextToken;
@@ -598,6 +666,8 @@ class AuthController extends Controller
                         'name' => $user->name,
                         'is_seller' => $isSeller,
                         'dashboard_url' => $dashboardUrl,
+                        'referral_code' => $user->referral_code,
+                        'referral_link' => $user->referral_link,
                     ],
                     viewPath: 'emails.welcome'
                 );

@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\Validator;
 use App\Models\Notification;
 use App\Services\NotificationService;
 use App\Models\City;
+use App\Models\User;
 
 class OrderCrudController extends Controller
 {
@@ -95,7 +96,7 @@ class OrderCrudController extends Controller
                 'customer_name' => 'required|string|max:100',
                 'customer_phone' => 'required|string|max:20',
                 'delivery_address' => 'required|string',
-                'payment_method' => 'required|in:cash_on_delivery,bank_transfer,credit_card,vodafone_cash,instapay',
+                'payment_method' => 'required|in:cash_on_delivery,bank_transfer,credit_card,vodafone_cash,instapay,gift_wallet',
                 'requirements' => 'nullable|string',
                 'payment_proof' => 'nullable|image|max:2048', // صورة إثبات الدفع
                 'city_id' => 'required|exists:cities,id',
@@ -245,6 +246,21 @@ class OrderCrudController extends Controller
                 
                 \Log::info('Total price calculated: ' . $totalPrice);
                 \Log::info('Seller ID: ' . $sellerId);
+
+                // Calculate delivery fee + buyer total early (needed for gift wallet payment)
+                $city = City::find($validated['city_id']);
+                $deliveryFee = $city ? (float) ($city->delivery_fee ?? 0) : 0.0;
+                $buyerTotal = round(((float) $totalPrice) + $deliveryFee, 2);
+
+                // If paying with gift wallet, ensure sufficient balance and deduct it
+                if (($validated['payment_method'] ?? null) === 'gift_wallet') {
+                    /** @var User $buyer */
+                    $buyer = User::lockForUpdate()->findOrFail(Auth::id());
+                    if ((float) $buyer->gift_wallet_balance < $buyerTotal) {
+                        throw new \Exception('رصيد محفظة الهدايا غير كافٍ لإتمام الطلب');
+                    }
+                    $buyer->deductFromGiftWallet($buyerTotal);
+                }
                 
                 // رفع صورة إثبات الدفع إذا وجدت
                 $paymentProofPath = null;
@@ -263,13 +279,16 @@ class OrderCrudController extends Controller
                     'customer_phone' => $validated['customer_phone'],
                     'delivery_address' => $validated['delivery_address'],
                     'payment_method' => $validated['payment_method'],
-                    'payment_status' => 'pending',
+                    'payment_status' => ($validated['payment_method'] ?? null) === 'gift_wallet' ? 'paid' : 'pending',
                     'requirements' => $validated['requirements'] ?? null,
                     'payment_proof' => $paymentProofPath,
                     'is_service_order' => false,
                     'city_id' => $validated['city_id'],
                     'created_at' => now(),
                     'updated_at' => now(),
+                    // If we already calculated buyer_total, set it now
+                    'delivery_fee' => $deliveryFee,
+                    'buyer_total' => $buyerTotal,
                 ]);
                 
                 // إضافة عناصر الطلب
@@ -293,12 +312,17 @@ class OrderCrudController extends Controller
                 $order->addToHistory('pending', Auth::id(), 'order_created', 'تم إنشاء الطلب');
             }
             
-            // بعد إنشاء الطلب، تعيين delivery_fee و commission percent من المدينة
+            // بعد إنشاء الطلب، تعيين commission percent من المدينة
             $city = City::find($order->city_id);
             if ($city) {
-                $order->delivery_fee = $city->delivery_fee;
                 $order->platform_commission_percent = $city->platform_commission_percent;
-                $order->buyer_total = round(($order->total_price ?? 0) + ($order->delivery_fee ?? 0), 2);
+                // Preserve delivery_fee/buyer_total if already set (gift wallet path)
+                if ($order->delivery_fee === null) {
+                    $order->delivery_fee = $city->delivery_fee;
+                }
+                if ($order->buyer_total === null) {
+                    $order->buyer_total = round(($order->total_price ?? 0) + ($order->delivery_fee ?? 0), 2);
+                }
                 $order->save();
             }
             

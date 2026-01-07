@@ -39,6 +39,7 @@ use App\Http\Controllers\Api\AdminAnnouncementController;
 use App\Http\Controllers\Api\CityCrudController;
 use App\Http\Controllers\Api\PlatformProfitController;
 use App\Http\Controllers\Api\AIAssistantController;
+use App\Http\Controllers\Api\ReferralController;
 
 
 Broadcast::routes(['middleware' => ['broadcast.auth']]);
@@ -122,6 +123,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::middleware(['check.user.status'])->group(function () {
         Route::get('me', [AuthController::class, 'me']);
         Route::get('check-token', [AuthController::class, 'checkToken']);
+        Route::get('referrals/me', [ReferralController::class, 'me']);
     
     // Role switching endpoints
     Route::post('switch-role', [AuthController::class, 'switchRole']);

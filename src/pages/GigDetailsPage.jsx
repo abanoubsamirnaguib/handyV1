@@ -418,7 +418,7 @@ const GigDetailsPage = () => {
               <div className="flex gap-2 flex-1">
                 {gig.type === 'gig' ? (
                   <Button size="lg" onClick={handleContactSeller} className="bg-roman-500 hover:bg-roman-500/90 text-white flex-1">
-                    <MessageSquare className="ml-2 h-5 w-5" /> تواصل مع البائع
+                    <MessageSquare className="ml-2 h-5 w-5" /> اطلب الآن
                   </Button>
                 ) : (
                   <Button size="lg" onClick={handleAddToCart} className="bg-roman-500 hover:bg-roman-500/90 text-white flex-1">

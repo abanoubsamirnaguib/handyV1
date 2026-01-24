@@ -254,8 +254,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('payments/remaining', [PaymentController::class, 'processRemainingPayment']);
     Route::get('payments/order/{orderId}', [PaymentController::class, 'getOrderPayments']);
     
-    // Admin routes
-    Route::prefix('admin')->group(function () {
+    // Admin routes (must be admin)
+    Route::prefix('admin')->middleware(['admin'])->group(function () {
         Route::get('dashboard', [AdminController::class, 'dashboard']);
         Route::get('users', [AdminController::class, 'users']);
         Route::get('sellers', [AdminController::class, 'sellers']);
@@ -276,6 +276,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('orders/{id}/approve', [AdminController::class, 'approveOrder']);
         Route::post('orders/{id}/reject', [AdminController::class, 'rejectOrder']);
         Route::post('orders/{id}/update-status', [OrderCrudController::class, 'adminUpdateStatus']);
+        Route::put('orders/{id}', [AdminController::class, 'updateOrder']);
         
         // Delivery Personnel Management
         Route::apiResource('delivery-personnel', DeliveryPersonnelCrudController::class);
@@ -393,7 +394,7 @@ Route::prefix('delivery')->name('delivery.')->group(function () {
 Route::post('contact', [ContactController::class, 'store']); // Public endpoint for contact form submission
 
 // Protected Contact Us Routes for Admin
-Route::middleware(['auth:sanctum'])->prefix('admin/contact')->group(function () {
+Route::middleware(['auth:sanctum', 'admin'])->prefix('admin/contact')->group(function () {
     Route::get('/', [ContactController::class, 'index']); // Get all contact messages
     Route::get('stats', [ContactController::class, 'stats']); // Get contact message statistics
     Route::get('{id}', [ContactController::class, 'show']); // Get single contact message

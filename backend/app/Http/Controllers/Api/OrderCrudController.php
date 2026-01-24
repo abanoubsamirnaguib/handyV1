@@ -229,8 +229,21 @@ class OrderCrudController extends Controller
                 foreach ($validated['cart_items'] as $item) {
                     \Log::info('Processing cart item: ', $item);
                     
-                    $product = \App\Models\Product::findOrFail($item['product_id']);
+                    // Use lockForUpdate to prevent race conditions
+                    $product = \App\Models\Product::where('id', $item['product_id'])->lockForUpdate()->firstOrFail();
                     \Log::info('Found product: ', ['id' => $product->id, 'title' => $product->title, 'seller_id' => $product->seller_id]);
+                    
+                    // Check if product is still active
+                    if ($product->status !== 'active') {
+                        throw new \Exception("المنتج '{$product->title}' لم يعد متاحاً");
+                    }
+                    
+                    // Check quantity for products (not gigs)
+                    if ($product->type === 'product') {
+                        if ($product->quantity !== null && $product->quantity < $item['quantity']) {
+                            throw new \Exception("الكمية المتاحة من المنتج '{$product->title}' هي {$product->quantity} فقط");
+                        }
+                    }
                     
                     $totalPrice += $product->price * $item['quantity'];
                     
@@ -284,6 +297,23 @@ class OrderCrudController extends Controller
                         'subtotal' => $product->price * $item['quantity'],
                         'created_at' => now(),
                     ]);
+                    
+                    // Reduce quantity for products (not gigs)
+                    if ($product->type === 'product' && $product->quantity !== null) {
+                        $oldQuantity = $product->quantity;
+                        $newQuantity = $oldQuantity - $item['quantity'];
+                        $product->quantity = $newQuantity;
+                        
+                        // If quantity reaches 0 or below, set status to inactive
+                        if ($newQuantity <= 0) {
+                            $product->quantity = 0; // Ensure it doesn't go negative
+                            $product->status = 'inactive';
+                            \Log::info("Product {$product->id} ({$product->title}) is now out of stock and set to inactive");
+                        }
+                        
+                        $product->save();
+                        \Log::info("Product {$product->id} quantity reduced from {$oldQuantity} to {$product->quantity}");
+                    }
                 }
                 
                 // حذف عناصر السلة
@@ -1097,14 +1127,10 @@ class OrderCrudController extends Controller
                 ]);
             }
 
-            // Update order status (and refund deposit if cancelling)
-            $order->update([
-                'status' => $newStatus,
-                'updated_at' => now()
-            ]);
-
             // معالجة الإرجاع عند الإلغاء
             if ($newStatus === 'cancelled') {
+                // Restore product quantities first
+                $order->restoreProductQuantities();
                 // إرجاع العربون للطلبات التي تتطلب عربون
                 if ($order->requires_deposit && $order->hasDepositPaid() && $order->deposit_amount > 0) {
                     $order->user->addToBuyerWallet($order->deposit_amount);
@@ -1123,6 +1149,12 @@ class OrderCrudController extends Controller
                     $order->addToHistory('refunded', $adminId, 'order_refunded', "تم رد المبلغ ({$refundAmount} جنيه) إلى محفظة المشتري بعد إلغاء الطلب بواسطة الأدمن (بدون مصاريف التوصيل)");
                 }
             }
+            
+            // Update order status
+            $order->update([
+                'status' => $newStatus,
+                'updated_at' => now()
+            ]);
 
             // Record in order history
             $noteText = $notes ? "تم تغيير الحالة من '{$this->getStatusInArabic($oldStatus)}' إلى '{$this->getStatusInArabic($newStatus)}'. ملاحظات: {$notes}" : "تم تغيير الحالة من '{$this->getStatusInArabic($oldStatus)}' إلى '{$this->getStatusInArabic($newStatus)}'.";
@@ -1573,6 +1605,9 @@ class OrderCrudController extends Controller
         
         try {
             DB::beginTransaction();
+            
+            // Restore product quantities (for regular product orders, not services)
+            $order->restoreProductQuantities();
             
             // تحديث حالة الطلب
             $order->update([

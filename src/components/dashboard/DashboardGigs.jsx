@@ -399,7 +399,16 @@ const DashboardGigs = () => {
                 </div>
                 <CardHeader className="pb-2">
                   <CardTitle className="text-lg font-semibold text-gray-800 h-14 overflow-hidden">{gig.title}</CardTitle>
-                  <CardDescription className="text-sm text-primary font-bold">{gig.price} جنيه</CardDescription>
+                  <CardDescription className="text-sm text-primary font-bold">
+                    {gig.price} جنيه
+                    {gig.type === 'product' && gig.quantity !== null && gig.quantity !== undefined && (
+                      <span className={`mr-2 text-xs ${gig.quantity === 0 ? 'text-red-600' : gig.quantity < 3 ? 'text-orange-600' : 'text-gray-600'}`}>
+                        • الكمية: {gig.quantity}
+                        {gig.quantity === 0 && ' (نفذت الكمية)'}
+                        {gig.quantity > 0 && gig.quantity < 3 && ' (كمية قليلة)'}
+                      </span>
+                    )}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="flex-grow space-y-2 text-sm">
                   <div className="flex items-center justify-between">

@@ -39,7 +39,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { adminApi } from '@/lib/api';
+import { api, adminApi, apiFormFetch } from '@/lib/api';
 
 // Custom RTL-friendly Select wrapper components
 const RTLSelect = ({ children, value, onValueChange, ...props }) => {
@@ -319,13 +319,188 @@ const AdminOrders = () => {
     );
   };
 
-  const OrderDetailDialog = ({ order }) => {
+  const OrderDetailDialog = ({ order: initialOrder }) => {
+    const [localOrder, setLocalOrder] = useState(initialOrder);
+    const [isEditing, setIsEditing] = useState(false);
+    const [isSavingEdit, setIsSavingEdit] = useState(false);
+    const [editData, setEditData] = useState({
+      customer_name: initialOrder.customer_name || initialOrder.user?.name || '',
+      customer_phone: initialOrder.customer_phone || '',
+      delivery_address: initialOrder.delivery_address || '',
+      seller_address: initialOrder.seller_address || '',
+      total_amount: initialOrder.total_amount ?? '',
+      deposit_amount: initialOrder.deposit_amount ?? '',
+    });
+    const [newDepositImageFile, setNewDepositImageFile] = useState(null);
+    const [newRemainingProofFile, setNewRemainingProofFile] = useState(null);
+
+    useEffect(() => {
+      setLocalOrder(initialOrder);
+      setIsEditing(false);
+      setIsSavingEdit(false);
+      setNewDepositImageFile(null);
+      setNewRemainingProofFile(null);
+      setEditData({
+        customer_name: initialOrder.customer_name || initialOrder.user?.name || '',
+        customer_phone: initialOrder.customer_phone || '',
+        delivery_address: initialOrder.delivery_address || '',
+        seller_address: initialOrder.seller_address || '',
+        total_amount: initialOrder.total_amount ?? '',
+        deposit_amount: initialOrder.deposit_amount ?? '',
+      });
+    }, [initialOrder]);
+
+    // Alias so the existing dialog content can keep using `order.*`
+    const order = localOrder;
+
+    const toNumber = (v) => {
+      const n = Number(v);
+      return Number.isFinite(n) ? n : 0;
+    };
+
+    const remainingAmount = () => {
+      const total = toNumber((isEditing ? editData.total_amount : localOrder.total_amount) ?? 0);
+      const dep = toNumber((isEditing ? editData.deposit_amount : localOrder.deposit_amount) ?? 0);
+      return Math.max(0, total - dep);
+    };
+
+    const handleEditField = (field, value) => {
+      setEditData((prev) => ({ ...prev, [field]: value }));
+    };
+
+    const validateEdit = () => {
+      const total = toNumber(editData.total_amount);
+      const dep = toNumber(editData.deposit_amount);
+      if (total < 0 || dep < 0) {
+        return 'القيم لا يمكن أن تكون سالبة';
+      }
+      if (localOrder?.is_service_order && localOrder?.requires_deposit) {
+        if (dep > total) {
+          return 'قيمة العربون لا يمكن أن تتجاوز المبلغ الإجمالي';
+        }
+      }
+      return null;
+    };
+
+    const saveEdits = async () => {
+      const err = validateEdit();
+      if (err) {
+        toast({
+          variant: "destructive",
+          title: "خطأ في البيانات",
+          description: err,
+        });
+        return;
+      }
+
+      setIsSavingEdit(true);
+      try {
+        // Prepare payload: keep it minimal (only editable fields)
+        const payload = {
+          customer_name: editData.customer_name,
+          customer_phone: editData.customer_phone,
+          delivery_address: editData.delivery_address,
+          seller_address: editData.seller_address,
+          total_amount: editData.total_amount === '' ? null : toNumber(editData.total_amount),
+        };
+
+        // deposit_amount only relevant for deposit orders; still send if present
+        if (localOrder?.is_service_order && localOrder?.requires_deposit) {
+          payload.deposit_amount = editData.deposit_amount === '' ? null : toNumber(editData.deposit_amount);
+        }
+
+        let updated = null;
+
+        // If deposit image is being replaced, use FormData (method override)
+        if (newDepositImageFile) {
+          const formData = new FormData();
+          Object.entries(payload).forEach(([k, v]) => {
+            if (v !== undefined && v !== null) formData.append(k, String(v));
+          });
+          formData.append('deposit_image', newDepositImageFile);
+
+          try {
+            const res = await adminApi.updateOrderWithFiles(localOrder.id, formData);
+            updated = res?.data || res;
+          } catch (e) {
+            // Fallback: some backends may allow updating via regular order endpoint
+            if (e?.status === 404 || e?.status === 405) {
+              const fallbackFormData = new FormData();
+              Object.entries(payload).forEach(([k, v]) => {
+                if (v !== undefined && v !== null) fallbackFormData.append(k, String(v));
+              });
+              fallbackFormData.append('deposit_image', newDepositImageFile);
+              if (!fallbackFormData.has('_method')) fallbackFormData.append('_method', 'PUT');
+              const res = await apiFormFetch(`orders/${localOrder.id}`, {
+                method: 'POST',
+                body: fallbackFormData,
+              });
+              updated = res?.data || res;
+            } else {
+              throw e;
+            }
+          }
+        } else {
+          // JSON update
+          try {
+            const res = await adminApi.updateOrder(localOrder.id, payload);
+            updated = res?.data || res;
+          } catch (e) {
+            if (e?.status === 404 || e?.status === 405) {
+              const res = await api.updateOrder(localOrder.id, payload);
+              updated = res?.data || res;
+            } else {
+              throw e;
+            }
+          }
+        }
+
+        // If remaining payment proof is being replaced/uploaded, reuse existing endpoint
+        if (newRemainingProofFile) {
+          const fd = new FormData();
+          fd.append('payment_proof', newRemainingProofFile);
+          fd.append('payment_type', 'remaining');
+          await api.uploadPaymentProof(localOrder.id, fd);
+        }
+
+        toast({
+          title: "تم تحديث بيانات الطلب",
+          description: "تم حفظ التعديلات بنجاح.",
+        });
+
+        if (updated && updated.id) {
+          setLocalOrder(updated);
+        } else {
+          // Keep UI consistent by reloading list
+          setLocalOrder((prev) => ({
+            ...prev,
+            ...payload,
+            deposit_amount: payload.deposit_amount ?? prev.deposit_amount,
+          }));
+        }
+
+        setIsEditing(false);
+        setNewDepositImageFile(null);
+        setNewRemainingProofFile(null);
+        loadOrders(filters, statusFilter, paymentFilter);
+      } catch (error) {
+        console.error('Error saving admin edits:', error);
+        toast({
+          variant: "destructive",
+          title: "خطأ في حفظ التعديلات",
+          description: error?.message || "حدث خطأ أثناء حفظ تعديلات الطلب.",
+        });
+      } finally {
+        setIsSavingEdit(false);
+      }
+    };
+
     // Check if there are any admin actions available for this order
-    const hasAdminActions = order.status === 'pending' && (
-      order.payment_proof || 
-      order.payment_method === 'cash_on_delivery' || 
-      order.deposit_image ||
-      order.remaining_payment_proof
+    const hasAdminActions = localOrder.status === 'pending' && (
+      localOrder.payment_proof || 
+      localOrder.payment_method === 'cash_on_delivery' || 
+      localOrder.deposit_image ||
+      localOrder.remaining_payment_proof
     );
     
     return (
@@ -338,10 +513,23 @@ const AdminOrders = () => {
       </DialogTrigger>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>تفاصيل الطلب رقم: {order.id}</DialogTitle>
-          <DialogDescription>
-            تاريخ إنشاء الطلب: {new Date(order.created_at).toLocaleString('ar-EG')}
-          </DialogDescription>
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <DialogTitle>تفاصيل الطلب رقم: {localOrder.id}</DialogTitle>
+              <DialogDescription>
+                تاريخ إنشاء الطلب: {new Date(localOrder.created_at).toLocaleString('ar-EG')}
+              </DialogDescription>
+            </div>
+            <Button
+              variant={isEditing ? "secondary" : "outline"}
+              size="sm"
+              onClick={() => setIsEditing((v) => !v)}
+              disabled={isSavingEdit}
+            >
+              <FileText className="h-4 w-4 ml-1" />
+              {isEditing ? 'إلغاء التعديل' : 'تعديل البيانات'}
+            </Button>
+          </div>
         </DialogHeader>
         
         <div className="grid md:grid-cols-2 gap-6">
@@ -352,40 +540,40 @@ const AdminOrders = () => {
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span>الحالة:</span>
-                  {getStatusBadge(order.status)}
+                  {getStatusBadge(localOrder.status)}
                 </div>
                 <div className="flex justify-between">
                   <span>المبلغ الإجمالي:</span>
                   <span className="font-semibold">
-                    {order.buyer_proposed_price && order.price_approval_status === 'approved' 
-                      ? `${order.buyer_proposed_price} جنيه (سعر متفاوض عليه)`
-                      : `${order.total_amount} جنيه`
+                    {localOrder.buyer_proposed_price && localOrder.price_approval_status === 'approved' 
+                      ? `${localOrder.buyer_proposed_price} جنيه (سعر متفاوض عليه)`
+                      : `${localOrder.total_amount} جنيه`
                     }
                   </span>
                 </div>
                 {/* عرض تفاصيل السعر المقترح */}
-                {order.buyer_proposed_price && order.price_approval_status === 'approved' && (
+                {localOrder.buyer_proposed_price && localOrder.price_approval_status === 'approved' && (
                   <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-sm">
                     <div className="flex justify-between text-xs text-gray-600">
                       <span>السعر الأصلي:</span>
-                      <span className="line-through">{order.original_service_price} جنيه</span>
+                      <span className="line-through">{localOrder.original_service_price} جنيه</span>
                     </div>
                     <div className="flex justify-between text-blue-700 font-semibold">
                       <span>السعر المتفق عليه:</span>
-                      <span>{order.buyer_proposed_price} جنيه</span>
+                      <span>{localOrder.buyer_proposed_price} جنيه</span>
                     </div>
                   </div>
                 )}
                 <div className="flex justify-between">
                   <span>طريقة الدفع:</span>
                   <div className="flex items-center gap-2">
-                    <span>{order.payment_method_ar || order.payment_method}</span>
-                    {order.payment_method === 'cash_on_delivery' && (
+                    <span>{localOrder.payment_method_ar || localOrder.payment_method}</span>
+                    {localOrder.payment_method === 'cash_on_delivery' && (
                       <Badge variant="outline" className="bg-blue-50 text-blue-800 text-xs">
                         عند الاستلام
                       </Badge>
                     )}
-                    {order.is_service_order && (
+                    {localOrder.is_service_order && (
                       <Badge variant="outline" className="bg-green-50 text-green-800 text-xs">
                         طلب حرفة
                       </Badge>
@@ -393,32 +581,149 @@ const AdminOrders = () => {
                   </div>
                 </div>
                 {/* Service Order Deposit Info */}
-                {order.is_service_order && order.requires_deposit && (
+                {localOrder.is_service_order && localOrder.requires_deposit && (
                   <>
                     <div className="flex justify-between">
                       <span>قيمة العربون:</span>
-                      <span className="font-semibold text-green-600">{order.deposit_amount} جنيه</span>
+                      <span className="font-semibold text-green-600">{localOrder.deposit_amount} جنيه</span>
                     </div>
                     <div className="flex justify-between">
                       <span>حالة العربون:</span>
                       <Badge 
-                        variant={order.deposit_status === 'paid' ? 'default' : 'secondary'}
-                        className={order.deposit_status === 'paid' 
+                        variant={localOrder.deposit_status === 'paid' ? 'default' : 'secondary'}
+                        className={localOrder.deposit_status === 'paid' 
                           ? 'bg-green-100 text-green-800 border-green-200' 
                           : 'bg-amber-100 text-amber-800 border-amber-200'
                         }
                       >
-                        {order.deposit_status === 'paid' ? 'مدفوع ✓' : 'غير مدفوع ⏳'}
+                        {localOrder.deposit_status === 'paid' ? 'مدفوع ✓' : 'غير مدفوع ⏳'}
                       </Badge>
                     </div>
                     <div className="flex justify-between">
                       <span>المبلغ المتبقي:</span>
-                      <span className="font-semibold text-blue-600">{order.total_amount - order.deposit_amount} جنيه</span>
+                      <span className="font-semibold text-blue-600">{toNumber(localOrder.total_amount) - toNumber(localOrder.deposit_amount)} جنيه</span>
                     </div>
                   </>
                 )}
               </div>
             </div>
+
+            {/* Admin Edit Form */}
+            {isEditing && (
+              <div className="bg-gray-50 border rounded-lg p-4 space-y-4">
+                <h4 className="font-semibold">تعديل بيانات الطلب</h4>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>اسم العميل</Label>
+                    <Input
+                      value={editData.customer_name}
+                      onChange={(e) => handleEditField('customer_name', e.target.value)}
+                      placeholder="اسم العميل"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>هاتف العميل</Label>
+                    <Input
+                      value={editData.customer_phone}
+                      onChange={(e) => handleEditField('customer_phone', e.target.value)}
+                      placeholder="رقم الهاتف"
+                    />
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <Label>عنوان التوصيل</Label>
+                    <Textarea
+                      value={editData.delivery_address}
+                      onChange={(e) => handleEditField('delivery_address', e.target.value)}
+                      placeholder="عنوان التوصيل"
+                      rows={3}
+                    />
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <Label>عنوان البائع (الاستلام)</Label>
+                    <Textarea
+                      value={editData.seller_address}
+                      onChange={(e) => handleEditField('seller_address', e.target.value)}
+                      placeholder="عنوان البائع"
+                      rows={3}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>المبلغ الإجمالي</Label>
+                    <Input
+                      type="number"
+                      value={editData.total_amount}
+                      onChange={(e) => handleEditField('total_amount', e.target.value)}
+                      placeholder="0"
+                    />
+                  </div>
+
+                  {localOrder?.is_service_order && localOrder?.requires_deposit && (
+                    <div className="space-y-2">
+                      <Label>قيمة العربون</Label>
+                      <Input
+                        type="number"
+                        value={editData.deposit_amount}
+                        onChange={(e) => handleEditField('deposit_amount', e.target.value)}
+                        placeholder="0"
+                      />
+                      <p className="text-xs text-gray-600">
+                        المبلغ المتبقي بعد العربون: <span className="font-semibold">{remainingAmount()} جنيه</span>
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Replace deposit image (service orders) */}
+                {localOrder?.is_service_order && localOrder?.requires_deposit && (
+                  <div className="space-y-2">
+                    <Label>تغيير صورة إيصال العربون (اختياري)</Label>
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => setNewDepositImageFile(e.target.files?.[0] || null)}
+                    />
+                    {newDepositImageFile && (
+                      <p className="text-xs text-gray-600">سيتم رفع: {newDepositImageFile.name}</p>
+                    )}
+                  </div>
+                )}
+
+                {/* Replace remaining payment proof (service orders) */}
+                {localOrder?.is_service_order && localOrder?.requires_deposit && (
+                  <div className="space-y-2">
+                    <Label>تغيير إثبات دفع باقي المبلغ (اختياري)</Label>
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => setNewRemainingProofFile(e.target.files?.[0] || null)}
+                    />
+                    {newRemainingProofFile && (
+                      <p className="text-xs text-gray-600">سيتم رفع: {newRemainingProofFile.name}</p>
+                    )}
+                  </div>
+                )}
+
+                <div className="flex gap-2">
+                  <Button
+                    onClick={saveEdits}
+                    disabled={isSavingEdit}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    {isSavingEdit ? <Loader2 className="h-4 w-4 animate-spin ml-2" /> : null}
+                    حفظ التعديلات
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsEditing(false)}
+                    disabled={isSavingEdit}
+                  >
+                    إلغاء
+                  </Button>
+                </div>
+              </div>
+            )}
 
             {/* Customer Info */}
             <div>
@@ -426,16 +731,16 @@ const AdminOrders = () => {
               <div className="space-y-2 text-sm">
                 <div className="flex items-center">
                   <User className="h-4 w-4 ml-2 text-gray-500" />
-                  <span>{order.user?.name || 'غير محدد'}</span>
+                  <span>{localOrder.customer_name || localOrder.user?.name || 'غير محدد'}</span>
                 </div>
                 <div className="flex items-center">
                   <Phone className="h-4 w-4 ml-2 text-gray-500" />
-                  <span>{order.customer_phone || 'غير محدد'}</span>
+                  <span>{localOrder.customer_phone || 'غير محدد'}</span>
                 </div>
-                {order.delivery_address && (
+                {localOrder.delivery_address && (
                   <div className="flex items-start">
                     <MapPin className="h-4 w-4 ml-2 mt-1 text-gray-500" />
-                    <span>{order.delivery_address}</span>
+                    <span>{localOrder.delivery_address}</span>
                   </div>
                 )}
               </div>
@@ -447,16 +752,16 @@ const AdminOrders = () => {
               <div className="space-y-2 text-sm">
                 <div className="flex items-center">
                   <User className="h-4 w-4 ml-2 text-gray-500" />
-                  <span>{order.seller?.name || 'غير محدد'}</span>
+                  <span>{localOrder.seller?.name || 'غير محدد'}</span>
                 </div>
                 <div className="flex items-center">
                   <Phone className="h-4 w-4 ml-2 text-gray-500" />
-                  <span>{order.seller?.phone || 'غير محدد'}</span>
+                  <span>{localOrder.seller?.phone || 'غير محدد'}</span>
                 </div>
-                {order.seller_address && (
+                {localOrder.seller_address && (
                   <div className="flex items-start">
                     <MapPin className="h-4 w-4 ml-2 mt-1 text-gray-500" />
-                    <span>{order.seller_address}</span>
+                    <span>{localOrder.seller_address}</span>
                   </div>
                 )}
               </div>
@@ -603,7 +908,7 @@ const AdminOrders = () => {
             </div>
 
             {/* Service Order Deposit Image */}
-            {order.is_service_order && order.deposit_image && (
+            {localOrder.is_service_order && localOrder.deposit_image && (
               <div>
                 <h4 className="font-semibold mb-2 flex items-center">
                   <CreditCard className="h-4 w-4 ml-2 text-green-600" />
@@ -615,23 +920,23 @@ const AdminOrders = () => {
                     <span className="font-medium text-green-800">طلب حرفة - تم دفع العربون</span>
                   </div>
                   <p className="text-sm text-green-700">
-                    قيمة العربون: {order.deposit_amount} جنيه
+                    قيمة العربون: {localOrder.deposit_amount} جنيه
                   </p>
                   <p className="text-xs text-green-600 mt-1 font-medium">
-                    المبلغ المتبقي: {order.total_amount - order.deposit_amount} جنيه
+                    المبلغ المتبقي: {toNumber(localOrder.total_amount) - toNumber(localOrder.deposit_amount)} جنيه
                   </p>
                 </div>
                 <img 
-                  src={order.deposit_image_url || order.deposit_image} 
+                  src={localOrder.deposit_image_url || localOrder.deposit_image} 
                   alt="إيصال العربون" 
                   className="max-w-full h-auto rounded-md border cursor-pointer"
-                  onClick={() => window.open(order.deposit_image_url || order.deposit_image, '_blank')}
+                  onClick={() => window.open(localOrder.deposit_image_url || localOrder.deposit_image, '_blank')}
                 />
               </div>
             )}
 
             {/* Remaining Payment Proof for Service Orders */}
-            {order.is_service_order && order.remaining_payment_proof && (
+            {localOrder.is_service_order && localOrder.remaining_payment_proof && (
               <div>
                 <h4 className="font-semibold mb-2 flex items-center">
                   <CreditCard className="h-4 w-4 ml-2 text-blue-600" />
@@ -643,19 +948,19 @@ const AdminOrders = () => {
                     <span className="font-medium text-blue-800">تم رفع إثبات دفع باقي المبلغ</span>
                   </div>
                   <p className="text-sm text-blue-700">
-                    المبلغ المتبقي: {order.total_amount - order.deposit_amount} جنيه
+                    المبلغ المتبقي: {toNumber(localOrder.total_amount) - toNumber(localOrder.deposit_amount)} جنيه
                   </p>
-                  {order.status === 'pending' && order.remaining_payment_proof && (
+                  {localOrder.status === 'pending' && localOrder.remaining_payment_proof && (
                     <p className="text-xs text-blue-600 mt-1 font-medium">
                       ⏳ ينتظر مراجعة الإدارة
                     </p>
                   )}
                 </div>
                 <img 
-                  src={order.remaining_payment_proof_url || order.remaining_payment_proof} 
+                  src={localOrder.remaining_payment_proof_url || localOrder.remaining_payment_proof} 
                   alt="إيصال باقي المبلغ" 
                   className="max-w-full h-auto rounded-md border cursor-pointer"
-                  onClick={() => window.open(order.remaining_payment_proof_url || order.remaining_payment_proof, '_blank')}
+                  onClick={() => window.open(localOrder.remaining_payment_proof_url || localOrder.remaining_payment_proof, '_blank')}
                 />
               </div>
             )}
@@ -762,10 +1067,10 @@ const AdminOrders = () => {
         </div>
 
         {/* Action Buttons */}
-        {hasAdminActions && (
+        {hasAdminActions && !isEditing && (
           <div className="space-y-3 mt-6">
             {/* Special note for deposit orders */}
-            {order.is_service_order && order.deposit_image && !order.remaining_payment_proof && (
+            {localOrder.is_service_order && localOrder.deposit_image && !localOrder.remaining_payment_proof && (
               <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
                 <div className="flex items-center">
                   <CreditCard className="h-4 w-4 ml-2 text-green-600" />
@@ -774,13 +1079,13 @@ const AdminOrders = () => {
                   </span>
                 </div>
                 <p className="text-xs text-green-700 mt-1">
-                  تم دفع عربون بقيمة {order.deposit_amount} جنيه من إجمالي {order.total_amount} جنيه
+                  تم دفع عربون بقيمة {localOrder.deposit_amount} جنيه من إجمالي {localOrder.total_amount} جنيه
                 </p>
               </div>
             )}
             
             {/* Special note for cash on delivery orders */}
-            {order.payment_method === 'cash_on_delivery' && (
+            {localOrder.payment_method === 'cash_on_delivery' && (
               <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
                 <div className="flex items-center">
                   <CreditCard className="h-4 w-4 ml-2 text-amber-600" />
@@ -795,7 +1100,7 @@ const AdminOrders = () => {
             )}
             
             {/* Special note for remaining payment proof */}
-            {order.is_service_order && order.remaining_payment_proof && (
+            {localOrder.is_service_order && localOrder.remaining_payment_proof && (
               <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
                 <div className="flex items-center">
                   <CreditCard className="h-4 w-4 ml-2 text-blue-600" />
@@ -825,18 +1130,18 @@ const AdminOrders = () => {
                   <AlertDialogHeader>
                     <AlertDialogTitle>اعتماد الطلب</AlertDialogTitle>
                     <AlertDialogDescription>
-                      هل أنت متأكد من رغبتك في اعتماد طلب رقم {order.id}؟
-                      {order.is_service_order && order.deposit_image && !order.remaining_payment_proof && (
+                      هل أنت متأكد من رغبتك في اعتماد طلب رقم {localOrder.id}؟
+                      {localOrder.is_service_order && localOrder.deposit_image && !localOrder.remaining_payment_proof && (
                         <span className="block mt-2 text-green-600 font-medium">
-                          ملاحظة: هذا طلب بعربون - تم دفع {order.deposit_amount} جنيه من أصل {order.total_amount} جنيه
+                          ملاحظة: هذا طلب بعربون - تم دفع {localOrder.deposit_amount} جنيه من أصل {localOrder.total_amount} جنيه
                         </span>
                       )}
-                      {order.is_service_order && order.remaining_payment_proof && (
+                      {localOrder.is_service_order && localOrder.remaining_payment_proof && (
                         <span className="block mt-2 text-blue-600 font-medium">
                           ملاحظة: تم رفع إثبات دفع باقي المبلغ - سيتم اعتبار الطلب مدفوع بالكامل
                         </span>
                       )}
-                      {order.payment_method === 'cash_on_delivery' && (
+                      {localOrder.payment_method === 'cash_on_delivery' && (
                         <span className="block mt-2 text-amber-600 font-medium">
                           ملاحظة: هذا طلب دفع عند الاستلام
                         </span>
@@ -849,11 +1154,11 @@ const AdminOrders = () => {
                       value={approvalNotes}
                       onChange={(e) => setApprovalNotes(e.target.value)}
                       placeholder={
-                        order.deposit_image && !order.remaining_payment_proof 
+                        localOrder.deposit_image && !localOrder.remaining_payment_proof 
                           ? "أدخل ملاحظات للبائع حول اعتماد العربون..." 
-                          : order.remaining_payment_proof 
+                          : localOrder.remaining_payment_proof 
                             ? "أدخل ملاحظات للبائع حول اعتماد الدفع النهائي..."
-                            : order.payment_method === 'cash_on_delivery' 
+                            : localOrder.payment_method === 'cash_on_delivery' 
                               ? "أدخل أي ملاحظات للبائع حول طلب الدفع عند الاستلام..."
                               : "أدخل أي ملاحظات للبائع..."
                       }
@@ -862,7 +1167,7 @@ const AdminOrders = () => {
                   <AlertDialogFooter>
                     <AlertDialogCancel>إلغاء</AlertDialogCancel>
                     <AlertDialogAction 
-                      onClick={() => handleApproveOrder(order.id)}
+                      onClick={() => handleApproveOrder(localOrder.id)}
                       disabled={isUpdating}
                       className="bg-green-600 hover:bg-green-700"
                     >
@@ -889,8 +1194,8 @@ const AdminOrders = () => {
                   <AlertDialogHeader>
                     <AlertDialogTitle>رفض الطلب</AlertDialogTitle>
                     <AlertDialogDescription>
-                      هل أنت متأكد من رغبتك في رفض طلب رقم {order.id}؟
-                      {order.payment_method === 'cash_on_delivery' && (
+                      هل أنت متأكد من رغبتك في رفض طلب رقم {localOrder.id}؟
+                      {localOrder.payment_method === 'cash_on_delivery' && (
                         <span className="block mt-2 text-amber-600 font-medium">
                           ملاحظة: هذا طلب دفع عند الاستلام
                         </span>
@@ -909,7 +1214,7 @@ const AdminOrders = () => {
                   <AlertDialogFooter>
                     <AlertDialogCancel>إلغاء</AlertDialogCancel>
                     <AlertDialogAction 
-                      onClick={() => handleRejectOrder(order.id)}
+                      onClick={() => handleRejectOrder(localOrder.id)}
                       disabled={isUpdating || !rejectionReason.trim()}
                       className="bg-red-600 hover:bg-red-700"
                     >

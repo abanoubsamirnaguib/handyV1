@@ -614,6 +614,25 @@ export const adminApi = {
       body: JSON.stringify({ reason }),
     }),
   
+  // Admin order edit (details + files)
+  updateOrder: (orderId, orderData) =>
+    apiFetch(`admin/orders/${orderId}`, {
+      method: 'PUT',
+      body: JSON.stringify(orderData),
+    }),
+  updateOrderWithFiles: (orderId, formData) => {
+    if (!(formData instanceof FormData)) {
+      throw new Error('updateOrderWithFiles expects FormData');
+    }
+    if (!formData.has('_method')) {
+      formData.append('_method', 'PUT');
+    }
+    return apiFormFetch(`admin/orders/${orderId}`, {
+      method: 'POST', // Laravel-style method override for file uploads
+      body: formData,
+    });
+  },
+  
   // Admin order workflow functions
   adminApproveOrder: (orderId, notes = '') => 
     apiFetch(`orders/${orderId}/admin-approve`, {

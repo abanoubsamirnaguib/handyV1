@@ -112,6 +112,7 @@ const GigDetailsPage = () => {
           sellerId: prod.sellerId || prod.seller_id || prod.seller?.id,
           deliveryTime: prod.delivery_time || prod.deliveryTime || 'غير محدد',
           tags: Array.isArray(prod.tags) ? prod.tags : (prod.tags ? [prod.tags] : []),
+          quantity: prod.quantity || 1,
         };
         setGig(normalizedGig);
         // Fetch seller
@@ -407,15 +408,10 @@ const GigDetailsPage = () => {
 
             {gig.type !== 'gig' && (
               <div className="flex items-center space-x-3 space-x-reverse">
-                <Label htmlFor="quantity" className="text-neutral-900">الكمية:</Label>
-                <Input 
-                  type="number" 
-                  id="quantity" 
-                  value={quantity} 
-                  onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value)))} 
-                  min="1" 
-                  className="w-20 text-center border-roman-500/30 focus:border-roman-500 focus:ring-roman-500/20"
-                />
+                <Label htmlFor="quantity" className="text-neutral-900">الكمية المتوفرة:</Label>
+                <div className="flex items-center space-x-2 space-x-reverse text-neutral-900 font-medium">
+                  {gig.quantity} 
+                </div>
               </div>
             )}
             <div className="flex flex-col sm:flex-row gap-3">

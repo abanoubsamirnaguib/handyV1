@@ -476,7 +476,7 @@ const ExplorePage = () => {
 
     return (
       <Link to={`/gigs/${gig.id}`} className="block">
-        <Card className="overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 flex flex-col h-62 card-hover border-roman-500/20 cursor-pointer" dir="rtl">
+        <Card className="overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 flex flex-col h-62 card-hover cursor-pointer" dir="rtl">
           <div className="relative h-56">
             <img 
               src={gig.images && gig.images.length > 0 
@@ -499,17 +499,12 @@ const ExplorePage = () => {
               </Badge>
             </div>
           </div>
-          <CardHeader className="pb-2 text-right p-2">
-            <CardTitle className="text-sm font-semibold text-neutral-900 overflow-hidden relative group">
-              <div 
-                className={`whitespace-nowrap transition-all duration-300 hover:scale-105 hover:text-roman-500 ${gig.title.length > 25 ? 'animate-scroll' : ''}`}
-                style={{ animationDuration: `${Math.max(3, gig.title.length * 0.2)}s` }}
-              >
-                {gig.title}
-              </div>
+          <CardHeader className="pb-2 text-right p-1">
+            <CardTitle className="text-xs font-semibold text-neutral-900 transition-colors duration-300 hover:text-roman-500 line-clamp-2 h-8">
+              {gig.title}
             </CardTitle>
           </CardHeader>
-          <CardContent className="flex-grow text-right p-2">
+          <CardContent className="flex-grow text-right p-1">
             <div className="flex items-center justify-between text-xs mb-2">
               <div className="flex items-center text-neutral-900/70">
                 <Star className="h-3 w-3 text-warning-500 ml-1" />
@@ -520,6 +515,11 @@ const ExplorePage = () => {
                 {gig.type === 'gig' && (gig.price === '0.00')
                   ? 'قابل للتفاوض'
                   : `${gig.price} ج`}
+                {gig.type === 'product' && gig.quantity !== null && gig.quantity !== undefined && (
+                  <span className={`block text-xs mt-1 ${gig.quantity === 0 ? 'text-red-600' : gig.quantity < 5 ? 'text-orange-600' : 'text-gray-600'}`}>
+                    {gig.quantity === 0 ? 'نفذت الكمية' : `متوفر: ${gig.quantity}`}
+                  </span>
+                )}
               </p>
             </div>
           </CardContent>
@@ -537,7 +537,7 @@ const ExplorePage = () => {
     
     return (
       <Link to={`/gigs/${gig.id}`} className="block">
-        <Card className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col md:flex-row card-hover border-roman-500/20 w-full cursor-pointer" dir="rtl">
+        <Card className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col md:flex-row card-hover w-full cursor-pointer" dir="rtl">
           <div className="relative md:w-1/3 h-56 md:h-auto">
             <img 
               src={gig.images && gig.images.length > 0 
@@ -574,6 +574,11 @@ const ExplorePage = () => {
                 {gig.type === 'gig' && (gig.price === 0 || gig.price === '0' || gig.price === '0.00' || parseFloat(gig.price) === 0)
                   ? 'قابل للتفاوض'
                   : `${gig.price} جنيه`}
+                {gig.type === 'product' && gig.quantity !== null && gig.quantity !== undefined && (
+                  <span className={`block text-sm mt-1 ${gig.quantity === 0 ? 'text-red-600' : gig.quantity < 5 ? 'text-orange-600' : 'text-gray-600'}`}>
+                    {gig.quantity === 0 ? 'نفذت الكمية' : `متوفر: ${gig.quantity}`}
+                  </span>
+                )}
               </p>
             </CardContent>
           </div>
@@ -584,7 +589,7 @@ const ExplorePage = () => {
   const SellerCard = ({ seller }) => {
     return (
       <Link to={`/sellers/${seller.id}`} className="block">
-        <Card className="overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 flex flex-col h-62 card-hover border-roman-500/20 cursor-pointer" dir="rtl">
+        <Card className="overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 flex flex-col h-62 card-hover cursor-pointer" dir="rtl">
           <div className={`relative h-32 flex items-center justify-center ${seller.coverImage ? '' : 'bg-roman-500'}`}>
             {seller.coverImage ? (
               <img 
@@ -607,17 +612,12 @@ const ExplorePage = () => {
               )}
             </div>
           </div>
-          <CardHeader className="pb-2 text-right p-2">
-            <CardTitle className="text-sm font-semibold text-neutral-900 overflow-hidden relative group">
-              <div 
-                className={`whitespace-nowrap transition-all duration-300 hover:scale-105 hover:text-roman-500 ${seller.name.length > 25 ? 'animate-scroll' : ''}`}
-                style={{ animationDuration: `${Math.max(3, seller.name.length * 0.2)}s` }}
-              >
-                {seller.name}
-              </div>
+          <CardHeader className="pb-2 text-right p-1">
+            <CardTitle className="text-xs font-semibold text-neutral-900 transition-colors duration-300 hover:text-roman-500 truncate">
+              {seller.name}
             </CardTitle>
           </CardHeader>
-          <CardContent className="flex-grow text-right p-2">
+          <CardContent className="flex-grow text-right p-1">
             <div className="flex flex-col gap-1 text-xs mb-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center text-neutral-900/70">
@@ -648,7 +648,7 @@ const ExplorePage = () => {
   const SellerListItem = ({ seller }) => {
     return (
       <Link to={`/sellers/${seller.id}`} className="block">
-        <Card className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col md:flex-row card-hover border-roman-500/20 w-full cursor-pointer" dir="rtl">
+        <Card className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col md:flex-row card-hover w-full cursor-pointer" dir="rtl">
           <div className={`relative md:w-1/4 h-48 md:h-auto flex items-center justify-center ${seller.coverImage ? '' : 'bg-roman-500'}`}>
             {seller.coverImage ? (
               <img 

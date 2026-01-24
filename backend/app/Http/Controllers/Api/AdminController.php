@@ -12,6 +12,8 @@ use App\Http\Resources\UserResource;
 use App\Http\Resources\ProductResource;
 use App\Http\Resources\SellerResource;
 use App\Http\Resources\OrderResource;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 
 class AdminController extends Controller
@@ -384,6 +386,147 @@ class AdminController extends Controller
         }
 
         return new OrderResource($order->fresh()->load(['user', 'seller.user', 'items.product', 'adminApprover']));
+    }
+
+    /**
+     * Admin: update order details (buyer/seller info + totals + deposit info + optional deposit image replacement)
+     *
+     * Route: PUT /api/admin/orders/{id}
+     */
+    public function updateOrder(Request $request, $id)
+    {
+        $order = Order::with(['user', 'seller.user', 'items.product', 'adminApprover', 'deliveryPerson', 'pickupPerson', 'history.actionUser', 'city'])
+            ->findOrFail($id);
+
+        $validated = $request->validate([
+            'customer_name' => 'sometimes|nullable|string|max:100',
+            'customer_phone' => 'sometimes|nullable|string|max:20',
+            'delivery_address' => 'sometimes|nullable|string',
+            'seller_address' => 'sometimes|nullable|string',
+
+            // Frontend uses total_amount; backend stores total_price and computes total_amount in resource
+            'total_amount' => 'sometimes|nullable|numeric|min:0',
+            'total_price' => 'sometimes|nullable|numeric|min:0',
+
+            // Deposit fields (service orders)
+            'deposit_amount' => 'sometimes|nullable|numeric|min:0',
+            'deposit_image' => 'sometimes|file|image|max:4096', // 4MB
+        ]);
+
+        DB::beginTransaction();
+        try {
+            $changes = [];
+
+            foreach (['customer_name', 'customer_phone', 'delivery_address', 'seller_address'] as $field) {
+                if (array_key_exists($field, $validated)) {
+                    $changes[$field] = $validated[$field];
+                }
+            }
+
+            // Determine intended total (excluding delivery fee) from either total_amount or total_price
+            $newTotal = null;
+            if (array_key_exists('total_amount', $validated)) {
+                $fee = (float) ($order->delivery_fee ?? 0);
+                $newTotal = max(0, (float) $validated['total_amount'] - $fee);
+            } elseif (array_key_exists('total_price', $validated)) {
+                $newTotal = max(0, (float) $validated['total_price']);
+            }
+
+            if ($newTotal !== null) {
+                // If negotiated price is approved, final price comes from buyer_proposed_price
+                $isNegotiatedApproved = $order->buyer_proposed_price && ($order->price_approval_status === 'approved');
+                if ($isNegotiatedApproved) {
+                    $changes['buyer_proposed_price'] = $newTotal;
+                } else {
+                    $changes['total_price'] = $newTotal;
+                }
+            }
+
+            // Deposit amount only valid on service orders requiring deposit
+            if (array_key_exists('deposit_amount', $validated)) {
+                if (!$order->is_service_order || !$order->requires_deposit) {
+                    return response()->json([
+                        'message' => 'هذا الطلب لا يدعم تعديل قيمة العربون'
+                    ], 422);
+                }
+
+                $changes['deposit_amount'] = (float) $validated['deposit_amount'];
+            }
+
+            // If deposit image provided, replace it (service orders only)
+            if ($request->hasFile('deposit_image')) {
+                if (!$order->is_service_order || !$order->requires_deposit) {
+                    return response()->json([
+                        'message' => 'هذا الطلب لا يدعم رفع صورة عربون'
+                    ], 422);
+                }
+
+                // Delete old file if present (best-effort)
+                if ($order->deposit_image) {
+                    try {
+                        Storage::disk('public')->delete($order->deposit_image);
+                    } catch (\Throwable $e) {
+                        // ignore
+                    }
+                }
+
+                $path = $request->file('deposit_image')->store('deposit_images', 'public');
+                $changes['deposit_image'] = $path;
+            }
+
+            // Validate deposit constraints after applying changes
+            $finalPriceAfter = $order->getFinalPrice();
+            if (array_key_exists('buyer_proposed_price', $changes)) {
+                $finalPriceAfter = (float) $changes['buyer_proposed_price'];
+            } elseif (array_key_exists('total_price', $changes) && !($order->buyer_proposed_price && $order->price_approval_status === 'approved')) {
+                $finalPriceAfter = (float) $changes['total_price'];
+            }
+
+            if ($order->is_service_order && $order->requires_deposit) {
+                $depositAfter = array_key_exists('deposit_amount', $changes)
+                    ? (float) $changes['deposit_amount']
+                    : (float) ($order->deposit_amount ?? 0);
+
+                if ($depositAfter > $finalPriceAfter) {
+                    return response()->json([
+                        'message' => 'قيمة العربون لا يمكن أن تتجاوز السعر النهائي'
+                    ], 422);
+                }
+
+                // Keep same business rule used in creation: deposit <= 80% of final price
+                $maxDeposit = $finalPriceAfter * 0.8;
+                if ($depositAfter > $maxDeposit) {
+                    return response()->json([
+                        'message' => 'قيمة العربون لا يمكن أن تتجاوز 80% من السعر النهائي'
+                    ], 422);
+                }
+            }
+
+            // Recompute buyer_total if total_price/buyer_proposed_price changed (delivery fee stays same)
+            if (array_key_exists('total_price', $changes) || array_key_exists('buyer_proposed_price', $changes)) {
+                $fee = (float) ($order->delivery_fee ?? 0);
+                $buyerTotal = round(($finalPriceAfter ?? 0) + $fee, 2);
+                $changes['buyer_total'] = $buyerTotal;
+            }
+
+            if (!empty($changes)) {
+                $changes['updated_at'] = now();
+                $order->update($changes);
+
+                // History (keep it simple)
+                $order->addToHistory($order->status, auth()->id(), 'admin_order_updated', 'تم تعديل بيانات الطلب بواسطة الإدارة');
+            }
+
+            DB::commit();
+            return new OrderResource($order->fresh()->load(['user', 'seller.user', 'items.product', 'adminApprover', 'deliveryPerson', 'pickupPerson', 'history.actionUser', 'city']));
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            \Log::error('Admin updateOrder failed', [
+                'order_id' => $id,
+                'error' => $e->getMessage(),
+            ]);
+            throw $e;
+        }
     }
 
     /**

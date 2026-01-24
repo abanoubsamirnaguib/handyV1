@@ -1897,7 +1897,7 @@ const OrderDetailPage = () => {
                       <p className="text-sm text-gray-500">العميل</p>
                     </div>
                   </div>
-                  {order.customer_phone && (
+                  {order.customer_phone && user?.active_role !== 'seller' && (
                     <div className="flex items-center space-x-3">
                       <div className="w-10 h-10 bg-roman-500 rounded-full flex items-center justify-center">
                         <Phone className="h-5 w-5 text-white" />
@@ -1921,7 +1921,8 @@ const OrderDetailPage = () => {
                   )}
                 </CardContent>
                 )}
-              </Card>              {/* Seller Information */}
+              </Card>              {/* Seller Information - Hidden from buyers */}
+              {(
               <Card className="border-0 shadow-lg">
                 <CardHeader 
                   className="bg-roman-500 text-white cursor-pointer hover:bg-roman-600 transition-colors"
@@ -1952,7 +1953,7 @@ const OrderDetailPage = () => {
                       <p className="text-sm text-gray-500">البائع</p>
                     </div>
                   </div>
-                  {order.seller?.phone && (
+                  {order.seller?.phone && user?.active_role !== 'buyer' &&  (
                     <div className="flex items-center space-x-3">
                       <div className="w-10 h-10 bg-roman-500 rounded-full flex items-center justify-center">
                         <Phone className="h-5 w-5 text-white" />
@@ -1977,6 +1978,7 @@ const OrderDetailPage = () => {
                 </CardContent>
                 )}
               </Card>
+              )}
 
               {/* Important Dates */}              <Card className="border-0 shadow-lg">
                 <CardHeader 

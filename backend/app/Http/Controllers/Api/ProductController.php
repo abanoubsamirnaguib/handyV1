@@ -125,11 +125,22 @@ class ProductController extends Controller
             'category_id' => 'required|exists:categories,id',
             'delivery_time' => 'nullable|string|max:50',
             'type' => 'required|in:gig,product',
+            'quantity' => $request->type === 'product' ? 'required|integer|min:0' : 'nullable',
             'tags' => 'array',
             'tags.*' => 'string|max:50',
             'images' => 'array',
             'images.*' => 'image|mimes:jpeg,jpg,png,gif,webp|max:5120',
         ]);
+        
+        // If type is product and no quantity is set, default to 0 and set status inactive
+        if ($validated['type'] === 'product' && (!isset($validated['quantity']) || $validated['quantity'] === null)) {
+            $validated['quantity'] = 0;
+        }
+        
+        // If type is gig, quantity should be null
+        if ($validated['type'] === 'gig') {
+            $validated['quantity'] = null;
+        }
         $product = new Product($validated);
         $product->seller_id = Auth::user()->seller_id;
         $product->status = 'pending_review';
@@ -198,6 +209,7 @@ class ProductController extends Controller
             'category_id' => 'sometimes|required|exists:categories,id',
             'delivery_time' => 'nullable|string|max:50',
             'type' => 'sometimes|required|in:gig,product',
+            'quantity' => ($request->type ?? $product->type) === 'product' ? 'required|integer|min:0' : 'nullable',
             'tags' => 'array',
             'tags.*' => 'string|max:50',
             'images' => 'array',
@@ -205,6 +217,19 @@ class ProductController extends Controller
             'existing_images' => 'array',
             'existing_images.*' => 'string',
         ]);
+        
+        // If type is being changed or updated
+        $productType = $validated['type'] ?? $product->type;
+        
+        // If type is gig, quantity should be null
+        if ($productType === 'gig') {
+            $validated['quantity'] = null;
+        }
+        
+        // If quantity is being updated and reaches 0 for products, set status to inactive
+        if ($productType === 'product' && isset($validated['quantity']) && $validated['quantity'] == 0) {
+            $validated['status'] = 'inactive';
+        }
         
         // Store old status to check if product was active before edit
         $oldStatus = $product->status;

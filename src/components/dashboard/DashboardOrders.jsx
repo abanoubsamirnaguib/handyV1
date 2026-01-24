@@ -470,10 +470,10 @@ const DashboardOrders = () => {
                               <User className="ml-2 h-4 w-4 text-gray-400" /> 
                               {order.customer_name}
                             </p>
-                            <p className="flex items-center text-sm text-gray-600">
+                            {/* <p className="flex items-center text-sm text-gray-600">
                               <Phone className="ml-2 h-4 w-4 text-gray-400" />
                               {order.customer_phone}
-                            </p>
+                            </p> */}
                           </>
                         ) : (
                            <p className="flex items-center text-sm text-gray-600">

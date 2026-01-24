@@ -23,6 +23,7 @@ class Product extends Model
         'created_at',
         'updated_at',
         'type',
+        'quantity',
     ];
     public $timestamps = false;
 

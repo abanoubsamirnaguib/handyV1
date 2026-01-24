@@ -191,13 +191,12 @@ const DashboardCard = ({ title, description, link, icon: Icon }) => (
 
 const DashboardHome = ({ user }) => (
   <div className="p-8">
-    <RoleSwitcher />
     <h1 className="text-3xl font-bold text-neutral-900 mb-6">مرحباً بك في لوحة التحكم، {user.name}!</h1>
     <p className="text-neutral-900/70 mb-8">
       هنا يمكنك إدارة {user.active_role === 'seller' ? 'حرفك وطلباتك وأرباحك' : 'طلباتك ورسائلك وإعدادات حسابك'}.
       استخدم القائمة الجانبية للتنقل.
     </p>
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
       {user.active_role === 'seller' ? (
         <>
           <DashboardCard title="إدارة حرفك" description="أضف حرف جديدة أو قم بتعديل الحرف الحالية." link="/dashboard/gigs" icon={ShoppingBag} />
@@ -212,6 +211,7 @@ const DashboardHome = ({ user }) => (
         </>
       )}
     </div>
+     <RoleSwitcher />
   </div>
 );
 

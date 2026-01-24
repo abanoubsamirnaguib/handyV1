@@ -41,6 +41,7 @@ const CreateGigPage = () => {
     deliveryTime: '',
     images: [],
     type: preSelectedType || 'gig', // use pre-selected type or default to gig
+    quantity: '',
   });
   const [imagePreviews, setImagePreviews] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -216,6 +217,12 @@ const CreateGigPage = () => {
       return;
     }
     
+    // Validate quantity for products
+    if (gigData.type === 'product' && gigData.quantity === '') {
+      toast({ variant: "destructive", title: "حقول ناقصة", description: "يرجى إدخال الكمية المتاحة للمنتج." });
+      return;
+    }
+    
     // Validate price based on product type
     const priceValue = parseFloat(gigData.price);
     if (gigData.type === 'product' && (isNaN(priceValue) || priceValue < 1)) {
@@ -231,6 +238,7 @@ const CreateGigPage = () => {
         category_id: gigData.category,
         delivery_time: gigData.deliveryTime,
         type: gigData.type,
+        quantity: gigData.type === 'product' ? gigData.quantity : null,
         tags: gigData.tags.split(',').map(tag => tag.trim()).filter(tag => tag),
         images: gigData.images,
       });
@@ -257,6 +265,7 @@ const CreateGigPage = () => {
         deliveryTime: '',
         images: [],
         type: 'gig',
+        quantity: '',
       });
       setImagePreviews([]);
       
@@ -438,6 +447,29 @@ const CreateGigPage = () => {
                     )}
                   </div>
                 </div>
+                
+                {/* Quantity field for products only */}
+                {gigData.type === 'product' && (
+                  <div>
+                    <Label htmlFor="quantity" className="flex items-center">
+                      <Tag className="ml-2 h-4 w-4 text-gray-500" />
+                      الكمية المتاحة
+                    </Label>
+                    <Input 
+                      id="quantity" 
+                      name="quantity" 
+                      type="number" 
+                      value={gigData.quantity} 
+                      onChange={handleChange} 
+                      placeholder="مثال: 10" 
+                      min="0"
+                    />
+                    <p className="text-sm text-gray-500 mt-1">
+                      عند وصول الكمية لصفر، سيتم تعطيل المنتج تلقائياً
+                    </p>
+                  </div>
+                )}
+                
                 <div>
                   <Label htmlFor="tags" className="flex items-center"><Tag className="ml-2 h-4 w-4 text-gray-500" />الكلمات المفتاحية (مفصولة بفاصلة)</Label>
                   <Input id="tags" name="tags" value={gigData.tags} onChange={handleChange} placeholder="مثال: كروشيه, شنطة, حقيبة, خيوط, حرف يدوية" />

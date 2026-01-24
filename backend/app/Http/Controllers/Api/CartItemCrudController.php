@@ -68,6 +68,25 @@ class CartItemCrudController extends Controller
             return response()->json(['message' => 'هذا المنتج غير متاح حالياً'], 400);
         }
         
+        // التحقق من توفر الكمية للمنتجات (ليس للحرف)
+        if ($product->type === 'product' && $product->quantity !== null) {
+            $existingCartItem = CartItem::where([
+                'user_id' => Auth::id(),
+                'product_id' => $validated['product_id']
+            ])->first();
+            
+            $currentCartQuantity = $existingCartItem ? $existingCartItem->quantity : 0;
+            $requestedTotalQuantity = $currentCartQuantity + $validated['quantity'];
+            
+            if ($product->quantity < $requestedTotalQuantity) {
+                return response()->json([
+                    'message' => "الكمية المتاحة من المنتج '{$product->title}' هي {$product->quantity} فقط",
+                    'available_quantity' => $product->quantity,
+                    'current_cart_quantity' => $currentCartQuantity
+                ], 400);
+            }
+        }
+        
         // البحث عن العنصر إذا كان موجود في العربة
         $existingItem = CartItem::where([
             'user_id' => Auth::id(),

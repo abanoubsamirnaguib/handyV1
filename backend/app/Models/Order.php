@@ -320,6 +320,9 @@ class Order extends Model
             throw new \Exception('لا يمكن رفض هذا الطلب في الوقت الحالي. يمكن رفض الطلبات قيد المراجعة فقط.');
         }
         
+        // Restore product quantities before rejecting
+        $this->restoreProductQuantities();
+        
         // تحديث حالة الطلب إلى ملغى
         $this->update([
             'status' => 'cancelled',
@@ -470,11 +473,51 @@ class Order extends Model
     
     public function cancel($userId, $reason = null)
     {
+        // Restore product quantities before cancelling
+        $this->restoreProductQuantities();
+        
         $this->update([
             'status' => 'cancelled'
         ]);
         
         $this->addToHistory('cancelled', $userId, 'order_cancelled', $reason);
+    }
+    
+    /**
+     * Restore product quantities when order is cancelled or rejected
+     * Only for regular product orders (not service orders)
+     */
+    public function restoreProductQuantities()
+    {
+        // Only restore for non-service orders
+        if ($this->is_service_order) {
+            return;
+        }
+        
+        // Load items if not already loaded
+        if (!$this->relationLoaded('items')) {
+            $this->load('items.product');
+        }
+        
+        foreach ($this->items as $item) {
+            $product = $item->product;
+            
+            // Only restore quantity for products (not gigs) that have quantity tracking
+            if ($product && $product->type === 'product' && $product->quantity !== null) {
+                $oldQuantity = $product->quantity;
+                $product->quantity = $oldQuantity + $item->quantity;
+                
+                // If product was inactive due to zero stock, reactivate it if quantity is restored
+                // But only if it wasn't manually deactivated for other reasons
+                if ($product->status === 'inactive' && $oldQuantity == 0 && $product->quantity > 0) {
+                    $product->status = 'active';
+                    \Log::info("Product {$product->id} ({$product->title}) reactivated after restoring quantity");
+                }
+                
+                $product->save();
+                \Log::info("Product {$product->id} quantity restored from {$oldQuantity} to {$product->quantity} (order #{$this->id} cancelled)");
+            }
+        }
     }
     
     public function suspend($deliveryPersonId, $reason = null)
@@ -828,6 +871,9 @@ class Order extends Model
             }
         }
 
+        // Restore product quantities before cancelling
+        $this->restoreProductQuantities();
+        
         $this->update([
             'price_approval_status' => 'rejected',
             'price_approved_at' => now(),

@@ -31,6 +31,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'delivery.auth' => \App\Http\Middleware\DeliveryAuth::class,
             'optional.auth' => \App\Http\Middleware\OptionalAuth::class,
             'check.user.status' => \App\Http\Middleware\CheckUserStatus::class,
+            'admin' => \App\Http\Middleware\EnsureAdminRole::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

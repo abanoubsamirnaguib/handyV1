@@ -40,6 +40,7 @@ class ProductResource extends JsonResource
             'status' => $this->status,
             'delivery_time' => $this->delivery_time,
             'type' => $this->type,
+            'quantity' => $this->quantity,
             'orders_count' => $this->orders_count ?? $this->orderItems()->count(),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,

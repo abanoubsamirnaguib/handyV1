@@ -211,9 +211,7 @@ class ChatController extends Controller
 
             // Create notification for the recipient
             $notification = NotificationService::messageReceived($recipientId, $user->name);
-            
-            // Broadcast the notification to the recipient
-            broadcast(new NotificationCreated($notification));
+            // NOTE: NotificationService::create() already dispatches NotificationCreated for real-time delivery.
 
             DB::commit();
 
@@ -618,7 +616,7 @@ class ChatController extends Controller
         // Send notification to admin
         try {
             $notification = NotificationService::chatReported($conversationId, $user->name, $request->reason);
-            broadcast(new NotificationCreated($notification));
+            // NOTE: NotificationService already dispatches NotificationCreated for real-time delivery.
         } catch (\Exception $e) {
             // Log error but don't fail the report
             \Log::error('Failed to send notification for chat report: ' . $e->getMessage());

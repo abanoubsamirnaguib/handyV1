@@ -43,5 +43,11 @@ Broadcast::channel('user.{userId}', function ($user, $userId) {
     return (int) $user->id === (int) $userId;
 });
 
+// Channel for user notifications (Laravel default model channel naming)
+// Frontend subscribes to: `App.Models.User.{id}` and NotificationCreated broadcasts to that same name.
+Broadcast::channel('App.Models.User.{userId}', function ($user, $userId) {
+    return $user && ((int) $user->id === (int) $userId);
+});
+
 // Channel for user online status (public channel)
  

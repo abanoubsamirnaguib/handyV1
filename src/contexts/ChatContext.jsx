@@ -14,71 +14,45 @@ export const ChatProvider = ({ children }) => {
   const [messages, setMessages] = useState({});
   const [loading, setLoading] = useState(false);
   const [connected, setConnected] = useState(false);
-  const [activeChannels, setActiveChannels] = useState(new Set());
+  // Keep channel tracking in a ref to avoid duplicate subscriptions from stale state closures
+  const activeChannelsRef = useRef(new Set());
   const authContext = useAuth();
   const user = authContext?.user || null;
   const { toast } = useToast();
   // Track the last time a conversation was marked as read to avoid rapid duplicate requests
   const lastMarkReadRef = useRef({});
-  // Track the last online status update time
-  const lastOnlineUpdateRef = useRef(0);
 
   // Load conversations when component mounts
   useEffect(() => {
-    if (user) {
+    const userId = user?.id;
+    if (userId) {
       // Update Echo auth headers with current token and load conversations
       updateEchoAuth();
       loadConversations();
-      
-      // Update online status immediately
-      updateOnlineStatus();
       
       // Set up interval to refresh conversations every 8 minutes to get updated online status
       const conversationsIntervalId = setInterval(() => {
         loadConversations();
       }, 480000); // 8 minutes
       
-      // Set up interval to update user's own online status every minute
-      const onlineStatusIntervalId = setInterval(() => {
-        updateOnlineStatus();
-      }, 480000); // 8 minutes
-      
       return () => {
         clearInterval(conversationsIntervalId);
-        clearInterval(onlineStatusIntervalId);
         disconnectFromChannels();
       };
     }
     return () => {
       disconnectFromChannels();
     };
-  }, [user]);
+  }, [user?.id]);
 
   // Setup channels when conversations change
   useEffect(() => {
-    if (user && conversations.length > 0 && echo) {
+    if (user?.id && conversations.length > 0 && echo) {
       // Only set up channels for conversations that need them
       // The setupPusherConnection function will check which channels already exist
       setupPusherConnection();
     }
-  }, [user, conversations]);
-
-  // Update user's online status
-  const updateOnlineStatus = async () => {
-    if (!user) return;
-    
-    // Throttle updates to once per minute
-    const now = Date.now();
-    if (now - lastOnlineUpdateRef.current < 60000) return;
-    
-    lastOnlineUpdateRef.current = now;
-    
-    try {
-      await api.updateOnlineStatus();
-    } catch (error) {
-      // Silent fail - don't show errors to user for background updates
-    }
-  };
+  }, [user?.id, conversations]);
 
   // Setup Pusher connection and event listeners
   const setupPusherConnection = () => {
@@ -101,17 +75,18 @@ export const ChatProvider = ({ children }) => {
         const channelName = `conversation.${conversation.id}`;
         
         // Skip if we already track this channel
-        if (activeChannels.has(channelName)) {
+        if (activeChannelsRef.current.has(channelName)) {
           return;
         }
+        // Mark as tracked immediately to prevent duplicate subscriptions if this function is called again quickly.
+        activeChannelsRef.current.add(channelName);
         
         // Check if channel already exists and is subscribed in Pusher
         const channelKey = `private-${channelName}`;
         const existingChannel = echo.connector?.pusher?.channels?.channels?.[channelKey];
         
         if (existingChannel && existingChannel.subscribed) {
-          // Channel already exists and is subscribed, just track it
-          setActiveChannels(prev => new Set([...prev, channelName]));
+          // Channel already exists and is subscribed
           return;
         }
         
@@ -136,8 +111,6 @@ export const ChatProvider = ({ children }) => {
           }
         });
 
-        // Track active channels
-        setActiveChannels(prev => new Set([...prev, channelName]));
       });
 
       setConnected(true);
@@ -149,8 +122,8 @@ export const ChatProvider = ({ children }) => {
 
   // Disconnect from all channels
   const disconnectFromChannels = () => {
-    if (echo && activeChannels.size > 0) {
-      activeChannels.forEach(channelName => {
+    if (echo && activeChannelsRef.current.size > 0) {
+      activeChannelsRef.current.forEach(channelName => {
         try {
           echo.leave(channelName);
         } catch (error) {
@@ -158,7 +131,7 @@ export const ChatProvider = ({ children }) => {
         }
       });
     }
-    setActiveChannels(new Set());
+    activeChannelsRef.current = new Set();
     setConnected(false);
   };
 
@@ -169,15 +142,15 @@ export const ChatProvider = ({ children }) => {
     const channelName = `conversation.${conversationId}`;
     
     // Skip if channel already exists in our tracking
-    if (activeChannels.has(channelName)) return;
+    if (activeChannelsRef.current.has(channelName)) return;
+    activeChannelsRef.current.add(channelName);
     
     // Check if channel already exists and is subscribed in Pusher
     const channelKey = `private-${channelName}`;
     const existingChannel = echo.connector?.pusher?.channels?.channels?.[channelKey];
     
     if (existingChannel && existingChannel.subscribed) {
-      // Channel already exists and is subscribed, just track it
-      setActiveChannels(prev => new Set([...prev, channelName]));
+      // Channel already exists and is subscribed
       return;
     }
     
@@ -196,7 +169,6 @@ export const ChatProvider = ({ children }) => {
       });
       
       // Track active channels
-      setActiveChannels(prev => new Set([...prev, channelName]));
     } catch (error) {
       // Silent fail for individual channel setup
     }
@@ -586,11 +558,7 @@ export const ChatProvider = ({ children }) => {
           // Silent fail for channel leave errors
         }
       }
-      setActiveChannels(prev => {
-        const newChannels = new Set(prev);
-        newChannels.delete(channelName);
-        return newChannels;
-      });
+      activeChannelsRef.current.delete(channelName);
       
       if (activeConversation === conversationId) {
         setActiveConversation(null);

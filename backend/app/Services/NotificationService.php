@@ -151,7 +151,7 @@ class NotificationService
                 'link' => $link,
                 'is_read' => false,
             ]);
-            
+
             // Fire the notification event for real-time broadcasting
             event(new NotificationCreated($notification));
             

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { apiUrl, api } from '@/lib/api';
 
@@ -18,26 +18,45 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const lastOnlineUpdateRef = useRef(0);
 
   // Helper to get token from localStorage
   const getToken = () => localStorage.getItem('token');
   
   // Update online status periodically
   useEffect(() => {
-    if (!user) return;
+    const userId = user?.id;
+    if (!userId) return;
+
+    const throttledUpdateOnlineStatus = (reason) => {
+      const now = Date.now();
+      // Cross-tab throttle: only one tab should ping per minute
+      const key = 'last_online_status_ping_at';
+      const sharedLast = Number(localStorage.getItem(key) || '0') || 0;
+      if (now - sharedLast < 60000) {
+        return;
+      }
+      // Throttle: at most once per minute across all triggers in this provider
+      if (now - lastOnlineUpdateRef.current < 60000) {
+        return;
+      }
+      lastOnlineUpdateRef.current = now;
+      localStorage.setItem(key, String(now));
+      api.updateOnlineStatus().catch(err => console.error('Failed to update online status:', err));
+    };
     
     // Update online status immediately
-    api.updateOnlineStatus().catch(err => console.error('Failed to update online status:', err));
+    throttledUpdateOnlineStatus('immediate');
     
     // Set up interval to update online status every 8 minutes
     const intervalId = setInterval(() => {
-      api.updateOnlineStatus().catch(err => console.error('Failed to update online status:', err));
+      throttledUpdateOnlineStatus('interval');
     }, 480000); // 8 minutes
     
     // Set up visibility change listener to update status when tab becomes visible
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        api.updateOnlineStatus().catch(err => console.error('Failed to update online status:', err));
+        throttledUpdateOnlineStatus('visibilitychange');
       }
     };
     
@@ -48,7 +67,7 @@ export const AuthProvider = ({ children }) => {
       clearInterval(intervalId);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [user]);
+  }, [user?.id]);
   
   // Fetch user info if token exists
   useEffect(() => {

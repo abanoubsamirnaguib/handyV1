@@ -58,8 +58,10 @@ export const NotificationProvider = ({ children }) => {
       if (echo && user.id) {
         try {
           // Listen for new notifications using user ID from AuthContext
-          echo.private(`App.Models.User.${user.id}`)
-            .listen('notification.created', (event) => {
+          const channel = echo.private(`App.Models.User.${user.id}`);
+          channel
+            // NOTE: because backend uses broadcastAs() = 'notification.created', Echo must listen with a leading dot.
+            .listen('.notification.created', (event) => {
               console.log('Real-time notification received:', event);
               setNotifications(prev => [event, ...prev]);
             });

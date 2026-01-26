@@ -213,7 +213,7 @@ class ProductController extends Controller
             'tags' => 'array',
             'tags.*' => 'string|max:50',
             'images' => 'array',
-            'images.*' => 'image|max:2048',
+            'images.*' => 'image|mimes:jpeg,jpg,png,gif,webp|max:5120',
             'existing_images' => 'array',
             'existing_images.*' => 'string',
         ]);

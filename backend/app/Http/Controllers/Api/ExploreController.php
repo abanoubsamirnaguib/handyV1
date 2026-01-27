@@ -46,10 +46,21 @@ class ExploreController extends Controller
             if ($request->sort === 'newest') $query->orderByDesc('created_at');
         }
         $query->where('status', 'active'); // Only active products
-        $products = $query->select(['id','title','description','price','category_id','seller_id','rating','review_count','featured','status','type','created_at'])
+        
+        // Pagination support
+        $perPage = $request->input('per_page', 40); // Default 40 items per page
+        $page = $request->input('page', 1);
+        
+        $productsQuery = $query->select(['id','title','description','price','category_id','seller_id','rating','review_count','featured','status','type','created_at'])
             ->with(['images:id,product_id,image_url', 'category:id,name', 'seller:id'])
-            ->withCount('orderItems as orders_count')
-            ->limit(40)
+            ->withCount('orderItems as orders_count');
+        
+        // Get total count before pagination
+        $total = $productsQuery->count();
+        
+        // Apply pagination
+        $products = $productsQuery->skip(($page - 1) * $perPage)
+            ->take($perPage)
             ->get();
         
         // Get user's wishlist status for all products if user is authenticated
@@ -67,6 +78,7 @@ class ExploreController extends Controller
             // Create a lookup array for quick access
             $wishlistStatuses = array_fill_keys($wishlistItems, true);
         }
+        
         return response()->json([
             'data' => $products->map(function($p) use ($wishlistStatuses) {
                 return [
@@ -86,7 +98,14 @@ class ExploreController extends Controller
                     'type' => $p->type ?? 'product', // Default to 'product' if type is null
                     'in_wishlist' => isset($wishlistStatuses[$p->id]) ? true : false,
                 ];
-            })
+            }),
+            'pagination' => [
+                'current_page' => (int) $page,
+                'per_page' => (int) $perPage,
+                'total' => $total,
+                'last_page' => (int) ceil($total / $perPage),
+                'has_more' => ($page * $perPage) < $total,
+            ]
         ]);
     }
 
@@ -125,8 +144,19 @@ class ExploreController extends Controller
         $query->whereHas('user', function($q) {
             $q->where('status', 'active');
         });
-        $sellers = $query->select(['id','user_id','rating','review_count','completed_orders','member_since'])
-            ->limit(20)
+        
+        // Pagination support
+        $perPage = $request->input('per_page', 20); // Default 20 sellers per page
+        $page = $request->input('page', 1);
+        
+        $sellersQuery = $query->select(['id','user_id','rating','review_count','completed_orders','member_since']);
+        
+        // Get total count before pagination
+        $total = $sellersQuery->count();
+        
+        // Apply pagination
+        $sellers = $sellersQuery->skip(($page - 1) * $perPage)
+            ->take($perPage)
             ->get();
         
         // Get total orders count for each seller
@@ -153,7 +183,14 @@ class ExploreController extends Controller
                     'completedOrders' => $s->completed_orders,
                     'ordersCount' => $ordersCount[$s->id] ?? 0,
                 ];
-            })
+            }),
+            'pagination' => [
+                'current_page' => (int) $page,
+                'per_page' => (int) $perPage,
+                'total' => $total,
+                'last_page' => (int) ceil($total / $perPage),
+                'has_more' => ($page * $perPage) < $total,
+            ]
         ]);
     }
 }

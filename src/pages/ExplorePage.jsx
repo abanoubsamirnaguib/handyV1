@@ -138,13 +138,19 @@ const ExplorePage = () => {
   const [selectedType, setSelectedType] = useState(searchParams.get('type') || 'all');
   const [priceRange, setPriceRange] = useState([0, 1000]);
   const [minRating, setMinRating] = useState(0);
-  const [sortBy, setSortBy] = useState('relevance');
+  const [sortBy, setSortBy] = useState('newest');
   const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [categories, setCategories] = useState([]);
   const [searchTimeout, setSearchTimeout] = useState(null);
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [showLoadMoreButton, setShowLoadMoreButton] = useState(false);
   
   const navigate = useNavigate();
   const location = useLocation();
@@ -211,7 +217,7 @@ const ExplorePage = () => {
     const minPrice = parseInt(searchParams.get('minPrice')) || 0;
     const maxPrice = parseInt(searchParams.get('maxPrice')) || 1000;
     const rating = parseInt(searchParams.get('rating')) || 0;
-    const sort = searchParams.get('sort') || 'relevance';
+    const sort = searchParams.get('sort') || 'newest';
 
     setActiveTab(tab);
     setSearchTerm(query);
@@ -228,6 +234,11 @@ const ExplorePage = () => {
     setPriceRange([minPrice, maxPrice]);
     setMinRating(rating);
     setSortBy(sort);
+    
+    // Reset pagination when filters change
+    setCurrentPage(1);
+    setGigs([]);
+    setSellers([]);
 
     setLoading(true);
     setError(null);
@@ -279,6 +290,7 @@ const ExplorePage = () => {
     if (tab === 'products' || tab === 'gigs') {
       // Build query params for products
       let params = [];
+      params.push('page=1'); // Always start from page 1 when filters change
       if (query) params.push(`search=${encodeURIComponent(query)}`);
       // Always send the category id (not name) if a category is selected
       if (category !== 'all') {
@@ -301,7 +313,9 @@ const ExplorePage = () => {
       const url = `explore/products?${params.join('&')}`;
       apiFetch(url)
         .then(data => {
-          setGigs(Array.isArray(data.data) ? data.data.map(normalizeProduct) : []);
+          const products = Array.isArray(data.data) ? data.data.map(normalizeProduct) : [];
+          setGigs(products);
+          setHasMore(data.pagination?.has_more || false);
           setLoading(false);
         })
         .catch(() => {
@@ -312,6 +326,7 @@ const ExplorePage = () => {
     } else if (tab === 'sellers') {
       // Build query params for sellers
       let params = [];
+      params.push('page=1'); // Always start from page 1 when filters change
       if (query) params.push(`search=${encodeURIComponent(query)}`);
       if (category !== 'all') {
         let categoryId = category;
@@ -324,7 +339,9 @@ const ExplorePage = () => {
       const url = `explore/sellers?${params.join('&')}`;
       apiFetch(url)
         .then(data => {
-          setSellers(Array.isArray(data.data) ? data.data.map(normalizeSeller) : []);
+          const sellersList = Array.isArray(data.data) ? data.data.map(normalizeSeller) : [];
+          setSellers(sellersList);
+          setHasMore(data.pagination?.has_more || false);
           setLoading(false);
         })
         .catch(() => {
@@ -376,7 +393,7 @@ const ExplorePage = () => {
       params.set('maxPrice', priceRange[1]);
     }
     if (minRating > 0) params.set('rating', minRating);
-    if (value !== 'relevance') params.set('sort', value);
+    if (value !== 'newest') params.set('sort', value);
     else params.delete('sort');
     
     setSearchParams(params);
@@ -389,7 +406,7 @@ const ExplorePage = () => {
     setSelectedType('all');
     setPriceRange([0, 1000]);
     setMinRating(0);
-    setSortBy('relevance');
+    setSortBy('newest');
     setSearchParams({ tab: activeTab });
     
     // Auto-close mobile filter after resetting
@@ -463,6 +480,149 @@ const ExplorePage = () => {
     
     setSearchParams(params);
   };
+
+  // Load more function for pagination
+  const loadMore = async () => {
+    if (loadingMore || !hasMore) return;
+
+    setLoadingMore(true);
+    const nextPage = currentPage + 1;
+
+    try {
+      const tab = searchParams.get('tab') || 'products';
+      const query = searchParams.get('search') || '';
+      const category = searchParams.get('category') || 'all';
+      const type = searchParams.get('type') || 'all';
+      const minPrice = parseInt(searchParams.get('minPrice')) || 0;
+      const maxPrice = parseInt(searchParams.get('maxPrice')) || 1000;
+      const rating = parseInt(searchParams.get('rating')) || 0;
+      const sort = searchParams.get('sort') || 'relevance';
+
+      if (tab === 'products' || tab === 'gigs') {
+        let params = [];
+        params.push(`page=${nextPage}`);
+        if (query) params.push(`search=${encodeURIComponent(query)}`);
+        if (category !== 'all') {
+          let categoryId = category;
+          const found = categories.find(cat => cat.id === category || cat.name === category);
+          if (found) categoryId = found.id;
+          params.push(`category=${encodeURIComponent(categoryId)}`);
+        }
+        if (tab === 'gigs') {
+          params.push(`type=gig`);
+        } else if (type !== 'all') {
+          params.push(`type=${encodeURIComponent(type)}`);
+        }
+        if (minPrice > 0) params.push(`min_price=${minPrice}`);
+        if (maxPrice < 1000) params.push(`max_price=${maxPrice}`);
+        if (rating > 0) params.push(`min_rating=${rating}`);
+        if (sort && sort !== 'relevance') params.push(`sort=${sort}`);
+        
+        const url = `explore/products?${params.join('&')}`;
+        const data = await apiFetch(url);
+        
+        const normalizeProduct = (prod) => {
+          let categoryId = prod.category_id || prod.category?.id || prod.category;
+          let categoryObj = categories.find(cat => cat.id === categoryId);
+          if (prod.category && typeof prod.category === 'object' && prod.category.name) {
+            categoryObj = prod.category;
+          }
+          return {
+            id: prod.id,
+            title: prod.title,
+            description: prod.description,
+            price: prod.price,
+            images: Array.isArray(prod.images) && prod.images.length > 0
+              ? prod.images.map(img => img.url || img.image_url)
+              : [],
+            category: categoryObj ? { id: categoryObj.id, name: categoryObj.name } : { id: categoryId, name: categoryId },
+            rating: prod.rating || 0,
+            reviewCount: prod.reviewCount || prod.review_count || 0,
+            ordersCount: prod.ordersCount || prod.orders_count || prod.order_count || 0,
+            sellerId: prod.sellerId || prod.seller_id || prod.seller?.id,
+            type: prod.type || 'product',
+            in_wishlist: prod.in_wishlist || false,
+          };
+        };
+
+        const newProducts = Array.isArray(data.data) ? data.data.map(normalizeProduct) : [];
+        setGigs(prev => [...prev, ...newProducts]);
+        setHasMore(data.pagination?.has_more || false);
+        setCurrentPage(nextPage);
+      } else if (tab === 'sellers') {
+        let params = [];
+        params.push(`page=${nextPage}`);
+        if (query) params.push(`search=${encodeURIComponent(query)}`);
+        if (category !== 'all') {
+          let categoryId = category;
+          const found = categories.find(cat => cat.id === category || cat.name === category);
+          if (found) categoryId = found.id;
+          params.push(`category=${encodeURIComponent(categoryId)}`);
+        }
+        if (rating > 0) params.push(`min_rating=${rating}`);
+        if (sort && sort !== 'relevance') params.push(`sort=${sort}`);
+        
+        const url = `explore/sellers?${params.join('&')}`;
+        const data = await apiFetch(url);
+        
+        const normalizeSeller = (seller) => ({
+          id: seller.id,
+          name: seller.name || '',
+          avatar: seller.avatar || '',
+          coverImage: seller.coverImage || seller.cover_image || null,
+          skills: seller.skills || [],
+          rating: seller.rating || 0,
+          reviewCount: seller.reviewCount || seller.review_count || 0,
+          ordersCount: seller.ordersCount || seller.orders_count || 0,
+          bio: seller.bio || '',
+          location: seller.location || '',
+          memberSince: seller.memberSince || '',
+          completedOrders: seller.completedOrders || 0,
+        });
+
+        const newSellers = Array.isArray(data.data) ? data.data.map(normalizeSeller) : [];
+        setSellers(prev => [...prev, ...newSellers]);
+        setHasMore(data.pagination?.has_more || false);
+        setCurrentPage(nextPage);
+      }
+    } catch (error) {
+      console.error('Error loading more:', error);
+      toast({
+        variant: "destructive",
+        title: "خطأ",
+        description: "فشل تحميل المزيد من النتائج",
+      });
+    } finally {
+      setLoadingMore(false);
+      setShowLoadMoreButton(false);
+    }
+  };
+
+  // Scroll detection to show Load More button
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!hasMore || loadingMore) {
+        setShowLoadMoreButton(false);
+        return;
+      }
+
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      const scrollHeight = document.documentElement.scrollHeight;
+      const clientHeight = document.documentElement.clientHeight;
+      
+      // Show button when user scrolls to 80% of the page
+      const scrollPercentage = (scrollTop + clientHeight) / scrollHeight;
+      
+      if (scrollPercentage > 0.8) {
+        setShowLoadMoreButton(true);
+      } else {
+        setShowLoadMoreButton(false);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [hasMore, loadingMore]);
 
 
 
@@ -930,24 +1090,60 @@ const ExplorePage = () => {
                 <div className="text-center py-12">
                   <p className="text-lg text-red-500">{error}</p>
                 </div>              ) : gigs.length > 0 ? (
-                <motion.div 
-                  className={viewMode === 'grid' ? "grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-2 rtl" : "space-y-6"}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.5 }}
-                  dir="rtl"
-                >
-                  {gigs.map((gig, index) => (
-                    <motion.div
-                      key={gig.id}
+                <>
+                  <motion.div 
+                    className={viewMode === 'grid' ? "grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-2 rtl" : "space-y-6"}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.5 }}
+                    dir="rtl"
+                  >
+                    {gigs.map((gig, index) => (
+                      <motion.div
+                        key={gig.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3, delay: index * 0.05 }}
+                      >
+                        {viewMode === 'grid' ? <GigCard gig={gig} /> : <GigListItem gig={gig} />}
+                      </motion.div>
+                    ))}
+                  </motion.div>
+                  
+                  {/* Load More Button */}
+                  {hasMore && (
+                    <motion.div 
+                      className="mt-8 flex justify-center"
                       initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3, delay: index * 0.05 }}
+                      animate={{ 
+                        opacity: showLoadMoreButton ? 1 : 0.5,
+                        y: showLoadMoreButton ? 0 : 20,
+                        scale: showLoadMoreButton ? 1.05 : 1
+                      }}
+                      transition={{ duration: 0.3 }}
                     >
-                      {viewMode === 'grid' ? <GigCard gig={gig} /> : <GigListItem gig={gig} />}
+                      <Button
+                        onClick={loadMore}
+                        disabled={loadingMore}
+                        className={`bg-roman-500 hover:bg-roman-500/90 text-white px-6 py-3 text-sm font-medium rounded-full shadow-md hover:shadow-lg transition-all duration-300 ${
+                          showLoadMoreButton ? 'ring-2 ring-roman-500/30' : ''
+                        }`}
+                      >
+                        {loadingMore ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white ml-2"></div>
+                            جاري التحميل...
+                          </>
+                        ) : (
+                          <>
+                            <ArrowRight className="ml-2 h-4 w-4 rotate-180" />
+                            تحميل المزيد
+                          </>
+                        )}
+                      </Button>
                     </motion.div>
-                  ))}
-                </motion.div>
+                  )}
+                </>
               ) : (
                 <div className="text-center py-12">
                   <img src="https://images.unsplash.com/photo-1675023112817-52b789fd2ef0" alt="لا توجد نتائج" className="mx-auto mb-4 w-48 h-48 text-gray-400" />
@@ -1068,24 +1264,60 @@ const ExplorePage = () => {
                 <div className="text-center py-12">
                   <p className="text-lg text-red-500">{error}</p>
                 </div>              ) : gigs.length > 0 ? (
-                <motion.div 
-                  className={viewMode === 'grid' ? "grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-2 rtl" : "space-y-6"}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.5 }}
-                  dir="rtl"
-                >
-                  {gigs.map((gig, index) => (
-                    <motion.div
-                      key={gig.id}
+                <>
+                  <motion.div 
+                    className={viewMode === 'grid' ? "grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-2 rtl" : "space-y-6"}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.5 }}
+                    dir="rtl"
+                  >
+                    {gigs.map((gig, index) => (
+                      <motion.div
+                        key={gig.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3, delay: index * 0.05 }}
+                      >
+                        {viewMode === 'grid' ? <GigCard gig={gig} /> : <GigListItem gig={gig} />}
+                      </motion.div>
+                    ))}
+                  </motion.div>
+                  
+                  {/* Load More Button */}
+                  {hasMore && (
+                    <motion.div 
+                      className="mt-8 flex justify-center"
                       initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3, delay: index * 0.05 }}
+                      animate={{ 
+                        opacity: showLoadMoreButton ? 1 : 0.5,
+                        y: showLoadMoreButton ? 0 : 20,
+                        scale: showLoadMoreButton ? 1.05 : 1
+                      }}
+                      transition={{ duration: 0.3 }}
                     >
-                      {viewMode === 'grid' ? <GigCard gig={gig} /> : <GigListItem gig={gig} />}
+                      <Button
+                        onClick={loadMore}
+                        disabled={loadingMore}
+                        className={`bg-roman-500 hover:bg-roman-500/90 text-white px-6 py-3 text-sm font-medium rounded-full shadow-md hover:shadow-lg transition-all duration-300 ${
+                          showLoadMoreButton ? 'ring-2 ring-roman-500/30' : ''
+                        }`}
+                      >
+                        {loadingMore ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white ml-2"></div>
+                            جاري التحميل...
+                          </>
+                        ) : (
+                          <>
+                            <ArrowRight className="ml-2 h-4 w-4 rotate-180" />
+                            تحميل المزيد
+                          </>
+                        )}
+                      </Button>
                     </motion.div>
-                  ))}
-                </motion.div>
+                  )}
+                </>
               ) : (
                 <div className="text-center py-12">
                   <img src="https://images.unsplash.com/photo-1675023112817-52b789fd2ef0" alt="لا توجد نتائج" className="mx-auto mb-4 w-48 h-48 text-gray-400" />
@@ -1195,24 +1427,60 @@ const ExplorePage = () => {
                 <div className="text-center py-12">
                   <p className="text-lg text-red-500">{error}</p>
                 </div>              ) : sellers.length > 0 ? (
-                <motion.div 
-                  className={viewMode === 'grid' ? "grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-2 rtl" : "space-y-6"}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.5 }}
-                  dir="rtl"
-                >
-                  {sellers.map((seller, index) => (
-                    <motion.div
-                      key={seller.id}
+                <>
+                  <motion.div 
+                    className={viewMode === 'grid' ? "grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-2 rtl" : "space-y-6"}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.5 }}
+                    dir="rtl"
+                  >
+                    {sellers.map((seller, index) => (
+                      <motion.div
+                        key={seller.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3, delay: index * 0.05 }}
+                      >
+                        {viewMode === 'grid' ? <SellerCard seller={seller} /> : <SellerListItem seller={seller} />}
+                      </motion.div>
+                    ))}
+                  </motion.div>
+                  
+                  {/* Load More Button */}
+                  {hasMore && (
+                    <motion.div 
+                      className="mt-8 flex justify-center"
                       initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3, delay: index * 0.05 }}
+                      animate={{ 
+                        opacity: showLoadMoreButton ? 1 : 0.5,
+                        y: showLoadMoreButton ? 0 : 20,
+                        scale: showLoadMoreButton ? 1.05 : 1
+                      }}
+                      transition={{ duration: 0.3 }}
                     >
-                      {viewMode === 'grid' ? <SellerCard seller={seller} /> : <SellerListItem seller={seller} />}
+                      <Button
+                        onClick={loadMore}
+                        disabled={loadingMore}
+                        className={`bg-roman-500 hover:bg-roman-500/90 text-white px-6 py-3 text-sm font-medium rounded-full shadow-md hover:shadow-lg transition-all duration-300 ${
+                          showLoadMoreButton ? 'ring-2 ring-roman-500/30' : ''
+                        }`}
+                      >
+                        {loadingMore ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white ml-2"></div>
+                            جاري التحميل...
+                          </>
+                        ) : (
+                          <>
+                            <ArrowRight className="ml-2 h-4 w-4 rotate-180" />
+                            تحميل المزيد
+                          </>
+                        )}
+                      </Button>
                     </motion.div>
-                  ))}
-                </motion.div>
+                  )}
+                </>
               ) : (
                 <div className="text-center py-12">
                   <img src="https://images.unsplash.com/photo-1675023112817-52b789fd2ef0" alt="لا توجد نتائج" className="mx-auto mb-4 w-48 h-48 text-gray-400" />

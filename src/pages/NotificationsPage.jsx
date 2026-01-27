@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Bell, Check, Trash2, Package, MessageSquare, Star, DollarSign, Loader2, RefreshCw } from 'lucide-react';
 import { useNotifications } from '@/contexts/NotificationContext';
 import { useNavigate } from 'react-router-dom';
+import { isPushSupported, requestAndSubscribePush, unsubscribePush } from '@/lib/pushNotifications';
 
 const NotificationsPage = () => {
   const { 
@@ -17,6 +18,10 @@ const NotificationsPage = () => {
   
   const [filter, setFilter] = useState('all');
   const [refreshing, setRefreshing] = useState(false);
+  const [pushBusy, setPushBusy] = useState(false);
+  const [pushPermission, setPushPermission] = useState(
+    typeof Notification !== 'undefined' ? Notification.permission : 'default'
+  );
   const navigate = useNavigate();
 
   const handleRefresh = async () => {
@@ -146,6 +151,65 @@ const NotificationsPage = () => {
 
       {/* Notifications List */}
       <div className="max-w-lg mx-auto px-4 py-4">
+        {/* Push banner */}
+        {isPushSupported() && (
+          <div className="bg-white border border-gray-200 rounded-lg p-4 mb-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="font-medium text-neutral-900">إشعارات عند إغلاق التطبيق</div>
+                <div className="text-sm text-gray-600 mt-1">
+                  فعّل إشعارات الدفع (Push) لتصلك الرسائل والطلبات حتى لو كان التطبيق مغلقاً.
+                </div>
+                {!window.isSecureContext && (
+                  <div className="text-xs text-red-500 mt-2">
+                    Push يعمل فقط على HTTPS أو localhost.
+                  </div>
+                )}
+                {pushPermission === 'denied' && (
+                  <div className="text-xs text-red-500 mt-2">
+                    تم رفض إذن الإشعارات من المتصفح. فعّله من إعدادات المتصفح ثم أعد المحاولة.
+                  </div>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                {pushPermission !== 'granted' ? (
+                  <button
+                    disabled={pushBusy || !window.isSecureContext}
+                    onClick={async () => {
+                      setPushBusy(true);
+                      try {
+                        const res = await requestAndSubscribePush();
+                        setPushPermission(res?.permission || Notification.permission);
+                      } finally {
+                        setPushBusy(false);
+                      }
+                    }}
+                    className="px-3 py-2 text-sm rounded-lg bg-warning-500 text-white hover:bg-warning-500/90 disabled:opacity-50"
+                  >
+                    تفعيل
+                  </button>
+                ) : (
+                  <button
+                    disabled={pushBusy}
+                    onClick={async () => {
+                      setPushBusy(true);
+                      try {
+                        await unsubscribePush();
+                        setPushPermission(Notification.permission);
+                      } finally {
+                        setPushBusy(false);
+                      }
+                    }}
+                    className="px-3 py-2 text-sm rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    إيقاف
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="w-8 h-8 text-warning-500 animate-spin" />

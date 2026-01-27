@@ -1,3 +1,5 @@
+import { useState, useEffect } from 'react';
+
 // Utility function to get proper asset URL
 export const getAssetUrl = (path) => {
   if (!path) return null;

@@ -39,6 +39,7 @@ use App\Http\Controllers\Api\AdminAnnouncementController;
 use App\Http\Controllers\Api\CityCrudController;
 use App\Http\Controllers\Api\PlatformProfitController;
 use App\Http\Controllers\Api\AIAssistantController;
+use App\Http\Controllers\Api\PushSubscriptionController;
 
 
 Broadcast::routes(['middleware' => ['broadcast.auth']]);
@@ -226,6 +227,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('notifications/unread-count', [NotificationCrudController::class, 'unreadCount']);
     Route::post('notifications/{id}/mark-read', [NotificationCrudController::class, 'markAsRead']);
     Route::post('notifications/mark-all-read', [NotificationCrudController::class, 'markAllAsRead']);
+
+    // PWA Push Notifications
+    Route::get('push/vapid-public-key', [PushSubscriptionController::class, 'vapidPublicKey']);
+    Route::post('push/subscribe', [PushSubscriptionController::class, 'subscribe']);
+    Route::post('push/unsubscribe', [PushSubscriptionController::class, 'unsubscribe']);
     
     // Activity Log CRUD
     Route::apiResource('activity-logs', ActivityLogCrudController::class)->except(['show']);

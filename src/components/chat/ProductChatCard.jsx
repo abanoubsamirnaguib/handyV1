@@ -45,7 +45,7 @@ const ProductChatCard = ({
   };
 
   const getImageUrl = (image) => {
-    if (!image) return '/placeholder.jpg';
+    if (!image) return '/placeholder-image.jpg';
     if (image.startsWith('http://') || image.startsWith('https://')) {
       return image;
     }
@@ -64,7 +64,10 @@ const ProductChatCard = ({
                 alt={productData.name || productData.title} 
                 className="h-20 w-20 object-cover rounded-md border border-gray-200"
                 onError={(e) => {
-                  e.target.src = '/placeholder.jpg';
+                  // Prevent infinite loop by checking if already set to placeholder
+                  if (!e.target.src.includes('placeholder-image.jpg')) {
+                    e.target.src = '/placeholder-image.jpg';
+                  }
                 }}
               />
             </div>

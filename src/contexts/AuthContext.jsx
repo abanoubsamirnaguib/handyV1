@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { apiUrl, api } from '@/lib/api';
+import { reconnectEcho } from '@/lib/echo';
 
 const AuthContext = createContext();
 
@@ -132,6 +133,8 @@ export const AuthProvider = ({ children }) => {
       
       const data = (await res.json());
       localStorage.setItem('token', data.token);
+      // Ensure Echo broadcasts auth uses the new token immediately (no refresh needed)
+      reconnectEcho();
       setUser(data.user);
       localStorage.setItem('user', JSON.stringify(data.user));
       toast({
@@ -173,6 +176,7 @@ export const AuthProvider = ({ children }) => {
       
       // Automatically set user and token after successful registration
       localStorage.setItem('token', data.token);
+      reconnectEcho();
       setUser(data.user);
       localStorage.setItem('user', JSON.stringify(data.user));
       
@@ -536,6 +540,7 @@ export const AuthProvider = ({ children }) => {
       
       // Set user and token after successful registration
       localStorage.setItem('token', data.token);
+      reconnectEcho();
       setUser(data.user);
       localStorage.setItem('user', JSON.stringify(data.user));
       

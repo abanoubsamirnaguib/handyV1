@@ -54,7 +54,7 @@ return new class extends Migration
             
             // Foreign keys
             $table->foreign('admin_approved_by')->references('id')->on('users')->onDelete('set null');
-            $table->foreign('delivery_person_id')->references('id')->on('users')->onDelete('set null');
+            $table->foreign('delivery_person_id')->references('id')->on('delivery_personnel')->onDelete('set null');
         });
 
         Schema::table('order_history', function (Blueprint $table) {

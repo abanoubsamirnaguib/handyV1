@@ -4,6 +4,17 @@ import { BrowserRouter } from 'react-router-dom';
 import App from '@/App';
 import './index.css';
 
+// Ensure SW is registered (needed for Push subscription + push events).
+try {
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker
+      .register('/sw.js', { scope: '/', type: 'module' })
+      .catch(() => {});
+  }
+} catch (e) {
+  // ignore
+}
+
 ReactDOM.createRoot(document.getElementById('root')).render(
   <BrowserRouter
     future={{
@@ -14,5 +25,3 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <App />
   </BrowserRouter>
 );
-
-// Service worker registration is handled by VitePWA plugin in production

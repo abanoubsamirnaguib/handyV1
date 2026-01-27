@@ -6,6 +6,7 @@ use App\Models\Notification;
 use App\Models\User;
 use App\Models\SiteSetting;
 use App\Events\NotificationCreated;
+use App\Services\WebPushService;
 use App\Traits\EmailTrait;
 use Illuminate\Support\Facades\Log;
 
@@ -173,6 +174,27 @@ class NotificationService
         $user = User::find($userId);
         if ($user && $user->email_notifications) {
             self::sendEmailNotification($user, $message, $link);
+        }
+
+        // Send Web Push notification (PWA push) if user has subscriptions.
+        // This enables notifications even when the app is closed.
+        try {
+            WebPushService::sendToUser($userId, [
+                'title' => 'بازار',
+                'body' => $message,
+                'data' => [
+                    'url' => $link ?: '/notifications',
+                    'type' => $type,
+                    'notificationId' => $notification->id,
+                ],
+            ]);
+        } catch (\Throwable $e) {
+            // Never break notification creation if push fails
+            Log::warning('Web push send failed', [
+                'user_id' => $userId,
+                'notification_id' => $notification->id,
+                'error' => $e->getMessage(),
+            ]);
         }
 
         return $notification;

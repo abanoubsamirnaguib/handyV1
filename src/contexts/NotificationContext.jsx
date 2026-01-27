@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { api } from '@/lib/api';
-import echo from '@/lib/echo';
+import echo, { updateEchoAuth } from '@/lib/echo';
 import { useAuth } from '@/contexts/AuthContext';
+import { ensurePushSubscriptionSaved } from '@/lib/pushNotifications';
 
 const NotificationContext = createContext();
 
@@ -53,10 +54,17 @@ export const NotificationProvider = ({ children }) => {
     // Only fetch if user is authenticated
     if (user) {
       fetchNotifications();
+
+      // If the user already granted permission earlier, ensure we have a saved subscription.
+      // (We do NOT auto-prompt here; the UI can trigger permission request.)
+      ensurePushSubscriptionSaved().catch(() => {});
       
       // Set up real-time notification listening
       if (echo && user.id) {
         try {
+          // Ensure Echo has the latest Authorization header before subscribing
+          updateEchoAuth();
+
           // Listen for new notifications using user ID from AuthContext
           const channel = echo.private(`App.Models.User.${user.id}`);
           channel

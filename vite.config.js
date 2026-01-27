@@ -187,15 +187,18 @@ export default defineConfig({
 	plugins: [react(), addTransformIndexHtml, VitePWA({
     registerType: 'autoUpdate',
     manifest: require('./public/manifest.json'),
-    workbox: {
-      cleanupOutdatedCaches: true,
-      globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,mp4}'],
+
+    // We need a custom service worker to handle Push events in production.
+    strategies: 'injectManifest',
+    srcDir: 'src',
+    filename: 'sw.js',
+    injectManifest: {
+      globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,mp4,webmanifest}'],
       maximumFileSizeToCacheInBytes: 2 * 1024 * 1024,
-      navigateFallback: '/index.html',
-      navigateFallbackDenylist: [/^\/api/, /^\/backend/]
     },
+
     devOptions: {
-      enabled: false, // Disabled in development to prevent conflicts
+      enabled: true, // Enable in dev so serviceWorker.ready resolves (needed to test Push)
     },
   })],
 	server: {

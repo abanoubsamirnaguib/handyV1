@@ -405,6 +405,19 @@ export const api = {
   markAllNotificationsAsRead: () => apiFetch('notifications/mark-all-read', { method: 'POST' }),
   deleteNotification: (id) => apiFetch(`notifications/${id}`, { method: 'DELETE' }),
 
+  // PWA Push Notifications
+  getVapidPublicKey: () => apiFetch('push/vapid-public-key'),
+  subscribePush: (subscription) =>
+    apiFetch('push/subscribe', {
+      method: 'POST',
+      body: JSON.stringify({ subscription }),
+    }),
+  unsubscribePush: (endpoint) =>
+    apiFetch('push/unsubscribe', {
+      method: 'POST',
+      body: JSON.stringify({ endpoint }),
+    }),
+
   // Withdrawal requests for sellers
   getWithdrawalRequests: () => apiFetch('withdrawals'),
   createWithdrawalRequest: (data) => 

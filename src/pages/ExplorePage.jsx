@@ -172,6 +172,13 @@ const ExplorePage = () => {
   useEffect(() => {
     document.documentElement.setAttribute('dir', 'rtl');
     
+    // Initialize sort parameter in URL if not present
+    if (!searchParams.has('sort')) {
+      const newParams = new URLSearchParams(searchParams);
+      newParams.set('sort', 'newest');
+      setSearchParams(newParams, { replace: true });
+    }
+    
     // Cleanup when component unmounts
     return () => {
       document.documentElement.removeAttribute('dir');
@@ -180,7 +187,7 @@ const ExplorePage = () => {
         clearTimeout(searchTimeout);
       }
     };
-  }, [searchTimeout]);
+  }, []);
 
   useEffect(() => {
     apiFetch('listcategories')
@@ -309,7 +316,7 @@ const ExplorePage = () => {
       if (minPrice > 0) params.push(`min_price=${minPrice}`);
       if (maxPrice < 1000) params.push(`max_price=${maxPrice}`);
       if (rating > 0) params.push(`min_rating=${rating}`);
-      if (sort && sort !== 'relevance') params.push(`sort=${sort}`);
+      if (sort) params.push(`sort=${sort}`);
       const url = `explore/products?${params.join('&')}`;
       apiFetch(url)
         .then(data => {
@@ -335,7 +342,7 @@ const ExplorePage = () => {
         params.push(`category=${encodeURIComponent(categoryId)}`);
       }
       if (rating > 0) params.push(`min_rating=${rating}`);
-      if (sort && sort !== 'relevance') params.push(`sort=${sort}`);
+      if (sort) params.push(`sort=${sort}`);
       const url = `explore/sellers?${params.join('&')}`;
       apiFetch(url)
         .then(data => {
@@ -369,7 +376,7 @@ const ExplorePage = () => {
     }
     
     if (minRating > 0) params.set('rating', minRating);
-    if (sortBy !== 'relevance') params.set('sort', sortBy);
+    params.set('sort', sortBy);
     setSearchParams(params);
     
     // Auto-close mobile filter after applying
@@ -393,8 +400,7 @@ const ExplorePage = () => {
       params.set('maxPrice', priceRange[1]);
     }
     if (minRating > 0) params.set('rating', minRating);
-    if (value !== 'newest') params.set('sort', value);
-    else params.delete('sort');
+    params.set('sort', value);
     
     setSearchParams(params);
   };
@@ -474,9 +480,7 @@ const ExplorePage = () => {
     if (minRating > 0) {
       params.set('rating', minRating);
     }
-    if (sortBy !== 'relevance') {
-      params.set('sort', sortBy);
-    }
+    params.set('sort', sortBy);
     
     setSearchParams(params);
   };
@@ -496,7 +500,7 @@ const ExplorePage = () => {
       const minPrice = parseInt(searchParams.get('minPrice')) || 0;
       const maxPrice = parseInt(searchParams.get('maxPrice')) || 1000;
       const rating = parseInt(searchParams.get('rating')) || 0;
-      const sort = searchParams.get('sort') || 'relevance';
+      const sort = searchParams.get('sort') || 'oldest';
 
       if (tab === 'products' || tab === 'gigs') {
         let params = [];
@@ -516,7 +520,7 @@ const ExplorePage = () => {
         if (minPrice > 0) params.push(`min_price=${minPrice}`);
         if (maxPrice < 1000) params.push(`max_price=${maxPrice}`);
         if (rating > 0) params.push(`min_rating=${rating}`);
-        if (sort && sort !== 'relevance') params.push(`sort=${sort}`);
+        if (sort) params.push(`sort=${sort}`);
         
         const url = `explore/products?${params.join('&')}`;
         const data = await apiFetch(url);
@@ -560,7 +564,7 @@ const ExplorePage = () => {
           params.push(`category=${encodeURIComponent(categoryId)}`);
         }
         if (rating > 0) params.push(`min_rating=${rating}`);
-        if (sort && sort !== 'relevance') params.push(`sort=${sort}`);
+        if (sort) params.push(`sort=${sort}`);
         
         const url = `explore/sellers?${params.join('&')}`;
         const data = await apiFetch(url);
@@ -1069,11 +1073,11 @@ const ExplorePage = () => {
                       <SelectValue placeholder="الترتيب حسب" />
                     </SelectTrigger>
                     <SelectContent className="border-roman-500/30 text-right" dir="rtl">
-                      <SelectItem value="relevance">الأكثر صلة</SelectItem>
+                      <SelectItem value="oldest">الأقدم</SelectItem>
+                      <SelectItem value="newest">الأحدث</SelectItem>
                       <SelectItem value="price_low">السعر: من الأقل للأعلى</SelectItem>
                       <SelectItem value="price_high">السعر: من الأعلى للأقل</SelectItem>
                       <SelectItem value="rating">الأعلى تقييماً</SelectItem>
-                      <SelectItem value="newest">الأحدث</SelectItem>
                     </SelectContent>
                   </Select>
                   <Button variant="outline" size="icon" className="border-roman-500/50 text-roman-500 hover:bg-roman-500 hover:text-white" onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}>
@@ -1243,7 +1247,7 @@ const ExplorePage = () => {
                       <SelectValue placeholder="الترتيب حسب" />
                     </SelectTrigger>
                     <SelectContent className="border-roman-500/30 text-right" dir="rtl">
-                      <SelectItem value="relevance">الأكثر صلة</SelectItem>
+                      <SelectItem value="oldest">الأقدم</SelectItem>
                       <SelectItem value="price_low">السعر: من الأقل للأعلى</SelectItem>
                       <SelectItem value="price_high">السعر: من الأعلى للأقل</SelectItem>
                       <SelectItem value="rating">الأعلى تقييماً</SelectItem>
@@ -1407,7 +1411,7 @@ const ExplorePage = () => {
                       <SelectValue placeholder="الترتيب حسب" />
                     </SelectTrigger>
                     <SelectContent className="text-right" dir="rtl">
-                      <SelectItem value="relevance">الأكثر صلة</SelectItem>
+                      <SelectItem value="oldest">الأقدم</SelectItem>
                       <SelectItem value="rating">الأعلى تقييماً</SelectItem>
                       <SelectItem value="experience">الأكثر خبرة</SelectItem>
                       <SelectItem value="newest">الأحدث</SelectItem>

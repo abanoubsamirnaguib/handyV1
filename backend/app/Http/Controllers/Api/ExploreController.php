@@ -44,6 +44,10 @@ class ExploreController extends Controller
             if ($request->sort === 'price_high') $query->orderByDesc('price');
             if ($request->sort === 'rating') $query->orderByDesc('rating');
             if ($request->sort === 'newest') $query->orderByDesc('created_at');
+            if ($request->sort === 'oldest') $query->orderBy('created_at');
+        } else {
+            // Default sorting by oldest when no sort specified
+            $query->orderBy('created_at');
         }
         $query->where('status', 'active'); // Only active products
         
@@ -129,7 +133,7 @@ class ExploreController extends Controller
         if ($request->filled('min_rating')) {
             $query->where('rating', '>=', $request->min_rating);
         }
-        // Add sort support: relevance (default), rating, experience, newest
+        // Add sort support: oldest (default), rating, experience, newest
         if ($request->filled('sort')) {
             $sort = $request->sort;
             if ($sort === 'rating') {
@@ -138,7 +142,12 @@ class ExploreController extends Controller
                 $query->orderByDesc('completed_orders');
             } elseif ($sort === 'newest') {
                 $query->orderByDesc('member_since');
-            } // else: default relevance (no explicit order)
+            } elseif ($sort === 'oldest') {
+                $query->orderBy('member_since');
+            }
+        } else {
+            // Default sorting by oldest when no sort specified
+            $query->orderBy('member_since');
         }
         // Only active sellers
         $query->whereHas('user', function($q) {

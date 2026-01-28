@@ -198,7 +198,7 @@ export default defineConfig({
     },
 
     devOptions: {
-      enabled: true, // Enable in dev so serviceWorker.ready resolves (needed to test Push)
+      enabled: false, // Disable PWA in dev to prevent excessive reloads from SW changes
     },
   })],
 	server: {

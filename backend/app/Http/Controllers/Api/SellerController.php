@@ -47,11 +47,18 @@ class SellerController extends Controller
 
     public function topSellers(Request $request)
     {
-        // Get top 3 sellers by rating, only active users
-        $sellers = Seller::with(['skills', 'user'])
+        // Get top 3 sellers by number of products , rating , only active users
+        $sellers = Seller::with(['skills', 'user', 'products'])
             ->whereHas('user', function($q) {
                 $q->where('status', 'active');
             })
+            ->whereHas('products', function($q) {
+                $q->where('status', 'active');
+            })
+            ->withCount(['products' => function($q) {
+                $q->where('status', 'active');
+            }])
+            ->orderByDesc('products_count')
             ->orderByDesc('rating')
             ->limit(3)
             ->get();
@@ -65,6 +72,7 @@ class SellerController extends Controller
                 'skills' => $seller->skills->pluck('skill_name')->toArray(),
                 'rating' => $seller->rating ?? 0,
                 'reviewCount' => $seller->review_count ?? 0,
+                'productsCount' => $seller->products_count ?? 0,
             ];
         });
         return response()->json(['data' => $result]);

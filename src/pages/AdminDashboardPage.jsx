@@ -8,7 +8,8 @@ import {
   Users, 
   Tag, 
   UserCheck, 
-  PackageOpen
+  PackageOpen,
+  Gift
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -76,6 +77,12 @@ const AdminDashboardPage = () => (
         description="تكوين إعدادات النظام العامة." 
         link="/admin/settings" 
         icon={Settings} 
+      />
+      <AdminDashboardCard 
+        title="أقسام الهدايا" 
+        description="إدارة أقسام عرض المنتجات حسب التاجات." 
+        link="/admin/gift-sections" 
+        icon={Gift} 
       />
     </div>
   </div>

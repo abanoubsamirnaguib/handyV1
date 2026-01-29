@@ -144,6 +144,8 @@ const ExplorePage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [categories, setCategories] = useState([]);
+  const [giftSections, setGiftSections] = useState([]);
+  const [selectedGiftSection, setSelectedGiftSection] = useState(searchParams.get('gift_section') || 'all');
   const [searchTimeout, setSearchTimeout] = useState(null);
   
   // Pagination states
@@ -211,6 +213,18 @@ const ExplorePage = () => {
         setCategories(normalized);
       })
       .catch(() => setCategories([]));
+    
+    // Fetch gift sections
+    apiFetch('gift-sections')
+      .then(data => {
+        if (data.success && Array.isArray(data.data)) {
+          setGiftSections(data.data);
+        }
+      })
+      .catch(err => {
+        console.error('Failed to load gift sections:', err);
+        setGiftSections([]);
+      });
   }, []);
 
   // Ensure selectedCategory is always a string (id) and matches the dropdown after searchParams change
@@ -221,6 +235,7 @@ const ExplorePage = () => {
     const query = searchParams.get('search') || '';
     const category = searchParams.get('category') || 'all';
     const type = searchParams.get('type') || 'all';
+    const giftSection = searchParams.get('gift_section') || 'all';
     const minPrice = parseInt(searchParams.get('minPrice')) || 0;
     const maxPrice = parseInt(searchParams.get('maxPrice')) || 1000;
     const rating = parseInt(searchParams.get('rating')) || 0;
@@ -238,6 +253,7 @@ const ExplorePage = () => {
     }
     setSelectedCategory(selectedCat);
     setSelectedType(type);
+    setSelectedGiftSection(giftSection);
     setPriceRange([minPrice, maxPrice]);
     setMinRating(rating);
     setSortBy(sort);
@@ -307,6 +323,10 @@ const ExplorePage = () => {
         if (found) categoryId = found.id;
         params.push(`category=${encodeURIComponent(categoryId)}`);
       }
+      // Add gift section filter
+      if (giftSection !== 'all') {
+        params.push(`gift_section=${encodeURIComponent(giftSection)}`);
+      }
       // For gigs tab force type=gig, otherwise use selected type
       if (tab === 'gigs') {
         params.push(`type=gig`);
@@ -370,6 +390,7 @@ const ExplorePage = () => {
       params.set('category', categoryId);
     }
     if (selectedType !== 'all') params.set('type', selectedType);
+    if (selectedGiftSection !== 'all') params.set('gift_section', selectedGiftSection);
     if (activeTab === 'products') {
       params.set('minPrice', priceRange[0]);
       params.set('maxPrice', priceRange[1]);
@@ -395,6 +416,7 @@ const ExplorePage = () => {
       params.set('category', categoryId);
     }
     if (selectedType !== 'all') params.set('type', selectedType);
+    if (selectedGiftSection !== 'all') params.set('gift_section', selectedGiftSection);
     if (activeTab === 'products') {
       params.set('minPrice', priceRange[0]);
       params.set('maxPrice', priceRange[1]);
@@ -410,6 +432,7 @@ const ExplorePage = () => {
     setQuickSearchTerm(''); // Reset quick search term too
     setSelectedCategory('all');
     setSelectedType('all');
+    setSelectedGiftSection('all');
     setPriceRange([0, 1000]);
     setMinRating(0);
     setSortBy('newest');
@@ -497,6 +520,7 @@ const ExplorePage = () => {
       const query = searchParams.get('search') || '';
       const category = searchParams.get('category') || 'all';
       const type = searchParams.get('type') || 'all';
+      const giftSection = searchParams.get('gift_section') || 'all';
       const minPrice = parseInt(searchParams.get('minPrice')) || 0;
       const maxPrice = parseInt(searchParams.get('maxPrice')) || 1000;
       const rating = parseInt(searchParams.get('rating')) || 0;
@@ -511,6 +535,9 @@ const ExplorePage = () => {
           const found = categories.find(cat => cat.id === category || cat.name === category);
           if (found) categoryId = found.id;
           params.push(`category=${encodeURIComponent(categoryId)}`);
+        }
+        if (giftSection !== 'all') {
+          params.push(`gift_section=${encodeURIComponent(giftSection)}`);
         }
         if (tab === 'gigs') {
           params.push(`type=gig`);
@@ -1027,6 +1054,20 @@ const ExplorePage = () => {
                     </Select>
                   </div>
                   <div>
+                    <Label htmlFor="gift-section-filter" className="text-neutral-900 block text-right">قسم الهدايا</Label>
+                    <Select value={selectedGiftSection} onValueChange={value => setSelectedGiftSection(String(value))} dir="rtl">
+                      <SelectTrigger id="gift-section-filter" className="mt-1 border-roman-500/30 focus:border-roman-500 focus:ring-roman-500/20 text-right">
+                        <SelectValue placeholder="اختر قسم الهدايا" />
+                      </SelectTrigger>
+                      <SelectContent className="border-roman-500/30 text-right" dir="rtl">
+                        <SelectItem value="all">كل الأقسام</SelectItem>
+                        {giftSections.map(section => (
+                          <SelectItem key={section.id} value={String(section.id)}>{section.title}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
                     <Label className="text-neutral-900 block text-right">نطاق السعر: {priceRange[0]} - {priceRange[1]} جنيه</Label>
                     <Slider
                       defaultValue={priceRange}
@@ -1195,6 +1236,20 @@ const ExplorePage = () => {
                         <SelectItem value="all">كل التصنيفات</SelectItem>
                         {categories.map(cat => (
                           <SelectItem key={cat.id} value={String(cat.id)}>{cat.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="gift-section-filter-gigs" className="text-neutral-900 block text-right">قسم الهدايا</Label>
+                    <Select value={selectedGiftSection} onValueChange={value => setSelectedGiftSection(String(value))} dir="rtl">
+                      <SelectTrigger id="gift-section-filter-gigs" className="mt-1 border-roman-500/30 focus:border-roman-500 focus:ring-roman-500/20 text-right">
+                        <SelectValue placeholder="اختر قسم الهدايا" />
+                      </SelectTrigger>
+                      <SelectContent className="border-roman-500/30 text-right" dir="rtl">
+                        <SelectItem value="all">كل الأقسام</SelectItem>
+                        {giftSections.map(section => (
+                          <SelectItem key={section.id} value={String(section.id)}>{section.title}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>

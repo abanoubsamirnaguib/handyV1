@@ -10,6 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { api } from '@/lib/api';
 import WishlistButton from '@/components/ui/WishlistButton';
 import PWAInstallSection from '@/components/PWAInstallSection';
+import GiftSections from '@/components/ui/GiftSections';
 
 const HomePage = () => {
   const navigate = useNavigate();
@@ -154,6 +155,7 @@ const HomePage = () => {
                 skills: seller.skills || seller.categories || [],
                 rating: seller.rating || 0,
                 reviewCount: seller.reviewCount || seller.review_count || 0,
+                productsCount: seller.productsCount || seller.products_count || 0,
               }))
             : [];
           setTopSellers(normalized);
@@ -530,6 +532,13 @@ const HomePage = () => {
         </div>
       </section>
 
+      {/* Gift Sections - أقسام الهدايا */}
+      <section className="py-16 bg-white dark:bg-gray-900">
+        <div className="container mx-auto px-4">
+          <GiftSections />
+        </div>
+      </section>
+
       {/* Latest Announcements Section */}
       {!loadingAnnouncements && !announcementsError && latestAnnouncements.length > 0 && (
         <section className="py-16 bg-gradient-to-r from-neutral-100 to-success-100">
@@ -680,8 +689,13 @@ const HomePage = () => {
                     </Avatar>
                     <h3 className="text-xl font-semibold text-neutral-900 mb-1">{seller.name}</h3>
                     <p className="text-sm text-neutral-900/60 mb-2">{Array.isArray(seller.skills) ? seller.skills.slice(0,2).join('، ') : ''}</p>
-                    <div className="flex justify-center items-center text-warning-500 mb-3">
-                      <Star size={16} className="mr-1" /> {seller.rating} ({seller.reviewCount} تقييمات)
+                    <div className="flex flex-col gap-2 mb-3">
+                      <div className="flex justify-center items-center text-warning-500">
+                        <Star size={16} className="mr-1" /> {seller.rating} ({seller.reviewCount} تقييمات)
+                      </div>
+                      <div className="flex justify-center items-center text-roman-500">
+                        <TrendingUp size={16} className="mr-1" /> {seller.productsCount} منتج
+                      </div>
                     </div>
                     <Button asChild variant="outline" className="border-roman-500 text-roman-500 hover:bg-roman-500 hover:text-white">
                       <Link to={`/sellers/${seller.id}`}>عرض الملف الشخصي</Link>

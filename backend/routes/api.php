@@ -111,6 +111,10 @@ Route::get('cities', [CityCrudController::class, 'index']);
 // Public Site Settings (general settings for frontend)
 Route::get('site-settings/general', [SiteSettingController::class, 'getGeneralSettings']);
 
+// Gift Sections - Public routes
+Route::get('gift-sections', [\App\Http\Controllers\GiftSectionController::class, 'index']);
+Route::get('gift-sections/{id}', [\App\Http\Controllers\GiftSectionController::class, 'show']);
+
 // AI Assistant routes (public - can be moved to protected if needed)
 Route::post('ai-assistant/chat', [AIAssistantController::class, 'chat']);
 
@@ -344,6 +348,15 @@ Route::middleware(['auth:sanctum'])->group(function () {
         
         // City CRUD for admin
         Route::apiResource('cities', CityCrudController::class);
+        
+        // Gift Sections Management for admin
+        Route::prefix('gift-sections')->group(function () {
+            Route::get('/', [\App\Http\Controllers\GiftSectionController::class, 'adminIndex']);
+            Route::post('/', [\App\Http\Controllers\GiftSectionController::class, 'store']);
+            Route::put('{id}', [\App\Http\Controllers\GiftSectionController::class, 'update']);
+            Route::delete('{id}', [\App\Http\Controllers\GiftSectionController::class, 'destroy']);
+            Route::post('update-order', [\App\Http\Controllers\GiftSectionController::class, 'updateOrder']);
+        });
 
         // Platform profits (admin dashboard)
         Route::get('platform-profits', [PlatformProfitController::class, 'index']);

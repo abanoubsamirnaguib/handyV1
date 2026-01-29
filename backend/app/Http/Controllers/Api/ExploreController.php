@@ -24,11 +24,37 @@ class ExploreController extends Controller
             $query->where('type', $request->type);
         }
         if ($request->filled('search')) {
-            $q = $request->search;
+            $q = trim($request->search);
             $query->where(function($sub) use ($q) {
                 $sub->where('title', 'like', "%$q%")
-                    ->orWhere('description', 'like', "%$q%") ;
+                    ->orWhere('description', 'like', "%$q%")
+                    ->orWhereHas('tags', function($tagQuery) use ($q) {
+                        // Split search query by comma and space to search each word
+                        $searchTerms = array_map('trim', preg_split('/[,،\s]+/', $q, -1, PREG_SPLIT_NO_EMPTY));
+                        $tagQuery->where(function($query) use ($searchTerms) {
+                            foreach ($searchTerms as $term) {
+                                $term = trim($term);
+                                if (!empty($term)) {
+                                    // Use TRIM in the database query to handle stored spaces
+                                    $query->orWhereRaw("TRIM(tag_name) LIKE ?", ['%' . $term . '%']);
+                                }
+                            }
+                        });
+                    });
             });
+        }
+        // Gift section filter: filter products by tags matching gift section tags
+        if ($request->filled('gift_section')) {
+            $giftSection = \App\Models\GiftSection::find($request->gift_section);
+            if ($giftSection && !empty($giftSection->tags)) {
+                $query->whereHas('tags', function($q) use ($giftSection) {
+                    $q->where(function($query) use ($giftSection) {
+                        foreach ($giftSection->tags as $tag) {
+                            $query->orWhere('tag_name', 'LIKE', '%' . trim($tag) . '%');
+                        }
+                    });
+                });
+            }
         }
         if ($request->filled('min_price')) {
             $query->where('price', '>=', $request->min_price);
@@ -46,8 +72,8 @@ class ExploreController extends Controller
             if ($request->sort === 'newest') $query->orderByDesc('created_at');
             if ($request->sort === 'oldest') $query->orderBy('created_at');
         } else {
-            // Default sorting by oldest when no sort specified
-            $query->orderBy('created_at');
+            // Default sorting by newest when no sort specified
+            $query->orderByDesc('created_at');
         }
         $query->where('status', 'active'); // Only active products
         

@@ -523,6 +523,10 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ message, history }),
     }),
+
+  // Gift Sections (public)
+  getGiftSections: () => apiFetch('gift-sections'),
+  getGiftSectionById: (id) => apiFetch(`gift-sections/${id}`),
 };
 
 // Admin API functions
@@ -841,6 +845,29 @@ export const adminApi = {
     const searchParams = new URLSearchParams(params);
     return apiFetch(`admin/platform-profits?${searchParams}`);
   },
+
+  // Gift Sections management
+  getGiftSections: (params = {}) => {
+    const searchParams = new URLSearchParams(params);
+    return apiFetch(`admin/gift-sections?${searchParams}`);
+  },
+  createGiftSection: (sectionData) => 
+    apiFetch('admin/gift-sections', {
+      method: 'POST',
+      body: JSON.stringify(sectionData),
+    }),
+  updateGiftSection: (sectionId, sectionData) => 
+    apiFetch(`admin/gift-sections/${sectionId}`, {
+      method: 'PUT',
+      body: JSON.stringify(sectionData),
+    }),
+  deleteGiftSection: (sectionId) => 
+    apiFetch(`admin/gift-sections/${sectionId}`, { method: 'DELETE' }),
+  updateGiftSectionsOrder: (sectionsData) => 
+    apiFetch('admin/gift-sections/update-order', {
+      method: 'POST',
+      body: JSON.stringify(sectionsData),
+    }),
 };
 
 // Seller API for product/gig CRUD

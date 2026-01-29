@@ -149,7 +149,10 @@ class ProductController extends Controller
         // Save tags
         if ($request->has('tags')) {
             foreach ($request->tags as $tag) {
-                $product->tags()->create(['tag_name' => $tag]);
+                $tag = trim($tag);
+                if (!empty($tag)) {
+                    $product->tags()->create(['tag_name' => $tag]);
+                }
             }
         }
         
@@ -244,7 +247,10 @@ class ProductController extends Controller
         if ($request->has('tags')) {
             $product->tags()->delete();
             foreach ($request->tags as $tag) {
-                $product->tags()->create(['tag_name' => $tag]);
+                $tag = trim($tag);
+                if (!empty($tag)) {
+                    $product->tags()->create(['tag_name' => $tag]);
+                }
             }
         }
         $hasNewImages = $request->hasFile('images');

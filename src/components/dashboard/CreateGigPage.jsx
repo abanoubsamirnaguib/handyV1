@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { sellerApi, api } from '@/lib/api';
+import { useCategories } from '@/hooks/useCache';
 
 const CreateGigPage = () => {
   const navigate = useNavigate();
@@ -46,47 +47,34 @@ const CreateGigPage = () => {
   const [imagePreviews, setImagePreviews] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  // Use cached categories from React Query
+  const { data: categoriesData, isLoading: isCategoriesLoading, isError: isCategoriesError } = useCategories();
+
   useEffect(() => {
-    const loadCategories = async () => {
-      let isMounted = true;
-      setCategoriesLoading(true);
-      setCategoriesError(null);
+    setCategoriesLoading(isCategoriesLoading);
+    
+    if (categoriesData) {
+      // Handle different response structures
+      let rawCategories = [];
       
-      try {
-        const data = await api.getCategories();
-        
-        if (!isMounted) return;
-
-        // Fixed validation logic
-        if (Array.isArray(data)) {
-          setCategories(data);
-        } else if (data && Array.isArray(data.data)) {
-          setCategories(data.data);
-        } else if (data && Array.isArray(data.categories)) {
-          setCategories(data.categories);
-        } else if (data && data.success && Array.isArray(data.data)) {
-          setCategories(data.data);
-        } else {
-          console.error('Invalid categories response structure:', data);
-          throw new Error('استجابة غير صحيحة من الخادم للتصنيفات');
-        }
-      } catch (error) {
-        console.error('Error loading categories:', error);
-        if (isMounted) {
-          setCategoriesError(error.message || 'فشل في تحميل التصنيفات');
-          setCategories([]);
-        }
-      } finally {
-        if (isMounted) {
-          setCategoriesLoading(false);
-        }
+      if (Array.isArray(categoriesData)) {
+        rawCategories = categoriesData;
+      } else if (categoriesData.data && Array.isArray(categoriesData.data)) {
+        rawCategories = categoriesData.data;
+      } else if (categoriesData.categories && Array.isArray(categoriesData.categories)) {
+        rawCategories = categoriesData.categories;
       }
-
-      return () => { isMounted = false; };
-    };
-
-    loadCategories();
-  }, []);
+      
+      setCategories(rawCategories);
+      setCategoriesLoading(false);
+    }
+    
+    if (isCategoriesError) {
+      setCategoriesError('فشل في تحميل التصنيفات');
+      setCategories([]);
+      setCategoriesLoading(false);
+    }
+  }, [categoriesData, isCategoriesLoading, isCategoriesError]);
 
   useEffect(() => {
     const fetchSellerGigs = async () => {

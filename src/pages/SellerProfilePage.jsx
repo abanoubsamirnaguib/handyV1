@@ -207,7 +207,7 @@ const SellerProfilePage = () => {
                 <img 
                   src="https://images.unsplash.com/photo-1692975716697-4abaff365786" 
                   alt="غلاف افتراضي للحرفي" 
-                  className="w-full h-full object-cover opacity-30" 
+                  className="w-full h-full object-cover opacity-100" 
                 />
                 <div className="absolute inset-0 bg-gradient-to-r from-roman-500/40 to-transparent"></div>
               </>
@@ -217,7 +217,7 @@ const SellerProfilePage = () => {
                 <img 
                   src={seller.avatar} 
                   alt={seller.name}
-                  className="w-full h-full object-cover opacity-30"
+                  className="w-full h-full object-cover opacity-100"
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-5xl font-bold text-roman-500">

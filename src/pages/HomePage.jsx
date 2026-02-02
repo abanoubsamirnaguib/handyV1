@@ -11,6 +11,7 @@ import { api } from '@/lib/api';
 import WishlistButton from '@/components/ui/WishlistButton';
 import PWAInstallSection from '@/components/PWAInstallSection';
 import GiftSections from '@/components/ui/GiftSections';
+import { useCategories } from '@/hooks/useCache';
 
 const HomePage = () => {
   const navigate = useNavigate();
@@ -70,34 +71,41 @@ const HomePage = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Fetch categories
+  // Use cached categories from React Query
+  const { data: categoriesData, isLoading: isCategoriesLoading, isError: categoriesHasError } = useCategories();
+  
   useEffect(() => {
-    let isMounted = true;
-    setLoadingCategories(true);
-    setCategoriesError(null);
-    api.getCategories()
-      .then(data => {
-        if (isMounted) {
-          const normalized = Array.isArray(data.data)
-            ? data.data.map(cat => ({
-                id: cat.id || cat._id || cat.category_id || cat.slug || cat.name,
-                name: cat.name || cat.title || cat.label,
-                icon: cat.icon || cat.iconName || 'star',
-                image: cat.image
-              }))
-            : [];
-          setCategories(normalized);
-          setLoadingCategories(false);
-        }
-      })
-      .catch(() => {
-        if (isMounted) {
-          setCategoriesError('تعذر تحميل التصنيفات');
-          setLoadingCategories(false);
-        }
-      });
-    return () => { isMounted = false; };
-  }, []);
+    // Update loading state
+    setLoadingCategories(isCategoriesLoading);
+    
+    if (categoriesData) {
+      // Handle different response structures
+      let rawCategories = [];
+      
+      if (Array.isArray(categoriesData)) {
+        // Direct array
+        rawCategories = categoriesData;
+      } else if (categoriesData.data && Array.isArray(categoriesData.data)) {
+        // Wrapped in data property
+        rawCategories = categoriesData.data;
+      }
+      
+      const normalized = rawCategories.map(cat => ({
+        id: cat.id || cat._id || cat.category_id || cat.slug || cat.name,
+        name: cat.name || cat.title || cat.label,
+        icon: cat.icon || cat.iconName || 'star',
+        image: cat.image
+      }));
+      
+      setCategories(normalized);
+      setLoadingCategories(false);
+    }
+    
+    if (categoriesHasError) {
+      setCategoriesError('تعذر تحميل التصنيفات');
+      setLoadingCategories(false);
+    }
+  }, [categoriesData, isCategoriesLoading, categoriesHasError]);
 
   // Fetch featured products from backend 
   useEffect(() => {
@@ -386,12 +394,24 @@ const HomePage = () => {
                                   src={getImageUrl(category.image)} 
                                   alt={category.name}
                                   className="w-full h-full object-cover rounded-full"
+                                  onError={(e) => {
+                                    // On error, replace with default image or fallback to icon
+                                    e.target.onerror = null; // Prevent infinite loop
+                                    e.target.style.display = 'none';
+                                    // Show the icon fallback instead
+                                    const iconContainer = e.target.parentElement.querySelector('.icon-fallback');
+                                    if (iconContainer) {
+                                      iconContainer.style.display = 'flex';
+                                    }
+                                  }}
                                 />
-                              ) : (
-                                <div className="w-8 h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 flex items-center justify-center text-roman-500 group-hover:text-roman-500/80 transition-colors duration-300">
-                                  {getCategoryIcon(category.icon)}
-                                </div>
-                              )}
+                              ) : null}
+                              {/* Icon fallback - shown when no image or image fails to load */}
+                              <div 
+                                className={`icon-fallback w-8 h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 flex items-center justify-center text-roman-500 group-hover:text-roman-500/80 transition-colors duration-300 ${category.image ? 'hidden' : 'flex'}`}
+                              >
+                                {getCategoryIcon(category.icon)}
+                              </div>
                               {/* Decorative ring */}
                               <div className="absolute inset-0 rounded-full border border-roman-500/20 animate-pulse"></div>
                             </div>

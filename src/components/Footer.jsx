@@ -1,18 +1,26 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Facebook, Instagram, Youtube, Mail, Phone, MapPin, Clock } from 'lucide-react';
-import { apiFetch } from '@/lib/api';
 import { useSiteSettings } from '@/contexts/SiteSettingsContext';
+import { useCategories } from '@/hooks/useCache';
 
 const Footer = () => {
   const [categories, setCategories] = useState([]);
   const { settings } = useSiteSettings();
+  const { data: categoriesData } = useCategories();
 
   useEffect(() => {
-    apiFetch('listcategories')
-      .then(data => setCategories(data.data || data))
-      .catch(() => setCategories([]));
-  }, []);
+    if (categoriesData) {
+      // Handle different response structures
+      if (Array.isArray(categoriesData)) {
+        setCategories(categoriesData);
+      } else if (categoriesData.data && Array.isArray(categoriesData.data)) {
+        setCategories(categoriesData.data);
+      } else {
+        setCategories([]);
+      }
+    }
+  }, [categoriesData]);
 
   return (
     <footer className="bg-roman-500 text-white md:block hidden">

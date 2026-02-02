@@ -8,6 +8,7 @@ use App\Http\Resources\ProductResource;
 use App\Http\Resources\ReviewResource;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
+use App\Services\ImageService;
 
 class ProductController extends Controller
 {
@@ -156,10 +157,17 @@ class ProductController extends Controller
             }
         }
         
-        // Save images
+        // Save images - Convert to WebP format
         if ($request->hasFile('images')) {
-            foreach ($request->file('images') as $img) {
-                $path = $img->store('products/'. $product->id , 'public');
+            $directory = 'products/' . $product->id;
+            $webpPaths = ImageService::convertMultipleToWebP(
+                $request->file('images'),
+                $directory,
+                100,  // WebP quality (0-100)
+                1920 // Max width in pixels
+            );
+            
+            foreach ($webpPaths as $path) {
                 $product->images()->create(['image_url' => $path]);
             }
         }
@@ -271,23 +279,29 @@ class ProductController extends Controller
                 }
                 }
                 if (!$found) {
-                if (Storage::disk('public')->exists($image->image_url)) {
-                    Storage::disk('public')->delete($image->image_url);
-                }
+                // Delete image using ImageService
+                ImageService::deleteImage($image->image_url);
                 $image->delete();
                 }
             }
             } else if ($hasNewImages) {
+            // Delete all existing images using ImageService
             foreach ($product->images as $image) {
-                if ($image->image_url && Storage::disk('public')->exists($image->image_url)) {
-                Storage::disk('public')->delete($image->image_url);
-                }
+                ImageService::deleteImage($image->image_url);
             }
             $product->images()->delete();
             }
             if ($hasNewImages) {
-            foreach ($request->file('images') as $img) {
-                $path = $img->store('products/' . $product->id, 'public');
+            // Convert new images to WebP format
+            $directory = 'products/' . $product->id;
+            $webpPaths = ImageService::convertMultipleToWebP(
+                $request->file('images'),
+                $directory,
+                100,  // WebP quality (0-100)
+                1920 // Max width in pixels
+            );
+            
+            foreach ($webpPaths as $path) {
                 $product->images()->create(['image_url' => $path]);
             }
             }
@@ -336,17 +350,14 @@ class ProductController extends Controller
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
-        // Delete images from storage (stored in public/products/{product_id})
+        // Delete images from storage using ImageService
         foreach ($product->images as $image) {
-            if ($image->image_url && Storage::disk('public')->exists($image->image_url)) {
-            Storage::disk('public')->delete($image->image_url);
-            }
+            ImageService::deleteImage($image->image_url);
         }
-        // Optionally, remove the entire product directory if empty
+        
+        // Remove the entire product directory
         $productDir = 'products/' . $product->id;
-        if (Storage::disk('public')->exists($productDir) && empty(Storage::disk('public')->files($productDir))) {
-            Storage::disk('public')->deleteDirectory($productDir);
-        }
+        ImageService::deleteDirectory($productDir);
 
         $product->images()->delete();
         $product->tags()->delete();

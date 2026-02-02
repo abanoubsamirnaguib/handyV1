@@ -48,6 +48,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { adminApi, api } from '@/lib/api';
+import { useCategories } from '@/hooks/useCache';
 
 const AdminProducts = () => {
   const { user } = useAuth();
@@ -118,19 +119,21 @@ const AdminProducts = () => {
       setLoading(false);
     }
   };
-  const fetchCategories = async () => {
-    try {
-      const response = await api.getCategories();
-      setCategories(response.data || []);
-    } catch (error) {
-      console.error('Error fetching categories:', error);
-      toast({
-        variant: "destructive",
-        title: "خطأ",
-        description: "حدث خطأ أثناء جلب التصنيفات"
-      });
+  // Use cached categories from React Query
+  const { data: categoriesData } = useCategories();
+  
+  useEffect(() => {
+    if (categoriesData) {
+      // Handle different response structures
+      if (Array.isArray(categoriesData)) {
+        setCategories(categoriesData);
+      } else if (categoriesData.data && Array.isArray(categoriesData.data)) {
+        setCategories(categoriesData.data);
+      } else {
+        setCategories([]);
+      }
     }
-  };  // Handle search and filter changes
+  }, [categoriesData]);  // Handle search and filter changes
   const handleSearchChange = (value) => {
     setSearchTerm(value);
     setCurrentPage(1); // Reset to first page when searching

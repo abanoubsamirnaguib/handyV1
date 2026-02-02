@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 
 const SiteSettingsContext = createContext();
@@ -12,26 +13,14 @@ export const useSiteSettings = () => {
 };
 
 export const SiteSettingsProvider = ({ children }) => {
-  const [settings, setSettings] = useState({
-    siteDescription: 'منصة تجمع الحرفيين والمبدعين في مكان واحد، لعرض منتجاتهم اليدوية الفريدة والتواصل مع العملاء مباشرة.',
-    maintenanceMode: false,
-    registrationsEnabled: true,
-    contactPhone: '+20 123 456 7890',
-    contactEmail: 'officialbazar64@gmail.com',
-    contactAddress: 'شارع الحرفيين، الفيوم ، مصر',
-    workingHours: 'السبت - الخميس: 9:00 صباحاً - 6:00 مساءً',
-    transactionNumber: '',
-  });
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    loadSettings();
-  }, []);
-
-  const loadSettings = async () => {
-    try {
+  const queryClient = useQueryClient();
+  
+  // Use React Query to fetch and cache site settings
+  const { data, isLoading } = useQuery({
+    queryKey: ['siteSettings', 'general'],
+    queryFn: async () => {
       const data = await api.getGeneralSiteSettings();
-      setSettings({
+      return {
         siteDescription: data.siteDescription || 'منصة تجمع الحرفيين والمبدعين في مكان واحد، لعرض منتجاتهم اليدوية الفريدة والتواصل مع العملاء مباشرة.',
         maintenanceMode: data.maintenanceMode || false,
         registrationsEnabled: data.registrationsEnabled !== false,
@@ -40,20 +29,30 @@ export const SiteSettingsProvider = ({ children }) => {
         contactAddress: data.contactAddress || 'شارع الحرفيين، الفيوم ، مصر',
         workingHours: data.workingHours || 'السبت - الخميس: 9:00 صباحاً - 6:00 مساءً',
         transactionNumber: data.transactionNumber || '',
-      });
-    } catch (error) {
-      console.error('Error loading site settings:', error);
-    } finally {
-      setLoading(false);
-    }
+      };
+    },
+    staleTime: 1000 * 60 * 60, // 1 hour
+    cacheTime: 1000 * 60 * 60 * 2, // 2 hours
+  });
+
+  const settings = data || {
+    siteDescription: 'منصة تجمع الحرفيين والمبدعين في مكان واحد، لعرض منتجاتهم اليدوية الفريدة والتواصل مع العملاء مباشرة.',
+    maintenanceMode: false,
+    registrationsEnabled: true,
+    contactPhone: '+20 01068644570',
+    contactEmail: 'officialbazar64@gmail.com',
+    contactAddress: 'شارع الحرفيين، الفيوم ، مصر',
+    workingHours: 'السبت - الخميس: 9:00 صباحاً - 6:00 مساءً',
+    transactionNumber: '',
   };
 
   const refreshSettings = () => {
-    loadSettings();
+    // Invalidate cache to force refetch
+    queryClient.invalidateQueries(['siteSettings', 'general']);
   };
 
   return (
-    <SiteSettingsContext.Provider value={{ settings, loading, refreshSettings }}>
+    <SiteSettingsContext.Provider value={{ settings, loading: isLoading, refreshSettings }}>
       {children}
     </SiteSettingsContext.Provider>
   );

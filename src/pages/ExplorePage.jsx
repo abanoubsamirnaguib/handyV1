@@ -15,6 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import WishlistButton from '@/components/ui/WishlistButton';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
+import { useCategories, useGiftSections } from '@/hooks/useCache';
 
 // Helper function to get category icon based on backend icon name
 const getCategoryIcon = (iconName) => {
@@ -159,6 +160,43 @@ const ExplorePage = () => {
   const { user } = useAuth();
   const { toast } = useToast();
 
+  // Use cached queries for categories and gift sections
+  const { data: categoriesData, isLoading: categoriesLoading } = useCategories();
+  const { data: giftSectionsData, isLoading: giftSectionsLoading } = useGiftSections();
+
+  // Update local state when cached data arrives
+  useEffect(() => {
+    if (categoriesData) {
+      // Handle different response structures
+      let rawCategories = [];
+      
+      if (Array.isArray(categoriesData)) {
+        rawCategories = categoriesData;
+      } else if (categoriesData.data && Array.isArray(categoriesData.data)) {
+        rawCategories = categoriesData.data;
+      }
+      
+      const normalized = rawCategories.map(cat => ({
+        id: cat.id,
+        name: cat.name || cat.title || cat.label,
+        icon: cat.icon || cat.iconName || 'star',
+        image: cat.image
+      }));
+      
+      setCategories(normalized);
+    }
+  }, [categoriesData]);
+
+  useEffect(() => {
+    if (giftSectionsData) {
+      if (giftSectionsData.success && Array.isArray(giftSectionsData.data)) {
+        setGiftSections(giftSectionsData.data);
+      } else if (Array.isArray(giftSectionsData)) {
+        setGiftSections(giftSectionsData);
+      }
+    }
+  }, [giftSectionsData]);
+
   // Handle wishlist changes
   const handleWishlistChange = (productId, isInWishlist) => {
     setGigs(prevGigs => 
@@ -189,42 +227,6 @@ const ExplorePage = () => {
         clearTimeout(searchTimeout);
       }
     };
-  }, []);
-
-  useEffect(() => {
-    apiFetch('listcategories')
-      .then(data => {
-        // Normalize categories data to include icon field from backend
-        const normalized = Array.isArray(data.data) 
-          ? data.data.map(cat => ({
-              id: cat.id,
-              name: cat.name || cat.title || cat.label,
-              icon: cat.icon || cat.iconName || 'star',
-              image: cat.image
-            }))
-          : Array.isArray(data)
-          ? data.map(cat => ({
-              id: cat.id,
-              name: cat.name || cat.title || cat.label,
-              icon: cat.icon || cat.iconName || 'star',
-              image: cat.image
-            }))
-          : [];
-        setCategories(normalized);
-      })
-      .catch(() => setCategories([]));
-    
-    // Fetch gift sections
-    apiFetch('gift-sections')
-      .then(data => {
-        if (data.success && Array.isArray(data.data)) {
-          setGiftSections(data.data);
-        }
-      })
-      .catch(err => {
-        console.error('Failed to load gift sections:', err);
-        setGiftSections([]);
-      });
   }, []);
 
   // Ensure selectedCategory is always a string (id) and matches the dropdown after searchParams change
@@ -338,12 +340,34 @@ const ExplorePage = () => {
       if (rating > 0) params.push(`min_rating=${rating}`);
       if (sort) params.push(`sort=${sort}`);
       const url = `explore/products?${params.join('&')}`;
+      
+      // Check sessionStorage cache (5 minutes)
+      const cacheKey = `explore_cache_${url}`;
+      const cached = sessionStorage.getItem(cacheKey);
+      if (cached) {
+        try {
+          const { data, timestamp } = JSON.parse(cached);
+          // Use cache if less than 5 minutes old
+          if (Date.now() - timestamp < 5 * 60 * 1000) {
+            const products = Array.isArray(data.data) ? data.data.map(normalizeProduct) : [];
+            setGigs(products);
+            setHasMore(data.pagination?.has_more || false);
+            setLoading(false);
+            return;
+          }
+        } catch (e) {
+          // Invalid cache, continue with fetch
+        }
+      }
+      
       apiFetch(url)
         .then(data => {
           const products = Array.isArray(data.data) ? data.data.map(normalizeProduct) : [];
           setGigs(products);
           setHasMore(data.pagination?.has_more || false);
           setLoading(false);
+          // Cache the response
+          sessionStorage.setItem(cacheKey, JSON.stringify({ data, timestamp: Date.now() }));
         })
         .catch(() => {
           setGigs([]);
@@ -364,12 +388,34 @@ const ExplorePage = () => {
       if (rating > 0) params.push(`min_rating=${rating}`);
       if (sort) params.push(`sort=${sort}`);
       const url = `explore/sellers?${params.join('&')}`;
+      
+      // Check sessionStorage cache (5 minutes)
+      const cacheKey = `explore_cache_${url}`;
+      const cached = sessionStorage.getItem(cacheKey);
+      if (cached) {
+        try {
+          const { data, timestamp } = JSON.parse(cached);
+          // Use cache if less than 5 minutes old
+          if (Date.now() - timestamp < 5 * 60 * 1000) {
+            const sellersList = Array.isArray(data.data) ? data.data.map(normalizeSeller) : [];
+            setSellers(sellersList);
+            setHasMore(data.pagination?.has_more || false);
+            setLoading(false);
+            return;
+          }
+        } catch (e) {
+          // Invalid cache, continue with fetch
+        }
+      }
+      
       apiFetch(url)
         .then(data => {
           const sellersList = Array.isArray(data.data) ? data.data.map(normalizeSeller) : [];
           setSellers(sellersList);
           setHasMore(data.pagination?.has_more || false);
           setLoading(false);
+          // Cache the response
+          sessionStorage.setItem(cacheKey, JSON.stringify({ data, timestamp: Date.now() }));
         })
         .catch(() => {
           setSellers([]);

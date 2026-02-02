@@ -34,4 +34,12 @@ class ProductImage extends Model
         // Otherwise, prepend APP_URL and storage path
         return config('app.url') . '/storage/' . ltrim($value, '/');
     }
+    
+    /**
+     * Check if the image is WebP format
+     */
+    public function isWebP()
+    {
+        return str_ends_with(strtolower($this->getRawOriginal('image_url') ?? ''), '.webp');
+    }
 }

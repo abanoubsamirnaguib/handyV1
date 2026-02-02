@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { sellerApi, apiFetch } from '@/lib/api';
+import { useCategories } from '@/hooks/useCache';
 
 // Custom RTL-friendly Select wrapper components
 const RTLSelect = ({ children, value, onValueChange, ...props }) => {
@@ -56,34 +57,23 @@ const EditGigPage = () => {  const { gigId } = useParams();
   const [categories, setCategories] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Load categories
+  // Use cached categories from React Query
+  const { data: categoriesData } = useCategories();
+  
   useEffect(() => {
-    const loadCategories = async () => {
-      try {
-        const data = await apiFetch('listcategories');
-        if (Array.isArray(data)) {
-          setCategories(data);
-        } else if (data && Array.isArray(data.data)) {
-          setCategories(data.data);
-        } else if (data && data.success && Array.isArray(data.data)) {
-          setCategories(data.data);
-        } else {
-          console.error('Invalid categories response structure:', data);
-          setCategories([]);
-        }
-      } catch (error) {
-        console.error('Error loading categories:', error);
-        toast({
-          variant: "destructive",
-          title: "خطأ في تحميل التصنيفات",
-          description: error.message || "فشل في تحميل التصنيفات"
-        });
-        setCategories([]);
+    if (categoriesData) {
+      // Handle different response structures
+      let rawCategories = [];
+      
+      if (Array.isArray(categoriesData)) {
+        rawCategories = categoriesData;
+      } else if (categoriesData.data && Array.isArray(categoriesData.data)) {
+        rawCategories = categoriesData.data;
       }
-    };
-    
-    loadCategories();
-  }, [toast]);
+      
+      setCategories(rawCategories);
+    }
+  }, [categoriesData]);
 
   // Fetch gig data
   useEffect(() => {

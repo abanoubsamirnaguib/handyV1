@@ -632,7 +632,7 @@ const ProfilePage = () => {
               <img 
                 src="https://images.unsplash.com/photo-1692975716697-4abaff365786" 
                 alt="غلاف الملف الشخصي" 
-                className="w-full h-full object-cover opacity-30" 
+                className="w-full h-full object-cover opacity-100" 
               />
             )}
             {isOwnProfile && (

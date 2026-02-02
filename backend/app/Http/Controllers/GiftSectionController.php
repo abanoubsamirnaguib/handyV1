@@ -14,23 +14,28 @@ class GiftSectionController extends Controller
     public function index()
     {
         try {
-            $sections = GiftSection::where('is_active', true)
-                ->orderBy('display_order', 'asc')
-                ->get();
+            // Cache gift sections for 30 minutes (1800 seconds)
+            $sectionsWithProducts = \Cache::remember('gift_sections_list', 1800, function () {
+                $sections = GiftSection::where('is_active', true)
+                    ->orderBy('display_order', 'asc')
+                    ->get();
 
-            $sectionsWithProducts = $sections->map(function ($section) {
-                return [
-                    'id' => $section->id,
-                    'title' => $section->title,
-                    'tags' => $section->tags,
-                    'products' => $section->getProducts(20), // Limit to 20 products per section
-                ];
+                return $sections->map(function ($section) {
+                    return [
+                        'id' => $section->id,
+                        'title' => $section->title,
+                        'tags' => $section->tags,
+                        'products' => $section->getProducts(20), // Limit to 20 products per section
+                    ];
+                });
             });
 
             return response()->json([
                 'success' => true,
                 'data' => $sectionsWithProducts
-            ]);
+            ])
+            ->header('Cache-Control', 'public, max-age=1800')
+            ->header('Expires', gmdate('D, d M Y H:i:s', time() + 1800) . ' GMT');
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -114,6 +119,9 @@ class GiftSectionController extends Controller
                 'is_active' => $request->is_active ?? true,
             ]);
 
+            // Clear cache when creating new section
+            \Cache::forget('gift_sections_list');
+
             return response()->json([
                 'success' => true,
                 'message' => 'Gift section created successfully',
@@ -159,6 +167,9 @@ class GiftSectionController extends Controller
                 'is_active'
             ]));
 
+            // Clear cache when updating section
+            \Cache::forget('gift_sections_list');
+
             return response()->json([
                 'success' => true,
                 'message' => 'Gift section updated successfully',
@@ -181,6 +192,9 @@ class GiftSectionController extends Controller
         try {
             $section = GiftSection::findOrFail($id);
             $section->delete();
+
+            // Clear cache when deleting section
+            \Cache::forget('gift_sections_list');
 
             return response()->json([
                 'success' => true,

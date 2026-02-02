@@ -17,19 +17,23 @@ class SiteSettingController extends Controller
     // Public: Get general site settings (for frontend)
     public function getGeneralSettings()
     {
-        // Only return editable settings (site name, logo, favicon are fixed in frontend)
-        $settings = [
-            'siteDescription' => SiteSetting::where('setting_key', 'site_description')->value('setting_value') ?? 'منصة تجمع الحرفيين والمبدعين في مكان واحد، لعرض منتجاتهم اليدوية الفريدة والتواصل مع العملاء مباشرة.',
-            'maintenanceMode' => SiteSetting::where('setting_key', 'maintenance_mode')->value('setting_value') === 'true',
-            'registrationsEnabled' => SiteSetting::where('setting_key', 'registrations_enabled')->value('setting_value') !== 'false',
-            'contactPhone' => SiteSetting::where('setting_key', 'contact_phone')->value('setting_value') ?? '+2 01068644570',
-            'contactEmail' => SiteSetting::where('setting_key', 'contact_email')->value('setting_value') ?? 'officialbazar64@gmail.com',
-            'contactAddress' => SiteSetting::where('setting_key', 'contact_address')->value('setting_value') ?? 'شارع الحرفيين، الفيوم ، مصر',
-            'workingHours' => SiteSetting::where('setting_key', 'working_hours')->value('setting_value') ?? 'السبت - الخميس: 9:00 صباحاً - 6:00 مساءً',
-            'transactionNumber' => SiteSetting::where('setting_key', 'transaction_number')->value('setting_value') ?? '',
-        ];
+        // Cache site settings for 1 hour (3600 seconds)
+        $settings = \Cache::remember('site_settings_general', 3600, function () {
+            return [
+                'siteDescription' => SiteSetting::where('setting_key', 'site_description')->value('setting_value') ?? 'منصة تجمع الحرفيين والمبدعين في مكان واحد، لعرض منتجاتهم اليدوية الفريدة والتواصل مع العملاء مباشرة.',
+                'maintenanceMode' => SiteSetting::where('setting_key', 'maintenance_mode')->value('setting_value') === 'true',
+                'registrationsEnabled' => SiteSetting::where('setting_key', 'registrations_enabled')->value('setting_value') !== 'false',
+                'contactPhone' => SiteSetting::where('setting_key', 'contact_phone')->value('setting_value') ?? '+2 01068644570',
+                'contactEmail' => SiteSetting::where('setting_key', 'contact_email')->value('setting_value') ?? 'officialbazar64@gmail.com',
+                'contactAddress' => SiteSetting::where('setting_key', 'contact_address')->value('setting_value') ?? 'شارع الحرفيين، الفيوم ، مصر',
+                'workingHours' => SiteSetting::where('setting_key', 'working_hours')->value('setting_value') ?? 'السبت - الخميس: 9:00 صباحاً - 6:00 مساءً',
+                'transactionNumber' => SiteSetting::where('setting_key', 'transaction_number')->value('setting_value') ?? '',
+            ];
+        });
 
-        return response()->json($settings);
+        return response()->json($settings)
+            ->header('Cache-Control', 'public, max-age=3600')
+            ->header('Expires', gmdate('D, d M Y H:i:s', time() + 3600) . ' GMT');
     }
 
     public function update(Request $request)
@@ -200,6 +204,11 @@ class SiteSettingController extends Controller
                         ['setting_value' => $value, 'updated_at' => now()]
                     );
                 }
+            }
+
+            // Clear cache when updating general settings
+            if ($settingsType === 'general') {
+                \Cache::forget('site_settings_general');
             }
 
             $messages = [

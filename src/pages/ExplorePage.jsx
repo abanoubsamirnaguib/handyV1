@@ -1153,7 +1153,7 @@ const ExplorePage = () => {
             {/* Gigs List */}
             <main className="w-full md:w-3/4">
               <div className="flex items-center justify-between mb-6">
-                <p className="text-neutral-900/70">تم العثور على {gigs.length} منتج</p>                <div className="flex items-center gap-2">                  <Button variant="outline" size="icon" className="md:hidden ml-2 border-roman-500/50 text-roman-500 hover:bg-roman-500 hover:text-white" onClick={() => setIsFiltersOpen(true)}>
+                <p className="text-neutral-900/70 hidden md:block">تم العثور على {gigs.length} منتج</p>                <div className="flex items-center gap-2">                  <Button variant="outline" size="icon" className="md:hidden ml-2 border-roman-500/50 text-roman-500 hover:bg-roman-500 hover:text-white" onClick={() => setIsFiltersOpen(true)}>
                     <Filter className="h-5 w-5" />
                   </Button>                  <Select value={sortBy} onValueChange={handleSortChange} dir="rtl">
                     <SelectTrigger className="w-[180px] border-roman-500/30 focus:border-roman-500 focus:ring-roman-500/20 text-right">
@@ -1341,7 +1341,7 @@ const ExplorePage = () => {
             {/* Gigs List */}
             <main className="w-full md:w-3/4">
               <div className="flex items-center justify-between mb-6">
-                <p className="text-neutral-900/70">تم العثور على {gigs.length} حرفة</p>                <div className="flex items-center gap-2">                  <Button variant="outline" size="icon" className="md:hidden ml-2 border-roman-500/50 text-roman-500 hover:bg-roman-500 hover:text-white" onClick={() => setIsFiltersOpen(true)}>
+                <p className="text-neutral-900/70 hidden md:block">تم العثور على {gigs.length} حرفة</p>                <div className="flex items-center gap-2">                  <Button variant="outline" size="icon" className="md:hidden ml-2 border-roman-500/50 text-roman-500 hover:bg-roman-500 hover:text-white" onClick={() => setIsFiltersOpen(true)}>
                     <Filter className="h-5 w-5" />
                   </Button>                  <Select value={sortBy} onValueChange={handleSortChange} dir="rtl">
                     <SelectTrigger className="w-[180px] border-roman-500/30 focus:border-roman-500 focus:ring-roman-500/20 text-right">
@@ -1503,7 +1503,7 @@ const ExplorePage = () => {
             {/* Sellers List */}
             <main className="w-full md:w-3/4">
               <div className="flex items-center justify-between mb-6">
-                <p className="text-gray-600">تم العثور على {sellers.length} حرفي</p>
+                <p className="text-gray-600 hidden md:block">تم العثور على {sellers.length} حرفي</p>
                 <div className="flex items-center gap-2">
                   <Button variant="outline" size="icon" className="md:hidden ml-2" onClick={() => setIsFiltersOpen(true)}>
                     <Filter className="h-5 w-5" />

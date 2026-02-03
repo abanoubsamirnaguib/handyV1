@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Search, ArrowRight, Star, TrendingUp, Shield, Clock, Palette, HandMetal, Gift, Shirt, Image, Utensils, AlertCircle, CheckCircle, Info, AlertTriangle, Calendar, Megaphone, ArrowLeft } from 'lucide-react';
+import { Search, ArrowRight, Star, TrendingUp, Shield, Clock, Palette, HandMetal, Gift, Shirt, Image, Utensils, AlertCircle, CheckCircle, Info, AlertTriangle, Calendar, Megaphone, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -454,7 +454,7 @@ const HomePage = () => {
       </section>
 
       {/* Featured Gigs Section */}
-      <section className="py-16 bg-roman-400/10">
+      <section className="py-16 bg-white">
         <div className="container mx-auto px-4">
           <motion.h2 
             className="text-3xl font-bold text-center mb-12 text-neutral-900"
@@ -464,83 +464,117 @@ const HomePage = () => {
           >
             منتجات <span className="text-roman-500">مميزة</span>
           </motion.h2>
-          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-2" dir="rtl">
-            {loadingFeatured ? (
-              <div className="col-span-8 text-center text-neutral-900/60 py-8">جاري التحميل...</div>
-            ) : featuredError ? (
-              <div className="col-span-8 text-center text-red-600 py-8">{featuredError}</div>
-            ) : featuredGigs.length === 0 ? (
-              <div className="col-span-8 text-center text-neutral-900/60 py-8">لا توجد منتجات مميزة متاحة</div>
-            ) : (
-              featuredGigs.map((gig, index) => {
-                // Find category name from gig.category object if present
-                let categoryName = gig.category && gig.category.name ? gig.category.name : null;
-                if (!categoryName) {
-                  const categoryObj = categories.find(cat => cat.id === (gig.category_id || gig.category?.id || gig.category));
-                  categoryName = categoryObj ? categoryObj.name : (gig.category_id || gig.category?.id || gig.category);
-                }
+          
+          {loadingFeatured ? (
+            <div className="text-center text-neutral-900/60 py-8">جاري التحميل...</div>
+          ) : featuredError ? (
+            <div className="text-center text-red-600 py-8">{featuredError}</div>
+          ) : featuredGigs.length === 0 ? (
+            <div className="text-center text-neutral-900/60 py-8">لا توجد منتجات مميزة متاحة</div>
+          ) : (
+            <div className="relative">
+              {/* Scroll Buttons */}
+              <Button
+                variant="outline"
+                size="icon"
+                className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white shadow-lg"
+                onClick={() => {
+                  const container = document.getElementById('featured-products');
+                  if (container) {
+                    container.scrollBy({ left: 300, behavior: 'smooth' });
+                  }
+                }}
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white shadow-lg"
+                onClick={() => {
+                  const container = document.getElementById('featured-products');
+                  if (container) {
+                    container.scrollBy({ left: -300, behavior: 'smooth' });
+                  }
+                }}
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
 
-                return (
-                  <motion.div
-                    key={gig.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: index * 0.1 }}
-                  >
-                    <Link to={`/gigs/${gig.id}`} className="block">
-                      <Card className="overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 flex flex-col h-62 card-hover border-roman-500/20 cursor-pointer" dir="rtl">
-                        <div className="relative h-56">
-                          <img 
-                            src={gig.images && gig.images.length > 0 
-                              ? gig.images[0] 
-                              : "https://images.unsplash.com/photo-1680188700662-5b03bdcf3017"} 
-                            alt={gig.title} 
-                            className="w-full h-full object-cover" 
-                          />
-                          <div className="absolute top-2 right-2 flex flex-col gap-1">
-                            <Badge variant="secondary" className="bg-roman-500 text-white">{categoryName}</Badge>
-                          </div>
-                          <div className="absolute top-2 left-2" onClick={(e) => e.stopPropagation()}>
-                            <div onClick={(e) => e.preventDefault()}>
-                              <WishlistButton productId={gig.id} inWishlist={gig.in_wishlist} onWishlistChange={handleWishlistChange} size="md" />
+              {/* Products Container */}
+              <div
+                id="featured-products"
+                className="flex gap-2 overflow-x-auto scrollbar-hide scroll-smooth px-2 py-2"
+                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+              >
+                {featuredGigs.map((gig, index) => {
+                  // Find category name from gig.category object if present
+                  let categoryName = gig.category && gig.category.name ? gig.category.name : null;
+                  if (!categoryName) {
+                    const categoryObj = categories.find(cat => cat.id === (gig.category_id || gig.category?.id || gig.category));
+                    categoryName = categoryObj ? categoryObj.name : (gig.category_id || gig.category?.id || gig.category);
+                  }
+
+                  return (
+                    <motion.div
+                      key={gig.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5, delay: index * 0.1 }}
+                      whileHover={{ y: -5 }}
+                      className="flex-shrink-0 w-[calc(50%-0.5rem)] md:w-72"
+                    >
+                      <Link to={`/gigs/${gig.id}`} className="block">
+                        <Card className="overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 flex flex-col h-62 card-hover cursor-pointer" dir="rtl">
+                          <div className="relative h-56">
+                            <img 
+                              src={gig.images && gig.images.length > 0 
+                                ? gig.images[0] 
+                                : "https://images.unsplash.com/photo-1680188700662-5b03bdcf3017"} 
+                              alt={gig.title} 
+                              className="w-full h-full object-cover" 
+                            />
+                            <div className="absolute top-2 right-2 flex flex-col gap-1">
+                              <Badge variant="secondary" className="bg-roman-500 text-white">{categoryName}</Badge>
+                            </div>
+                            <div className="absolute top-2 left-2" onClick={(e) => e.stopPropagation()}>
+                              <div onClick={(e) => e.preventDefault()}>
+                                <WishlistButton productId={gig.id} inWishlist={gig.in_wishlist} onWishlistChange={handleWishlistChange} size="md" />
+                              </div>
+                            </div>
+                            <div className="absolute bottom-2 right-2 flex flex-col gap-1">
+                              <Badge variant="outline" className={`text-xs ${gig.type === 'gig' ? 'bg-warning-500/50 text-white border-warning-500' : 'bg-blue-100 text-blue-600 border-blue-300'}`}>
+                                {gig.type === 'gig' ? 'حرفة مخصصة' : 'منتج جاهز'}
+                              </Badge>
                             </div>
                           </div>
-                          <div className="absolute bottom-2 right-2 flex flex-col gap-1">
-                            <Badge variant="outline" className={`text-xs ${gig.type === 'gig' ? 'bg-warning-500/50 text-white border-warning-500' : 'bg-blue-100 text-blue-600 border-blue-300'}`}>
-                              {gig.type === 'gig' ? 'حرفة مخصصة' : 'منتج جاهز'}
-                            </Badge>
-                          </div>
-                        </div>
-                        <CardHeader className="pb-2 text-right p-2">
-                          <CardTitle className="text-sm font-semibold text-neutral-900 overflow-hidden relative group">
-                            <div 
-                              className={`whitespace-nowrap transition-all duration-300 hover:scale-105 hover:text-roman-500 ${gig.title.length > 25 ? 'animate-scroll' : ''}`}
-                              style={{ animationDuration: `${Math.max(3, gig.title.length * 0.2)}s` }}
-                            >
+                          <CardHeader className="pb-2 text-right p-1">
+                            <CardTitle className="text-xs font-semibold text-neutral-900 transition-colors duration-300 hover:text-roman-500 line-clamp-2 h-8">
                               {gig.title}
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent className="flex-grow text-right p-1">
+                            <div className="flex items-center justify-between text-xs mb-2">
+                              <div className="flex items-center text-neutral-900/70">
+                                <Star className="h-3 w-3 text-warning-500 ml-1" />
+                                <span className="whitespace-nowrap">{gig.rating} ({gig.reviewCount})</span>
+                              </div>
+                              <p className="text-sm font-bold text-roman-500 whitespace-nowrap">
+                                {gig.type === 'gig' && (gig.price === 0 || gig.price === '0' || gig.price === '0.00' || parseFloat(gig.price) === 0)
+                                  ? 'قابل للتفاوض'
+                                  : `${gig.price} ج`}
+                              </p>
                             </div>
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="flex-grow text-right p-2">
-                          <div className="flex items-center justify-between text-xs mb-2">
-                            <div className="flex items-center text-neutral-900/70">
-                              <Star className="h-3 w-3 text-warning-500 ml-1" />
-                              <span className="whitespace-nowrap">{gig.rating} ({gig.reviewCount})</span>
-                            </div>
-                            <p className="text-sm font-bold text-roman-500 whitespace-nowrap">
-                              {gig.type === 'gig' && (gig.price === 0 || gig.price === '0' || gig.price === '0.00' || parseFloat(gig.price) === 0)
-                                ? 'قابل للتفاوض'
-                                : `${gig.price} ج`}
-                            </p>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </Link>
-                  </motion.div>
-                );
-              })
-            )}
-          </div>
+                          </CardContent>
+                        </Card>
+                      </Link>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+          
           <div className="text-center mt-12">
             <Button asChild variant="outline" size="lg" className="border-roman-500 text-roman-500 hover:bg-roman-500 hover:text-white">
               <Link to="/explore">

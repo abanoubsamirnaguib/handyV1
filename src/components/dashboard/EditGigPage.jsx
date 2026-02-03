@@ -56,6 +56,7 @@ const EditGigPage = () => {  const { gigId } = useParams();
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showProgress, setShowProgress] = useState(false);
 
   // Use cached categories from React Query
   const { data: categoriesData } = useCategories();
@@ -318,6 +319,7 @@ const EditGigPage = () => {  const { gigId } = useParams();
     }
     
     setIsSubmitting(true);
+    setShowProgress(true);
     
     try {
       // Process updated data for the API
@@ -393,6 +395,7 @@ const EditGigPage = () => {  const { gigId } = useParams();
       });
     } finally {
       setIsSubmitting(false);
+      setShowProgress(false);
     }
   };
   // Loading state
@@ -599,6 +602,40 @@ const EditGigPage = () => {  const { gigId } = useParams();
           </CardContent>
         </Card>
       </form>
+
+      {/* Progress Bar Overlay */}
+      {showProgress && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+        >
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-white rounded-lg p-6 shadow-2xl max-w-md w-full mx-4"
+          >
+            <div className="text-center">
+              <Loader2 className="h-12 w-12 animate-spin text-green-500 mx-auto mb-4" />
+              <h3 className="text-xl font-bold text-gray-800 mb-2">جاري تحديث الحرفة...</h3>
+              <p className="text-gray-600 mb-4">يرجى الانتظار، جاري حفظ التعديلات والصور</p>
+              <div className="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
+                <motion.div
+                  className="bg-green-500 h-2.5 rounded-full"
+                  initial={{ width: "0%" }}
+                  animate={{ width: "100%" }}
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                  }}
+                />
+              </div>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
     </div>
   );
 };

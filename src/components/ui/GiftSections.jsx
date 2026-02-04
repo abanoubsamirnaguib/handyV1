@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import WishlistButton from '@/components/ui/WishlistButton';
 import { api } from '@/lib/api';
+import { getStorageUrl } from '@/lib/assets';
 
 const GiftSections = () => {
   const [sections, setSections] = useState([]);
@@ -82,7 +83,6 @@ const GiftSections = () => {
   return (
     <div className="space-y-12">
       {sectionsWithProducts.map((section) => {
-        console.log('Rendering section:', section); // Debug log
         return (
         <div key={section.id} className="relative">
           {/* Section Header */}
@@ -140,11 +140,13 @@ const GiftSections = () => {
                           <img 
                             src={
                               product.images?.[0]
-                                ? (product.images[0].image_url || product.images[0])
+                                ? getStorageUrl(product.images[0].image_url || product.images[0])
                                 : 'https://via.placeholder.com/300x200?text=No+Image'
                             }
                             alt={product.title}
                             className="w-full h-full object-cover"
+                            loading="lazy"
+                            decoding="async"
                           />
                           <div className="absolute top-2 right-2 flex flex-col gap-1">
                             {product.category && (

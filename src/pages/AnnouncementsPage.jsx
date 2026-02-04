@@ -45,26 +45,20 @@ const AnnouncementsPage = () => {
     { value: 'high', label: 'عالية', color: 'bg-roman-100 text-roman-700' }
   ];
 
-  // Debounced search effect
+  // Consolidated effect to prevent multiple API calls
   useEffect(() => {
-    const timeoutId = setTimeout(() => {
+    // Only use debounce for search, immediate for other filters
+    if (filters.search !== undefined) {
+      const timeoutId = setTimeout(() => {
+        fetchAnnouncements(1);
+      }, 500); // 500ms delay for search debouncing
+      
+      return () => clearTimeout(timeoutId);
+    } else {
+      // For type and priority changes, fetch immediately
       fetchAnnouncements(1);
-    }, 500); // 500ms delay for search debouncing
-
-    return () => clearTimeout(timeoutId);
-  }, [filters.search]);
-
-  // Immediate effect for type and priority filters
-  useEffect(() => {
-    fetchAnnouncements(1);
-  }, [filters.type, filters.priority]);
-
-  // Effect for pagination
-  useEffect(() => {
-    if (pagination.current_page > 1) {
-      fetchAnnouncements(pagination.current_page);
     }
-  }, [pagination.current_page]);
+  }, [filters.search, filters.type, filters.priority]);
 
   const fetchAnnouncements = async (page = 1) => {
     try {
@@ -101,20 +95,20 @@ const AnnouncementsPage = () => {
       [key]: value
     }));
     // Reset pagination to first page when filters change
-    if (pagination.current_page !== 1) {
-      setPagination(prev => ({
-        ...prev,
-        current_page: 1
-      }));
-    }
+    setPagination(prev => ({
+      ...prev,
+      current_page: 1
+    }));
   };
 
   const handlePageChange = (page) => {
-    setPagination(prev => ({
-      ...prev,
-      current_page: page
-    }));
-    fetchAnnouncements(page);
+    if (page !== pagination.current_page) {
+      setPagination(prev => ({
+        ...prev,
+        current_page: page
+      }));
+      fetchAnnouncements(page);
+    }
   };
 
   const getTypeInfo = (type) => typeOptions.find(t => t.value === type);

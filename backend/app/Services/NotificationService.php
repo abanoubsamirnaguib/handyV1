@@ -451,4 +451,49 @@ class NotificationService
     {
         return Notification::where('created_at', '<', now()->subDays($days))->delete();
     }
+
+    /**
+     * Create announcement notification for a user
+     */
+    public static function announcementCreated(int $userId, $announcement): Notification
+    {
+        $typeEmoji = match($announcement->type) {
+            'info' => '📢',
+            'warning' => '⚠️',
+            'success' => '✅',
+            'error' => '❌',
+            default => '📢',
+        };
+
+        $message = "{$typeEmoji} إعلان جديد: {$announcement->title}";
+        
+        return self::create(
+            userId: $userId,
+            type: 'announcement',
+            message: $message,
+            link: "/announcements"
+        );
+    }
+
+    /**
+     * Broadcast announcement notification to all users
+     */
+    public static function broadcastAnnouncement($announcement, array $userIds): array
+    {
+        $notifications = [];
+        
+        foreach ($userIds as $userId) {
+            try {
+                $notifications[] = self::announcementCreated($userId, $announcement);
+            } catch (\Exception $e) {
+                Log::error('Failed to create announcement notification', [
+                    'user_id' => $userId,
+                    'announcement_id' => $announcement->id,
+                    'error' => $e->getMessage()
+                ]);
+            }
+        }
+        
+        return $notifications;
+    }
 }

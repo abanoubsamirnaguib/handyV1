@@ -14,7 +14,7 @@
     RewriteRule .* - [E=HTTP_X_XSRF_TOKEN:%{HTTP:X-XSRF-Token}]
 
     # Serve static files directly (images, css, js, etc.)
-    RewriteCond %{REQUEST_URI} ^/storage/.*\.(jpg|jpeg|png|gif|bmp|svg|css|js|pdf|doc|docx|zip)$ [NC]
+    RewriteCond %{REQUEST_URI} ^/storage/.*\.(jpg|jpeg|png|gif|bmp|svg|webp|avif|css|js|pdf|doc|docx|zip)$ [NC]
     RewriteRule ^(.*)$ $1 [L]
 
     # Redirect Trailing Slashes If Not A Folder...
@@ -42,9 +42,16 @@
         </FilesMatch>
         
         # For image files, set proper CORS
-        <FilesMatch "\.(jpg|jpeg|png|gif|bmp|svg)$">
+        <FilesMatch "\.(jpg|jpeg|png|gif|bmp|svg|webp|avif)$">
             Header always set Access-Control-Allow-Origin "*"
-            Header always set Cache-Control "public, max-age=31536000"
+            # Cache images aggressively; immutable prevents revalidation on normal reloads
+            Header always set Cache-Control "public, max-age=31536000, immutable"
+            Header always set Vary "Origin"
+        </FilesMatch>
+
+        # Optional: cache fonts too (if you serve any)
+        <FilesMatch "\.(woff2|woff|ttf|otf)$">
+            Header always set Cache-Control "public, max-age=31536000, immutable"
         </FilesMatch>
     </IfModule>
 
@@ -55,5 +62,19 @@
         AddType image/gif .gif
         AddType image/svg+xml .svg
         AddType image/bmp .bmp
+        AddType image/webp .webp
+        AddType image/avif .avif
+    </IfModule>
+
+    # Optional: Expires headers (works if mod_expires enabled)
+    <IfModule mod_expires.c>
+        ExpiresActive On
+        ExpiresByType image/jpeg "access plus 1 year"
+        ExpiresByType image/png "access plus 1 year"
+        ExpiresByType image/gif "access plus 1 year"
+        ExpiresByType image/svg+xml "access plus 1 year"
+        ExpiresByType image/bmp "access plus 1 year"
+        ExpiresByType image/webp "access plus 1 year"
+        ExpiresByType image/avif "access plus 1 year"
     </IfModule>
 </IfModule>

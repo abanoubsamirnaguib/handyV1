@@ -7,15 +7,17 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
+import { GoogleLoginButton } from '@/components/ui/google-login-button';
 
 const LoginPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, user, loading } = useAuth();
+  const { login, loginWithGoogle, user, loading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
   // Redirect authenticated users
   useEffect(() => {
@@ -44,6 +46,20 @@ const LoginPage = () => {
     setIsLoading(false);
     if (success) {
       // The useEffect above will handle the redirect
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setIsGoogleLoading(true);
+    try {
+      const success = await loginWithGoogle();
+      if (success) {
+        // The useEffect above will handle the redirect
+      }
+    } catch (error) {
+      console.error('Google login error:', error);
+    } finally {
+      setIsGoogleLoading(false);
     }
   };
 
@@ -140,10 +156,26 @@ const LoginPage = () => {
                   هل نسيت كلمة المرور؟
                 </Link>
               </div>
-              <Button type="submit" className="w-full bg-roman-500 hover:bg-roman-500/90 text-white text-lg py-3" disabled={isLoading}>
+              <Button type="submit" className="w-full bg-roman-500 hover:bg-roman-500/90 text-white text-lg py-3" disabled={isLoading || isGoogleLoading}>
                 {isLoading ? 'جاري تسجيل الدخول...' : 'تسجيل الدخول'}
               </Button>
             </form>
+
+            {/* Divider */}
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-neutral-300"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-4 bg-white text-neutral-600">أو</span>
+              </div>
+            </div>
+
+            {/* Google Login Button */}
+            <GoogleLoginButton 
+              onClick={handleGoogleLogin} 
+              isLoading={isGoogleLoading}
+            />
           </CardContent>
           <CardFooter className="flex flex-col items-center space-y-3">
             <p className="text-sm text-neutral-900/80">

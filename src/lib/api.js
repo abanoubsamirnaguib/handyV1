@@ -179,6 +179,13 @@ export const api = {
   getFeaturedProducts: () => apiFetch('TopProducts?featured=1&status=active&limit=10'),
   getProductById: (productId) => apiFetch(`Listpoducts/${productId}`),
   
+  // Google OAuth Authentication
+  googleAuth: (accessToken) => 
+    apiFetch('auth/google', {
+      method: 'POST',
+      body: JSON.stringify({ access_token: accessToken }),
+    }),
+
   // Authentication with OTP
   sendEmailVerificationOTP: (email) => 
     apiFetch('send-email-verification-otp', {

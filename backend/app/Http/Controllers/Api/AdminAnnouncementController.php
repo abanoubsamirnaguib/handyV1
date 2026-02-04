@@ -4,11 +4,15 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Announcement;
+use App\Models\User;
 use App\Http\Resources\AnnouncementResource;
+use App\Services\EmailService;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 
 class AdminAnnouncementController extends Controller
 {
@@ -103,9 +107,48 @@ class AdminAnnouncementController extends Controller
         $announcement = Announcement::create($data);
         $announcement->load('creator:id,name');
 
+        // Send notifications and emails to all active users
+        try {
+            // Get all active users
+            $activeUsers = User::where('status', 'active')
+                ->whereNotNull('email')
+                ->get();
+            
+            if ($activeUsers->count() > 0) {
+                // Get user IDs for notifications
+                $userIds = $activeUsers->pluck('id')->toArray();
+                
+                // Create database notifications with push notifications
+                NotificationService::broadcastAnnouncement($announcement, $userIds);
+                
+                // Send email notifications to users who have email notifications enabled
+                $usersWithEmailEnabled = $activeUsers->where('email_notifications', true);
+                if ($usersWithEmailEnabled->count() > 0) {
+                    $emailService = new EmailService();
+                    $emailResults = $emailService->sendAnnouncementToUsers(
+                        $announcement, 
+                        $usersWithEmailEnabled->pluck('email')->toArray()
+                    );
+                    
+                    Log::info("Announcement notifications sent", [
+                        'announcement_id' => $announcement->id,
+                        'database_notifications' => count($userIds),
+                        'email_results' => $emailResults
+                    ]);
+                }
+            }
+        } catch (\Exception $e) {
+            // Log the error but don't fail the announcement creation
+            Log::error("Failed to send announcement notifications: " . $e->getMessage(), [
+                'announcement_id' => $announcement->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+        }
+
         return response()->json([
             'success' => true,
-            'message' => 'تم إنشاء الإعلان بنجاح',
+            'message' => 'تم إنشاء الإعلان بنجاح وإرسال الإشعارات',
             'data' => new AnnouncementResource($announcement)
         ], 201);
     }

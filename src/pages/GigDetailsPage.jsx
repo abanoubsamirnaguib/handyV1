@@ -16,6 +16,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useChat } from '@/contexts/ChatContext';
 import { api, apiFetch } from '@/lib/api';
 import WishlistButton from '@/components/ui/WishlistButton';
+import { getStorageUrl } from '@/lib/assets';
 
 const GigDetailsPage = () => {
   const { id } = useParams();
@@ -141,7 +142,7 @@ const GigDetailsPage = () => {
               title: prod.title,
               price: prod.price,
               images: Array.isArray(prod.images) && prod.images.length > 0
-                ? prod.images.map(img => img.image_url || img.url || img)
+                ? prod.images.map(img => getStorageUrl(img?.image_url || img?.url || img))
                 : [],
               category: prod.category,
               rating: prod.rating || 0,
@@ -584,7 +585,9 @@ const GigDetailsPage = () => {
                             ? relatedGig.images[0] 
                             : `https://images.unsplash.com/photo-1635865165118-917ed9e20936`} 
                           alt={relatedGig.title} 
-                          className="w-full h-full object-cover" 
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                          decoding="async"
                         />
                         <Badge variant="secondary" className="absolute top-2 right-2 bg-roman-500 text-white">{relatedGig.category?.name}</Badge>
                         <div className="absolute top-2 left-2" onClick={(e) => e.stopPropagation()}>

@@ -22,6 +22,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'google_id',
         'role',
         'active_role',
         'is_seller',
@@ -34,6 +35,7 @@ class User extends Authenticatable
         'cover_image',
         'phone',
         'email_verified',
+        'email_verified_at',
         'email_notifications',
         'show_ai_assistant'
     ];

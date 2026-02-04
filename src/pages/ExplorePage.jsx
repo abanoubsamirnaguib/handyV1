@@ -16,6 +16,7 @@ import WishlistButton from '@/components/ui/WishlistButton';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
 import { useCategories, useGiftSections } from '@/hooks/useCache';
+import { getStorageUrl } from '@/lib/assets';
 
 // Helper function to get category icon based on backend icon name
 const getCategoryIcon = (iconName) => {
@@ -71,12 +72,8 @@ const getCategoryIconByName = (categoryName) => {
   }
 };
 
-// Helper to get full image URL
-const getImageUrl = (imagePath) => {
-  if (!imagePath) return null;
-  const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
-  return `${baseUrl}/storage/${imagePath}`;
-};
+// Helper to get full image URL (normalized to backend host)
+const getImageUrl = (imagePath) => getStorageUrl(imagePath);
 
 // Category Item Component
 const CategoryItem = ({ category, isSelected, onClick }) => {
@@ -717,10 +714,12 @@ const ExplorePage = () => {
           <div className="relative h-56">
             <img 
               src={gig.images && gig.images.length > 0 
-                ? gig.images[0] 
+                ? getStorageUrl(gig.images[0]) 
                 : "https://images.unsplash.com/photo-1680188700662-5b03bdcf3017"} 
               alt={gig.title} 
-              className="w-full h-full object-cover" 
+              className="w-full h-full object-cover"
+              loading="lazy"
+              decoding="async"
             />
             <div className="absolute top-2 right-2 flex flex-col gap-1">
               <Badge variant="secondary" className="bg-roman-500 text-white">{categoryName}</Badge>
@@ -778,10 +777,12 @@ const ExplorePage = () => {
           <div className="relative md:w-1/3 h-56 md:h-auto">
             <img 
               src={gig.images && gig.images.length > 0 
-                ? gig.images[0] 
+                ? getStorageUrl(gig.images[0]) 
                 : "https://images.unsplash.com/photo-1680188700662-5b03bdcf3017"} 
               alt={gig.title} 
-              className="w-full h-full max-h-56 object-cover" 
+              className="w-full h-full max-h-56 object-cover"
+              loading="lazy"
+              decoding="async"
             />
             <div className="absolute top-2 right-2 flex flex-col gap-1">
               <Badge variant="secondary" className="bg-roman-500 text-white">{categoryName}</Badge>

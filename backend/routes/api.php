@@ -75,6 +75,7 @@ Route::get('debug/order-test', function() {
 // Authentication - public routes
 Route::post('register-with-verification', [AuthController::class, 'registerWithEmailVerification']);
 Route::post('login', [AuthController::class, 'login']);
+Route::post('auth/google', [AuthController::class, 'googleAuth']);
 
 // OTP routes - public
 Route::post('send-email-verification-otp', [AuthController::class, 'sendEmailVerificationOTP']);

@@ -63,4 +63,66 @@ class EmailService
             return false;
         }
     }
+
+    /**
+     * Send announcement email to a user
+     */
+    public function sendAnnouncementEmail($email, $announcement)
+    {
+        try {
+            $data = [
+                'announcement' => $announcement,
+                'appName' => config('app.name', 'بازار')
+            ];
+            
+            self::sendMail(
+                'إعلان جديد: ' . $announcement->title,
+                $email,
+                $data,
+                'emails.announcement-created'
+            );
+            
+            return true;
+        } catch (\Exception $e) {
+            Log::error('Failed to send announcement email', [
+                'email' => $email,
+                'announcement_id' => $announcement->id,
+                'error' => $e->getMessage()
+            ]);
+            return false;
+        }
+    }
+
+    /**
+     * Send announcement emails to multiple users
+     */
+    public function sendAnnouncementToUsers($announcement, $emails)
+    {
+        $successCount = 0;
+        $failureCount = 0;
+
+        foreach ($emails as $email) {
+            if ($this->sendAnnouncementEmail($email, $announcement)) {
+                $successCount++;
+            } else {
+                $failureCount++;
+            }
+            
+            // Small delay to prevent overwhelming the API
+            usleep(100000); // 0.1 second delay
+        }
+
+        Log::info('Announcement emails sent', [
+            'announcement_id' => $announcement->id,
+            'success' => $successCount,
+            'failed' => $failureCount,
+            'total' => count($emails)
+        ]);
+
+        return [
+            'success' => $successCount,
+            'failed' => $failureCount,
+            'total' => count($emails)
+        ];
+    }
 } 

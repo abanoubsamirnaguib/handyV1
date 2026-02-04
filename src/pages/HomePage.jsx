@@ -12,6 +12,7 @@ import WishlistButton from '@/components/ui/WishlistButton';
 import PWAInstallSection from '@/components/PWAInstallSection';
 import GiftSections from '@/components/ui/GiftSections';
 import { useCategories } from '@/hooks/useCache';
+import { getStorageUrl } from '@/lib/assets';
 
 const HomePage = () => {
   const navigate = useNavigate();
@@ -44,12 +45,8 @@ const HomePage = () => {
     );
   };
 
-  // Helper to get full image URL
-  const getImageUrl = (imagePath) => {
-    if (!imagePath) return null;
-    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
-    return `${baseUrl}/storage/${imagePath}`;
-  };
+  // Helper to get full image URL (normalized to backend host)
+  const getImageUrl = (imagePath) => getStorageUrl(imagePath);
 
   // Latest announcements from backend
   const [latestAnnouncements, setLatestAnnouncements] = useState([]);
@@ -529,10 +526,12 @@ const HomePage = () => {
                           <div className="relative h-56">
                             <img 
                               src={gig.images && gig.images.length > 0 
-                                ? gig.images[0] 
+                                ? getStorageUrl(gig.images[0]) 
                                 : "https://images.unsplash.com/photo-1680188700662-5b03bdcf3017"} 
                               alt={gig.title} 
-                              className="w-full h-full object-cover" 
+                              className="w-full h-full object-cover"
+                              loading="lazy"
+                              decoding="async"
                             />
                             <div className="absolute top-2 right-2 flex flex-col gap-1">
                               <Badge variant="secondary" className="bg-roman-500 text-white">{categoryName}</Badge>
@@ -645,9 +644,11 @@ const HomePage = () => {
                       {announcement.image && (
                         <div className="mt-3">
                           <img 
-                            src={`/storage/${announcement.image}`} 
+                            src={getStorageUrl(announcement.image)}
                             alt={announcement.title}
                             className="w-full h-32 object-cover rounded-md"
+                            loading="lazy"
+                            decoding="async"
                           />
                         </div>
                       )}

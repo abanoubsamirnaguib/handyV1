@@ -150,6 +150,125 @@ export const AuthProvider = ({ children }) => {
       });
       return false;
     }
+  };
+
+  const loginWithGoogle = async () => {
+    try {
+      // Initialize Google Sign-In
+      return new Promise((resolve, reject) => {
+        // Load Google Identity Services library if not already loaded
+        if (!window.google) {
+          const script = document.createElement('script');
+          script.src = 'https://accounts.google.com/gsi/client';
+          script.async = true;
+          script.defer = true;
+          script.onload = () => initializeGoogleSignIn(resolve, reject);
+          script.onerror = () => {
+            toast({
+              variant: 'destructive',
+              title: 'خطأ',
+              description: 'فشل تحميل Google Sign-In',
+            });
+            reject(new Error('Failed to load Google Sign-In'));
+          };
+          document.body.appendChild(script);
+        } else {
+          initializeGoogleSignIn(resolve, reject);
+        }
+      });
+    } catch (error) {
+      console.error('Google login error:', error);
+      toast({
+        variant: 'destructive',
+        title: 'خطأ',
+        description: 'حدث خطأ أثناء تسجيل الدخول بواسطة Google',
+      });
+      return false;
+    }
+  };
+
+  const initializeGoogleSignIn = (resolve, reject) => {
+    try {
+      const client = window.google.accounts.oauth2.initTokenClient({
+        client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+        scope: 'email profile',
+        callback: async (response) => {
+          if (response.access_token) {
+            try {
+              // Send access token to backend
+              const res = await fetch(apiUrl('auth/google'), {
+                method: 'POST',
+                headers: { 
+                  'Content-Type': 'application/json',
+                  'Accept': 'application/json',
+                },
+                body: JSON.stringify({ access_token: response.access_token }),
+              });
+              
+              if (!res.ok) {
+                const errorData = await res.json().catch(() => ({}));
+                toast({
+                  variant: 'destructive',
+                  title: 'فشل تسجيل الدخول',
+                  description: errorData.message || 'فشل التحقق من حساب Google',
+                });
+                resolve(false);
+                return;
+              }
+              
+              const data = await res.json();
+              localStorage.setItem('token', data.token);
+              reconnectEcho();
+              setUser(data.user);
+              localStorage.setItem('user', JSON.stringify(data.user));
+              
+              toast({
+                title: 'تم تسجيل الدخول بنجاح',
+                description: `مرحباً بك ${data.user.name}`,
+              });
+              resolve(true);
+            } catch (error) {
+              console.error('Backend auth error:', error);
+              toast({
+                variant: 'destructive',
+                title: 'خطأ',
+                description: 'حدث خطأ أثناء التحقق من الحساب',
+              });
+              resolve(false);
+            }
+          } else {
+            toast({
+              variant: 'destructive',
+              title: 'خطأ',
+              description: 'فشل الحصول على بيانات Google',
+            });
+            resolve(false);
+          }
+        },
+        error_callback: (error) => {
+          console.error('Google Sign-In error:', error);
+          if (error.type !== 'popup_closed') {
+            toast({
+              variant: 'destructive',
+              title: 'خطأ',
+              description: 'فشل تسجيل الدخول بواسطة Google',
+            });
+          }
+          resolve(false);
+        },
+      });
+      
+      // Request access token
+      client.requestAccessToken();
+    } catch (error) {
+      console.error('Initialize Google Sign-In error:', error);
+      toast({
+        variant: 'destructive',
+        title: 'خطأ',
+        description: 'فشل تهيئة Google Sign-In',
+      });
+      reject(error);
+    }
   };  
   const register = async (userData) => {
     try {
@@ -631,6 +750,7 @@ export const AuthProvider = ({ children }) => {
     user,
     loading,
     login,
+    loginWithGoogle,
     register,
     logout,
     updateProfile,

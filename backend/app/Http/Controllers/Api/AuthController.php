@@ -484,6 +484,152 @@ class AuthController extends Controller
     }
 
     /**
+     * Handle Google OAuth login/registration
+     */
+    public function googleAuth(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'access_token' => 'required|string',
+            ]);
+            
+            // Verify the Google access token by making a request to Google's userinfo endpoint
+            $googleUserInfo = $this->getGoogleUserInfo($validated['access_token']);
+            
+            if (!$googleUserInfo || !isset($googleUserInfo['email'])) {
+                return response()->json([
+                    'message' => 'Invalid Google access token'
+                ], 401);
+            }
+            
+            // Check if user already exists
+            $user = User::where('email', $googleUserInfo['email'])->first();
+            
+            if ($user) {
+                // Check if user is suspended
+                if ($user->status === 'suspended') {
+                    return response()->json([
+                        'message' => 'تم تعليق حسابك. يرجى التواصل مع الإدارة.'
+                    ], 403);
+                }
+                
+                // Update last_login and last_seen
+                $user->last_login = now();
+                $user->last_seen = now();
+                
+                // If user doesn't have Google ID, add it
+                if (!$user->google_id) {
+                    $user->google_id = $googleUserInfo['sub'] ?? $googleUserInfo['id'];
+                }
+                
+                // Update email verification if coming from Google
+                if (!$user->email_verified) {
+                    $user->email_verified = true;
+                    $user->email_verified_at = now();
+                }
+                
+                $user->save();
+            } else {
+                // Check if registrations are enabled
+                $registrationsEnabled = \App\Models\SiteSetting::where('setting_key', 'registrations_enabled')->value('setting_value') !== 'false';
+                if (!$registrationsEnabled) {
+                    return response()->json([
+                        'message' => 'التسجيل غير متاح حالياً. يرجى المحاولة لاحقاً.'
+                    ], 403);
+                }
+                
+                // Create new user with buyer role as default
+                $user = User::create([
+                    'name' => $googleUserInfo['name'] ?? explode('@', $googleUserInfo['email'])[0],
+                    'email' => $googleUserInfo['email'],
+                    'google_id' => $googleUserInfo['sub'] ?? $googleUserInfo['id'],
+                    'avatar' => $googleUserInfo['picture'] ?? null,
+                    'password' => Hash::make(uniqid()), // Random password since they'll use Google login
+                    'role' => 'buyer', // Default role as buyer
+                    'active_role' => 'buyer',
+                    'is_buyer' => true,
+                    'is_seller' => false,
+                    'status' => 'active',
+                    'email_verified' => true, // Google accounts are already verified
+                    'email_verified_at' => now(),
+                ]);
+                
+                // Send welcome notification
+                try {
+                    NotificationService::welcome($user->id, $user->name, false);
+                } catch (Exception $notifError) {
+                    Log::warning('Failed to send welcome notification', [
+                        'user_id' => $user->id,
+                        'error' => $notifError->getMessage()
+                    ]);
+                }
+                
+                // Notify admin
+                try {
+                    NotificationService::notifyAdmin(
+                        'new_user',
+                        "مستخدم جديد انضم إلى المنصة عبر Google: {$user->name} (مشتري)",
+                        "/admin/users/{$user->id}"
+                    );
+                } catch (Exception $notifError) {
+                    Log::warning('Failed to send admin notification', [
+                        'user_id' => $user->id,
+                        'error' => $notifError->getMessage()
+                    ]);
+                }
+            }
+            
+            // Create token
+            $token = $user->createToken('api-token')->plainTextToken;
+            
+            // Load seller relationship if needed
+            if ($user->active_role === 'seller' || $user->is_seller) {
+                $user->load('seller.skills');
+            }
+            
+            return response()->json([
+                'token' => $token,
+                'user' => new \App\Http\Resources\UserResource($user)
+            ]);
+            
+        } catch (ValidationException $e) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (Exception $e) {
+            Log::error('Google auth error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json([
+                'message' => 'Google authentication failed',
+                'error' => config('app.debug') ? $e->getMessage() : 'Internal server error'
+            ], 500);
+        }
+    }
+    
+    /**
+     * Get Google user info from access token
+     */
+    private function getGoogleUserInfo($accessToken)
+    {
+        try {
+            $response = \Illuminate\Support\Facades\Http::get('https://www.googleapis.com/oauth2/v2/userinfo', [
+                'access_token' => $accessToken
+            ]);
+            
+            if ($response->successful()) {
+                return $response->json();
+            }
+            
+            return null;
+        } catch (Exception $e) {
+            Log::error('Failed to get Google user info: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
      * Updated register method to require email verification
      */
     public function registerWithEmailVerification(Request $request)

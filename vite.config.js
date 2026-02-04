@@ -199,6 +199,7 @@ export default defineConfig({
 
     devOptions: {
       enabled: false, // Disable PWA in dev to prevent excessive reloads from SW changes
+      type: 'module',
     },
   })],
 	server: {
@@ -216,11 +217,34 @@ export default defineConfig({
 		// },
 		// Simplify allowed hosts for development
 		allowedHosts: ['localhost', '127.0.0.1'],
+		watch: {
+			// Exclude backend directory and other unnecessary files from watching
+			ignored: [
+				'**/backend/**',
+				'**/node_modules/**',
+				'**/dist/**',
+				'**/dev-dist/**',
+				'**/.git/**',
+				'**/vendor/**',
+				'**/storage/**',
+				'**/bootstrap/cache/**',
+				'**/*.log',
+				'**/.env*',
+			],
+		},
 	},
 	resolve: {
 		extensions: ['.jsx', '.js', '.tsx', '.ts', '.json', ],
 		alias: {
 			'@': path.resolve(__dirname, './src'),
 		},
+	},
+	// Optimize build and dev performance
+	optimizeDeps: {
+		exclude: ['sharp'], // Exclude native modules that don't need pre-bundling
+	},
+	build: {
+		// Don't watch build output
+		watch: null,
 	},
 });

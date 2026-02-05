@@ -15,9 +15,11 @@
 
     # Serve static files directly (images, css, js, etc.)
     RewriteCond %{REQUEST_URI} ^/storage/.*\.(jpg|jpeg|png|gif|bmp|svg|webp|avif|css|js|pdf|doc|docx|zip)$ [NC]
-    RewriteRule ^(.*)$ $1 [L]
+    RewriteRule ^ - [L]
 
     # Redirect Trailing Slashes If Not A Folder...
+    # Important: avoid redirecting CORS preflight (Safari/iOS is sensitive to OPTIONS redirects)
+    RewriteCond %{REQUEST_METHOD} !OPTIONS
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_URI} (.+)/$
     RewriteRule ^ %1 [L,R=301]
@@ -46,7 +48,6 @@
             Header always set Access-Control-Allow-Origin "*"
             # Cache images aggressively; immutable prevents revalidation on normal reloads
             Header always set Cache-Control "public, max-age=31536000, immutable"
-            Header always set Vary "Origin"
         </FilesMatch>
 
         # Optional: cache fonts too (if you serve any)

@@ -11,12 +11,13 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
 import { useSiteSettings } from '@/contexts/SiteSettingsContext';
 import { AlertCircle } from 'lucide-react';
+import { GoogleLoginButton } from '@/components/ui/google-login-button';
 
 const RegisterPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
-  const { user, loading, sendEmailVerificationOTP } = useAuth();
+  const { user, loading, sendEmailVerificationOTP, loginWithGoogle } = useAuth();
   const { toast } = useToast();
   const { settings } = useSiteSettings();
   const [name, setName] = useState('');
@@ -29,6 +30,7 @@ const RegisterPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
   // Redirect authenticated users
   useEffect(() => {
@@ -97,6 +99,20 @@ const RegisterPage = () => {
     }
     
     setIsLoading(false);
+  };
+
+  const handleGoogleRegister = async () => {
+    setIsGoogleLoading(true);
+    try {
+      const success = await loginWithGoogle();
+      if (success) {
+        // The useEffect above will handle the redirect
+      }
+    } catch (error) {
+      console.error('Google registration error:', error);
+    } finally {
+      setIsGoogleLoading(false);
+    }
   };
 
   // Show loading while checking auth status
@@ -258,10 +274,26 @@ const RegisterPage = () => {
                   </div>
                 )}
               </div>
-              <Button type="submit" className="w-full bg-roman-500 hover:bg-roman-500/90 text-white text-lg py-3" disabled={isLoading}>
+              <Button type="submit" className="w-full bg-roman-500 hover:bg-roman-500/90 text-white text-lg py-3" disabled={isLoading || isGoogleLoading}>
                 {isLoading ? 'جاري إنشاء الحساب...' : 'إنشاء حساب'}
               </Button>
             </form>
+
+            {/* Divider */}
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-neutral-300"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-4 bg-white text-neutral-600">أو</span>
+              </div>
+            </div>
+
+            {/* Google Registration Button */}
+            <GoogleLoginButton 
+              onClick={handleGoogleRegister} 
+              isLoading={isGoogleLoading}
+            />
           </CardContent>
           <CardFooter className="flex flex-col items-center space-y-3">
             <p className="text-sm text-neutral-900/80">

@@ -11,6 +11,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 
 const AIAssistantContent = () => {
+  const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
@@ -22,7 +23,7 @@ const AIAssistantContent = () => {
   // Drag and visibility states
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
-  const [isHidden, setIsHidden] = useState(true); // Default to hidden
+  const [isHidden, setIsHidden] = useState(false);
   const [showDeleteButton, setShowDeleteButton] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [hasMoved, setHasMoved] = useState(false);
@@ -41,10 +42,9 @@ const AIAssistantContent = () => {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Load position and visibility from localStorage on mount
+  // Load position from localStorage on mount
   useEffect(() => {
     const savedPosition = localStorage.getItem('mernaButtonPosition');
-    const savedVisibility = localStorage.getItem('mernaButtonVisible');
     
     if (savedPosition) {
       try {
@@ -68,10 +68,17 @@ const AIAssistantContent = () => {
       });
     }
     
-    if (savedVisibility === 'false') {
-      setIsHidden(true);
-    }
   }, []);
+
+  // Sync visibility with user setting
+  useEffect(() => {
+    const allowVisible = user?.show_ai_assistant !== false;
+    if (!allowVisible) {
+      setIsHidden(true);
+      return;
+    }
+    setIsHidden(false);
+  }, [user]);
 
   // Save position to localStorage when it changes
   useEffect(() => {

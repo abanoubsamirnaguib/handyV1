@@ -11,6 +11,7 @@ import { Switch } from '@/components/ui/switch';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
 import { apiUrl } from '@/lib/api';
+import { isPushSupported, requestAndSubscribePush, unsubscribePush, getCurrentPushSubscription } from '@/lib/pushNotifications';
 
 const SettingsSection = ({ title, description, icon, children }) => (
   <motion.div
@@ -61,6 +62,11 @@ const DashboardSettings = () => {
     show_ai_assistant: user?.show_ai_assistant !== false, // True by default unless explicitly set to false
   });
   const [savingNotifications, setSavingNotifications] = useState(false);
+  const [pushBusy, setPushBusy] = useState(false);
+  const [pushPermission, setPushPermission] = useState(
+    typeof Notification !== 'undefined' ? Notification.permission : 'default'
+  );
+  const [pushEnabled, setPushEnabled] = useState(false);
 
   const handleProfileChange = (e) => {
     setProfileData({ ...profileData, [e.target.name]: e.target.value });
@@ -220,6 +226,25 @@ const DashboardSettings = () => {
       });
     }
   }, [user]);
+
+  useEffect(() => {
+    if (!isPushSupported()) return;
+    let isActive = true;
+    (async () => {
+      try {
+        const sub = await getCurrentPushSubscription();
+        if (isActive) {
+          setPushEnabled(!!sub);
+          setPushPermission(Notification.permission);
+        }
+      } catch {
+        // ignore
+      }
+    })();
+    return () => {
+      isActive = false;
+    };
+  }, []);
 
   const handleNotificationSettingsSubmit = async (e) => {
     e.preventDefault();
@@ -464,6 +489,89 @@ const DashboardSettings = () => {
                     setNotificationSettings(prev => ({ ...prev, show_ai_assistant: checked }))
                   }
                 />
+              </div>
+            )}
+
+            {/* Push Notifications - Browser */}
+            {isPushSupported() && (
+              <div className="p-4 bg-white border border-gray-200 rounded-lg">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1">
+                    <Label className="text-base font-medium cursor-default">
+                      إشعارات عند إغلاق التطبيق
+                    </Label>
+                    <p className="text-sm text-gray-500 mt-1">
+                      فعّل إشعارات الدفع (Push) لتصلك الرسائل والطلبات حتى لو كان التطبيق مغلقاً.
+                    </p>
+                    {!window.isSecureContext && (
+                      <p className="text-xs text-red-500 mt-2">
+                        Push يعمل فقط على HTTPS أو localhost.
+                      </p>
+                    )}
+                    {pushPermission === 'denied' && (
+                      <p className="text-xs text-red-500 mt-2">
+                        تم رفض إذن الإشعارات من المتصفح. فعّله من إعدادات المتصفح ثم أعد المحاولة.
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {!pushEnabled ? (
+                      <Button
+                        type="button"
+                        disabled={pushBusy || !window.isSecureContext || pushPermission === 'denied'}
+                        onClick={async () => {
+                          setPushBusy(true);
+                      try {
+                        const res = await requestAndSubscribePush();
+                        const permission = res?.permission || Notification.permission;
+                        setPushPermission(permission);
+                            if (permission === 'granted') {
+                              setPushEnabled(true);
+                            } else if (typeof res?.subscribed === 'boolean') {
+                              setPushEnabled(res.subscribed);
+                            } else {
+                              const sub = await getCurrentPushSubscription();
+                              setPushEnabled(!!sub);
+                            }
+                      } finally {
+                            setPushBusy(false);
+                          }
+                        }}
+                        className="bg-roman-500 hover:bg-roman-500/90 text-white"
+                      >
+                        تفعيل
+                      </Button>
+                    ) : (
+                      <Button
+                        type="button"
+                        disabled={pushBusy}
+                        onClick={async () => {
+                          setPushBusy(true);
+                          try {
+                            await unsubscribePush();
+                            setPushEnabled(false);
+                            setPushPermission(Notification.permission);
+                            toast({
+                              title: "تم إيقاف الإشعارات",
+                              description: "تم إيقاف إشعارات الدفع بنجاح.",
+                            });
+                          } catch (error) {
+                            toast({
+                              variant: "destructive",
+                              title: "خطأ",
+                              description: "حدث خطأ أثناء إيقاف الإشعارات.",
+                            });
+                          } finally {
+                            setPushBusy(false);
+                          }
+                        }}
+                        variant="outline"
+                      >
+                        إيقاف
+                      </Button>
+                    )}
+                  </div>
+                </div>
               </div>
             )}
           </div>

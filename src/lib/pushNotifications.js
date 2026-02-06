@@ -35,6 +35,7 @@ export async function ensurePushSubscriptionSaved() {
   if (!window.isSecureContext) return { supported: true, secureContext: false };
 
   const vapid = await api.getVapidPublicKey();
+  
   if (!vapid?.enabled || !vapid?.publicKey) {
     return { supported: true, enabledOnServer: false };
   }
@@ -61,10 +62,15 @@ export async function ensurePushSubscriptionSaved() {
  * Prompt for notification permission (if needed), then subscribe and save.
  */
 export async function requestAndSubscribePush() {
-  if (!isPushSupported()) return { supported: false };
-  if (!window.isSecureContext) return { supported: true, secureContext: false };
+  if (!isPushSupported()) {
+    return { supported: false };
+  }
+  if (!window.isSecureContext) {
+    return { supported: true, secureContext: false };
+  }
 
   const permission = await Notification.requestPermission();
+  
   if (permission !== 'granted') {
     return { supported: true, permission, subscribed: false };
   }
@@ -74,13 +80,18 @@ export async function requestAndSubscribePush() {
 
 export async function unsubscribePush() {
   const sub = await getCurrentPushSubscription();
-  if (!sub) return { unsubscribed: true };
+  
+  if (!sub) {
+    return { unsubscribed: true, noSubscription: true };
+  }
 
   const endpoint = sub.endpoint;
+  
   try {
     await api.unsubscribePush(endpoint);
-  } catch {
-    // ignore
+  } catch (error) {
+    console.error('Failed to unsubscribe from backend:', error);
+    // Continue anyway to unsubscribe locally
   }
 
   await sub.unsubscribe();

@@ -21,23 +21,23 @@ import { getStorageUrl } from '@/lib/assets';
 // Helper function to get category icon based on backend icon name
 const getCategoryIcon = (iconName) => {
   switch (iconName?.toLowerCase()) {
-    case 'gem': 
+    case 'gem':
     case 'gift': return Gift;
-    case 'coffee': 
+    case 'coffee':
     case 'handmetal': return HandMetal;
-    case 'scissors': 
+    case 'scissors':
     case 'palette': return Palette;
-    case 'shirt': 
+    case 'shirt':
     case 'clothes': return Shirt;
-    case 'image': 
+    case 'image':
     case 'camera': return Image;
-    case 'utensils': 
+    case 'utensils':
     case 'food': return Utensils;
-    case 'sparkles': 
+    case 'sparkles':
     case 'jewelry': return Sparkles;
-    case 'home': 
+    case 'home':
     case 'house': return Home;
-    case 'wrench': 
+    case 'wrench':
     case 'tools': return Wrench;
     default: return Star;
   }
@@ -46,7 +46,7 @@ const getCategoryIcon = (iconName) => {
 // Legacy function for name-based icon determination (keep as fallback)
 const getCategoryIconByName = (categoryName) => {
   const name = categoryName?.toLowerCase() || '';
-  
+
   if (name.includes('ملابس') || name.includes('خياطة') || name.includes('clothes') || name.includes('fashion')) {
     return Shirt;
   } else if (name.includes('مجوهرات') || name.includes('اكسسوارات') || name.includes('jewelry') || name.includes('accessories')) {
@@ -78,7 +78,7 @@ const getImageUrl = (imagePath) => getStorageUrl(imagePath);
 // Category Item Component
 const CategoryItem = ({ category, isSelected, onClick }) => {
   const [imageError, setImageError] = useState(false);
-  
+
   // Use backend icon first, fallback to name-based icon determination
   let IconComponent;
   if (category.icon) {
@@ -86,7 +86,7 @@ const CategoryItem = ({ category, isSelected, onClick }) => {
   } else {
     IconComponent = getCategoryIconByName(category.name);
   }
-  
+
   const handleImageError = () => {
     setImageError(true);
   };
@@ -96,18 +96,16 @@ const CategoryItem = ({ category, isSelected, onClick }) => {
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
       onClick={onClick}
-      className={`flex-shrink-0 cursor-pointer transition-all duration-300 ${
-        isSelected ? 'transform scale-105' : 'hover:scale-105'
-      }`}
+      className={`flex-shrink-0 cursor-pointer transition-all duration-300 ${isSelected ? 'transform scale-105' : 'hover:scale-105'
+        }`}
     >
-      <div className={`w-24 h-24 md:w-28 md:h-28 rounded-xl flex items-center justify-center mb-3 transition-all duration-300 overflow-hidden ${
-        isSelected
-          ? 'bg-roman-500 text-white shadow-lg'
-          : 'bg-neutral-100 hover:bg-roman-500/10 border border-roman-500/20'
-      }`}>
+      <div className={`w-24 h-24 md:w-28 md:h-28 rounded-xl flex items-center justify-center mb-3 transition-all duration-300 overflow-hidden ${isSelected
+        ? 'bg-roman-500 text-white shadow-lg'
+        : 'bg-neutral-100 hover:bg-roman-500/10 border border-roman-500/20'
+        }`}>
         {category.image && !imageError ? (
-          <img 
-            src={getImageUrl(category.image)} 
+          <img
+            src={getImageUrl(category.image)}
             alt={category.name}
             className="w-full h-full object-cover rounded-xl"
             onError={handleImageError}
@@ -116,9 +114,8 @@ const CategoryItem = ({ category, isSelected, onClick }) => {
           <IconComponent className="w-8 h-8 md:w-10 md:h-10" />
         )}
       </div>
-      <p className={`text-sm md:text-base font-medium text-center transition-colors duration-300 max-w-24 md:max-w-28 truncate ${
-        isSelected ? 'text-roman-500' : 'text-neutral-900'
-      }`}>
+      <p className={`text-sm md:text-base font-medium text-center transition-colors duration-300 max-w-24 md:max-w-28 truncate ${isSelected ? 'text-roman-500' : 'text-neutral-900'
+        }`}>
         {category.name}
       </p>
     </motion.div>
@@ -145,13 +142,13 @@ const ExplorePage = () => {
   const [giftSections, setGiftSections] = useState([]);
   const [selectedGiftSection, setSelectedGiftSection] = useState(searchParams.get('gift_section') || 'all');
   const [searchTimeout, setSearchTimeout] = useState(null);
-  
+
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [showLoadMoreButton, setShowLoadMoreButton] = useState(false);
-  
+
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
@@ -166,20 +163,20 @@ const ExplorePage = () => {
     if (categoriesData) {
       // Handle different response structures
       let rawCategories = [];
-      
+
       if (Array.isArray(categoriesData)) {
         rawCategories = categoriesData;
       } else if (categoriesData.data && Array.isArray(categoriesData.data)) {
         rawCategories = categoriesData.data;
       }
-      
+
       const normalized = rawCategories.map(cat => ({
         id: cat.id,
         name: cat.name || cat.title || cat.label,
         icon: cat.icon || cat.iconName || 'star',
         image: cat.image
       }));
-      
+
       setCategories(normalized);
     }
   }, [categoriesData]);
@@ -196,9 +193,9 @@ const ExplorePage = () => {
 
   // Handle wishlist changes
   const handleWishlistChange = (productId, isInWishlist) => {
-    setGigs(prevGigs => 
-      prevGigs.map(gig => 
-        gig.id === productId 
+    setGigs(prevGigs =>
+      prevGigs.map(gig =>
+        gig.id === productId
           ? { ...gig, in_wishlist: isInWishlist }
           : gig
       )
@@ -208,14 +205,14 @@ const ExplorePage = () => {
   // Add dir="rtl" to root element once component mounts
   useEffect(() => {
     document.documentElement.setAttribute('dir', 'rtl');
-    
+
     // Initialize sort parameter in URL if not present
     if (!searchParams.has('sort')) {
       const newParams = new URLSearchParams(searchParams);
       newParams.set('sort', 'newest');
       setSearchParams(newParams, { replace: true });
     }
-    
+
     // Cleanup when component unmounts
     return () => {
       document.documentElement.removeAttribute('dir');
@@ -256,7 +253,7 @@ const ExplorePage = () => {
     setPriceRange([minPrice, maxPrice]);
     setMinRating(rating);
     setSortBy(sort);
-    
+
     // Reset pagination when filters change
     setCurrentPage(1);
     setGigs([]);
@@ -337,7 +334,7 @@ const ExplorePage = () => {
       if (rating > 0) params.push(`min_rating=${rating}`);
       if (sort) params.push(`sort=${sort}`);
       const url = `explore/products?${params.join('&')}`;
-      
+
       // Check sessionStorage cache (5 minutes)
       const cacheKey = `explore_cache_${url}`;
       const cached = sessionStorage.getItem(cacheKey);
@@ -356,7 +353,7 @@ const ExplorePage = () => {
           // Invalid cache, continue with fetch
         }
       }
-      
+
       apiFetch(url)
         .then(data => {
           const products = Array.isArray(data.data) ? data.data.map(normalizeProduct) : [];
@@ -385,7 +382,7 @@ const ExplorePage = () => {
       if (rating > 0) params.push(`min_rating=${rating}`);
       if (sort) params.push(`sort=${sort}`);
       const url = `explore/sellers?${params.join('&')}`;
-      
+
       // Check sessionStorage cache (5 minutes)
       const cacheKey = `explore_cache_${url}`;
       const cached = sessionStorage.getItem(cacheKey);
@@ -404,7 +401,7 @@ const ExplorePage = () => {
           // Invalid cache, continue with fetch
         }
       }
-      
+
       apiFetch(url)
         .then(data => {
           const sellersList = Array.isArray(data.data) ? data.data.map(normalizeSeller) : [];
@@ -438,18 +435,18 @@ const ExplorePage = () => {
       params.set('minPrice', priceRange[0]);
       params.set('maxPrice', priceRange[1]);
     }
-    
+
     if (minRating > 0) params.set('rating', minRating);
     params.set('sort', sortBy);
     setSearchParams(params);
-    
+
     // Auto-close mobile filter after applying
     setIsFiltersOpen(false);
   };
 
   const handleSortChange = (value) => {
     setSortBy(value);
-    
+
     // Immediately update URL params with new sort value
     const params = new URLSearchParams(searchParams);
     params.set('tab', activeTab);
@@ -466,10 +463,10 @@ const ExplorePage = () => {
     }
     if (minRating > 0) params.set('rating', minRating);
     params.set('sort', value);
-    
+
     setSearchParams(params);
   };
-  
+
   const resetFilters = () => {
     setSearchTerm('');
     setQuickSearchTerm(''); // Reset quick search term too
@@ -480,7 +477,7 @@ const ExplorePage = () => {
     setMinRating(0);
     setSortBy('newest');
     setSearchParams({ tab: activeTab });
-    
+
     // Auto-close mobile filter after resetting
     setIsFiltersOpen(false);
   };
@@ -488,16 +485,16 @@ const ExplorePage = () => {
   // Handle quick search with debouncing
   const handleQuickSearch = (value) => {
     setQuickSearchTerm(value);
-    
+
     // Clear existing timeout
     if (searchTimeout) {
       clearTimeout(searchTimeout);
     }
-    
+
     // Set new timeout for debounced search
     const newTimeout = setTimeout(() => {
       setSearchTerm(value); // Sync with main search term
-      
+
       // Update URL params after debounce
       const params = new URLSearchParams(searchParams);
       params.set('tab', activeTab);
@@ -508,7 +505,7 @@ const ExplorePage = () => {
       }
       setSearchParams(params);
     }, 500); // 500ms debounce
-    
+
     setSearchTimeout(newTimeout);
   };
 
@@ -523,13 +520,13 @@ const ExplorePage = () => {
     setSelectedCategory(categoryId);
     const params = new URLSearchParams(searchParams);
     params.set('tab', activeTab);
-    
+
     if (categoryId === 'all') {
       params.delete('category');
     } else {
       params.set('category', categoryId);
     }
-    
+
     // Keep other existing params
     if (searchTerm) {
       params.set('search', searchTerm);
@@ -547,7 +544,7 @@ const ExplorePage = () => {
       params.set('rating', minRating);
     }
     params.set('sort', sortBy);
-    
+
     setSearchParams(params);
   };
 
@@ -591,10 +588,10 @@ const ExplorePage = () => {
         if (maxPrice < 1000) params.push(`max_price=${maxPrice}`);
         if (rating > 0) params.push(`min_rating=${rating}`);
         if (sort) params.push(`sort=${sort}`);
-        
+
         const url = `explore/products?${params.join('&')}`;
         const data = await apiFetch(url);
-        
+
         const normalizeProduct = (prod) => {
           let categoryId = prod.category_id || prod.category?.id || prod.category;
           let categoryObj = categories.find(cat => cat.id === categoryId);
@@ -635,10 +632,10 @@ const ExplorePage = () => {
         }
         if (rating > 0) params.push(`min_rating=${rating}`);
         if (sort) params.push(`sort=${sort}`);
-        
+
         const url = `explore/sellers?${params.join('&')}`;
         const data = await apiFetch(url);
-        
+
         const normalizeSeller = (seller) => ({
           id: seller.id,
           name: seller.name || '',
@@ -683,10 +680,10 @@ const ExplorePage = () => {
       const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
       const scrollHeight = document.documentElement.scrollHeight;
       const clientHeight = document.documentElement.clientHeight;
-      
+
       // Show button when user scrolls to 80% of the page
       const scrollPercentage = (scrollTop + clientHeight) / scrollHeight;
-      
+
       if (scrollPercentage > 0.8) {
         setShowLoadMoreButton(true);
       } else {
@@ -712,11 +709,11 @@ const ExplorePage = () => {
       <Link to={`/gigs/${gig.id}`} className="block">
         <Card className="overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 flex flex-col h-62 card-hover cursor-pointer" dir="rtl">
           <div className="relative h-56">
-            <img 
-              src={gig.images && gig.images.length > 0 
-                ? getStorageUrl(gig.images[0]) 
-                : "https://images.unsplash.com/photo-1680188700662-5b03bdcf3017"} 
-              alt={gig.title} 
+            <img
+              src={gig.images && gig.images.length > 0
+                ? getStorageUrl(gig.images[0])
+                : "https://images.unsplash.com/photo-1680188700662-5b03bdcf3017"}
+              alt={gig.title}
               className="w-full h-full object-cover"
               loading="lazy"
               decoding="async"
@@ -770,16 +767,16 @@ const ExplorePage = () => {
       const categoryObj = categories.find(cat => cat.id === (gig.category_id || gig.category?.id || gig.category));
       categoryName = categoryObj ? categoryObj.name : (gig.category_id || gig.category?.id || gig.category);
     }
-    
+
     return (
       <Link to={`/gigs/${gig.id}`} className="block">
         <Card className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col md:flex-row card-hover w-full cursor-pointer" dir="rtl">
           <div className="relative md:w-1/3 h-56 md:h-auto">
-            <img 
-              src={gig.images && gig.images.length > 0 
-                ? getStorageUrl(gig.images[0]) 
-                : "https://images.unsplash.com/photo-1680188700662-5b03bdcf3017"} 
-              alt={gig.title} 
+            <img
+              src={gig.images && gig.images.length > 0
+                ? getStorageUrl(gig.images[0])
+                : "https://images.unsplash.com/photo-1680188700662-5b03bdcf3017"}
+              alt={gig.title}
               className="w-full h-full max-h-56 object-cover"
               loading="lazy"
               decoding="async"
@@ -830,16 +827,16 @@ const ExplorePage = () => {
         <Card className="overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 flex flex-col h-62 card-hover cursor-pointer" dir="rtl">
           <div className={`relative h-32 flex items-center justify-center ${seller.coverImage ? '' : 'bg-roman-500'}`}>
             {seller.coverImage ? (
-              <img 
-                src={seller.coverImage} 
-                alt="Cover" 
+              <img
+                src={seller.coverImage}
+                alt="Cover"
                 className="absolute inset-0 w-full h-full object-cover"
               />
             ) : null}
             <div className="relative z-10">
               {seller.avatar ? (
-                <img 
-                  src={seller.avatar} 
+                <img
+                  src={seller.avatar}
                   alt={seller.name}
                   className="h-16 w-16 rounded-full object-cover border-2 border-white shadow-md"
                 />
@@ -889,16 +886,16 @@ const ExplorePage = () => {
         <Card className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col md:flex-row card-hover w-full cursor-pointer" dir="rtl">
           <div className={`relative md:w-1/4 h-48 md:h-auto flex items-center justify-center ${seller.coverImage ? '' : 'bg-roman-500'}`}>
             {seller.coverImage ? (
-              <img 
-                src={seller.coverImage} 
-                alt="Cover" 
+              <img
+                src={seller.coverImage}
+                alt="Cover"
                 className="absolute inset-0 w-full h-full object-cover"
               />
             ) : null}
             <div className="relative z-10">
               {seller.avatar ? (
-                <img 
-                  src={seller.avatar} 
+                <img
+                  src={seller.avatar}
                   alt={seller.name}
                   className="h-24 w-24 rounded-full object-cover border-4 border-white shadow-md"
                 />
@@ -936,9 +933,9 @@ const ExplorePage = () => {
                     {skill}
                   </Badge>
                 ))}
-              </div>          
+              </div>
               <div className="text-sm text-neutral-900/70 mt-2 text-right">
-                <span className="font-semibold">عضو منذ:</span> {new Date(seller.memberSince).toLocaleDateString('ar-EG')} <span className="mx-2">|</span> 
+                <span className="font-semibold">عضو منذ:</span> {new Date(seller.memberSince).toLocaleDateString('ar-EG')} <span className="mx-2">|</span>
                 <span className="font-semibold">طلبات مكتملة:</span> {seller.completedOrders}
               </div>
             </CardContent>
@@ -961,12 +958,12 @@ const ExplorePage = () => {
             {activeTab === 'sellers' ? 'تصنيفات الحرفيين' : 'استكشف التصنيفات'}
           </h2>
           <p className="text-roman-500">
-            {activeTab === 'sellers' 
-              ? 'استكشف مختلف تخصصات الحرفيين' 
+            {activeTab === 'sellers'
+              ? 'استكشف مختلف تخصصات الحرفيين'
               : 'اختر التصنيف المناسب لإيجاد ما تبحث عنه'}
           </p>
         </div>
-        
+
         {/* Categories Horizontal Scroll */}
         <div className="relative">
           <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-4" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
@@ -975,24 +972,21 @@ const ExplorePage = () => {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => handleCategoryChange('all')}
-              className={`flex-shrink-0 cursor-pointer transition-all duration-300 ${
-                selectedCategory === 'all' 
-                  ? 'transform scale-105' 
-                  : 'hover:scale-105'
-              }`}
+              className={`flex-shrink-0 cursor-pointer transition-all duration-300 ${selectedCategory === 'all'
+                ? 'transform scale-105'
+                : 'hover:scale-105'
+                }`}
             >
-              <div className={`w-24 h-24 md:w-28 md:h-28 rounded-xl flex items-center justify-center mb-3 transition-all duration-300 ${
-                selectedCategory === 'all'
-                  ? 'bg-roman-500 text-white shadow-lg'
-                  : 'bg-neutral-100 hover:bg-roman-500/10 border border-roman-500/20'
-              }`}>
+              <div className={`w-24 h-24 md:w-28 md:h-28 rounded-xl flex items-center justify-center mb-3 transition-all duration-300 ${selectedCategory === 'all'
+                ? 'bg-roman-500 text-white shadow-lg'
+                : 'bg-neutral-100 hover:bg-roman-500/10 border border-roman-500/20'
+                }`}>
                 <LayoutGrid className="w-8 h-8 md:w-10 md:h-10" />
               </div>
-              <p className={`text-sm md:text-base font-medium text-center transition-colors duration-300 ${
-                selectedCategory === 'all'
-                  ? 'text-roman-500'
-                  : 'text-neutral-900'
-              }`}>
+              <p className={`text-sm md:text-base font-medium text-center transition-colors duration-300 ${selectedCategory === 'all'
+                ? 'text-roman-500'
+                : 'text-neutral-900'
+                }`}>
                 جميع التصنيفات
               </p>
             </motion.div>
@@ -1029,8 +1023,8 @@ const ExplorePage = () => {
                 activeTab === 'products'
                   ? 'بحث سريع في المنتجات...'
                   : activeTab === 'gigs'
-                  ? 'بحث سريع في الحرف ...'
-                  : 'بحث سريع في الحرفيين...'
+                    ? 'بحث سريع في الحرف ...'
+                    : 'بحث سريع في الحرفيين...'
               }
               className="pl-10 pr-12 border-roman-500/30 focus:border-roman-500 focus:ring-roman-500/20 text-right text-base h-12 bg-white shadow-sm"
               dir="rtl"
@@ -1047,143 +1041,146 @@ const ExplorePage = () => {
             )}
           </div>
         </div>
-          <TabsContent value="products" className="mt-0">          <div className="flex flex-col md:flex-row-reverse gap-8">
-            {/* Filters Sidebar */}
-            <motion.aside 
-              className={`md:w-1/4 ${isFiltersOpen ? 'block' : 'hidden'} md:block fixed inset-0 z-40 bg-white p-6 md:relative md:bg-transparent md:p-0 md:z-auto transition-transform duration-300 ease-in-out transform ${isFiltersOpen ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}`}
-              initial={{ x: -200, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              transition={{ duration: 0.5 }}
-            >
-              <Card className="shadow-lg border-roman-500/20">
-                <CardHeader className="flex flex-row-reverse items-center justify-between">
-                  <CardTitle className="text-xl text-roman-500 text-right">تصفية النتائج</CardTitle>
-                  <Button variant="ghost" size="icon" className="md:hidden hover:bg-success-100/50 text-roman-500" onClick={() => setIsFiltersOpen(false)}>
-                    <X className="h-5 w-5" />
-                  </Button>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div>
-                    <Label htmlFor="search-filter" className="text-neutral-900 block text-right">بحث بالاسم</Label>                    <Input 
-                      id="search-filter" 
-                      type="text" 
-                      value={searchTerm} 
-                      onChange={(e) => setSearchTerm(e.target.value)} 
-                      placeholder="اسم المنتج، وصف..." 
-                      className="mt-1 border-roman-500/30 focus:border-roman-500 focus:ring-roman-500/20 text-right"
-                      dir="rtl"
-                    />
-                  </div>                  <div>
-                    <Label htmlFor="category-filter" className="text-neutral-900 block text-right">التصنيف</Label>
-                    <Select value={selectedCategory} onValueChange={value => handleCategoryChange(String(value))} dir="rtl">
-                      <SelectTrigger id="category-filter" className="mt-1 border-roman-500/30 focus:border-roman-500 focus:ring-roman-500/20 text-right">
-                        <SelectValue placeholder="اختر تصنيف" />
-                      </SelectTrigger>
-                      <SelectContent className="border-roman-500/30 text-right" dir="rtl">
-                        <SelectItem value="all">كل التصنيفات</SelectItem>
-                        {categories.map(cat => (
-                          <SelectItem key={cat.id} value={String(cat.id)}>{cat.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label htmlFor="type-filter" className="text-neutral-900 block text-right">نوع المنتج</Label>
-                    <Select value={selectedType} onValueChange={value => setSelectedType(String(value))} dir="rtl">
-                      <SelectTrigger id="type-filter" className="mt-1 border-roman-500/30 focus:border-roman-500 focus:ring-roman-500/20 text-right">
-                        <SelectValue placeholder="اختر نوع المنتج" />
-                      </SelectTrigger>
-                      <SelectContent className="border-roman-500/30 text-right" dir="rtl">
-                        <SelectItem value="all">كل الأنواع</SelectItem>
-                        <SelectItem value="product">منتجات جاهزة</SelectItem>
-                        <SelectItem value="gig">حرف مخصصة</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label htmlFor="gift-section-filter" className="text-neutral-900 block text-right">قسم الهدايا</Label>
-                    <Select value={selectedGiftSection} onValueChange={value => setSelectedGiftSection(String(value))} dir="rtl">
-                      <SelectTrigger id="gift-section-filter" className="mt-1 border-roman-500/30 focus:border-roman-500 focus:ring-roman-500/20 text-right">
-                        <SelectValue placeholder="اختر قسم الهدايا" />
-                      </SelectTrigger>
-                      <SelectContent className="border-roman-500/30 text-right" dir="rtl">
-                        <SelectItem value="all">كل الأقسام</SelectItem>
-                        {giftSections.map(section => (
-                          <SelectItem key={section.id} value={String(section.id)}>{section.title}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label className="text-neutral-900 block text-right">نطاق السعر: {priceRange[0]} - {priceRange[1]} جنيه</Label>
-                    <Slider
-                      defaultValue={priceRange}
-                      min={0}
-                      max={1000}
-                      step={50}
-                      onValueChange={setPriceRange}
-                      className="mt-2 [&>span:first-child]:h-1 [&>span:first-child]:bg-roman-500/20 [&_[role=slider]]:bg-roman-500 [&_[role=slider]]:w-4 [&_[role=slider]]:h-4 [&_[role=slider]]:border-2 [&_[role=slider]]:border-neutral-200"
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-neutral-900 block text-right">التقييم الأدنى: {minRating} نجوم</Label>
-                    <div className="flex space-x-1 space-x-reverse mt-1">
-                      {[1, 2, 3, 4, 5].map(star => (
-                        <Button 
-                          key={star} 
-                          variant={minRating >= star ? "default" : "outline"} 
-                          size="icon" 
-                          onClick={() => setMinRating(star === minRating ? 0 : star)}
-                          className={`p-2 ${minRating >= star ? 'bg-roman-500 border-roman-500 hover:bg-roman-500/90' : 'border-roman-500/30'}`}
-                        >
-                          <Star className={`h-5 w-5 ${minRating >= star ? 'text-white' : 'text-warning-500'}`} />
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-                  <Separator />                  <Button onClick={handleFilterChange} className="w-full bg-roman-500 hover:bg-roman-500/90 text-white">
-                    <Filter className="ml-2 h-4 w-4" /> تطبيق الفلاتر
-                  </Button>
-                  <Button onClick={resetFilters} variant="outline" className="w-full border-roman-500/50 text-roman-500 hover:bg-roman-500 hover:text-white">
-                    إعادة تعيين الفلاتر
-                  </Button>
-                </CardContent>
-              </Card>
-            </motion.aside>
-
-            {/* Gigs List */}
-            <main className="w-full md:w-3/4">
-              <div className="flex items-center justify-between mb-6">
-                <p className="text-neutral-900/70 hidden md:block">تم العثور على {gigs.length} منتج</p>                <div className="flex items-center gap-2">                  <Button variant="outline" size="icon" className="md:hidden ml-2 border-roman-500/50 text-roman-500 hover:bg-roman-500 hover:text-white" onClick={() => setIsFiltersOpen(true)}>
-                    <Filter className="h-5 w-5" />
-                  </Button>                  <Select value={sortBy} onValueChange={handleSortChange} dir="rtl">
-                    <SelectTrigger className="w-[180px] border-roman-500/30 focus:border-roman-500 focus:ring-roman-500/20 text-right">
-                      <SelectValue placeholder="الترتيب حسب" />
+        <TabsContent value="products" className="mt-0">          <div className="flex flex-col md:flex-row-reverse gap-8">
+          {/* Filters Sidebar */}
+          <motion.aside
+            className={`md:w-1/4 ${isFiltersOpen ? 'block' : 'hidden'} md:block fixed inset-0 z-40 bg-white p-6 md:relative md:bg-transparent md:p-0 md:z-auto transition-transform duration-300 ease-in-out transform ${isFiltersOpen ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}`}
+            initial={{ x: -200, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ duration: 0.5 }}
+          >
+            <Card className="shadow-lg border-roman-500/20">
+              <CardHeader className="flex flex-row-reverse items-center justify-between">
+                <CardTitle className="text-xl text-roman-500 text-right">تصفية النتائج</CardTitle>
+                <Button variant="ghost" size="icon" className="md:hidden hover:bg-success-100/50 text-roman-500" onClick={() => setIsFiltersOpen(false)}>
+                  <X className="h-5 w-5" />
+                </Button>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div>
+                  <Label htmlFor="search-filter" className="text-neutral-900 block text-right">بحث بالاسم</Label>                    <Input
+                    id="search-filter"
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="اسم المنتج، وصف..."
+                    className="mt-1 border-roman-500/30 focus:border-roman-500 focus:ring-roman-500/20 text-right"
+                    dir="rtl"
+                  />
+                </div>                  <div>
+                  <Label htmlFor="category-filter" className="text-neutral-900 block text-right">التصنيف</Label>
+                  <Select value={selectedCategory} onValueChange={value => handleCategoryChange(String(value))} dir="rtl">
+                    <SelectTrigger id="category-filter" className="mt-1 border-roman-500/30 focus:border-roman-500 focus:ring-roman-500/20 text-right">
+                      <SelectValue placeholder="اختر تصنيف" />
                     </SelectTrigger>
                     <SelectContent className="border-roman-500/30 text-right" dir="rtl">
-                      <SelectItem value="oldest">الأقدم</SelectItem>
-                      <SelectItem value="newest">الأحدث</SelectItem>
-                      <SelectItem value="price_low">السعر: من الأقل للأعلى</SelectItem>
-                      <SelectItem value="price_high">السعر: من الأعلى للأقل</SelectItem>
-                      <SelectItem value="rating">الأعلى تقييماً</SelectItem>
+                      <SelectItem value="all">كل التصنيفات</SelectItem>
+                      {categories.map(cat => (
+                        <SelectItem key={cat.id} value={String(cat.id)}>{cat.name}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
-                  <Button variant="outline" size="icon" className="border-roman-500/50 text-roman-500 hover:bg-roman-500 hover:text-white" onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}>
-                    {viewMode === 'grid' ? <ListFilter className="h-5 w-5" /> : <LayoutGrid className="h-5 w-5" />}
-                  </Button>
                 </div>
-              </div>
+                <div>
+                  <Label htmlFor="type-filter" className="text-neutral-900 block text-right">نوع المنتج</Label>
+                  <Select value={selectedType} onValueChange={value => setSelectedType(String(value))} dir="rtl">
+                    <SelectTrigger id="type-filter" className="mt-1 border-roman-500/30 focus:border-roman-500 focus:ring-roman-500/20 text-right">
+                      <SelectValue placeholder="اختر نوع المنتج" />
+                    </SelectTrigger>
+                    <SelectContent className="border-roman-500/30 text-right" dir="rtl">
+                      <SelectItem value="all">كل الأنواع</SelectItem>
+                      <SelectItem value="product">منتجات جاهزة</SelectItem>
+                      <SelectItem value="gig">حرف مخصصة</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="gift-section-filter" className="text-neutral-900 block text-right">قسم الهدايا</Label>
+                  <Select value={selectedGiftSection} onValueChange={value => setSelectedGiftSection(String(value))} dir="rtl">
+                    <SelectTrigger id="gift-section-filter" className="mt-1 border-roman-500/30 focus:border-roman-500 focus:ring-roman-500/20 text-right">
+                      <SelectValue placeholder="اختر قسم الهدايا" />
+                    </SelectTrigger>
+                    <SelectContent className="border-roman-500/30 text-right" dir="rtl">
+                      <SelectItem value="all">كل الأقسام</SelectItem>
+                      {giftSections.map(section => (
+                        <SelectItem key={section.id} value={String(section.id)}>{section.title}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-neutral-900 block text-right">نطاق السعر: {priceRange[0]} - {priceRange[1]} جنيه</Label>
+                  <Slider
+                    defaultValue={priceRange}
+                    min={0}
+                    max={1000}
+                    step={50}
+                    onValueChange={setPriceRange}
+                    className="mt-2 [&>span:first-child]:h-1 [&>span:first-child]:bg-roman-500/20 [&_[role=slider]]:bg-roman-500 [&_[role=slider]]:w-4 [&_[role=slider]]:h-4 [&_[role=slider]]:border-2 [&_[role=slider]]:border-neutral-200"
+                  />
+                </div>
+                <div>
+                  <Label className="text-neutral-900 block text-right">التقييم الأدنى: {minRating} نجوم</Label>
+                  <div className="flex space-x-1 space-x-reverse mt-1">
+                    {[1, 2, 3, 4, 5].map(star => (
+                      <Button
+                        key={star}
+                        variant={minRating >= star ? "default" : "outline"}
+                        size="icon"
+                        onClick={() => setMinRating(star === minRating ? 0 : star)}
+                        className={`p-2 ${minRating >= star ? 'bg-roman-500 border-roman-500 hover:bg-roman-500/90' : 'border-roman-500/30'}`}
+                      >
+                        <Star className={`h-5 w-5 ${minRating >= star ? 'text-white' : 'text-warning-500'}`} />
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+                <Separator />                  <Button onClick={handleFilterChange} className="w-full bg-roman-500 hover:bg-roman-500/90 text-white">
+                  <Filter className="ml-2 h-4 w-4" /> تطبيق الفلاتر
+                </Button>
+                <Button onClick={resetFilters} variant="outline" className="w-full border-roman-500/50 text-roman-500 hover:bg-roman-500 hover:text-white">
+                  إعادة تعيين الفلاتر
+                </Button>
+              </CardContent>
+            </Card>
+          </motion.aside>
 
-              {loading ? (
-                <div className="text-center py-12">
-                  <p className="text-lg text-neutral-900">جاري تحميل المنتجات...</p>
-                </div>
-              ) : error ? (
-                <div className="text-center py-12">
-                  <p className="text-lg text-red-500">{error}</p>
-                </div>              ) : gigs.length > 0 ? (
+          {/* Gigs List */}
+          <main className="w-full md:w-3/4">
+            <div className="flex items-center justify-end mb-6">
+              <p className="text-neutral-900/70 hidden md:block">تم العثور على {gigs.length} منتج</p>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="icon" className="md:hidden ml-2 border-roman-500/50 text-roman-500 hover:bg-roman-500 hover:text-white" onClick={() => setIsFiltersOpen(true)}>
+                  <Filter className="h-5 w-5" />
+                </Button>
+                <Select value={sortBy} onValueChange={handleSortChange} dir="rtl">
+                  <SelectTrigger className="w-[180px] border-roman-500/30 focus:border-roman-500 focus:ring-roman-500/20 text-right">
+                    <SelectValue placeholder="الترتيب حسب" />
+                  </SelectTrigger>
+                  <SelectContent className="border-roman-500/30 text-right" dir="rtl">
+                    <SelectItem value="oldest">الأقدم</SelectItem>
+                    <SelectItem value="newest">الأحدث</SelectItem>
+                    <SelectItem value="price_low">السعر: من الأقل للأعلى</SelectItem>
+                    <SelectItem value="price_high">السعر: من الأعلى للأقل</SelectItem>
+                    <SelectItem value="rating">الأعلى تقييماً</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button variant="outline" size="icon" className="border-roman-500/50 text-roman-500 hover:bg-roman-500 hover:text-white" onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}>
+                  {viewMode === 'grid' ? <ListFilter className="h-5 w-5" /> : <LayoutGrid className="h-5 w-5" />}
+                </Button>
+              </div>
+            </div>
+
+            {loading ? (
+              <div className="text-center py-12">
+                <p className="text-lg text-neutral-900">جاري تحميل المنتجات...</p>
+              </div>
+            ) : error ? (
+              <div className="text-center py-12">
+                <p className="text-lg text-red-500">{error}</p>
+              </div>) : gigs.length > 0 ? (
                 <>
-                  <motion.div 
+                  <motion.div
                     className={viewMode === 'grid' ? "grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-2 rtl" : "space-y-6"}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -1201,13 +1198,13 @@ const ExplorePage = () => {
                       </motion.div>
                     ))}
                   </motion.div>
-                  
+
                   {/* Load More Button */}
                   {hasMore && (
-                    <motion.div 
+                    <motion.div
                       className="mt-8 flex justify-center"
                       initial={{ opacity: 0, y: 20 }}
-                      animate={{ 
+                      animate={{
                         opacity: showLoadMoreButton ? 1 : 0.5,
                         y: showLoadMoreButton ? 0 : 20,
                         scale: showLoadMoreButton ? 1.05 : 1
@@ -1217,9 +1214,8 @@ const ExplorePage = () => {
                       <Button
                         onClick={loadMore}
                         disabled={loadingMore}
-                        className={`bg-roman-500 hover:bg-roman-500/90 text-white px-6 py-3 text-sm font-medium rounded-full shadow-md hover:shadow-lg transition-all duration-300 ${
-                          showLoadMoreButton ? 'ring-2 ring-roman-500/30' : ''
-                        }`}
+                        className={`bg-roman-500 hover:bg-roman-500/90 text-white px-6 py-3 text-sm font-medium rounded-full shadow-md hover:shadow-lg transition-all duration-300 ${showLoadMoreButton ? 'ring-2 ring-roman-500/30' : ''
+                          }`}
                       >
                         {loadingMore ? (
                           <>
@@ -1237,141 +1233,141 @@ const ExplorePage = () => {
                   )}
                 </>
               ) : (
-                <div className="text-center py-12">
-                  <img src="https://images.unsplash.com/photo-1675023112817-52b789fd2ef0" alt="لا توجد نتائج" className="mx-auto mb-4 w-48 h-48 text-gray-400" />
-                  <h3 className="text-2xl font-semibold text-neutral-900 mb-2">لا توجد منتجات تطابق بحثك</h3>
-                  <p className="text-neutral-900/70">حاول تعديل الفلاتر أو البحث بكلمات أخرى.</p>
-                </div>
-              )}
-            </main>
-          </div>
+              <div className="text-center py-12">
+                <img src="https://images.unsplash.com/photo-1675023112817-52b789fd2ef0" alt="لا توجد نتائج" className="mx-auto mb-4 w-48 h-48 text-gray-400" />
+                <h3 className="text-2xl font-semibold text-neutral-900 mb-2">لا توجد منتجات تطابق بحثك</h3>
+                <p className="text-neutral-900/70">حاول تعديل الفلاتر أو البحث بكلمات أخرى.</p>
+              </div>
+            )}
+          </main>
+        </div>
         </TabsContent>
         {/* Gigs-only tab (filters pre-set to type=gig) */}
-          <TabsContent value="gigs" className="mt-0">          <div className="flex flex-col md:flex-row-reverse gap-8">
-            {/* Filters Sidebar */}
-            <motion.aside 
-              className={`md:w-1/4 ${isFiltersOpen ? 'block' : 'hidden'} md:block fixed inset-0 z-40 bg-white p-6 md:relative md:bg-transparent md:p-0 md:z-auto transition-transform duration-300 ease-in-out transform ${isFiltersOpen ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}`}
-              initial={{ x: -200, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              transition={{ duration: 0.5 }}
-            >
-              <Card className="shadow-lg border-roman-500/20">
-                <CardHeader className="flex flex-row-reverse items-center justify-between">
-                  <CardTitle className="text-xl text-roman-500 text-right">تصفية النتائج</CardTitle>
-                  <Button variant="ghost" size="icon" className="md:hidden hover:bg-success-100/50 text-roman-500" onClick={() => setIsFiltersOpen(false)}>
-                    <X className="h-5 w-5" />
-                  </Button>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div>
-                    <Label htmlFor="search-filter-gigs" className="text-neutral-900 block text-right">بحث بالاسم</Label>                    <Input 
-                      id="search-filter-gigs" 
-                      type="text" 
-                      value={searchTerm} 
-                      onChange={(e) => setSearchTerm(e.target.value)} 
-                      placeholder="اسم الحرفة، وصف..." 
-                      className="mt-1 border-roman-500/30 focus:border-roman-500 focus:ring-roman-500/20 text-right"
-                      dir="rtl"
-                    />
-                  </div>                  <div>
-                    <Label htmlFor="category-filter-gigs" className="text-neutral-900 block text-right">التصنيف</Label>
-                    <Select value={selectedCategory} onValueChange={value => handleCategoryChange(String(value))} dir="rtl">
-                      <SelectTrigger id="category-filter-gigs" className="mt-1 border-roman-500/30 focus:border-roman-500 focus:ring-roman-500/20 text-right">
-                        <SelectValue placeholder="اختر تصنيف" />
-                      </SelectTrigger>
-                      <SelectContent className="border-roman-500/30 text-right" dir="rtl">
-                        <SelectItem value="all">كل التصنيفات</SelectItem>
-                        {categories.map(cat => (
-                          <SelectItem key={cat.id} value={String(cat.id)}>{cat.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label htmlFor="gift-section-filter-gigs" className="text-neutral-900 block text-right">قسم الهدايا</Label>
-                    <Select value={selectedGiftSection} onValueChange={value => setSelectedGiftSection(String(value))} dir="rtl">
-                      <SelectTrigger id="gift-section-filter-gigs" className="mt-1 border-roman-500/30 focus:border-roman-500 focus:ring-roman-500/20 text-right">
-                        <SelectValue placeholder="اختر قسم الهدايا" />
-                      </SelectTrigger>
-                      <SelectContent className="border-roman-500/30 text-right" dir="rtl">
-                        <SelectItem value="all">كل الأقسام</SelectItem>
-                        {giftSections.map(section => (
-                          <SelectItem key={section.id} value={String(section.id)}>{section.title}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  {/* Type is fixed to gig in this tab; no type selector */}
-                  <div>
-                    <Label className="text-neutral-900 block text-right">نطاق السعر: {priceRange[0]} - {priceRange[1]} جنيه</Label>
-                    <Slider
-                      defaultValue={priceRange}
-                      min={0}
-                      max={1000}
-                      step={50}
-                      onValueChange={setPriceRange}
-                      className="mt-2 [&>span:first-child]:h-1 [&>span:first-child]:bg-roman-500/20 [&_[role=slider]]:bg-roman-500 [&_[role=slider]]:w-4 [&_[role=slider]]:h-4 [&_[role=slider]]:border-2 [&_[role=slider]]:border-neutral-200"
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-neutral-900 block text-right">التقييم الأدنى: {minRating} نجوم</Label>
-                    <div className="flex space-x-1 space-x-reverse mt-1">
-                      {[1, 2, 3, 4, 5].map(star => (
-                        <Button 
-                          key={star} 
-                          variant={minRating >= star ? "default" : "outline"} 
-                          size="icon" 
-                          onClick={() => setMinRating(star === minRating ? 0 : star)}
-                          className={`p-2 ${minRating >= star ? 'bg-roman-500 border-roman-500 hover:bg-roman-500/90' : 'border-roman-500/30'}`}
-                        >
-                          <Star className={`h-5 w-5 ${minRating >= star ? 'text-white' : 'text-warning-500'}`} />
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-                  <Separator />                  <Button onClick={handleFilterChange} className="w-full bg-roman-500 hover:bg-roman-500/90 text-white">
-                    <Filter className="ml-2 h-4 w-4" /> تطبيق الفلاتر
-                  </Button>
-                  <Button onClick={resetFilters} variant="outline" className="w-full border-roman-500/50 text-roman-500 hover:bg-roman-500 hover:text-white">
-                    إعادة تعيين الفلاتر
-                  </Button>
-                </CardContent>
-              </Card>
-            </motion.aside>
-
-            {/* Gigs List */}
-            <main className="w-full md:w-3/4">
-              <div className="flex items-center justify-between mb-6">
-                <p className="text-neutral-900/70 hidden md:block">تم العثور على {gigs.length} حرفة</p>                <div className="flex items-center gap-2">                  <Button variant="outline" size="icon" className="md:hidden ml-2 border-roman-500/50 text-roman-500 hover:bg-roman-500 hover:text-white" onClick={() => setIsFiltersOpen(true)}>
-                    <Filter className="h-5 w-5" />
-                  </Button>                  <Select value={sortBy} onValueChange={handleSortChange} dir="rtl">
-                    <SelectTrigger className="w-[180px] border-roman-500/30 focus:border-roman-500 focus:ring-roman-500/20 text-right">
-                      <SelectValue placeholder="الترتيب حسب" />
+        <TabsContent value="gigs" className="mt-0">          <div className="flex flex-col md:flex-row-reverse gap-8">
+          {/* Filters Sidebar */}
+          <motion.aside
+            className={`md:w-1/4 ${isFiltersOpen ? 'block' : 'hidden'} md:block fixed inset-0 z-40 bg-white p-6 md:relative md:bg-transparent md:p-0 md:z-auto transition-transform duration-300 ease-in-out transform ${isFiltersOpen ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}`}
+            initial={{ x: -200, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ duration: 0.5 }}
+          >
+            <Card className="shadow-lg border-roman-500/20">
+              <CardHeader className="flex flex-row-reverse items-center justify-between">
+                <CardTitle className="text-xl text-roman-500 text-right">تصفية النتائج</CardTitle>
+                <Button variant="ghost" size="icon" className="md:hidden hover:bg-success-100/50 text-roman-500" onClick={() => setIsFiltersOpen(false)}>
+                  <X className="h-5 w-5" />
+                </Button>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div>
+                  <Label htmlFor="search-filter-gigs" className="text-neutral-900 block text-right">بحث بالاسم</Label>                    <Input
+                    id="search-filter-gigs"
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="اسم الحرفة، وصف..."
+                    className="mt-1 border-roman-500/30 focus:border-roman-500 focus:ring-roman-500/20 text-right"
+                    dir="rtl"
+                  />
+                </div>                  <div>
+                  <Label htmlFor="category-filter-gigs" className="text-neutral-900 block text-right">التصنيف</Label>
+                  <Select value={selectedCategory} onValueChange={value => handleCategoryChange(String(value))} dir="rtl">
+                    <SelectTrigger id="category-filter-gigs" className="mt-1 border-roman-500/30 focus:border-roman-500 focus:ring-roman-500/20 text-right">
+                      <SelectValue placeholder="اختر تصنيف" />
                     </SelectTrigger>
                     <SelectContent className="border-roman-500/30 text-right" dir="rtl">
-                      <SelectItem value="oldest">الأقدم</SelectItem>
-                      <SelectItem value="price_low">السعر: من الأقل للأعلى</SelectItem>
-                      <SelectItem value="price_high">السعر: من الأعلى للأقل</SelectItem>
-                      <SelectItem value="rating">الأعلى تقييماً</SelectItem>
-                      <SelectItem value="newest">الأحدث</SelectItem>
+                      <SelectItem value="all">كل التصنيفات</SelectItem>
+                      {categories.map(cat => (
+                        <SelectItem key={cat.id} value={String(cat.id)}>{cat.name}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
-                  <Button variant="outline" size="icon" className="border-roman-500/50 text-roman-500 hover:bg-roman-500 hover:text-white" onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}>
-                    {viewMode === 'grid' ? <ListFilter className="h-5 w-5" /> : <LayoutGrid className="h-5 w-5" />}
-                  </Button>
                 </div>
-              </div>
+                <div>
+                  <Label htmlFor="gift-section-filter-gigs" className="text-neutral-900 block text-right">قسم الهدايا</Label>
+                  <Select value={selectedGiftSection} onValueChange={value => setSelectedGiftSection(String(value))} dir="rtl">
+                    <SelectTrigger id="gift-section-filter-gigs" className="mt-1 border-roman-500/30 focus:border-roman-500 focus:ring-roman-500/20 text-right">
+                      <SelectValue placeholder="اختر قسم الهدايا" />
+                    </SelectTrigger>
+                    <SelectContent className="border-roman-500/30 text-right" dir="rtl">
+                      <SelectItem value="all">كل الأقسام</SelectItem>
+                      {giftSections.map(section => (
+                        <SelectItem key={section.id} value={String(section.id)}>{section.title}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                {/* Type is fixed to gig in this tab; no type selector */}
+                <div>
+                  <Label className="text-neutral-900 block text-right">نطاق السعر: {priceRange[0]} - {priceRange[1]} جنيه</Label>
+                  <Slider
+                    defaultValue={priceRange}
+                    min={0}
+                    max={1000}
+                    step={50}
+                    onValueChange={setPriceRange}
+                    className="mt-2 [&>span:first-child]:h-1 [&>span:first-child]:bg-roman-500/20 [&_[role=slider]]:bg-roman-500 [&_[role=slider]]:w-4 [&_[role=slider]]:h-4 [&_[role=slider]]:border-2 [&_[role=slider]]:border-neutral-200"
+                  />
+                </div>
+                <div>
+                  <Label className="text-neutral-900 block text-right">التقييم الأدنى: {minRating} نجوم</Label>
+                  <div className="flex space-x-1 space-x-reverse mt-1">
+                    {[1, 2, 3, 4, 5].map(star => (
+                      <Button
+                        key={star}
+                        variant={minRating >= star ? "default" : "outline"}
+                        size="icon"
+                        onClick={() => setMinRating(star === minRating ? 0 : star)}
+                        className={`p-2 ${minRating >= star ? 'bg-roman-500 border-roman-500 hover:bg-roman-500/90' : 'border-roman-500/30'}`}
+                      >
+                        <Star className={`h-5 w-5 ${minRating >= star ? 'text-white' : 'text-warning-500'}`} />
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+                <Separator />                  <Button onClick={handleFilterChange} className="w-full bg-roman-500 hover:bg-roman-500/90 text-white">
+                  <Filter className="ml-2 h-4 w-4" /> تطبيق الفلاتر
+                </Button>
+                <Button onClick={resetFilters} variant="outline" className="w-full border-roman-500/50 text-roman-500 hover:bg-roman-500 hover:text-white">
+                  إعادة تعيين الفلاتر
+                </Button>
+              </CardContent>
+            </Card>
+          </motion.aside>
 
-              {loading ? (
-                <div className="text-center py-12">
-                  <p className="text-lg text-neutral-900">جاري تحميل الحرف...</p>
-                </div>
-              ) : error ? (
-                <div className="text-center py-12">
-                  <p className="text-lg text-red-500">{error}</p>
-                </div>              ) : gigs.length > 0 ? (
+          {/* Gigs List */}
+          <main className="w-full md:w-3/4">
+            <div className="flex items-center justify-end mb-6">
+              <p className="text-neutral-900/70 hidden md:block">تم العثور على {gigs.length} حرفة</p>                <div className="flex items-center gap-2">                  <Button variant="outline" size="icon" className="md:hidden ml-2 border-roman-500/50 text-roman-500 hover:bg-roman-500 hover:text-white" onClick={() => setIsFiltersOpen(true)}>
+                <Filter className="h-5 w-5" />
+              </Button>                  <Select value={sortBy} onValueChange={handleSortChange} dir="rtl">
+                  <SelectTrigger className="w-[180px] border-roman-500/30 focus:border-roman-500 focus:ring-roman-500/20 text-right">
+                    <SelectValue placeholder="الترتيب حسب" />
+                  </SelectTrigger>
+                  <SelectContent className="border-roman-500/30 text-right" dir="rtl">
+                    <SelectItem value="oldest">الأقدم</SelectItem>
+                    <SelectItem value="price_low">السعر: من الأقل للأعلى</SelectItem>
+                    <SelectItem value="price_high">السعر: من الأعلى للأقل</SelectItem>
+                    <SelectItem value="rating">الأعلى تقييماً</SelectItem>
+                    <SelectItem value="newest">الأحدث</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button variant="outline" size="icon" className="border-roman-500/50 text-roman-500 hover:bg-roman-500 hover:text-white" onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}>
+                  {viewMode === 'grid' ? <ListFilter className="h-5 w-5" /> : <LayoutGrid className="h-5 w-5" />}
+                </Button>
+              </div>
+            </div>
+
+            {loading ? (
+              <div className="text-center py-12">
+                <p className="text-lg text-neutral-900">جاري تحميل الحرف...</p>
+              </div>
+            ) : error ? (
+              <div className="text-center py-12">
+                <p className="text-lg text-red-500">{error}</p>
+              </div>) : gigs.length > 0 ? (
                 <>
-                  <motion.div 
+                  <motion.div
                     className={viewMode === 'grid' ? "grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-2 rtl" : "space-y-6"}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -1389,13 +1385,13 @@ const ExplorePage = () => {
                       </motion.div>
                     ))}
                   </motion.div>
-                  
+
                   {/* Load More Button */}
                   {hasMore && (
-                    <motion.div 
+                    <motion.div
                       className="mt-8 flex justify-center"
                       initial={{ opacity: 0, y: 20 }}
-                      animate={{ 
+                      animate={{
                         opacity: showLoadMoreButton ? 1 : 0.5,
                         y: showLoadMoreButton ? 0 : 20,
                         scale: showLoadMoreButton ? 1.05 : 1
@@ -1405,9 +1401,8 @@ const ExplorePage = () => {
                       <Button
                         onClick={loadMore}
                         disabled={loadingMore}
-                        className={`bg-roman-500 hover:bg-roman-500/90 text-white px-6 py-3 text-sm font-medium rounded-full shadow-md hover:shadow-lg transition-all duration-300 ${
-                          showLoadMoreButton ? 'ring-2 ring-roman-500/30' : ''
-                        }`}
+                        className={`bg-roman-500 hover:bg-roman-500/90 text-white px-6 py-3 text-sm font-medium rounded-full shadow-md hover:shadow-lg transition-all duration-300 ${showLoadMoreButton ? 'ring-2 ring-roman-500/30' : ''
+                          }`}
                       >
                         {loadingMore ? (
                           <>
@@ -1425,19 +1420,19 @@ const ExplorePage = () => {
                   )}
                 </>
               ) : (
-                <div className="text-center py-12">
-                  <img src="https://images.unsplash.com/photo-1675023112817-52b789fd2ef0" alt="لا توجد نتائج" className="mx-auto mb-4 w-48 h-48 text-gray-400" />
-                  <h3 className="text-2xl font-semibold text-neutral-900 mb-2">لا توجد حرف تطابق بحثك</h3>
-                  <p className="text-neutral-900/70">حاول تعديل الفلاتر أو البحث بكلمات أخرى.</p>
-                </div>
-              )}
-            </main>
-          </div>
+              <div className="text-center py-12">
+                <img src="https://images.unsplash.com/photo-1675023112817-52b789fd2ef0" alt="لا توجد نتائج" className="mx-auto mb-4 w-48 h-48 text-gray-400" />
+                <h3 className="text-2xl font-semibold text-neutral-900 mb-2">لا توجد حرف تطابق بحثك</h3>
+                <p className="text-neutral-900/70">حاول تعديل الفلاتر أو البحث بكلمات أخرى.</p>
+              </div>
+            )}
+          </main>
+        </div>
         </TabsContent>
-          <TabsContent value="sellers" className="mt-0">          
-            <div className="flex flex-col md:flex-row-reverse gap-8">
+        <TabsContent value="sellers" className="mt-0">
+          <div className="flex flex-col md:flex-row-reverse gap-8">
             {/* Sellers Filters Sidebar */}
-            <motion.aside 
+            <motion.aside
               className={`md:w-1/4 ${isFiltersOpen ? 'block' : 'hidden'} md:block fixed inset-0 z-40 bg-white p-6 pt-15 md:relative md:bg-transparent md:p-0 md:z-auto transition-transform duration-300 ease-in-out transform ${isFiltersOpen ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}`}
               initial={{ x: -200, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
@@ -1452,12 +1447,12 @@ const ExplorePage = () => {
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div>
-                    <Label htmlFor="search-filter-sellers" className="text-neutral-900 block text-right">بحث بالاسم أو المهارات</Label>                    <Input 
-                      id="search-filter-sellers" 
-                      type="text" 
-                      value={searchTerm} 
-                      onChange={(e) => setSearchTerm(e.target.value)} 
-                      placeholder="اسم الحرفي، المهارات..." 
+                    <Label htmlFor="search-filter-sellers" className="text-neutral-900 block text-right">بحث بالاسم أو المهارات</Label>                    <Input
+                      id="search-filter-sellers"
+                      type="text"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      placeholder="اسم الحرفي، المهارات..."
                       className="mt-1 border-roman-500/30 focus:border-roman-500 focus:ring-roman-500/20 text-right"
                       dir="rtl"
                     />
@@ -1479,10 +1474,10 @@ const ExplorePage = () => {
                     <Label className="text-gray-700 block text-right">التقييم الأدنى: {minRating} نجوم</Label>
                     <div className="flex space-x-1 space-x-reverse mt-1">
                       {[1, 2, 3, 4, 5].map(star => (
-                        <Button 
-                          key={star} 
-                          variant={minRating >= star ? "default" : "outline"} 
-                          size="icon" 
+                        <Button
+                          key={star}
+                          variant={minRating >= star ? "default" : "outline"}
+                          size="icon"
                           onClick={() => setMinRating(star === minRating ? 0 : star)}
                           className={`p-2 ${minRating >= star ? 'bg-yellow-400 border-yellow-400 hover:bg-yellow-500' : 'border-gray-300'}`}
                         >
@@ -1503,10 +1498,10 @@ const ExplorePage = () => {
 
             {/* Sellers List */}
             <main className="w-full md:w-3/4">
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center justify-end mb-6">
                 <p className="text-gray-600 hidden md:block">تم العثور على {sellers.length} حرفي</p>
                 <div className="flex items-center gap-2">
-                  <Button variant="outline" size="icon" className="md:hidden ml-2" onClick={() => setIsFiltersOpen(true)}>
+                  <Button variant="outline" size="icon" className="md:hidden ml-2 border-roman-500/50 text-roman-500 hover:bg-roman-500 hover:text-white" onClick={() => setIsFiltersOpen(true)}>
                     <Filter className="h-5 w-5" />
                   </Button>                  <Select value={sortBy} onValueChange={handleSortChange} dir="rtl">
                     <SelectTrigger className="w-[180px] text-right">
@@ -1532,62 +1527,61 @@ const ExplorePage = () => {
               ) : error ? (
                 <div className="text-center py-12">
                   <p className="text-lg text-red-500">{error}</p>
-                </div>              ) : sellers.length > 0 ? (
-                <>
-                  <motion.div 
-                    className={viewMode === 'grid' ? "grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-2 rtl" : "space-y-6"}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.5 }}
-                    dir="rtl"
-                  >
-                    {sellers.map((seller, index) => (
-                      <motion.div
-                        key={seller.id}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.3, delay: index * 0.05 }}
-                      >
-                        {viewMode === 'grid' ? <SellerCard seller={seller} /> : <SellerListItem seller={seller} />}
-                      </motion.div>
-                    ))}
-                  </motion.div>
-                  
-                  {/* Load More Button */}
-                  {hasMore && (
-                    <motion.div 
-                      className="mt-8 flex justify-center"
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ 
-                        opacity: showLoadMoreButton ? 1 : 0.5,
-                        y: showLoadMoreButton ? 0 : 20,
-                        scale: showLoadMoreButton ? 1.05 : 1
-                      }}
-                      transition={{ duration: 0.3 }}
+                </div>) : sellers.length > 0 ? (
+                  <>
+                    <motion.div
+                      className={viewMode === 'grid' ? "grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-2 rtl" : "space-y-6"}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 0.5 }}
+                      dir="rtl"
                     >
-                      <Button
-                        onClick={loadMore}
-                        disabled={loadingMore}
-                        className={`bg-roman-500 hover:bg-roman-500/90 text-white px-6 py-3 text-sm font-medium rounded-full shadow-md hover:shadow-lg transition-all duration-300 ${
-                          showLoadMoreButton ? 'ring-2 ring-roman-500/30' : ''
-                        }`}
-                      >
-                        {loadingMore ? (
-                          <>
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white ml-2"></div>
-                            جاري التحميل...
-                          </>
-                        ) : (
-                          <>
-                            <ArrowRight className="ml-2 h-4 w-4 rotate-180" />
-                            تحميل المزيد
-                          </>
-                        )}
-                      </Button>
+                      {sellers.map((seller, index) => (
+                        <motion.div
+                          key={seller.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.3, delay: index * 0.05 }}
+                        >
+                          {viewMode === 'grid' ? <SellerCard seller={seller} /> : <SellerListItem seller={seller} />}
+                        </motion.div>
+                      ))}
                     </motion.div>
-                  )}
-                </>
-              ) : (
+
+                    {/* Load More Button */}
+                    {hasMore && (
+                      <motion.div
+                        className="mt-8 flex justify-center"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{
+                          opacity: showLoadMoreButton ? 1 : 0.5,
+                          y: showLoadMoreButton ? 0 : 20,
+                          scale: showLoadMoreButton ? 1.05 : 1
+                        }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        <Button
+                          onClick={loadMore}
+                          disabled={loadingMore}
+                          className={`bg-roman-500 hover:bg-roman-500/90 text-white px-6 py-3 text-sm font-medium rounded-full shadow-md hover:shadow-lg transition-all duration-300 ${showLoadMoreButton ? 'ring-2 ring-roman-500/30' : ''
+                            }`}
+                        >
+                          {loadingMore ? (
+                            <>
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white ml-2"></div>
+                              جاري التحميل...
+                            </>
+                          ) : (
+                            <>
+                              <ArrowRight className="ml-2 h-4 w-4 rotate-180" />
+                              تحميل المزيد
+                            </>
+                          )}
+                        </Button>
+                      </motion.div>
+                    )}
+                  </>
+                ) : (
                 <div className="text-center py-12">
                   <img src="https://images.unsplash.com/photo-1675023112817-52b789fd2ef0" alt="لا توجد نتائج" className="mx-auto mb-4 w-48 h-48 text-gray-400" />
                   <h3 className="text-2xl font-semibold text-gray-700 mb-2">لا يوجد حرفيين يطابقون بحثك</h3>
@@ -1598,7 +1592,7 @@ const ExplorePage = () => {
           </div>
         </TabsContent>
       </Tabs>
-      
+
       {isFiltersOpen && <div className="fixed inset-0 bg-black/50 z-30 md:hidden" onClick={() => setIsFiltersOpen(false)}></div>}
     </div>
   );

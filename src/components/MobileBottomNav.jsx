@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Search, ShoppingCart, LogIn, Bell, MessageCircle, LayoutDashboard } from 'lucide-react';
+import { Search, ShoppingCart, LogIn, Bell, MessageCircle, LayoutDashboard, Store } from 'lucide-react';
 import { useNotifications } from '@/contexts/NotificationContext';
 
 const navItems = [
@@ -20,7 +20,7 @@ const navItems = [
   },
   {
     label: 'استكشاف',
-    icon: Search,
+    icon: Store,
     to: '/explore',
     show: () => true,
     type: 'search'

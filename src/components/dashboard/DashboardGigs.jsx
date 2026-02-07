@@ -350,7 +350,7 @@ const DashboardGigs = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
-            >              <Card className="shadow-lg hover:shadow-xl transition-shadow flex flex-col h-full border-neutral-300">
+            >              <Card className="transition-shadow flex flex-col h-full">
                 <div className="relative h-48">
                   <img 
                     src={(() => {

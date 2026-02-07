@@ -190,7 +190,7 @@ const WishlistPage = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
               >
-                <Card className="group hover:shadow-lg transition-all duration-300 border-roman-500/20">
+                <Card className="group transition-all duration-300">
                   <CardHeader className="p-0">
                     <div className="relative">
                       <img

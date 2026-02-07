@@ -578,7 +578,7 @@ const GigDetailsPage = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" dir="rtl">
                 {relatedGigs.map(relatedGig => (
                   <Link key={relatedGig.id} to={`/gigs/${relatedGig.id}`} className="block">
-                    <Card className="overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 card-hover border-roman-500/20 cursor-pointer" dir="rtl">
+                    <Card className="overflow-hidden transition-shadow duration-300 card-hover cursor-pointer" dir="rtl">
                       <div className="relative h-48">
                         <img 
                           src={relatedGig.images && relatedGig.images.length > 0 

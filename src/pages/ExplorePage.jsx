@@ -707,7 +707,7 @@ const ExplorePage = () => {
 
     return (
       <Link to={`/gigs/${gig.id}`} className="block">
-        <Card className="overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 flex flex-col h-62 card-hover cursor-pointer" dir="rtl">
+        <Card className="overflow-hidden transition-shadow duration-300 flex flex-col h-62 card-hover cursor-pointer" dir="rtl">
           <div className="relative h-56">
             <img
               src={gig.images && gig.images.length > 0

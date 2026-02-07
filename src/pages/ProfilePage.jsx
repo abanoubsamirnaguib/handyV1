@@ -1070,7 +1070,7 @@ const ProfilePage = () => {
             ) : userGigs && userGigs.length > 0 ? (
               <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                 {userGigs.map(gig => (
-                  <Card key={gig.id} className="overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 card-hover border-neutral-200/50">
+                  <Card key={gig.id} className="overflow-hidden transition-shadow duration-300 card-hover">
                     <div className="relative h-48">
                       <img 
                         src={gig.images && gig.images.length > 0 

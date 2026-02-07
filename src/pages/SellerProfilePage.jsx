@@ -326,7 +326,7 @@ const SellerProfilePage = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8" dir="rtl">
                 {sellerGigs.map((gig) => (
                   <Link key={gig.id} to={`/gigs/${gig.id}`} className="block">
-                    <Card className="overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 flex flex-col h-full card-hover border-neutral-200/50 cursor-pointer" dir="rtl">
+                    <Card className="overflow-hidden transition-shadow duration-300 flex flex-col h-full card-hover cursor-pointer" dir="rtl">
                       <div className="relative h-56">
                         <img 
                           src={gig.images && gig.images.length > 0 

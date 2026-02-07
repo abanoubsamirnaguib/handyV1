@@ -405,7 +405,7 @@ const AdminProducts = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
               >
-                <Card className="shadow-lg hover:shadow-xl transition-shadow border-blue-100 h-full flex flex-col">
+                <Card className="transition-shadow h-full flex flex-col">
                   <CardHeader className="pb-2 relative">
                     <div className="flex justify-between items-start">
                       <CardTitle className="text-lg text-gray-800 line-clamp-2">{product.title}</CardTitle>

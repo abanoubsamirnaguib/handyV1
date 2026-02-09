@@ -1,9 +1,10 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Search, ShoppingCart, LogIn, Bell, MessageCircle, LayoutDashboard, Store } from 'lucide-react';
+import { Search, ShoppingCart, LogIn, Bell, MessageCircle, LayoutDashboard, Store, Plus, Package } from 'lucide-react';
 import { useNotifications } from '@/contexts/NotificationContext';
+import { useAuth } from '@/contexts/AuthContext';
 
-const navItems = [
+const getNavItems = (user) => [
   {
     label: 'لوحة التحكم',
     icon: LayoutDashboard,
@@ -19,16 +20,16 @@ const navItems = [
     type: 'notification'
   },
   {
-    label: 'استكشاف',
-    icon: Store,
-    to: '/explore',
+    label: user?.active_role === 'seller' ? 'إضافة منتج' : 'استكشاف',
+    icon: user?.active_role === 'seller' ? Plus : Store,
+    to: user?.active_role === 'seller' ? '/dashboard/gigs' : '/explore',
     show: () => true,
     type: 'search'
   },
   {
-    label: 'السلة',
-    icon: ShoppingCart,
-    to: '/cart',
+    label: user?.active_role === 'seller' ? 'الطلبات' : 'السلة',
+    icon: user?.active_role === 'seller' ? Package : ShoppingCart,
+    to: user?.active_role === 'seller' ? '/dashboard/orders' : '/cart',
     show: () => !!localStorage.getItem('token'),
     type: 'regular'
   },
@@ -51,6 +52,8 @@ const navItems = [
 const MobileBottomNav = () => {
   const location = useLocation();
   const { unreadCount = 0 } = useNotifications();
+  const { user } = useAuth();
+  const navItems = getNavItems(user);
   
   const renderNavItem = (item) => {
     const { label, icon: Icon, to, type } = item;

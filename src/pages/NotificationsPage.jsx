@@ -1,7 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, Check, Trash2, Package, MessageSquare, Star, DollarSign, Loader2, RefreshCw } from 'lucide-react';
+import { Bell, Check, Trash2, Package, MessageSquare, Star, DollarSign, Loader2, RefreshCw, BellRing } from 'lucide-react';
 import { useNotifications } from '@/contexts/NotificationContext';
 import { useNavigate } from 'react-router-dom';
+import {
+  isPushSupported,
+  getCurrentPushSubscription,
+  requestAndSubscribePush,
+  unsubscribePush,
+} from '@/lib/pushNotifications';
 
 const NotificationsPage = () => {
   const { 
@@ -17,7 +23,37 @@ const NotificationsPage = () => {
   
   const [filter, setFilter] = useState('all');
   const [refreshing, setRefreshing] = useState(false);
+  const [pushEnabled, setPushEnabled] = useState(false);
+  const [pushLoading, setPushLoading] = useState(false);
+  const [pushSupported] = useState(() => isPushSupported());
   const navigate = useNavigate();
+
+  const updatePushStatus = async () => {
+    const sub = await getCurrentPushSubscription();
+    setPushEnabled(!!sub);
+  };
+
+  useEffect(() => {
+    if (pushSupported) updatePushStatus();
+  }, [pushSupported]);
+
+  const handlePushToggle = async () => {
+    if (!pushSupported || pushLoading) return;
+    setPushLoading(true);
+    try {
+      if (pushEnabled) {
+        await unsubscribePush();
+        setPushEnabled(false);
+      } else {
+        const result = await requestAndSubscribePush();
+        setPushEnabled(result?.subscribed === true);
+      }
+    } catch (err) {
+      console.error('Push toggle error:', err);
+    } finally {
+      setPushLoading(false);
+    }
+  };
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -102,6 +138,24 @@ const NotificationsPage = () => {
               )}
             </div>
             <div className="flex items-center gap-2">
+              {pushSupported && (
+                <button
+                  onClick={handlePushToggle}
+                  disabled={pushLoading}
+                  className={`p-2 rounded-lg transition-colors disabled:opacity-50 ${
+                    pushEnabled
+                      ? 'text-red-500 hover:text-red-600 bg-red-50 hover:bg-red-100'
+                      : 'text-gray-500 hover:text-gray-700 bg-gray-100 hover:bg-gray-200'
+                  }`}
+                  title={pushEnabled ? 'إشعارات الدفع مفعّلة - اضغط لإيقافها' : 'تفعيل إشعارات الدفع'}
+                >
+                  {pushLoading ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <BellRing className="w-5 h-5" />
+                  )}
+                </button>
+              )}
               <button
                 onClick={handleRefresh}
                 disabled={refreshing}

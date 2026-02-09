@@ -34,7 +34,7 @@ const ProductGigSelectionModal = ({ isOpen, onClose, onSelectProduct, onSelectGi
               transition={{ delay: 0.1 }}
             >
               <Card
-                className="cursor-pointer hover:shadow-lg transition-all duration-300 hover:border-amber-300 border-2 border-transparent group"
+                className="cursor-pointer hover:shadow-lg transition-all duration-300 hover:border-amber-300 border-2 border-transparent group"   
                 onClick={handleProductSelect}
               >
                 <CardHeader className="text-center pb-3">

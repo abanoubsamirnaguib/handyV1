@@ -162,9 +162,9 @@ class ProductController extends Controller
             $directory = 'products/' . $product->id;
             $webpPaths = ImageService::convertMultipleToWebP(
                 $request->file('images'),
-                $directory,
-                100,  // WebP quality (0-100)
-                1920 // Max width in pixels
+                $directory
+                // Uses config values from config/images.php:
+                // scale=50%, quality=85, min-quality=40, quality-step=5, min-size=0KB, max-size=200KB
             );
             
             foreach ($webpPaths as $path) {
@@ -296,9 +296,9 @@ class ProductController extends Controller
             $directory = 'products/' . $product->id;
             $webpPaths = ImageService::convertMultipleToWebP(
                 $request->file('images'),
-                $directory,
-                100,  // WebP quality (0-100)
-                1920 // Max width in pixels
+                $directory
+                // Uses config values from config/images.php:
+                // scale=50%, quality=85, min-quality=40, quality-step=5, min-size=0KB, max-size=200KB
             );
             
             foreach ($webpPaths as $path) {

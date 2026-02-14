@@ -78,7 +78,7 @@ const AdminProducts = () => {
       });
       return;    }
     fetchProducts(); // Fetch first page
-    fetchCategories();
+    // fetchCategories();
   }, [user]);// Fetch products when search, filter, or page changes
   useEffect(() => {
     if (user?.role === 'admin') {

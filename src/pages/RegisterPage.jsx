@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { UserPlus, Mail, Lock, User, Briefcase, Eye, EyeOff, ShoppingBag, Store } from 'lucide-react';
+import { UserPlus, Mail, Lock, User, Briefcase, Eye, EyeOff, ShoppingBag, Store, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -22,6 +22,7 @@ const RegisterPage = () => {
   const { settings } = useSiteSettings();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [role, setRole] = useState(searchParams.get('role') || 'buyer'); // 'buyer' or 'seller'
@@ -63,6 +64,17 @@ const RegisterPage = () => {
       return;
     }
     
+    // Validate Egyptian phone number
+    const phoneRegex = /^(010|011|012|015)[0-9]{8}$/;
+    if (!phoneRegex.test(phone)) {
+      toast({
+        variant: "destructive",
+        title: "رقم الهاتف غير صحيح",
+        description: "يرجى إدخال رقم هاتف مصري صحيح (يبدأ بـ 010، 011، 012، أو 015 ويتكون من 11 رقم)",
+      });
+      return;
+    }
+    
     if (!isBuyer && !isSeller) {
       toast({
         variant: "destructive",
@@ -83,6 +95,7 @@ const RegisterPage = () => {
       const registrationData = {
         name,
         email,
+        phone,
         password,
         role: primaryRole,
         is_buyer: isBuyer,
@@ -202,6 +215,24 @@ const RegisterPage = () => {
                   <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-roman-500/60" />
                   <Input id="email-register" type="email" placeholder="example@mail.com" value={email} onChange={(e) => setEmail(e.target.value)} required className="pr-10 border-roman-500/30 focus:border-roman-500 focus:ring-roman-500/20" />
                 </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="phone-register" className="text-neutral-900">رقم الهاتف</Label>
+                <div className="relative">
+                  <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-roman-500/60" />
+                  <Input 
+                    id="phone-register" 
+                    type="tel" 
+                    placeholder="01012345678" 
+                    value={phone} 
+                    onChange={(e) => setPhone(e.target.value)} 
+                    required 
+                    maxLength={11}
+                    dir="rtl"
+                    className="pl-10 text-right border-roman-500/30 focus:border-roman-500 focus:ring-roman-500/20" 
+                  />
+                </div>
+                <p className="text-xs text-neutral-600">رقم مصري (يبدأ بـ 010، 011، 012، أو 015)</p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="password-register" className="text-neutral-900">كلمة المرور</Label>

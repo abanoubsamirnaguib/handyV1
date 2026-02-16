@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, Check, Trash2, Package, MessageSquare, Star, DollarSign, Loader2, RefreshCw, BellRing } from 'lucide-react';
+import { Bell, Check, Trash2, Package, MessageSquare, Star, DollarSign, Loader2, RefreshCw, BellRing, Info } from 'lucide-react';
 import { useNotifications } from '@/contexts/NotificationContext';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -200,6 +200,18 @@ const NotificationsPage = () => {
 
       {/* Notifications List */}
       <div className="max-w-lg mx-auto px-4 py-4">
+        {/* Notification Permission Hint */}
+        {pushSupported && !pushEnabled && !pushLoading && (
+          <div className="mb-4 bg-roman-100 border border-roman-200 rounded-lg p-3 flex items-start gap-3">
+            <Info className="w-5 h-5 text-roman-500 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-sm text-roman-700">
+                يرجى تفعيل الإشعارات من الزر أعلاه حتى نتمكن من إرسال إشعارات التطبيق وأخبار منتجاتك وطلباتك
+              </p>
+            </div>
+          </div>
+        )}
+
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="w-8 h-8 text-warning-500 animate-spin" />

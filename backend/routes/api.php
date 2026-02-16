@@ -260,6 +260,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // Change Password
     Route::post('change-password', [AuthController::class, 'changePassword']);
     
+    // Update Phone
+    Route::post('update-phone', [AuthController::class, 'updatePhone']);
+    
     // Payment routes
     Route::post('payments/deposit', [PaymentController::class, 'processDeposit']);
     Route::post('payments/remaining', [PaymentController::class, 'processRemainingPayment']);

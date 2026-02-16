@@ -612,6 +612,51 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const updatePhone = async (phone) => {
+    try {
+      const token = getToken();
+      if (!token || !user) throw new Error('Not authenticated');
+      
+      const res = await fetch(apiUrl('update-phone'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ phone }),
+      });
+      
+      const data = await res.json();
+      
+      if (!res.ok) {
+        toast({
+          variant: 'destructive',
+          title: 'خطأ',
+          description: data.message || 'حدث خطأ أثناء تحديث رقم الهاتف',
+        });
+        return false;
+      }
+      
+      // Update user data
+      setUser(data.user);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      
+      toast({
+        title: 'تم تحديث رقم الهاتف',
+        description: 'تم حفظ رقم هاتفك بنجاح',
+      });
+      return true;
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'خطأ',
+        description: error.message || 'حدث خطأ أثناء تحديث رقم الهاتف',
+      });
+      return false;
+    }
+  };
+
   // OTP-related functions
   const sendEmailVerificationOTP = async (email) => {
     try {
@@ -759,6 +804,7 @@ export const AuthProvider = ({ children }) => {
     switchRole,
     enableSellerMode,
     changePassword,
+    updatePhone,
     // OTP functions
     sendEmailVerificationOTP,
     verifyEmail,

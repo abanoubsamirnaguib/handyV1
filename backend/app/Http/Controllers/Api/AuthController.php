@@ -630,6 +630,59 @@ class AuthController extends Controller
     }
 
     /**
+     * Update user phone number
+     */
+    public function updatePhone(Request $request)
+    {
+        try {
+            $user = $request->user();
+            
+            $validated = $request->validate([
+                'phone' => 'required|string|regex:/^(010|011|012|015)[0-9]{8}$/',
+            ], [
+                'phone.required' => 'رقم الهاتف مطلوب',
+                'phone.regex' => 'رقم الهاتف يجب أن يكون رقم مصري صحيح (يبدأ بـ 010، 011، 012، أو 015 ويتكون من 11 رقم)',
+            ]);
+            
+            // Check if phone is already used by another user
+            $existingUser = User::where('phone', $validated['phone'])
+                ->where('id', '!=', $user->id)
+                ->first();
+                
+            if ($existingUser) {
+                return response()->json([
+                    'message' => 'رقم الهاتف مستخدم بالفعل من قبل مستخدم آخر'
+                ], 422);
+            }
+            
+            $user->phone = $validated['phone'];
+            $user->save();
+            
+            // Load seller relationship if needed
+            if ($user->active_role === 'seller' || $user->is_seller) {
+                $user->load('seller.skills');
+            }
+            
+            return response()->json([
+                'message' => 'تم تحديث رقم الهاتف بنجاح',
+                'user' => new \App\Http\Resources\UserResource($user)
+            ]);
+            
+        } catch (ValidationException $e) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (Exception $e) {
+            Log::error('Update phone error: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'فشل تحديث رقم الهاتف',
+                'error' => config('app.debug') ? $e->getMessage() : 'Internal server error'
+            ], 500);
+        }
+    }
+
+    /**
      * Updated register method to require email verification
      */
     public function registerWithEmailVerification(Request $request)
@@ -649,10 +702,14 @@ class AuthController extends Controller
                 'name' => 'required|string|max:100',
                 'email' => 'required|email|unique:users,email',
                 'password' => 'required|string|min:6',
+                'phone' => 'required|string|regex:/^(010|011|012|015)[0-9]{8}$/',
                 'otp_code' => 'required|string|size:4',
                 'role' => 'in:admin,seller,buyer',
                 'is_seller' => 'boolean',
                 'is_buyer' => 'boolean',
+            ], [
+                'phone.required' => 'رقم الهاتف مطلوب',
+                'phone.regex' => 'رقم الهاتف يجب أن يكون رقم مصري صحيح (يبدأ بـ 010، 011، 012، أو 015 ويتكون من 11 رقم)',
             ]);
             
             // Verify OTP first
@@ -673,6 +730,7 @@ class AuthController extends Controller
                 'name' => $validated['name'],
                 'email' => $validated['email'],
                 'password' => Hash::make($validated['password']),
+                'phone' => $validated['phone'],
                 'role' => $validated['role'] ?? 'buyer',
                 'active_role' => $activeRole,
                 'is_seller' => $isSeller,

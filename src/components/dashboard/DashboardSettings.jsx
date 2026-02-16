@@ -341,7 +341,7 @@ const DashboardSettings = () => {
                       type="button"
                       onClick={handleUploadAvatar}
                       disabled={uploadingAvatar}
-                      className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 text-sm"
+                      className="bg-roman-500 hover:bg-roman-500/90 text-white px-4 py-2 text-sm"
                     >
                       {uploadingAvatar ? 'جاري الرفع...' : 'رفع الصورة'}
                     </Button>
@@ -420,7 +420,7 @@ const DashboardSettings = () => {
               <Input id="confirmPassword" name="confirmPassword" type="password" value={passwordData.confirmPassword} onChange={handlePasswordChange} />
             </div>
           </div>
-          <Button type="submit" className="bg-blue-500 hover:bg-blue-600">
+          <Button type="submit" className="bg-roman-500 hover:bg-roman-500/90">
             <Save className="ml-2 h-4 w-4" /> تغيير كلمة المرور
           </Button>
         </form>
@@ -578,7 +578,7 @@ const DashboardSettings = () => {
 
           <Button 
             type="submit" 
-            className="bg-blue-500 hover:bg-blue-600"
+            className="bg-roman-500 hover:bg-roman-500/90"
             disabled={savingNotifications}
           >
             <Save className="ml-2 h-4 w-4" />

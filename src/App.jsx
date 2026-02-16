@@ -10,6 +10,7 @@ import ScrollToTop from '@/components/ScrollToTop';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import DeliveryProtectedRoute from '@/components/DeliveryProtectedRoute';
 import PWAInstallPopup from '@/components/PWAInstallPopup';
+import PhoneRequiredWrapper from '@/components/PhoneRequiredWrapper';
 
 import MainLayout from '@/layouts/MainLayout';
 import AdminLayout from '@/layouts/AdminLayout';
@@ -242,14 +243,16 @@ function App() {
   return (
     <SiteSettingsProvider>
       <AuthProvider>
-        <CartProvider>
-          <ChatProvider>
-            <NotificationProvider>
-              <AppRoutes />
-          </NotificationProvider>
-        </ChatProvider>
-      </CartProvider>
-    </AuthProvider>
+        <PhoneRequiredWrapper>
+          <CartProvider>
+            <ChatProvider>
+              <NotificationProvider>
+                <AppRoutes />
+              </NotificationProvider>
+            </ChatProvider>
+          </CartProvider>
+        </PhoneRequiredWrapper>
+      </AuthProvider>
     </SiteSettingsProvider>
   );
 }

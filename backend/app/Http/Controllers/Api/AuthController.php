@@ -638,7 +638,7 @@ class AuthController extends Controller
             $user = $request->user();
             
             $validated = $request->validate([
-                'phone' => 'required|string|regex:/^(010|011|012|015)[0-9]{8}$/',
+                'phone' => ['required', 'string', 'regex:/^(010|011|012|015)[0-9]{8}$/'],
             ], [
                 'phone.required' => 'رقم الهاتف مطلوب',
                 'phone.regex' => 'رقم الهاتف يجب أن يكون رقم مصري صحيح (يبدأ بـ 010، 011، 012، أو 015 ويتكون من 11 رقم)',
@@ -702,7 +702,7 @@ class AuthController extends Controller
                 'name' => 'required|string|max:100',
                 'email' => 'required|email|unique:users,email',
                 'password' => 'required|string|min:6',
-                'phone' => 'required|string|regex:/^(010|011|012|015)[0-9]{8}$/',
+                'phone' => ['required', 'string', 'regex:/^(010|011|012|015)[0-9]{8}$/'],
                 'otp_code' => 'required|string|size:4',
                 'role' => 'in:admin,seller,buyer',
                 'is_seller' => 'boolean',

@@ -1,7 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Search, ShoppingCart, LogIn, Bell, MessageCircle, LayoutDashboard, Store, Plus, Package } from 'lucide-react';
-import { useNotifications } from '@/contexts/NotificationContext';
+import { ShoppingCart, LogIn, MessageCircle, LayoutDashboard, Store, Plus, Package, DollarSign } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
 const getNavItems = (user) => [
@@ -13,11 +12,11 @@ const getNavItems = (user) => [
     type: 'regular'
   },
   {
-    label: 'الإشعارات',
-    icon: Bell,
-    to: '/notifications',
+    label: user?.active_role === 'seller' ? 'الأرباح' : 'السلة',
+    icon: user?.active_role === 'seller' ? DollarSign : ShoppingCart,
+    to: user?.active_role === 'seller' ? '/dashboard/earnings' : '/cart',
     show: () => !!localStorage.getItem('token'),
-    type: 'notification'
+    type: 'regular'
   },
   {
     label: user?.active_role === 'seller' ? 'إضافة منتج' : 'استكشاف',
@@ -27,9 +26,9 @@ const getNavItems = (user) => [
     type: 'search'
   },
   {
-    label: user?.active_role === 'seller' ? 'الطلبات' : 'السلة',
-    icon: user?.active_role === 'seller' ? Package : ShoppingCart,
-    to: user?.active_role === 'seller' ? '/dashboard/orders' : '/cart',
+    label: 'الطلبات',
+    icon: Package,
+    to: '/dashboard/orders',
     show: () => !!localStorage.getItem('token'),
     type: 'regular'
   },
@@ -51,7 +50,6 @@ const getNavItems = (user) => [
 
 const MobileBottomNav = () => {
   const location = useLocation();
-  const { unreadCount = 0 } = useNotifications();
   const { user } = useAuth();
   const navItems = getNavItems(user);
   
@@ -87,29 +85,6 @@ const MobileBottomNav = () => {
           }`}>
             {label}
           </span>
-        </Link>
-      );
-    }
-    
-    if (type === 'notification') {
-      return (
-        <Link
-          key={to}
-          to={to}
-          className={`relative flex flex-col items-center justify-center text-xs font-medium transition-colors duration-200 ${
-            isActive ? 'text-roman-500' : 'text-neutral-900/70'
-          } hover:text-roman-500`}
-          aria-label={label}
-        >
-          <div className="relative">
-            <Icon size={24} className="mb-1" />
-            {unreadCount > 0 && (
-              <div className="absolute -top-2 -right-2 flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-gradient-to-r from-red-500 to-pink-500 rounded-full border-2 border-white shadow-lg animate-pulse">
-                {unreadCount > 9 ? '9+' : unreadCount}
-              </div>
-            )}
-          </div>
-          <span className="text-xs">{label}</span>
         </Link>
       );
     }

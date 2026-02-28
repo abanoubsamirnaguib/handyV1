@@ -1,10 +1,11 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Link, Outlet, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LayoutDashboard, ShoppingBag, MessageCircle, Settings, BarChart2, DollarSign, Users, LogOut, PlusCircle, Edit, Menu, X, ChevronLeft, Heart, User } from 'lucide-react';
+import { LayoutDashboard, ShoppingBag, MessageCircle, Settings, BarChart2, DollarSign, Users, LogOut, PlusCircle, Edit, Menu, X, ChevronLeft, Heart, User, Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNotifications } from '@/contexts/NotificationContext';
 import { Separator } from '@/components/ui/separator';
 import { SidebarProvider, useSidebar } from '@/contexts/SidebarContext';
 import { usePageNavigation } from '@/hooks/usePageNavigation';
@@ -221,6 +222,7 @@ const DashboardContent = ({ user }) => {
   const { logout } = useAuth();
   const isDashboardRoot = location.pathname === '/dashboard' || location.pathname === '/dashboard/';
   const { isMobile, toggleSidebar, isMobileMenuOpen, isSidebarOpen } = useSidebar();
+  const { unreadCount = 0 } = useNotifications();
   // Create a ref for the main content scroll area
   const scrollRef = useScrollToTop();
   const headerRef = useRef(null);
@@ -287,14 +289,29 @@ const DashboardContent = ({ user }) => {
               <span className="text-lg font-semibold text-roman-500">لوحة التحكم</span>
             </Button>
           </div>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => toggleSidebar()}
-            className="text-roman-500 hover:bg-success-100/50"
-          >
-            {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/notifications')}
+              className="relative text-roman-500 hover:bg-success-100/50"
+            >
+              <Bell className="h-5 w-5" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => toggleSidebar()}
+              className="text-roman-500 hover:bg-success-100/50"
+            >
+              {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </Button>
+          </div>
         </div>
       )}
       {isMobile && isMobileMenuOpen && (

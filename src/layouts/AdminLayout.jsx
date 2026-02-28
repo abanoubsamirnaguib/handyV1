@@ -19,11 +19,13 @@ import {
   DollarSign,
   HelpCircle,
   Megaphone,
-  MapPin
+  MapPin,
+  Bell
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNotifications } from '@/contexts/NotificationContext';
 import { Separator } from '@/components/ui/separator';
 import { SidebarProvider, useSidebar } from '@/contexts/SidebarContext';
 import { usePageNavigation } from '@/hooks/usePageNavigation';
@@ -198,7 +200,10 @@ const AdminLayout = () => {
     { path: '/admin/messages', label: 'المحادثات', icon: MessageCircle },
     { path: '/admin/contact-us', label: 'رسائل التواصل', icon: HelpCircle },
     { path: '/admin/settings', label: 'إعدادات النظام', icon: Settings },
-  ];return (    <div className="flex min-h-[calc(100vh-var(--navbar-height,100px))]">
+  ];
+  const { unreadCount = 0 } = useNotifications();
+
+  return (    <div className="flex min-h-[calc(100vh-var(--navbar-height,100px))]">
       {!isMobile && <AdminSidebar />}      <main 
         ref={scrollRef}
         className={`flex-1 bg-background overflow-y-auto ${
@@ -210,14 +215,29 @@ const AdminLayout = () => {
               <Shield className="ml-1 h-4 w-4 text-blue-600" />
               <h1 className="text-lg font-semibold text-blue-600">لوحة المدير</h1>
             </div>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={toggleSidebar}
-              className="text-blue-600 hover:bg-gray-100"
-            >
-              {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            </Button>
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate('/notifications')}
+                className="relative text-blue-600 hover:bg-gray-100"
+              >
+                <Bell className="h-5 w-5" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={toggleSidebar}
+                className="text-blue-600 hover:bg-gray-100"
+              >
+                {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              </Button>
+            </div>
           </div>
         )}
           {isMobile && isMobileMenuOpen && (

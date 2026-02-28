@@ -221,35 +221,14 @@ const Navbar = () => {
                 <Button variant="ghost" size="icon" onClick={() => navigate('/wishlist')} className="text-roman-500 hover:text-warning-500 hover:bg-success-100">
                   <Heart className="h-5 w-5" />
                 </Button>
-                <DropdownMenu onOpenChange={open => { if (open) handleNotifDropdownOpen(); }}>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="relative text-roman-500 hover:text-warning-500 hover:bg-success-100">
-                      <Bell className="h-5 w-5" />
-                      {unreadCount > 0 && (
-                        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                          {unreadCount}
-                        </span>
-                      )}
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-80 max-h-96 overflow-y-auto">
-                    <DropdownMenuLabel className="text-neutral-900">الإشعارات</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    {notifications.length === 0 ? (
-                      <div className="p-4 text-center text-gray-500">لا توجد إشعارات</div>
-                    ) : (
-                      notifications.slice(0, 10).map((notif, idx) => (
-                        <DropdownMenuItem key={notif.id || idx} onClick={() => handleNotificationClick(notif)} className={!notif.read ? 'bg-gray-100 font-bold' : ''}>
-                          <div className="flex flex-col w-full">
-                            <span className="text-sm font-medium">{notif.title || 'إشعار'}</span>
-                            <span className="text-xs text-gray-600">{notif.message}</span>
-                            <span className="text-xs text-gray-400 mt-1">{notif.time || (notif.createdAt ? new Date(notif.createdAt).toLocaleString('ar-EG') : '')}</span>
-                          </div>
-                        </DropdownMenuItem>
-                      ))
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <Button variant="ghost" size="icon" onClick={() => navigate('/notifications')} className="relative text-roman-500 hover:text-warning-500 hover:bg-success-100">
+                  <Bell className="h-5 w-5" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
+                </Button>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="p-0 rounded-full">
@@ -296,9 +275,21 @@ const Navbar = () => {
             )}
           </div>
 
-          <Button variant="ghost" size="icon" className="md:hidden text-roman-500 hover:text-warning-500 hover:bg-success-100" onClick={toggleMenu}>
-            {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-          </Button>
+          <div className="md:hidden flex items-center gap-1">
+            {user && (
+              <Button variant="ghost" size="icon" onClick={() => navigate('/notifications')} className="relative text-roman-500 hover:text-warning-500 hover:bg-success-100">
+                <Bell className="h-5 w-5" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
+              </Button>
+            )}
+            <Button variant="ghost" size="icon" className="text-roman-500 hover:text-warning-500 hover:bg-success-100" onClick={toggleMenu}>
+              {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            </Button>
+          </div>
         </div>
 
         {isMenuOpen && (

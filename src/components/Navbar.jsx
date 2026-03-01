@@ -9,6 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import { useNotifications } from '@/contexts/NotificationContext';
 import { useSiteSettings } from '@/contexts/SiteSettingsContext';
+import NotificationDropdown from '@/components/NotificationDropdown';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -221,14 +222,7 @@ const Navbar = () => {
                 <Button variant="ghost" size="icon" onClick={() => navigate('/wishlist')} className="text-roman-500 hover:text-warning-500 hover:bg-success-100">
                   <Heart className="h-5 w-5" />
                 </Button>
-                <Button variant="ghost" size="icon" onClick={() => navigate('/notifications')} className="relative text-roman-500 hover:text-warning-500 hover:bg-success-100">
-                  <Bell className="h-5 w-5" />
-                  {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                      {unreadCount > 9 ? '9+' : unreadCount}
-                    </span>
-                  )}
-                </Button>
+                <NotificationDropdown />
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="p-0 rounded-full">

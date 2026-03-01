@@ -27,6 +27,7 @@ const DashboardSidebar = ({ user }) => {
     { path: '/wishlist', label: 'قائمة الأمنيات', icon: Heart },
     { path: '/dashboard/wallet', label: 'محفظتي', icon: DollarSign },
     { path: '/dashboard/messages', label: 'الرسائل', icon: MessageCircle },
+    { path: '/notifications', label: 'الإشعارات', icon: Bell },
     { path: '/profile/me', label: 'الملف الشخصي', icon: User },
     { path: '/dashboard/settings', label: 'إعدادات الحساب', icon: Settings },
   ];
@@ -37,6 +38,7 @@ const DashboardSidebar = ({ user }) => {
     { path: '/dashboard/orders', label: 'الطلبات الواردة', icon: DollarSign },
     { path: '/dashboard/earnings', label: 'الأرباح', icon: BarChart2 },
     { path: '/dashboard/messages', label: 'الرسائل', icon: MessageCircle },
+    { path: '/notifications', label: 'الإشعارات', icon: Bell },
     { path: '/profile/me', label: 'الملف الشخصي', icon: User },
     { path: '/dashboard/settings', label: 'إعدادات الحساب', icon: Settings },
   ];
@@ -127,7 +129,7 @@ const DashboardSidebar = ({ user }) => {
             )}
 
             <nav className="space-y-1">
-              {links.map(link => (
+              {(isMobile ? links.filter(l => l.path !== '/notifications') : links).map(link => (
                 <Button
                   key={link.path}
                   variant={location.pathname.startsWith(link.path) ? 'subtle' : 'ghost'}
@@ -246,6 +248,7 @@ const DashboardContent = ({ user }) => {
     { path: '/wishlist', label: 'قائمة الأمنيات', icon: Heart },
     { path: '/dashboard/wallet', label: 'محفظتي', icon: DollarSign },
     { path: '/dashboard/messages', label: 'الرسائل', icon: MessageCircle },
+    { path: '/notifications', label: 'الإشعارات', icon: Bell },
     { path: '/profile/me', label: 'الملف الشخصي', icon: User },
     { path: '/dashboard/settings', label: 'إعدادات الحساب', icon: Settings },
   ];
@@ -256,6 +259,7 @@ const DashboardContent = ({ user }) => {
     { path: '/dashboard/orders', label: 'الطلبات الواردة', icon: DollarSign },
     { path: '/dashboard/earnings', label: 'الأرباح', icon: BarChart2 },
     { path: '/dashboard/messages', label: 'الرسائل', icon: MessageCircle },
+    { path: '/notifications', label: 'الإشعارات', icon: Bell },
     { path: '/profile/me', label: 'الملف الشخصي', icon: User },
     { path: '/dashboard/settings', label: 'إعدادات الحساب', icon: Settings },
   ];
@@ -325,7 +329,7 @@ const DashboardContent = ({ user }) => {
         >
           <div className="p-4">
             <nav className="flex flex-col space-y-2">
-              {links.map(link => (
+              {links.filter(l => l.path !== '/notifications').map(link => (
                 <Link 
                   key={link.path}
                   to={link.path}

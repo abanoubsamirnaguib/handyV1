@@ -17,6 +17,8 @@ import AdminLayout from '@/layouts/AdminLayout';
 
 import HomePage from '@/pages/HomePage.jsx';
 import ExplorePage from '@/pages/ExplorePage.jsx';
+import CommunityPage from '@/pages/CommunityPage.jsx';
+import CommunityPostPage from '@/pages/CommunityPostPage.jsx';
 import GigDetailsPage from '@/pages/GigDetailsPage.jsx';
 import ProfilePage from '@/pages/ProfilePage.jsx';
 import SellerProfilePage from '@/pages/SellerProfilePage.jsx';
@@ -73,6 +75,7 @@ import AdminAnnouncements from '@/components/admin/AdminAnnouncements';
 import AdminCities from '@/components/admin/AdminCities';
 import AdminPlatformProfits from '@/components/admin/AdminPlatformProfits';
 import AdminGiftSections from '@/components/admin/AdminGiftSections';
+import AdminCommunityPosts from '@/components/admin/AdminCommunityPosts';
 
 import './styles/rtl-dropdown.css'; // Import our RTL dropdown styles
 
@@ -87,6 +90,8 @@ function AppRoutes() {
               <Route path="/" element={<MainLayout />}>
                 <Route index element={<HomePage />} />
                 <Route path="explore" element={<ExplorePage />} />
+                <Route path="community" element={<CommunityPage />} />
+                <Route path="community/posts/:postId" element={<CommunityPostPage />} />
                 <Route path="gigs/:id" element={<GigDetailsPage />} />
                 <Route path="sellers/:id" element={<SellerProfilePage />} />
                 <Route path="contact-us" element={<Navigate to="/about-us" replace />} />
@@ -203,6 +208,7 @@ function AppRoutes() {
                 <Route path="delivery-orders" element={<AdminDeliveryAssignment />} />
                 <Route path="withdrawals" element={<AdminWithdrawals />} />
                 <Route path="messages" element={<AdminMessages />} />
+                <Route path="community" element={<AdminCommunityPosts />} />
                 <Route path="contact-us" element={<AdminContactUs />} />
                 <Route path="announcements" element={<AdminAnnouncements />} />
                 <Route path="cities" element={<AdminCities />} />

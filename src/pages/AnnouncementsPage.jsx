@@ -149,7 +149,7 @@ const AnnouncementsPage = () => {
             <div className="flex flex-wrap gap-4 items-center">
               <div className="flex-1 min-w-80">
                 <div className="relative">
-                  <Search className="absolute right-3 top-2.5 h-5 w-5 text-neutral-400" />
+                  <Search className="absolute right-3 top-2.5 h-5 w-5 text-neutral-700" />
                   <Input
                     placeholder="البحث في الإعلانات... (العنوان والمحتوى)"
                     value={filters.search}
@@ -159,7 +159,7 @@ const AnnouncementsPage = () => {
                   {filters.search && (
                     <button
                       onClick={() => handleFilterChange('search', '')}
-                      className="absolute left-3 top-2.5 h-5 w-5 text-neutral-400 hover:text-neutral-900 transition-colors"
+                      className="absolute left-3 top-2.5 h-5 w-5 text-neutral-700 hover:text-neutral-900 transition-colors"
                       title="مسح البحث"
                     >
                       <X className="h-4 w-4" />
@@ -208,9 +208,9 @@ const AnnouncementsPage = () => {
         ) : announcements.length === 0 ? (
           <Card className="border-neutral-300/20">
             <CardContent className="text-center py-12">
-              <Info className="h-12 w-12 text-neutral-400 mx-auto mb-4" />
+              <Info className="h-12 w-12 text-neutral-700 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-neutral-900 mb-2">لا توجد إعلانات</h3>
-              <p className="text-neutral-400">لم يتم العثور على إعلانات تطابق معايير البحث</p>
+              <p className="text-neutral-700">لم يتم العثور على إعلانات تطابق معايير البحث</p>
             </CardContent>
           </Card>
         ) : (
@@ -245,7 +245,7 @@ const AnnouncementsPage = () => {
                         </div>
                       </div>
                       
-                      <div className="text-sm text-neutral-400 flex items-center">
+                      <div className="text-sm text-neutral-700 flex items-center">
                         <Calendar className="h-4 w-4 ml-1 text-roman-500" />
                         {format(new Date(announcement.created_at), 'dd MMMM yyyy', { locale: ar })}
                       </div>
@@ -268,7 +268,7 @@ const AnnouncementsPage = () => {
                     )}
 
                     <div className="flex items-center justify-between pt-4 border-t border-success-200">
-                      <div className="flex items-center gap-4 text-sm text-neutral-400">
+                      <div className="flex items-center gap-4 text-sm text-neutral-700">
                         {announcement.creator && (
                           <span>بواسطة: <span className="text-roman-500 font-medium">{announcement.creator.name}</span></span>
                         )}
@@ -331,7 +331,7 @@ const AnnouncementsPage = () => {
 
         {/* معلومات إضافية */}
         {announcements.length > 0 && (
-          <div className="text-center mt-6 text-sm text-neutral-400">
+          <div className="text-center mt-6 text-sm text-neutral-700">
             عرض {announcements.length} من أصل {pagination.total} إعلان
           </div>
         )}

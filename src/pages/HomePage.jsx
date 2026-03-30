@@ -628,7 +628,7 @@ const HomePage = () => {
                              announcement.type === 'success' ? 'نجاح' : 'تنبيه'}
                           </Badge>
                         </div>
-                        <div className="text-xs text-neutral-400 flex items-center">
+                        <div className="text-xs text-neutral-700 flex items-center">
                           <Calendar className="h-3 w-3 mr-1 text-roman-500" />
                           {new Date(announcement.created_at).toLocaleDateString('ar-EG')}
                         </div>

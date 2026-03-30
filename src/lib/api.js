@@ -497,6 +497,27 @@ export const api = {
   deleteReview: (reviewId) => 
     apiFetch(`reviews/${reviewId}`, { method: 'DELETE' }),
 
+  community: {
+    getFeed: (page = 1, params = {}) => {
+      const searchParams = new URLSearchParams({ page: String(page), ...params });
+      return apiFetch(`community/feed?${searchParams.toString()}`);
+    },
+    getPost: (id) => apiFetch(`community/posts/${id}`),
+    createPost: (data) => apiFetch('community/posts', { method: 'POST', body: JSON.stringify(data) }),
+    updatePost: (id, data) => apiFetch(`community/posts/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    hidePost: (id) => apiFetch(`community/posts/${id}/hide`, { method: 'PATCH' }),
+    deletePost: (id) => apiFetch(`community/posts/${id}`, { method: 'DELETE' }),
+    getComments: (postId, page = 1) => apiFetch(`community/posts/${postId}/comments?page=${page}`),
+    addComment: (postId, data) => apiFetch(`community/posts/${postId}/comments`, { method: 'POST', body: JSON.stringify(data) }),
+    updateComment: (commentId, data) => apiFetch(`community/comments/${commentId}`, { method: 'PUT', body: JSON.stringify(data) }),
+    deleteComment: (commentId) => apiFetch(`community/comments/${commentId}`, { method: 'DELETE' }),
+    toggleReaction: (postId, reactionType = 'like') => apiFetch(`community/posts/${postId}/react`, { method: 'POST', body: JSON.stringify({ reaction_type: reactionType }) }),
+    followAuthor: (authorId) => apiFetch(`community/users/${authorId}/follow`, { method: 'POST' }),
+    unfollowAuthor: (authorId) => apiFetch(`community/users/${authorId}/follow`, { method: 'DELETE' }),
+    getSharableReviews: () => apiFetch('community/seller/sharable-reviews'),
+    getSharableProducts: () => apiFetch('community/seller/sharable-products'),
+  },
+
   // Contact Us form submission (public endpoint)
   submitContactForm: (formData) => 
     apiFetch('contact', {
@@ -586,6 +607,16 @@ export const adminApi = {
   },
   // Recent activity
   getRecentActivity: () => apiFetch('admin/recent-activity'),
+
+  // Community moderation
+  getHiddenCommunityPosts: (params = {}) => {
+    const searchParams = new URLSearchParams(params);
+    return apiFetch(`admin/community/posts/hidden?${searchParams}`);
+  },
+  restoreCommunityPost: (postId) =>
+    apiFetch(`admin/community/posts/${postId}/restore`, {
+      method: 'POST',
+    }),
 
   // Categories management
   getCategories: (params = {}) => {

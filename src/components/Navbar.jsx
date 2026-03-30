@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Menu, X, ShoppingCart, Bell, Search, User, Shield, Heart, Facebook, Instagram, Youtube, Share2 } from 'lucide-react';
+import { Menu, X, ShoppingCart, Bell, Search, User, Shield, Heart, Facebook, Instagram, Youtube, Share2, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -45,6 +45,15 @@ const Navbar = () => {
     }
     return location.pathname.startsWith(path);
   };
+
+  // Dynamic community link: when currently inside /community route
+  // it should point to /market and display as 'المتجر'
+  const communityLink = (() => {
+    if (location.pathname.startsWith('/community')) {
+      return { to: '/explore', label: 'المتجر' };
+    }
+    return { to: '/community', label: 'المجتمع' };
+  })();
 
   const handleNotifDropdownOpen = async () => {
     // Mark all as read when dropdown opens
@@ -104,6 +113,11 @@ const Navbar = () => {
               isActiveLink('/explore') ? 'text-roman-500 border-b-2 border-roman-500 font-semibold' : ''
             }`}>
               استكشاف
+            </Link>
+            <Link to={communityLink.to} className={`px-3 py-2 text-sm font-medium hover:text-roman-500 transition-colors flex items-center gap-1 ${
+              isActiveLink(communityLink.to) ? 'text-roman-500 border-b-2 border-roman-500 font-semibold' : ''
+            }`}>
+              {communityLink.label}
             </Link>
             <Link to="/about-us" className={`px-3 py-2 text-sm font-medium hover:text-roman-500 transition-colors ${
               isActiveLink('/about-us') ? 'text-roman-500 border-b-2 border-roman-500 font-semibold' : ''
@@ -314,6 +328,11 @@ const Navbar = () => {
                 isActiveLink('/explore') ? 'text-roman-500 bg-roman-500/10 rounded-md font-semibold' : ''
               }`} onClick={toggleMenu}>
                 استكشاف
+              </Link>
+              <Link to={communityLink.to} className={`px-3 py-2 text-sm font-medium hover:text-primary transition-colors flex items-center gap-2 ${
+                isActiveLink(communityLink.to) ? 'text-roman-500 bg-roman-500/10 rounded-md font-semibold' : ''
+              }`} onClick={toggleMenu}>
+                {communityLink.label}
               </Link>
               <Link to="/about-us" className={`px-3 py-2 text-sm font-medium hover:text-primary transition-colors ${
                 isActiveLink('/about-us') ? 'text-roman-500 bg-roman-500/10 rounded-md font-semibold' : ''

@@ -251,6 +251,7 @@ const DashboardContent = ({ user }) => {
     { path: '/notifications', label: 'الإشعارات', icon: Bell },
     { path: '/profile/me', label: 'الملف الشخصي', icon: User },
     { path: '/dashboard/settings', label: 'إعدادات الحساب', icon: Settings },
+    { path: '/community', label: 'المجتمع', icon: Users },
   ];
 
   const sellerLinks = [
@@ -262,6 +263,7 @@ const DashboardContent = ({ user }) => {
     { path: '/notifications', label: 'الإشعارات', icon: Bell },
     { path: '/profile/me', label: 'الملف الشخصي', icon: User },
     { path: '/dashboard/settings', label: 'إعدادات الحساب', icon: Settings },
+    { path: '/community', label: 'المجتمع', icon: Users },
   ];
 
   const links = user?.active_role === 'seller' ? sellerLinks : buyerLinks;

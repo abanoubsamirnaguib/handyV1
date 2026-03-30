@@ -64,6 +64,7 @@ const AdminSidebar = () => {
     { path: '/admin/delivery-orders', label: 'توزيع الطلبات', icon: PackageOpen },
     { path: '/admin/withdrawals', label: 'طلبات السحب', icon: DollarSign },
     { path: '/admin/messages', label: 'المحادثات', icon: MessageCircle },
+    { path: '/admin/community', label: 'منشورات المجتمع', icon: MessageCircle },
     { path: '/admin/contact-us', label: 'رسائل التواصل', icon: HelpCircle },
     { path: '/admin/announcements', label: 'الإعلانات', icon: Megaphone },
     { path: '/admin/settings', label: 'إعدادات النظام', icon: Settings },
@@ -198,6 +199,7 @@ const AdminLayout = () => {
     { path: '/admin/delivery-orders', label: 'توزيع الطلبات', icon: PackageOpen },
     { path: '/admin/withdrawals', label: 'طلبات السحب', icon: DollarSign },
     { path: '/admin/messages', label: 'المحادثات', icon: MessageCircle },
+    { path: '/admin/community', label: 'منشورات المجتمع', icon: MessageCircle },
     { path: '/admin/contact-us', label: 'رسائل التواصل', icon: HelpCircle },
     { path: '/admin/settings', label: 'إعدادات النظام', icon: Settings },
   ];

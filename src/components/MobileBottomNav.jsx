@@ -1,9 +1,9 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ShoppingCart, LogIn, MessageCircle, LayoutDashboard, Store, Plus, Package, DollarSign } from 'lucide-react';
+import { ShoppingCart, LogIn, MessageCircle, LayoutDashboard, Store, Plus, Package, DollarSign, Home, FileText } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
-const getNavItems = (user) => [
+const getDefaultNavItems = (user) => [
   {
     label: 'لوحة التحكم',
     icon: LayoutDashboard,
@@ -48,14 +48,61 @@ const getNavItems = (user) => [
   },
 ];
 
+const getCommunityNavItems = () => [
+  {
+    label: 'الرئيسية',
+    icon: Home,
+    to: '/community',
+    show: () => true,
+    type: 'regular',
+    isActive: ({ pathname, searchParams }) => pathname === '/community' && searchParams.get('view') !== 'mine',
+  },
+  {
+    label: 'بوستاتي',
+    icon: FileText,
+    to: '/community?view=mine',
+    show: () => !!localStorage.getItem('token'),
+    type: 'regular',
+    isActive: ({ pathname, searchParams }) => pathname === '/community' && searchParams.get('view') === 'mine',
+  },
+  {
+    label: 'إضافة',
+    icon: Plus,
+    to: '/community?compose=1',
+    show: () => !!localStorage.getItem('token'),
+    type: 'search',
+    isActive: ({ pathname, searchParams }) => pathname === '/community' && searchParams.get('compose') === '1',
+  },
+  {
+    label: 'المتجر',
+    icon: Store,
+    to: '/explore',
+    show: () => true,
+    type: 'regular',
+    isActive: ({ pathname }) => pathname.startsWith('/explore'),
+  },
+  {
+    label: 'الرسائل',
+    icon: MessageCircle,
+    to: '/chat',
+    show: () => !!localStorage.getItem('token'),
+    type: 'regular',
+    isActive: ({ pathname }) => pathname === '/chat' || pathname.startsWith('/chat/'),
+  },
+];
+
 const MobileBottomNav = () => {
   const location = useLocation();
   const { user } = useAuth();
-  const navItems = getNavItems(user);
+  const isCommunityPage = location.pathname === '/community' || location.pathname.startsWith('/community/');
+  const navItems = isCommunityPage ? getCommunityNavItems() : getDefaultNavItems(user);
+  const searchParams = new URLSearchParams(location.search);
   
   const renderNavItem = (item) => {
-    const { label, icon: Icon, to, type } = item;
-    const isActive = location.pathname === to || (to !== '/' && location.pathname.startsWith(to));
+    const { label, icon: Icon, to, type, isActive: isItemActive } = item;
+    const isActive = isItemActive
+      ? isItemActive({ pathname: location.pathname, searchParams })
+      : location.pathname === to || (to !== '/' && location.pathname.startsWith(to));
     
     if (type === 'search') {
       return (

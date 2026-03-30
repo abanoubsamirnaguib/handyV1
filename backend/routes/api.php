@@ -40,6 +40,7 @@ use App\Http\Controllers\Api\CityCrudController;
 use App\Http\Controllers\Api\PlatformProfitController;
 use App\Http\Controllers\Api\AIAssistantController;
 use App\Http\Controllers\Api\PushSubscriptionController;
+use App\Http\Controllers\Api\CommunityController;
 
 
 Broadcast::routes(['middleware' => ['broadcast.auth']]);
@@ -94,6 +95,9 @@ Route::get('explore/sellers', [ExploreController::class, 'sellers']);
 // Public review endpoints - allow guests to view reviews
 Route::get('products/{productId}/reviews', [ReviewCrudController::class, 'getProductReviews']);
 Route::get('sellers/{sellerId}/reviews', [ReviewCrudController::class, 'getSellerReviews']);
+Route::get('community/feed', [CommunityController::class, 'feed'])->middleware('optional.auth');
+Route::get('community/posts/{id}', [CommunityController::class, 'show'])->middleware('optional.auth');
+Route::get('community/posts/{id}/comments', [CommunityController::class, 'getComments'])->middleware('optional.auth');
 
 // Public Announcements - للزوار
 Route::prefix('announcements')->group(function () {
@@ -247,6 +251,21 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // File Upload
     Route::post('upload', [FileUploadController::class, 'upload']);
 
+    Route::prefix('community')->group(function () {
+        Route::post('posts', [CommunityController::class, 'store']);
+        Route::put('posts/{id}', [CommunityController::class, 'update']);
+        Route::patch('posts/{id}/hide', [CommunityController::class, 'hide']);
+        Route::delete('posts/{id}', [CommunityController::class, 'destroy']);
+        Route::post('posts/{id}/comments', [CommunityController::class, 'storeComment']);
+        Route::put('comments/{commentId}', [CommunityController::class, 'updateComment']);
+        Route::delete('comments/{commentId}', [CommunityController::class, 'destroyComment']);
+        Route::post('posts/{id}/react', [CommunityController::class, 'toggleReaction']);
+        Route::post('users/{id}/follow', [CommunityController::class, 'followAuthor']);
+        Route::delete('users/{id}/follow', [CommunityController::class, 'unfollowAuthor']);
+        Route::get('seller/sharable-reviews', [CommunityController::class, 'getSellerSharableReviews']);
+        Route::get('seller/sharable-products', [CommunityController::class, 'getSellerSharableProducts']);
+    });
+
     // User profile image upload
     Route::post('users/{id}/upload-avatar', [UserCrudController::class, 'uploadProfileImage']);
     
@@ -275,6 +294,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('sellers', [AdminController::class, 'sellers']);
         Route::get('products', [AdminController::class, 'products']);
         Route::get('recent-activity', [AdminController::class, 'recentActivity']);
+
+        Route::prefix('community')->group(function () {
+            Route::get('posts/hidden', [CommunityController::class, 'adminHiddenPosts']);
+            Route::post('posts/{id}/restore', [CommunityController::class, 'restore']);
+        });
         
         Route::patch('users/{id}/status', [AdminController::class, 'updateUserStatus']);
         Route::patch('sellers/{id}/status', [AdminController::class, 'updateSellerStatus']);

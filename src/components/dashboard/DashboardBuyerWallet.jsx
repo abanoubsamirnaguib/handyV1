@@ -16,6 +16,11 @@ const DashboardBuyerWallet = () => {
   const { toast } = useToast();
 
   const [requests, setRequests] = useState([]);
+  const [referralData, setReferralData] = useState({
+    referred_users_count: 0,
+    total_earned_gift: 0,
+    rewards: [],
+  });
   const [loading, setLoading] = useState(true);
   const [showDialog, setShowDialog] = useState(false);
   const [form, setForm] = useState({ amount: '', payment_method: '', payment_details: '' });
@@ -30,6 +35,7 @@ const DashboardBuyerWallet = () => {
 
   useEffect(() => {
     fetchRequests();
+    fetchReferralData();
   }, []);
 
   const fetchRequests = async () => {
@@ -40,6 +46,19 @@ const DashboardBuyerWallet = () => {
       // ignore
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchReferralData = async () => {
+    try {
+      const res = await api.getMyReferrals();
+      setReferralData({
+        referred_users_count: res.referred_users_count || 0,
+        total_earned_gift: Number(res.total_earned_gift || 0),
+        rewards: res.rewards || [],
+      });
+    } catch (e) {
+      // ignore
     }
   };
 
@@ -59,6 +78,7 @@ const DashboardBuyerWallet = () => {
       setShowDialog(false);
       setForm({ amount: '', payment_method: '', payment_details: '' });
       await fetchRequests();
+      await fetchReferralData();
       await refreshUser?.();
     } catch (e) {
       toast({ title: 'خطأ', description: 'تعذر إرسال طلب السحب', variant: 'destructive' });
@@ -134,6 +154,11 @@ const DashboardBuyerWallet = () => {
                 <div className="text-sm text-neutral-900/70">رصيد الهدايا (للشراء فقط)</div>
                 <div className="text-2xl font-bold text-neutral-900">{(user?.gift_wallet_balance ?? 0).toFixed?.(2) || Number(user?.gift_wallet_balance ?? 0).toFixed(2)} جنيه</div>
               </div>
+              <div className="p-4 rounded-lg bg-blue-50">
+                <div className="text-sm text-neutral-900/70">ملخص الدعوات</div>
+                <div className="text-sm text-neutral-900">عدد المسجلين عبر رابطك: <span className="font-semibold">{referralData.referred_users_count}</span></div>
+                <div className="text-sm text-neutral-900">إجمالي الهدايا المكتسبة: <span className="font-semibold">{Number(referralData.total_earned_gift || 0).toFixed(2)} جنيه</span></div>
+              </div>
             </div>
 
             {user?.referral_link && (
@@ -152,6 +177,27 @@ const DashboardBuyerWallet = () => {
                 )}
               </div>
             )}
+
+            <div className="mt-5 p-4 rounded-lg bg-white border">
+              <div className="text-sm font-semibold text-neutral-900 mb-3">سجل الهدايا</div>
+
+              {referralData.rewards.length === 0 ? (
+                <div className="text-sm text-neutral-900/60">لا توجد هدايا مضافة بعد.</div>
+              ) : (
+                <div className="space-y-2">
+                  {referralData.rewards.map((reward) => (
+                    <div key={reward.id} className="rounded-lg border bg-neutral-50 px-3 py-2">
+                      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-1">
+                        <div className="text-sm text-neutral-900 font-medium">{reward.reward_type_label}</div>
+                        <div className="text-sm text-green-700 font-semibold">+{Number(reward.amount || 0).toFixed(2)} جنيه</div>
+                      </div>
+                      <div className="text-xs text-neutral-700 mt-1">السبب: {reward.reason || 'هدية دعوة'}</div>
+                      <div className="text-xs text-neutral-500 mt-1">{new Date(reward.created_at).toLocaleString('ar-EG')}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
       </motion.div>

@@ -103,10 +103,20 @@ class SiteSettingController extends Controller
             'deliveryMethod' => SiteSetting::where('setting_key', 'admin_notification_delivery')->value('setting_value') ?? 'both',
         ];
 
-        // Referral settings
+        $signupGiftAmount = SiteSetting::where('setting_key', 'referral_signup_gift_amount')->value('setting_value');
+        if ($signupGiftAmount === null) {
+            $signupGiftAmount = SiteSetting::where('setting_key', 'referral_bonus_amount')->value('setting_value');
+        }
+
+        // Referral gift settings
         $referralSettings = [
             'enabled' => SiteSetting::where('setting_key', 'referral_enabled')->value('setting_value') !== 'false',
-            'bonusAmount' => (float) (SiteSetting::where('setting_key', 'referral_bonus_amount')->value('setting_value') ?? 0),
+            'registrationGiftAmount' => (float) ($signupGiftAmount ?? 0),
+            'firstProductGiftAmount' => (float) (SiteSetting::where('setting_key', 'referral_first_product_gift_amount')->value('setting_value') ?? 0),
+            'firstOrderGiftAmount' => (float) (SiteSetting::where('setting_key', 'referral_first_order_gift_amount')->value('setting_value') ?? 0),
+            'maxLinkUses' => (int) (SiteSetting::where('setting_key', 'referral_max_link_uses')->value('setting_value') ?? 0),
+            // Backward compatibility for any old frontend expecting bonusAmount.
+            'bonusAmount' => (float) ($signupGiftAmount ?? 0),
         ];
 
         return response()->json([
@@ -186,7 +196,11 @@ class SiteSettingController extends Controller
                 ],
                 'referrals' => [
                     'enabled' => 'referral_enabled',
-                    'bonusAmount' => 'referral_bonus_amount',
+                    'registrationGiftAmount' => 'referral_signup_gift_amount',
+                    'firstProductGiftAmount' => 'referral_first_product_gift_amount',
+                    'firstOrderGiftAmount' => 'referral_first_order_gift_amount',
+                    'maxLinkUses' => 'referral_max_link_uses',
+                    'bonusAmount' => 'referral_signup_gift_amount',
                 ],
             ];
 
@@ -210,6 +224,14 @@ class SiteSettingController extends Controller
                         ['setting_key' => $backendKey],
                         ['setting_value' => $value, 'updated_at' => now()]
                     );
+
+                    // Keep legacy key in sync for older flows still reading it.
+                    if ($settingsType === 'referrals' && in_array($frontendKey, ['registrationGiftAmount', 'bonusAmount'], true)) {
+                        SiteSetting::updateOrCreate(
+                            ['setting_key' => 'referral_bonus_amount'],
+                            ['setting_value' => $value, 'updated_at' => now()]
+                        );
+                    }
                 }
             }
 

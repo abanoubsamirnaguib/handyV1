@@ -31,6 +31,34 @@ const RegisterPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const referralCode = searchParams.get('ref') || '';
 
+  const buildDeviceFingerprint = () => {
+    const parts = [
+      navigator.userAgent || '',
+      navigator.language || '',
+      navigator.platform || '',
+      Intl.DateTimeFormat().resolvedOptions().timeZone || '',
+      `${window.screen?.width || 0}x${window.screen?.height || 0}`,
+      String(navigator.hardwareConcurrency || 0),
+    ];
+
+    const raw = parts.join('|');
+    let hash = 0;
+    for (let i = 0; i < raw.length; i += 1) {
+      hash = (hash << 5) - hash + raw.charCodeAt(i);
+      hash |= 0;
+    }
+
+    return `web_${Math.abs(hash)}_${parts[4]}`;
+  };
+
+  const getMacAddressIfProvided = () => {
+    const stored = window.localStorage.getItem('device_mac_address');
+    if (!stored) return undefined;
+
+    const trimmed = stored.trim();
+    return trimmed || undefined;
+  };
+
   // Redirect authenticated users
   useEffect(() => {
     if (!loading && user) {
@@ -79,6 +107,7 @@ const RegisterPage = () => {
     if (success) {
       // Prepare registration data
       const primaryRole = isSeller ? 'seller' : 'buyer';
+      const macAddress = getMacAddressIfProvided();
       const registrationData = {
         name,
         email,
@@ -86,6 +115,8 @@ const RegisterPage = () => {
         role: primaryRole,
         is_buyer: isBuyer,
         is_seller: isSeller,
+        device_fingerprint: buildDeviceFingerprint(),
+        ...(macAddress ? { mac_address: macAddress } : {}),
         ...(referralCode ? { referral_code: referralCode } : {}),
       };
 

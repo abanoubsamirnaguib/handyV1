@@ -159,6 +159,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Registered devices used when this user account was created.
+     */
+    public function devices()
+    {
+        return $this->hasMany(UserDevice::class);
+    }
+
+    /**
      * Referral link for frontend registration page.
      */
     public function getReferralLinkAttribute(): ?string

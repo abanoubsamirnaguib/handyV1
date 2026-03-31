@@ -2,19 +2,22 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\ReferralReward;
 use App\Models\SiteSetting;
 use App\Models\User;
+use App\Models\UserDevice;
 use App\Models\Otp;
 use App\Services\EmailService;
 use App\Services\NotificationService;
+use App\Services\ReferralGiftService;
 use App\Traits\EmailTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
+use Illuminate\Database\QueryException;
 use Illuminate\Validation\ValidationException;
 use Exception;
 
@@ -512,6 +515,10 @@ class AuthController extends Controller
                 'is_seller' => 'boolean',
                 'is_buyer' => 'boolean',
                 'referral_code' => 'nullable|string|max:32|exists:users,referral_code',
+                'device_fingerprint' => 'nullable|string|max:255',
+                'mac_address' => ['nullable', 'string', 'max:32', 'regex:/^([0-9A-Fa-f]{2}([:-]?)){5}[0-9A-Fa-f]{2}$/'],
+            ], [
+                'mac_address.regex' => 'صيغة عنوان MAC غير صحيحة',
             ]);
             
             // Verify OTP first
@@ -528,12 +535,42 @@ class AuthController extends Controller
             $isBuyer = $validated['is_buyer'] ?? ($validated['role'] === 'buyer' || $validated['role'] === null);
             $activeRole = $validated['role'] === 'seller' ? 'seller' : 'buyer';
 
+            $ipAddress = $this->resolveClientIpAddress($request);
+            $normalizedMacAddress = $this->normalizeMacAddress($validated['mac_address'] ?? null);
+            $deviceFingerprint = $this->normalizeDeviceFingerprint($validated['device_fingerprint'] ?? null);
+            $userAgent = Str::limit((string) ($request->userAgent() ?? ''), 1000, '');
+
+            $this->assertDeviceCanRegister($ipAddress, $normalizedMacAddress, $deviceFingerprint);
+
             $referrerUserId = null;
             if (!empty($validated['referral_code'])) {
                 $referrerUserId = User::where('referral_code', $validated['referral_code'])->value('id');
+
+                if ($referrerUserId) {
+                    $maxLinkUses = max(0, (int) (SiteSetting::where('setting_key', 'referral_max_link_uses')->value('setting_value') ?? 0));
+                    if ($maxLinkUses > 0) {
+                        $currentUses = User::where('referred_by_user_id', $referrerUserId)->count();
+                        if ($currentUses >= $maxLinkUses) {
+                            throw ValidationException::withMessages([
+                                'referral_code' => ['تم الوصول إلى الحد الأقصى لاستخدام رابط الإحالة هذا.'],
+                            ]);
+                        }
+                    }
+                }
             }
 
-            $user = DB::transaction(function () use ($validated, $isSeller, $isBuyer, $activeRole, $request, $referrerUserId) {
+            $user = DB::transaction(function () use (
+                $validated,
+                $isSeller,
+                $isBuyer,
+                $activeRole,
+                $request,
+                $referrerUserId,
+                $ipAddress,
+                $normalizedMacAddress,
+                $deviceFingerprint,
+                $userAgent
+            ) {
                 // Generate unique referral code for the new user
                 $newReferralCode = null;
                 for ($i = 0; $i < 25; $i++) {
@@ -583,41 +620,17 @@ class AuthController extends Controller
                     }
                 }
 
-                // Apply referral reward (gift wallet credit to referrer) if enabled
                 if ($referrerUserId && $referrerUserId !== $user->id) {
-                    $referralEnabled = SiteSetting::where('setting_key', 'referral_enabled')->value('setting_value') !== 'false';
-                    $bonusAmountRaw = SiteSetting::where('setting_key', 'referral_bonus_amount')->value('setting_value') ?? '0';
-                    $bonusAmount = (float) $bonusAmountRaw;
-
-                    if ($referralEnabled && $bonusAmount > 0) {
-                        $referrer = User::find($referrerUserId);
-                        if ($referrer) {
-                            $currency = SiteSetting::where('setting_key', 'default_currency')->value('setting_value');
-
-                            ReferralReward::create([
-                                'referrer_user_id' => $referrer->id,
-                                'referred_user_id' => $user->id,
-                                'amount' => $bonusAmount,
-                                'currency' => $currency,
-                                'created_at' => now(),
-                            ]);
-
-                            $referrer->addToGiftWallet($bonusAmount);
-
-                            // Notify referrer
-                            try {
-                                NotificationService::create(
-                                    $referrer->id,
-                                    'system',
-                                    "تم إضافة رصيد هدية بقيمة {$bonusAmount} إلى محفظتك بسبب تسجيل مستخدم جديد عبر رابطك.",
-                                    "/dashboard/wallet"
-                                );
-                            } catch (\Throwable $e) {
-                                // ignore
-                            }
-                        }
-                    }
+                    ReferralGiftService::awardSignupGift($user);
                 }
+
+                $this->registerUserDevice(
+                    user: $user,
+                    ipAddress: $ipAddress,
+                    macAddress: $normalizedMacAddress,
+                    deviceFingerprint: $deviceFingerprint,
+                    userAgent: $userAgent
+                );
 
                 return $user;
             });
@@ -700,6 +713,88 @@ class AuthController extends Controller
                 'message' => 'Registration failed',
                 'error' => config('app.debug') ? $e->getMessage() : 'Internal server error'
             ], 500);
+        }
+    }
+
+    private function resolveClientIpAddress(Request $request): ?string
+    {
+        $ip = $request->ip();
+        return $ip ? trim($ip) : null;
+    }
+
+    private function normalizeMacAddress(?string $macAddress): ?string
+    {
+        if (!$macAddress) {
+            return null;
+        }
+
+        $compact = strtoupper(preg_replace('/[^A-F0-9]/i', '', $macAddress));
+        if (strlen($compact) !== 12) {
+            return null;
+        }
+
+        return implode(':', str_split($compact, 2));
+    }
+
+    private function normalizeDeviceFingerprint(?string $deviceFingerprint): ?string
+    {
+        if ($deviceFingerprint === null) {
+            return null;
+        }
+
+        $normalized = trim($deviceFingerprint);
+        return $normalized !== '' ? Str::limit($normalized, 255, '') : null;
+    }
+
+    private function assertDeviceCanRegister(?string $ipAddress, ?string $macAddress, ?string $deviceFingerprint): void
+    {
+        if (!Schema::hasTable('user_devices')) {
+            return;
+        }
+
+        if ($macAddress && UserDevice::where('mac_address', $macAddress)->exists()) {
+            throw ValidationException::withMessages([
+                'email' => ['هذا الجهاز لديه حساب مسجل بالفعل. لا يمكن إنشاء أكثر من حساب من نفس الجهاز.'],
+            ]);
+        }
+
+        if ($deviceFingerprint && UserDevice::where('device_fingerprint', $deviceFingerprint)->exists()) {
+            throw ValidationException::withMessages([
+                'email' => ['هذا الجهاز لديه حساب مسجل بالفعل. لا يمكن إنشاء أكثر من حساب من نفس الجهاز.'],
+            ]);
+        }
+
+        if ($ipAddress && UserDevice::where('ip_address', $ipAddress)->exists()) {
+            throw ValidationException::withMessages([
+                'email' => ['هذا الاتصال مستخدم بالفعل في تسجيل سابق. لا يمكن إنشاء أكثر من حساب جديد من نفس الجهاز/الشبكة.'],
+            ]);
+        }
+    }
+
+    private function registerUserDevice(
+        User $user,
+        ?string $ipAddress,
+        ?string $macAddress,
+        ?string $deviceFingerprint,
+        ?string $userAgent
+    ): void {
+        if (!Schema::hasTable('user_devices')) {
+            return;
+        }
+
+        try {
+            UserDevice::create([
+                'user_id' => $user->id,
+                'ip_address' => $ipAddress ?: '0.0.0.0',
+                'mac_address' => $macAddress,
+                'device_fingerprint' => $deviceFingerprint,
+                'user_agent' => $userAgent,
+                'registered_at' => now(),
+            ]);
+        } catch (QueryException $e) {
+            throw ValidationException::withMessages([
+                'email' => ['هذا الجهاز أو الاتصال تم استخدامه مسبقًا.'],
+            ]);
         }
     }
 }

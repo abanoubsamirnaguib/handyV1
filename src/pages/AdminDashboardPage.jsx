@@ -8,7 +8,8 @@ import {
   Users, 
   Tag, 
   UserCheck, 
-  PackageOpen
+  PackageOpen,
+  Gift
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -70,6 +71,12 @@ const AdminDashboardPage = () => (
         description="عرض جميع المحادثات بين المستخدمين والبائعين." 
         link="/admin/messages" 
         icon={MessageCircle} 
+      />
+      <AdminDashboardCard
+        title="الهدايا"
+        description="إدارة قيم هدايا الدعوات ومتابعة المستخدمين المستفيدين."
+        link="/admin/gifts"
+        icon={Gift}
       />
       <AdminDashboardCard 
         title="إعدادات النظام" 

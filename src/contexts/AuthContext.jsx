@@ -526,9 +526,18 @@ export const AuthProvider = ({ children }) => {
       });
       return true;
     } catch (error) {
-      const errorMessage = error.message.includes('Invalid or expired verification code')
-        ? 'رمز التحقق غير صحيح أو منتهي الصلاحية'
-        : 'حدث خطأ أثناء إنشاء الحساب';
+      let errorMessage = 'حدث خطأ أثناء إنشاء الحساب';
+
+      if (error.message.includes('Invalid or expired verification code')) {
+        errorMessage = 'رمز التحقق غير صحيح أو منتهي الصلاحية';
+      } else if (error.response?.errors) {
+        const firstError = Object.values(error.response.errors)[0];
+        if (Array.isArray(firstError) && firstError.length > 0) {
+          errorMessage = firstError[0];
+        }
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
       
       toast({
         variant: 'destructive',

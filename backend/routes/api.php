@@ -310,6 +310,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         // Admin site settings management
         Route::get('site-settings', [SiteSettingController::class, 'getAdminSettings']);
         Route::post('site-settings', [SiteSettingController::class, 'updateAdminSettings']);
+        Route::get('referrals/summary', [ReferralController::class, 'adminSummary']);
         
         // Admin chat management routes
         Route::prefix('chat')->group(function () {

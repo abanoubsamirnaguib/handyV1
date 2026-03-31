@@ -4,6 +4,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\PlatformProfit;
+use App\Services\ReferralGiftService;
 use Carbon\Carbon;
 
 class Order extends Model
@@ -466,6 +467,9 @@ class Order extends Model
             "تم إكمال طلبك #{$this->id}! يمكنك الآن تقييم المنتجات التي قمت بشرائها.",
             "/orders/{$this->id}"
         );
+
+        // Referral gift: first completed order made by a referred user from their referrer.
+        ReferralGiftService::awardFirstCompletedOrderGift($this);
     }
     
     public function cancel($userId, $reason = null)

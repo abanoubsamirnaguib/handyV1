@@ -22,15 +22,24 @@ import { useChat } from '@/contexts/ChatContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
 import WishlistButton from '@/components/ui/WishlistButton';
+import PostCard from '@/components/community/PostCard';
 
 const SellerProfilePage = () => {
   const { id } = useParams();
   const [seller, setSeller] = useState(null);
   const [sellerGigs, setSellerGigs] = useState([]);
   const [sellerReviews, setSellerReviews] = useState([]);
+  const [sellerPosts, setSellerPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [postsLoading, setPostsLoading] = useState(false);
+  const [postsLoadingMore, setPostsLoadingMore] = useState(false);
+  const [postsLoaded, setPostsLoaded] = useState(false);
+  const [postsError, setPostsError] = useState(null);
+  const [postsPage, setPostsPage] = useState(1);
+  const [hasMorePosts, setHasMorePosts] = useState(false);
+  const [followPending, setFollowPending] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
   const { startConversation, setActiveConversation } = useChat();
@@ -111,6 +120,16 @@ const SellerProfilePage = () => {
     fetchSellerData();
   }, [id, navigate]);
 
+  useEffect(() => {
+    setSellerPosts([]);
+    setPostsLoading(false);
+    setPostsLoadingMore(false);
+    setPostsLoaded(false);
+    setPostsError(null);
+    setPostsPage(1);
+    setHasMorePosts(false);
+  }, [id]);
+
   // Function to load seller reviews
   const loadSellerReviews = async () => {
     if (!seller?.id || sellerReviews.length > 0) return; // Don't load if already loaded
@@ -126,6 +145,46 @@ const SellerProfilePage = () => {
     } finally {
       setReviewsLoading(false);
     }
+  };
+
+  const loadSellerPosts = async ({ page = 1, append = false } = {}) => {
+    if (!seller?.user_id) return;
+
+    if (append) {
+      if (postsLoadingMore || postsLoading) return;
+      setPostsLoadingMore(true);
+    } else {
+      if (postsLoaded || postsLoading) return;
+      setPostsLoading(true);
+    }
+
+    setPostsError(null);
+
+    try {
+      const response = await api.community.getUserPosts(seller.user_id, page);
+      const nextPosts = Array.isArray(response?.data) ? response.data : [];
+      const currentPage = Number(response?.meta?.current_page ?? page);
+      const lastPage = Number(response?.meta?.last_page ?? currentPage);
+
+      setSellerPosts((prev) => (append ? [...prev, ...nextPosts] : nextPosts));
+      setPostsPage(currentPage);
+      setHasMorePosts(currentPage < lastPage);
+      setPostsLoaded(true);
+    } catch (loadError) {
+      console.error('Error loading seller posts:', loadError);
+      setPostsError('تعذر تحميل المنشورات حالياً. حاول مرة أخرى.');
+    } finally {
+      if (append) {
+        setPostsLoadingMore(false);
+      } else {
+        setPostsLoading(false);
+      }
+    }
+  };
+
+  const handleLoadMorePosts = () => {
+    if (!hasMorePosts || postsLoadingMore) return;
+    loadSellerPosts({ page: postsPage + 1, append: true });
   };
   if (loading) {
     return (
@@ -188,8 +247,52 @@ const SellerProfilePage = () => {
     }
   };
 
+  const handleFollowToggle = async () => {
+    if (!user || !seller?.user_id || user.id === seller.user_id || followPending) {
+      return;
+    }
+
+    const shouldFollow = !Boolean(seller.user?.followed_by_viewer);
+    setFollowPending(true);
+
+    try {
+      const response = shouldFollow
+        ? await api.community.followAuthor(seller.user_id)
+        : await api.community.unfollowAuthor(seller.user_id);
+
+      const nextFollowing = Boolean(response?.following ?? shouldFollow);
+
+      setSeller((prev) => {
+        if (!prev) {
+          return prev;
+        }
+
+        const currentFollowers = Number(prev.user?.followers_count || 0);
+        const wasFollowing = Boolean(prev.user?.followed_by_viewer);
+
+        return {
+          ...prev,
+          user: {
+            ...prev.user,
+            followed_by_viewer: nextFollowing,
+            followers_count: currentFollowers + (nextFollowing && !wasFollowing ? 1 : !nextFollowing && wasFollowing ? -1 : 0),
+          },
+        };
+      });
+    } catch (error) {
+      console.error('Failed to toggle follow status:', error);
+      toast({
+        variant: 'destructive',
+        title: 'تعذر تنفيذ العملية',
+        description: 'حدث خطأ أثناء تحديث حالة المتابعة. حاول مرة أخرى.',
+      });
+    } finally {
+      setFollowPending(false);
+    }
+  };
+
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8" dir="rtl">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -253,6 +356,20 @@ const SellerProfilePage = () => {
                   <MessageSquare className="ml-2 h-4 w-4" />
                   تواصل مع الحرفي
                 </Button>
+                {user && user.id !== seller.user_id && (
+                  <button
+                    type="button"
+                    onClick={handleFollowToggle}
+                    disabled={followPending}
+                    className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+                      seller.user?.followed_by_viewer
+                        ? 'bg-success-100 text-neutral-700 hover:bg-success-200'
+                        : 'bg-roman-500 text-white hover:bg-roman-600'
+                    }`}
+                  >
+                    {seller.user?.followed_by_viewer ? 'متابَع' : 'متابعة'}
+                  </button>
+                )}
               </div>
             </div>
           </CardContent>
@@ -314,8 +431,12 @@ const SellerProfilePage = () => {
           if (value === 'reviews') {
             loadSellerReviews();
           }
+          if (value === 'posts') {
+            loadSellerPosts();
+          }
         }}>
-          <TabsList className="w-full max-w-md mx-auto grid grid-cols-2 mb-8">
+          <TabsList className="w-full max-w-2xl mx-auto grid grid-cols-3 mb-8">
+            <TabsTrigger value="posts" className="text-lg">المنشورات</TabsTrigger>
             <TabsTrigger value="products" className="text-lg">المنتجات</TabsTrigger>
             <TabsTrigger value="reviews" className="text-lg">التقييمات ({seller?.reviewCount || 0})</TabsTrigger>
           </TabsList>
@@ -448,6 +569,48 @@ const SellerProfilePage = () => {
                 <Star className="h-16 w-16 text-gray-300 mx-auto mb-4" />
                 <p className="text-xl text-gray-600 mb-2">لا توجد تقييمات حتى الآن</p>
                 <p className="text-gray-500">سيظهر هنا تقييمات العملاء عند شراء منتجات هذا الحرفي</p>
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="posts" dir="rtl">
+            <h2 className="text-2xl font-bold mb-6">منشورات الحرفي</h2>
+            {postsLoading ? (
+              <div className="text-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+                <p className="text-gray-600">جاري تحميل المنشورات...</p>
+              </div>
+            ) : postsError ? (
+              <div className="text-center py-12 bg-gray-50 rounded-lg">
+                <p className="text-gray-600 mb-4">{postsError}</p>
+                <Button variant="outline" onClick={() => loadSellerPosts({ page: 1, append: false })}>
+                  إعادة المحاولة
+                </Button>
+              </div>
+            ) : sellerPosts.length > 0 ? (
+              <div className="space-y-4">
+                {sellerPosts.map((post) => (
+                  <PostCard key={post.id} post={post} />
+                ))}
+                {hasMorePosts && (
+                  <div className="flex justify-center pt-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="rounded-2xl px-6"
+                      onClick={handleLoadMorePosts}
+                      disabled={postsLoadingMore}
+                    >
+                      {postsLoadingMore ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : null}
+                      اقرأ المزيد
+                    </Button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="text-center py-12 bg-gray-50 rounded-lg">
+                <p className="text-xl text-gray-600 mb-2">لا توجد منشورات لعرضها حالياً</p>
+                <p className="text-gray-500">سيظهر هنا أحدث منشورات هذا الحرفي في المجتمع</p>
               </div>
             )}
           </TabsContent>

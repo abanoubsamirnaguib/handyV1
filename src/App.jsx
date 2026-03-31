@@ -41,6 +41,7 @@ import AboutUsPage from '@/pages/AboutUsPage.jsx';
 import PolicyPage from '@/pages/PolicyPage.jsx';
 import AnnouncementsPage from '@/pages/AnnouncementsPage.jsx';
 import AIAssistant from '@/components/ai/AIAssistant';
+import { requestAndSubscribePush } from '@/lib/pushNotifications';
 
 // Delivery Pages
 import DeliveryLoginPage from '@/pages/DeliveryLoginPage.jsx';
@@ -56,6 +57,7 @@ import DashboardEarnings from '@/components/dashboard/DashboardEarnings';
 import DashboardMessages from '@/components/dashboard/DashboardMessages';
 import DashboardSettings from '@/components/dashboard/DashboardSettings';
 import DashboardBuyerWallet from '@/components/dashboard/DashboardBuyerWallet';
+import DashboardConnections from '@/components/dashboard/DashboardConnections';
 import CreateGigPage from '@/components/dashboard/CreateGigPage';
 import EditGigPage from '@/components/dashboard/EditGigPage';
 
@@ -82,6 +84,42 @@ import './styles/rtl-dropdown.css'; // Import our RTL dropdown styles
 // Create a wrapper component that uses useLocation inside Router context
 function AppRoutes() {
   const location = useLocation();
+
+  React.useEffect(() => {
+    // Ask for browser notification permission once on first app open.
+    // Skip dashboard-only surfaces where this UX is not needed.
+    if (location.pathname.startsWith('/admin') || location.pathname.startsWith('/delivery')) {
+      return;
+    }
+
+    const storageKey = 'handyv1_notification_permission_prompted';
+
+    if (localStorage.getItem(storageKey) === '1') {
+      return;
+    }
+
+    if (typeof window === 'undefined' || !('Notification' in window)) {
+      localStorage.setItem(storageKey, '1');
+      return;
+    }
+
+    if (Notification.permission !== 'default') {
+      localStorage.setItem(storageKey, '1');
+      return;
+    }
+
+    const timer = window.setTimeout(async () => {
+      try {
+        await requestAndSubscribePush();
+      } catch (error) {
+        // Swallow errors to avoid blocking the app startup path.
+      } finally {
+        localStorage.setItem(storageKey, '1');
+      }
+    }, 1000);
+
+    return () => window.clearTimeout(timer);
+  }, [location.pathname]);
 
   return (
     <>
@@ -128,6 +166,7 @@ function AppRoutes() {
                   <Route path="gigs/edit/:gigId" element={<EditGigPage />} />
                   <Route path="earnings" element={<DashboardEarnings />} />
                   <Route path="wallet" element={<DashboardBuyerWallet />} />
+                  <Route path="connections" element={<DashboardConnections />} />
                   <Route path="messages" element={<DashboardMessages />} />
                   <Route path="settings" element={<DashboardSettings />} />
                 </Route>

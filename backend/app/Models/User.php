@@ -92,6 +92,22 @@ class User extends Authenticatable
     }
 
     /**
+     * Users who follow this account.
+     */
+    public function followers()
+    {
+        return $this->hasMany(UserFollow::class, 'followed_id');
+    }
+
+    /**
+     * Follow relationships initiated by this account.
+     */
+    public function following()
+    {
+        return $this->hasMany(UserFollow::class, 'follower_id');
+    }
+
+    /**
      * Check if user can act as seller
      */
     public function canActAsSeller()

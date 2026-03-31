@@ -194,9 +194,11 @@ class AdminController extends Controller
             'status' => 'required|in:active,inactive,pending_review,rejected',
             'rejection_reason' => 'nullable|string|max:1000'
         ]);
+
+        $isActivatingNow = $validated['status'] === 'active' && $product->status !== 'active';
         
         // Check if admin is trying to approve (activate) the product
-        if ($validated['status'] === 'active' && $product->status !== 'active') {
+        if ($isActivatingNow) {
             // Check seller's active product count
             $activeCount = Product::where('seller_id', $product->seller_id)
                 ->where('status', 'active')
@@ -226,11 +228,19 @@ class AdminController extends Controller
         $product->update($updateData);
 
         // إذا تم تفعيل المنتج، نرسل إشعارًا للبائع
-        if ($validated['status'] === 'active' && $product->seller && $product->seller->user_id) {
+        if ($isActivatingNow && $product->seller && $product->seller->user_id) {
             \App\Services\NotificationService::productApproved(
                 userId: $product->seller->user_id,
                 productTitle: $product->title,
                 productType: $product->type
+            );
+
+            // Notify users who follow this seller that a new product was approved and published
+            \App\Services\NotificationService::productPublishedToFollowers(
+                sellerUserId: $product->seller->user_id,
+                productId: $product->id,
+                productTitle: $product->title,
+                productType: $product->type ?? 'product'
             );
         }
         

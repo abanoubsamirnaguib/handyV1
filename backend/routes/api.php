@@ -262,6 +262,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('posts/{id}/react', [CommunityController::class, 'toggleReaction']);
         Route::post('users/{id}/follow', [CommunityController::class, 'followAuthor']);
         Route::delete('users/{id}/follow', [CommunityController::class, 'unfollowAuthor']);
+        Route::get('users/{id}/followers', [CommunityController::class, 'followers']);
+        Route::get('users/{id}/following', [CommunityController::class, 'following']);
         Route::get('seller/sharable-reviews', [CommunityController::class, 'getSellerSharableReviews']);
         Route::get('seller/sharable-products', [CommunityController::class, 'getSellerSharableProducts']);
     });

@@ -66,6 +66,7 @@ class NotificationCreated implements ShouldBroadcastNow
             'message' => 'رسالة جديدة',
             'review' => 'تقييم جديد',
             'payment' => 'دفعة مستلمة',
+            'following_new_product' => 'منتج جديد من بائع تتابعه',
             'system' => 'إشعار النظام',
         ];
         return $titles[$type] ?? 'إشعار';

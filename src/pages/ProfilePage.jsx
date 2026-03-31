@@ -42,6 +42,7 @@ const ProfilePage = () => {
   const [completedCrop, setCompletedCrop] = useState();
   const [showCropModal, setShowCropModal] = useState(false);
   const [showShareToast, setShowShareToast] = useState(false);
+  const [followPending, setFollowPending] = useState(false);
   const imgRef = useRef(null);
   const canvasRef = useRef(null);
 
@@ -117,6 +118,9 @@ const ProfilePage = () => {
           cover_image: data.cover_image || '',
           phone: data.phone || '',
           seller_id: data.seller_id || null,
+          followed_by_viewer: Boolean(data.followed_by_viewer),
+          followers_count: Number(data.followers_count || 0),
+          following_count: Number(data.following_count || 0),
           rating: typeof data.rating === 'number' ? data.rating : (parseFloat(data.rating) || 0),
           completedOrders: typeof data.completedOrders === 'number' ? data.completedOrders : (parseInt(data.completedOrders) || 0),
           reviewCount: typeof data.reviewCount === 'number' ? data.reviewCount : (parseInt(data.reviewCount) || 0),
@@ -571,6 +575,9 @@ const ProfilePage = () => {
                 skills: Array.isArray(freshData.skills) ? freshData.skills : [],
                 avatar: freshData.avatar || '',
                 cover_image: freshData.cover_image || '',
+                followed_by_viewer: Boolean(freshData.followed_by_viewer),
+                followers_count: Number(freshData.followers_count || 0),
+                following_count: Number(freshData.following_count || 0),
                 rating: typeof freshData.rating === 'number' ? freshData.rating : 0,
                 completedOrders: typeof freshData.completedOrders === 'number' ? freshData.completedOrders : 0,
                 reviewCount: typeof freshData.reviewCount === 'number' ? freshData.reviewCount : 0,
@@ -604,6 +611,47 @@ const ProfilePage = () => {
       navigate('/chat');
     } catch (error) {
       console.error('Error starting conversation:', error);
+    }
+  };
+
+  const handleFollowToggle = async () => {
+    if (!user || !profileData || isOwnProfile || followPending) {
+      return;
+    }
+
+    const shouldFollow = !Boolean(profileData.followed_by_viewer);
+    setFollowPending(true);
+
+    try {
+      const response = shouldFollow
+        ? await api.community.followAuthor(profileData.id)
+        : await api.community.unfollowAuthor(profileData.id);
+
+      const nextFollowing = Boolean(response?.following ?? shouldFollow);
+
+      setProfileData((prev) => {
+        if (!prev) {
+          return prev;
+        }
+
+        const currentFollowers = Number(prev.followers_count || 0);
+        const wasFollowing = Boolean(prev.followed_by_viewer);
+
+        return {
+          ...prev,
+          followed_by_viewer: nextFollowing,
+          followers_count: currentFollowers + (nextFollowing && !wasFollowing ? 1 : !nextFollowing && wasFollowing ? -1 : 0),
+        };
+      });
+    } catch (error) {
+      console.error('Failed to toggle follow status:', error);
+      toast({
+        variant: 'destructive',
+        title: 'تعذر تنفيذ العملية',
+        description: 'حدث خطأ أثناء تحديث حالة المتابعة. حاول مرة أخرى.',
+      });
+    } finally {
+      setFollowPending(false);
     }
   };
 
@@ -680,9 +728,23 @@ const ProfilePage = () => {
                       <Edit3 className="ml-2 h-4 w-4" /> {isEditing ? 'إلغاء التعديل' : 'تعديل الملف الشخصي'}
                     </Button>
                   ) : (
-                    <Button onClick={handleContactSeller} className="bg-roman-500 hover:bg-roman-500/90 text-white">
-                      <MessageSquare className="ml-2 h-4 w-4" /> تواصل
-                    </Button>
+                    <>
+                      <Button onClick={handleContactSeller} className="bg-roman-500 hover:bg-roman-500/90 text-white">
+                        <MessageSquare className="ml-2 h-4 w-4" /> تواصل
+                      </Button>
+                      <button
+                        type="button"
+                        onClick={handleFollowToggle}
+                        disabled={followPending}
+                        className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+                          profileData.followed_by_viewer
+                            ? 'bg-success-100 text-neutral-700 hover:bg-success-200'
+                            : 'bg-roman-500 text-white hover:bg-roman-600'
+                        }`}
+                      >
+                        {profileData.followed_by_viewer ? 'متابَع' : 'متابعة'}
+                      </button>
+                    </>
                   )}
                   <Button onClick={handleShare} variant="outline" className="px-3">
                     <Share2 className="h-4 w-4" />

@@ -28,10 +28,15 @@ class CommunityController extends Controller
     {
         $user = $request->user();
         $followingOnly = $request->boolean('following_only', false);
+        $authorId = (int) $request->query('user_id', 0);
 
         $postsQuery = Post::published()
             ->with($this->postRelations())
             ->latest();
+
+        if ($authorId > 0) {
+            $postsQuery->where('user_id', $authorId);
+        }
 
         if ($followingOnly) {
             if (!$user) {
@@ -673,6 +678,34 @@ class CommunityController extends Controller
         ]);
     }
 
+    public function followers(Request $request, $id)
+    {
+        $targetUser = User::findOrFail((int) $id);
+
+        $followers = User::query()
+            ->select('users.*')
+            ->join('user_follows', 'user_follows.follower_id', '=', 'users.id')
+            ->where('user_follows.followed_id', $targetUser->id)
+            ->orderByDesc('user_follows.created_at')
+            ->paginate(20);
+
+        return response()->json($this->buildFollowListResponse($followers, $request->user()));
+    }
+
+    public function following(Request $request, $id)
+    {
+        $targetUser = User::findOrFail((int) $id);
+
+        $following = User::query()
+            ->select('users.*')
+            ->join('user_follows', 'user_follows.followed_id', '=', 'users.id')
+            ->where('user_follows.follower_id', $targetUser->id)
+            ->orderByDesc('user_follows.created_at')
+            ->paginate(20);
+
+        return response()->json($this->buildFollowListResponse($following, $request->user()));
+    }
+
     private function postRelations(): array
     {
         return [
@@ -736,5 +769,43 @@ class CommunityController extends Controller
     private function isAdmin($user): bool
     {
         return in_array($user->role, ['admin', 'super_admin'], true);
+    }
+
+    private function buildFollowListResponse($paginator, $viewer): array
+    {
+        $users = $paginator->getCollection();
+        $users->loadMissing(['seller:id,user_id']);
+        $userIds = $users->pluck('id')->all();
+
+        $followedByViewer = [];
+        if ($viewer && !empty($userIds)) {
+            $followedByViewer = UserFollow::query()
+                ->where('follower_id', $viewer->id)
+                ->whereIn('followed_id', $userIds)
+                ->pluck('followed_id')
+                ->flip();
+        }
+
+        return [
+            'data' => $users->map(function ($user) use ($followedByViewer) {
+                return [
+                    'id' => $user->id,
+                    'seller_id' => optional($user->seller)->id,
+                    'name' => $user->name,
+                    'avatar' => $user->avatar_url,
+                    'bio' => $user->bio,
+                    'active_role' => $user->active_role,
+                    'followed_by_viewer' => $followedByViewer instanceof \Illuminate\Support\Collection
+                        ? $followedByViewer->has($user->id)
+                        : false,
+                ];
+            })->values(),
+            'meta' => [
+                'current_page' => $paginator->currentPage(),
+                'last_page' => $paginator->lastPage(),
+                'per_page' => $paginator->perPage(),
+                'total' => $paginator->total(),
+            ],
+        ];
     }
 }

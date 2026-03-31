@@ -1,11 +1,14 @@
 <?php
 namespace App\Http\Resources;
 
+use App\Models\UserFollow;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class UserResource extends JsonResource
 {    public function toArray($request)
     {
+        $viewer = $request->user();
+
         $data = [
             'id' => $this->id,
             'name' => $this->name,
@@ -25,6 +28,14 @@ class UserResource extends JsonResource
             'email_notifications' => $this->email_notifications ?? false,
             'show_ai_assistant' => $this->show_ai_assistant ?? true,
             'orders_count' => $this->orders_count ?? 0,
+            'followers_count' => $this->followers_count ?? $this->followers()->count(),
+            'following_count' => $this->following_count ?? $this->following()->count(),
+            'followed_by_viewer' => $viewer
+                ? UserFollow::query()
+                    ->where('follower_id', $viewer->id)
+                    ->where('followed_id', $this->id)
+                    ->exists()
+                : false,
             'created_at' => $this->created_at,
             'last_login' => $this->last_login,
             'last_seen' => $this->last_seen,

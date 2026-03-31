@@ -502,6 +502,10 @@ export const api = {
       const searchParams = new URLSearchParams({ page: String(page), ...params });
       return apiFetch(`community/feed?${searchParams.toString()}`);
     },
+    getUserPosts: (userId, page = 1, params = {}) => {
+      const searchParams = new URLSearchParams({ page: String(page), user_id: String(userId), ...params });
+      return apiFetch(`community/feed?${searchParams.toString()}`);
+    },
     getPost: (id) => apiFetch(`community/posts/${id}`),
     createPost: (data) => apiFetch('community/posts', { method: 'POST', body: JSON.stringify(data) }),
     updatePost: (id, data) => apiFetch(`community/posts/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
@@ -514,6 +518,8 @@ export const api = {
     toggleReaction: (postId, reactionType = 'like') => apiFetch(`community/posts/${postId}/react`, { method: 'POST', body: JSON.stringify({ reaction_type: reactionType }) }),
     followAuthor: (authorId) => apiFetch(`community/users/${authorId}/follow`, { method: 'POST' }),
     unfollowAuthor: (authorId) => apiFetch(`community/users/${authorId}/follow`, { method: 'DELETE' }),
+    getFollowers: (userId, page = 1) => apiFetch(`community/users/${userId}/followers?page=${page}`),
+    getFollowing: (userId, page = 1) => apiFetch(`community/users/${userId}/following?page=${page}`),
     getSharableReviews: () => apiFetch('community/seller/sharable-reviews'),
     getSharableProducts: () => apiFetch('community/seller/sharable-products'),
   },

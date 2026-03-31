@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Notification;
 use App\Models\User;
+use App\Models\UserFollow;
 use App\Models\SiteSetting;
 use App\Events\NotificationCreated;
 use App\Services\WebPushService;
@@ -296,6 +297,45 @@ class NotificationService
             message: $message,
             link: '/dashboard/gigs'
         );
+    }
+
+    /**
+     * Notify followers when a followed seller's product is approved by admin.
+     */
+    public static function productPublishedToFollowers(
+        int $sellerUserId,
+        int $productId,
+        string $productTitle,
+        string $productType = 'product'
+    ): int {
+        $followerIds = UserFollow::query()
+            ->where('followed_id', $sellerUserId)
+            ->where('follower_id', '!=', $sellerUserId)
+            ->pluck('follower_id')
+            ->unique()
+            ->values();
+
+        if ($followerIds->isEmpty()) {
+            return 0;
+        }
+
+        $sellerName = User::query()->whereKey($sellerUserId)->value('name');
+        $sellerLabel = $sellerName ?: 'بائع تتابعه';
+        $itemLabel = $productType === 'gig' ? 'حرفة جديدة' : 'منتج جديد';
+        $message = "أضاف {$sellerLabel} {$itemLabel} بعنوان \"{$productTitle}\" .";
+
+        $createdCount = 0;
+        foreach ($followerIds as $followerId) {
+            self::create(
+                userId: (int) $followerId,
+                type: 'following_new_product',
+                message: $message,
+                link: "/gigs/{$productId}"
+            );
+            $createdCount++;
+        }
+
+        return $createdCount;
     }
 
     /**

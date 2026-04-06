@@ -28,6 +28,14 @@ class SiteSettingController extends Controller
                 'contactAddress' => SiteSetting::where('setting_key', 'contact_address')->value('setting_value') ?? 'شارع الحرفيين، الفيوم ، مصر',
                 'workingHours' => SiteSetting::where('setting_key', 'working_hours')->value('setting_value') ?? 'السبت - الخميس: 9:00 صباحاً - 6:00 مساءً',
                 'transactionNumber' => SiteSetting::where('setting_key', 'transaction_number')->value('setting_value') ?? '',
+                'promoBanner' => [
+                    'enabled' => SiteSetting::where('setting_key', 'promo_banner_enabled')->value('setting_value') === 'true',
+                    'title' => SiteSetting::where('setting_key', 'promo_banner_title')->value('setting_value') ?? '',
+                    'description' => SiteSetting::where('setting_key', 'promo_banner_description')->value('setting_value') ?? '',
+                    'timerEnd' => SiteSetting::where('setting_key', 'promo_banner_timer_end')->value('setting_value') ?? '',
+                    'linkUrl' => SiteSetting::where('setting_key', 'promo_banner_link_url')->value('setting_value') ?? '',
+                    'revision' => SiteSetting::where('setting_key', 'promo_banner_revision')->value('setting_value') ?? '0',
+                ],
             ];
         });
 
@@ -54,7 +62,7 @@ class SiteSettingController extends Controller
     public function getAdminSettings()
     {
         $user = Auth::user();
-        if ($user->role !== 'admin') {
+        if (!in_array($user->role, ['admin', 'super_admin'], true)) {
             return response()->json(['error' => 'غير مصرح'], 403);
         }
 
@@ -123,6 +131,15 @@ class SiteSettingController extends Controller
             'bonusAmount' => (float) ($signupGiftAmount ?? 0),
         ];
 
+        $promoBannerSettings = [
+            'enabled' => SiteSetting::where('setting_key', 'promo_banner_enabled')->value('setting_value') === 'true',
+            'title' => SiteSetting::where('setting_key', 'promo_banner_title')->value('setting_value') ?? '',
+            'description' => SiteSetting::where('setting_key', 'promo_banner_description')->value('setting_value') ?? '',
+            'timerEnd' => SiteSetting::where('setting_key', 'promo_banner_timer_end')->value('setting_value') ?? '',
+            'linkUrl' => SiteSetting::where('setting_key', 'promo_banner_link_url')->value('setting_value') ?? '',
+            'revision' => SiteSetting::where('setting_key', 'promo_banner_revision')->value('setting_value') ?? '0',
+        ];
+
         return response()->json([
             'settings' => [
                 'general' => $generalSettings,
@@ -130,6 +147,7 @@ class SiteSettingController extends Controller
                 'userNotifications' => $userNotificationSettings,
                 'adminNotifications' => $adminNotificationSettings,
                 'referrals' => $referralSettings,
+                'promoBanner' => $promoBannerSettings,
             ]
         ]);
     }
@@ -138,12 +156,12 @@ class SiteSettingController extends Controller
     public function updateAdminSettings(Request $request)
     {
         $user = Auth::user();
-        if ($user->role !== 'admin') {
+        if (!in_array($user->role, ['admin', 'super_admin'], true)) {
             return response()->json(['error' => 'غير مصرح'], 403);
         }
 
         $validator = Validator::make($request->all(), [
-            'settingsType' => 'required|string|in:general,email,userNotifications,adminNotifications,referrals',
+            'settingsType' => 'required|string|in:general,email,userNotifications,adminNotifications,referrals,promoBanner',
             'settings' => 'required|array',
         ]);
 
@@ -206,6 +224,13 @@ class SiteSettingController extends Controller
                     'maxLinkUses' => 'referral_max_link_uses',
                     'bonusAmount' => 'referral_signup_gift_amount',
                 ],
+                'promoBanner' => [
+                    'enabled' => 'promo_banner_enabled',
+                    'title' => 'promo_banner_title',
+                    'description' => 'promo_banner_description',
+                    'timerEnd' => 'promo_banner_timer_end',
+                    'linkUrl' => 'promo_banner_link_url',
+                ],
             ];
 
             if (!isset($settingMappings[$settingsType])) {
@@ -223,10 +248,14 @@ class SiteSettingController extends Controller
                     if (is_bool($value)) {
                         $value = $value ? 'true' : 'false';
                     }
+
+                    if ($settingsType === 'promoBanner' && $frontendKey === 'timerEnd' && ($value === '' || $value === null)) {
+                        $value = '';
+                    }
                     
                     SiteSetting::updateOrCreate(
                         ['setting_key' => $backendKey],
-                        ['setting_value' => $value, 'updated_at' => now()]
+                        ['setting_value' => is_string($value) ? $value : (string) $value, 'updated_at' => now()]
                     );
 
                     // Keep legacy key in sync for older flows still reading it.
@@ -239,8 +268,15 @@ class SiteSettingController extends Controller
                 }
             }
 
+            if ($settingsType === 'promoBanner') {
+                SiteSetting::updateOrCreate(
+                    ['setting_key' => 'promo_banner_revision'],
+                    ['setting_value' => (string) time(), 'updated_at' => now()]
+                );
+            }
+
             // Clear cache when updating general settings
-            if ($settingsType === 'general') {
+            if ($settingsType === 'general' || $settingsType === 'promoBanner') {
                 \Cache::forget('site_settings_general');
             }
 
@@ -250,6 +286,7 @@ class SiteSettingController extends Controller
                 'userNotifications' => 'تم حفظ إعدادات إشعارات المستخدمين بنجاح',
                 'adminNotifications' => 'تم حفظ إعدادات إشعارات المشرفين بنجاح',
                 'referrals' => 'تم حفظ إعدادات الإحالة بنجاح',
+                'promoBanner' => 'تم حفظ إعدادات البانر الترويجي بنجاح',
             ];
 
             return response()->json([

@@ -11,6 +11,7 @@ import { SidebarProvider, useSidebar } from '@/contexts/SidebarContext';
 import { usePageNavigation } from '@/hooks/usePageNavigation';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
 import RoleSwitcher from '@/components/dashboard/RoleSwitcher';
+import DashboardReferralLink from '@/components/dashboard/DashboardReferralLink';
 import '@/components/dashboard/sidebar.css';
 
 const DashboardSidebar = ({ user }) => {
@@ -217,6 +218,7 @@ const DashboardHome = ({ user }) => (
       )}
     </div>
      <RoleSwitcher />
+     <DashboardReferralLink />
   </div>
 );
 

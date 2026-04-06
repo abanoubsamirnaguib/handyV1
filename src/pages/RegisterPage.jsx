@@ -150,7 +150,12 @@ const RegisterPage = () => {
   const handleGoogleRegister = async () => {
     setIsGoogleLoading(true);
     try {
-      const success = await loginWithGoogle();
+      const macAddress = getMacAddressIfProvided();
+      const success = await loginWithGoogle({
+        ...(referralCode ? { referral_code: referralCode } : {}),
+        device_fingerprint: buildDeviceFingerprint(),
+        ...(macAddress ? { mac_address: macAddress } : {}),
+      });
       if (success) {
         // The useEffect above will handle the redirect
       }

@@ -22,6 +22,7 @@ import {
   MapPin,
   Bell,
   Gift,
+  Sparkles,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -69,6 +70,7 @@ const AdminSidebar = () => {
     { path: '/admin/contact-us', label: 'رسائل التواصل', icon: HelpCircle },
     { path: '/admin/announcements', label: 'الإعلانات', icon: Megaphone },
     { path: '/admin/gifts', label: 'الهدايا', icon: Gift },
+    { path: '/admin/promo-banner', label: 'البانر الترويجي', icon: Sparkles },
     { path: '/admin/settings', label: 'إعدادات النظام', icon: Settings },
   ];
 
@@ -204,6 +206,7 @@ const AdminLayout = () => {
     { path: '/admin/community', label: 'منشورات المجتمع', icon: MessageCircle },
     { path: '/admin/contact-us', label: 'رسائل التواصل', icon: HelpCircle },
     { path: '/admin/gifts', label: 'الهدايا', icon: Gift },
+    { path: '/admin/promo-banner', label: 'البانر الترويجي', icon: Sparkles },
     { path: '/admin/settings', label: 'إعدادات النظام', icon: Settings },
   ];
   const { unreadCount = 0 } = useNotifications();

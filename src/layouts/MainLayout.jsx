@@ -1,6 +1,7 @@
 import React from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
+import PromoBanner from '@/components/PromoBanner';
 import Footer from '@/components/Footer';
 import MobileBottomNav from '@/components/MobileBottomNav';
 import MaintenanceModeBar from '@/components/MaintenanceModeBar';
@@ -13,11 +14,23 @@ const MainLayout = () => {
   const isChatPage = location.pathname === '/chat' || location.pathname.startsWith('/chat/');
   const isDashboardPage = location.pathname.startsWith('/dashboard');
   const isAdminPage = location.pathname.startsWith('/admin');
+  const showPromoBanner =
+    !isDashboardPage &&
+    (location.pathname === '/' || location.pathname === '/explore');
   
   return (
     <div className="flex flex-col min-h-screen" dir="rtl">
       {settings.maintenanceMode && !isAdminPage && <MaintenanceModeBar />}
-      {!isDashboardPage && <Navbar />}
+      {!isDashboardPage && (
+        <div
+          className={`sticky z-50 ${settings.maintenanceMode ? 'top-10' : 'top-0'}`}
+        >
+          <Navbar suppressSticky />
+          {showPromoBanner && (
+            <PromoBanner key={settings.promoBanner?.revision ?? '0'} />
+          )}
+        </div>
+      )}
       <motion.main 
         className={`flex-grow ${isChatPage ? 'pb-0' : 'pb-16 md:pb-0'}`}
         initial={{ opacity: 0, y: 20 }}

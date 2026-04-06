@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { DollarSign } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useToast } from '@/components/ui/use-toast';
 import { api } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
+import { getReferralInviteUrl } from '@/lib/referralUrl';
 
 const DashboardBuyerWallet = () => {
   const { user, refreshUser } = useAuth();
@@ -24,6 +25,8 @@ const DashboardBuyerWallet = () => {
   const [loading, setLoading] = useState(true);
   const [showDialog, setShowDialog] = useState(false);
   const [form, setForm] = useState({ amount: '', payment_method: '', payment_details: '' });
+
+  const referralInviteUrl = useMemo(() => getReferralInviteUrl(user), [user]);
 
   const allPaymentMethods = [
     { value: 'vodafone_cash', label: 'فودافون كاش' },
@@ -86,10 +89,9 @@ const DashboardBuyerWallet = () => {
   };
 
   const copyReferralLink = async () => {
-    const link = user?.referral_link;
-    if (!link) return;
+    if (!referralInviteUrl) return;
     try {
-      await navigator.clipboard.writeText(link);
+      await navigator.clipboard.writeText(referralInviteUrl);
       toast({ title: 'تم النسخ', description: 'تم نسخ رابط الدعوة' });
     } catch {
       toast({ title: 'خطأ', description: 'تعذر نسخ الرابط', variant: 'destructive' });
@@ -161,11 +163,11 @@ const DashboardBuyerWallet = () => {
               </div>
             </div>
 
-            {user?.referral_link && (
+            {referralInviteUrl && (
               <div className="mt-5 p-4 rounded-lg bg-neutral-50 border">
                 <div className="text-sm text-neutral-900/70 mb-2">رابط الدعوة الخاص بك</div>
                 <div className="flex flex-col md:flex-row gap-2">
-                  <Input readOnly value={user.referral_link} className="bg-white" />
+                  <Input readOnly value={referralInviteUrl} className="bg-white" />
                   <Button type="button" variant="outline" onClick={copyReferralLink}>
                     نسخ
                   </Button>

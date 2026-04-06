@@ -57,6 +57,9 @@ class AuthController extends Controller
                     'message' => 'تم تعليق حسابك. يرجى التواصل مع الإدارة.'
                 ], 403);
             }
+
+            $user->assignReferralCodeIfMissing();
+            $user->refresh();
             
             // Update last_login and last_seen timestamps
             $user->last_login = now();
@@ -97,6 +100,9 @@ class AuthController extends Controller
         if (!$user) {
             return response()->json(['message' => 'Unauthenticated'], 401);
         }
+
+        $user->assignReferralCodeIfMissing();
+        $user->refresh();
         
         // Load seller relationship with skills if user is a seller
         if ($user->active_role === 'seller' || $user->is_seller) {
@@ -121,6 +127,11 @@ class AuthController extends Controller
     public function checkToken(Request $request)
     {
         $user = $request->user();
+
+        if ($user) {
+            $user->assignReferralCodeIfMissing();
+            $user->refresh();
+        }
         
         // Load seller relationship with skills if user is a seller
         if ($user && ($user->active_role === 'seller' || $user->is_seller)) {
@@ -498,6 +509,11 @@ class AuthController extends Controller
         try {
             $validated = $request->validate([
                 'access_token' => 'required|string',
+                'referral_code' => 'nullable|string|max:32',
+                'device_fingerprint' => 'nullable|string|max:255',
+                'mac_address' => ['nullable', 'string', 'max:32', 'regex:/^([0-9A-Fa-f]{2}([:-]?)){5}[0-9A-Fa-f]{2}$/'],
+            ], [
+                'mac_address.regex' => 'صيغة عنوان MAC غير صحيحة',
             ]);
             
             // Verify the Google access token by making a request to Google's userinfo endpoint
@@ -544,22 +560,55 @@ class AuthController extends Controller
                         'message' => 'التسجيل غير متاح حالياً. يرجى المحاولة لاحقاً.'
                     ], 403);
                 }
-                
-                // Create new user with buyer role as default
-                $user = User::create([
-                    'name' => $googleUserInfo['name'] ?? explode('@', $googleUserInfo['email'])[0],
-                    'email' => $googleUserInfo['email'],
-                    'google_id' => $googleUserInfo['sub'] ?? $googleUserInfo['id'],
-                    'avatar' => $googleUserInfo['picture'] ?? null,
-                    'password' => Hash::make(uniqid()), // Random password since they'll use Google login
-                    'role' => 'buyer', // Default role as buyer
-                    'active_role' => 'buyer',
-                    'is_buyer' => true,
-                    'is_seller' => false,
-                    'status' => 'active',
-                    'email_verified' => true, // Google accounts are already verified
-                    'email_verified_at' => now(),
-                ]);
+
+                $ipAddress = $this->resolveClientIpAddress($request);
+                $normalizedMacAddress = $this->normalizeMacAddress($validated['mac_address'] ?? null);
+                $deviceFingerprint = $this->normalizeDeviceFingerprint($validated['device_fingerprint'] ?? null);
+                $userAgent = Str::limit((string) ($request->userAgent() ?? ''), 1000, '');
+
+                $this->assertDeviceCanRegister($ipAddress, $normalizedMacAddress, $deviceFingerprint);
+
+                $referrerUserId = $this->resolveReferrerUserIdForSignup($validated['referral_code'] ?? null, true);
+
+                $user = DB::transaction(function () use (
+                    $googleUserInfo,
+                    $referrerUserId,
+                    $ipAddress,
+                    $normalizedMacAddress,
+                    $deviceFingerprint,
+                    $userAgent
+                ) {
+                    $user = User::create([
+                        'name' => $googleUserInfo['name'] ?? explode('@', $googleUserInfo['email'])[0],
+                        'email' => $googleUserInfo['email'],
+                        'google_id' => $googleUserInfo['sub'] ?? $googleUserInfo['id'],
+                        'avatar' => $googleUserInfo['picture'] ?? null,
+                        'password' => Hash::make(uniqid()), // Random password since they'll use Google login
+                        'role' => 'buyer', // Default role as buyer
+                        'active_role' => 'buyer',
+                        'is_buyer' => true,
+                        'is_seller' => false,
+                        'status' => 'active',
+                        'email_verified' => true, // Google accounts are already verified
+                        'email_verified_at' => now(),
+                        'referral_code' => User::generateUniqueReferralCode(),
+                        'referred_by_user_id' => $referrerUserId,
+                    ]);
+
+                    if ($referrerUserId && $referrerUserId !== $user->id) {
+                        ReferralGiftService::awardSignupGift($user);
+                    }
+
+                    $this->registerUserDevice(
+                        user: $user,
+                        ipAddress: $ipAddress,
+                        macAddress: $normalizedMacAddress,
+                        deviceFingerprint: $deviceFingerprint,
+                        userAgent: $userAgent
+                    );
+
+                    return $user;
+                });
                 
                 // Send welcome notification
                 try {
@@ -744,22 +793,7 @@ class AuthController extends Controller
 
             $this->assertDeviceCanRegister($ipAddress, $normalizedMacAddress, $deviceFingerprint);
 
-            $referrerUserId = null;
-            if (!empty($validated['referral_code'])) {
-                $referrerUserId = User::where('referral_code', $validated['referral_code'])->value('id');
-
-                if ($referrerUserId) {
-                    $maxLinkUses = max(0, (int) (SiteSetting::where('setting_key', 'referral_max_link_uses')->value('setting_value') ?? 0));
-                    if ($maxLinkUses > 0) {
-                        $currentUses = User::where('referred_by_user_id', $referrerUserId)->count();
-                        if ($currentUses >= $maxLinkUses) {
-                            throw ValidationException::withMessages([
-                                'referral_code' => ['تم الوصول إلى الحد الأقصى لاستخدام رابط الإحالة هذا.'],
-                            ]);
-                        }
-                    }
-                }
-            }
+            $referrerUserId = $this->resolveReferrerUserIdForSignup($validated['referral_code'] ?? null, false);
 
             $user = DB::transaction(function () use (
                 $validated,
@@ -773,22 +807,6 @@ class AuthController extends Controller
                 $deviceFingerprint,
                 $userAgent
             ) {
-                // Generate unique referral code for the new user
-                $newReferralCode = null;
-                for ($i = 0; $i < 25; $i++) {
-                    $candidate = Str::upper(Str::random(10));
-                    if (!User::where('referral_code', $candidate)->exists()) {
-                        $newReferralCode = $candidate;
-                        break;
-                    }
-                }
-                if (!$newReferralCode) {
-                    // Extremely unlikely fallback: longer code, still ensured unique
-                    do {
-                        $newReferralCode = Str::upper(Str::random(16));
-                    } while (User::where('referral_code', $newReferralCode)->exists());
-                }
-
                 $user = User::create([
                     'name' => $validated['name'],
                     'email' => $validated['email'],
@@ -800,7 +818,7 @@ class AuthController extends Controller
                     'is_buyer' => $isBuyer,
                     'status' => 'active',
                     'email_verified' => true, // Already verified with OTP
-                    'referral_code' => $newReferralCode,
+                    'referral_code' => User::generateUniqueReferralCode(),
                     'referred_by_user_id' => $referrerUserId,
                 ]);
 
@@ -917,6 +935,43 @@ class AuthController extends Controller
                 'error' => config('app.debug') ? $e->getMessage() : 'Internal server error'
             ], 500);
         }
+    }
+
+    /**
+     * Resolve referrer user id from an optional referral code and enforce max-link-uses.
+     *
+     * @param  bool  $throwIfUnknown  When true, a non-empty unknown code throws ValidationException (e.g. Google signup).
+     */
+    private function resolveReferrerUserIdForSignup(?string $referralCode, bool $throwIfUnknown = false): ?int
+    {
+        $code = is_string($referralCode) ? trim($referralCode) : '';
+        if ($code === '') {
+            return null;
+        }
+
+        $referrerUserId = User::where('referral_code', $code)->value('id');
+
+        if (!$referrerUserId) {
+            if ($throwIfUnknown) {
+                throw ValidationException::withMessages([
+                    'referral_code' => ['رمز الإحالة غير صالح.'],
+                ]);
+            }
+
+            return null;
+        }
+
+        $maxLinkUses = max(0, (int) (SiteSetting::where('setting_key', 'referral_max_link_uses')->value('setting_value') ?? 0));
+        if ($maxLinkUses > 0) {
+            $currentUses = User::where('referred_by_user_id', $referrerUserId)->count();
+            if ($currentUses >= $maxLinkUses) {
+                throw ValidationException::withMessages([
+                    'referral_code' => ['تم الوصول إلى الحد الأقصى لاستخدام رابط الإحالة هذا.'],
+                ]);
+            }
+        }
+
+        return $referrerUserId;
     }
 
     private function resolveClientIpAddress(Request $request): ?string

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { apiUrl, api } from '@/lib/api';
 import { reconnectEcho } from '@/lib/echo';
@@ -23,6 +23,26 @@ export const AuthProvider = ({ children }) => {
 
   // Helper to get token from localStorage
   const getToken = () => localStorage.getItem('token');
+
+  const refreshUser = useCallback(async () => {
+    const token = getToken();
+    if (!token) return;
+    try {
+      const res = await fetch(apiUrl('me'), {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/json',
+        },
+      });
+      if (res.ok) {
+        const data = (await res.json()).data;
+        setUser(data);
+        localStorage.setItem('user', JSON.stringify(data));
+      }
+    } catch {
+      // ignore network errors
+    }
+  }, []);
   
   // Update online status periodically
   useEffect(() => {
@@ -152,7 +172,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const loginWithGoogle = async () => {
+  const loginWithGoogle = async (signupOptions = {}) => {
     try {
       // Initialize Google Sign-In
       return new Promise((resolve, reject) => {
@@ -162,7 +182,7 @@ export const AuthProvider = ({ children }) => {
           script.src = 'https://accounts.google.com/gsi/client';
           script.async = true;
           script.defer = true;
-          script.onload = () => initializeGoogleSignIn(resolve, reject);
+          script.onload = () => initializeGoogleSignIn(resolve, reject, signupOptions);
           script.onerror = () => {
             toast({
               variant: 'destructive',
@@ -173,7 +193,7 @@ export const AuthProvider = ({ children }) => {
           };
           document.body.appendChild(script);
         } else {
-          initializeGoogleSignIn(resolve, reject);
+          initializeGoogleSignIn(resolve, reject, signupOptions);
         }
       });
     } catch (error) {
@@ -187,7 +207,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const initializeGoogleSignIn = (resolve, reject) => {
+  const initializeGoogleSignIn = (resolve, reject, signupOptions = {}) => {
     try {
       const client = window.google.accounts.oauth2.initTokenClient({
         client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
@@ -195,22 +215,41 @@ export const AuthProvider = ({ children }) => {
         callback: async (response) => {
           if (response.access_token) {
             try {
-              // Send access token to backend
+              const payload = { access_token: response.access_token };
+              if (signupOptions.referral_code) {
+                payload.referral_code = signupOptions.referral_code;
+              }
+              if (signupOptions.device_fingerprint) {
+                payload.device_fingerprint = signupOptions.device_fingerprint;
+              }
+              if (signupOptions.mac_address) {
+                payload.mac_address = signupOptions.mac_address;
+              }
+
               const res = await fetch(apiUrl('auth/google'), {
                 method: 'POST',
                 headers: { 
                   'Content-Type': 'application/json',
                   'Accept': 'application/json',
                 },
-                body: JSON.stringify({ access_token: response.access_token }),
+                body: JSON.stringify(payload),
               });
               
               if (!res.ok) {
                 const errorData = await res.json().catch(() => ({}));
+                const referralErr = errorData.errors?.referral_code?.[0];
+                const firstFieldError =
+                  referralErr ||
+                  (errorData.errors && typeof errorData.errors === 'object'
+                    ? Object.values(errorData.errors).flat()?.[0]
+                    : null);
                 toast({
                   variant: 'destructive',
                   title: 'فشل تسجيل الدخول',
-                  description: errorData.message || 'فشل التحقق من حساب Google',
+                  description:
+                    firstFieldError ||
+                    errorData.message ||
+                    'فشل التحقق من حساب Google',
                 });
                 resolve(false);
                 return;
@@ -803,6 +842,7 @@ export const AuthProvider = ({ children }) => {
   const value = {
     user,
     loading,
+    refreshUser,
     login,
     loginWithGoogle,
     register,

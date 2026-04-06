@@ -20,6 +20,14 @@ export const SiteSettingsProvider = ({ children }) => {
     queryKey: ['siteSettings', 'general'],
     queryFn: async () => {
       const data = await api.getGeneralSiteSettings();
+      const defaultPromo = {
+        enabled: false,
+        title: '',
+        description: '',
+        timerEnd: '',
+        linkUrl: '',
+        revision: '0',
+      };
       return {
         siteDescription: data.siteDescription || 'منصة تجمع الحرفيين والمبدعين في مكان واحد، لعرض منتجاتهم اليدوية الفريدة والتواصل مع العملاء مباشرة.',
         maintenanceMode: data.maintenanceMode || false,
@@ -29,6 +37,9 @@ export const SiteSettingsProvider = ({ children }) => {
         contactAddress: data.contactAddress || 'شارع الحرفيين، الفيوم ، مصر',
         workingHours: data.workingHours || 'السبت - الخميس: 9:00 صباحاً - 6:00 مساءً',
         transactionNumber: data.transactionNumber || '',
+        promoBanner: data.promoBanner && typeof data.promoBanner === 'object'
+          ? { ...defaultPromo, ...data.promoBanner }
+          : defaultPromo,
       };
     },
     staleTime: 1000 * 60 * 60, // 1 hour
@@ -44,6 +55,14 @@ export const SiteSettingsProvider = ({ children }) => {
     contactAddress: 'شارع الحرفيين، الفيوم ، مصر',
     workingHours: 'السبت - الخميس: 9:00 صباحاً - 6:00 مساءً',
     transactionNumber: '',
+    promoBanner: {
+      enabled: false,
+      title: '',
+      description: '',
+      timerEnd: '',
+      linkUrl: '',
+      revision: '0',
+    },
   };
 
   const refreshSettings = () => {

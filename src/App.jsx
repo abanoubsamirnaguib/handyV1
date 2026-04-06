@@ -79,6 +79,7 @@ import AdminPlatformProfits from '@/components/admin/AdminPlatformProfits';
 import AdminGiftSections from '@/components/admin/AdminGiftSections';
 import AdminCommunityPosts from '@/components/admin/AdminCommunityPosts';
 import AdminGifts from '@/components/admin/AdminGifts';
+import AdminPromoBanner from '@/components/admin/AdminPromoBanner';
 
 import './styles/rtl-dropdown.css'; // Import our RTL dropdown styles
 
@@ -255,6 +256,7 @@ function AppRoutes() {
                 <Route path="platform-profits" element={<AdminPlatformProfits />} />
                 <Route path="gift-sections" element={<AdminGiftSections />} />
                 <Route path="gifts" element={<AdminGifts />} />
+                <Route path="promo-banner" element={<AdminPromoBanner />} />
                 <Route path="settings" element={<AdminSettings />} />
               </Route>
               

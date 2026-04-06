@@ -19,7 +19,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-const Navbar = () => {
+const Navbar = ({ suppressSticky = false }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSocialMenuOpen, setIsSocialMenuOpen] = useState(false);
   const { user, logout } = useAuth();
@@ -86,7 +86,7 @@ const Navbar = () => {
   }, [user?.avatar, user?.name]);
 
   return (
-    <header className={`sticky ${settings.maintenanceMode ? 'top-10' : 'top-0'} z-50 bg-background/80 backdrop-blur-md border-b border-roman-500/20`}>
+    <header className={`${suppressSticky ? 'relative' : `sticky ${settings.maintenanceMode ? 'top-10' : 'top-0'}`} z-50 bg-background/80 backdrop-blur-md border-b border-roman-500/20`}>
       <div className="container mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
           <Link to="/" className="flex items-center space-x-2 space-x-reverse">

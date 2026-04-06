@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Support\Str;
 
 class User extends Authenticatable
 {
@@ -187,6 +188,37 @@ class User extends Authenticatable
     public function devices()
     {
         return $this->hasMany(UserDevice::class);
+    }
+
+    /**
+     * Generate a unique referral code (10 chars, or 16 on collision exhaustion).
+     */
+    public static function generateUniqueReferralCode(): string
+    {
+        for ($i = 0; $i < 25; $i++) {
+            $candidate = Str::upper(Str::random(10));
+            if (!static::where('referral_code', $candidate)->exists()) {
+                return $candidate;
+            }
+        }
+
+        do {
+            $candidate = Str::upper(Str::random(16));
+        } while (static::where('referral_code', $candidate)->exists());
+
+        return $candidate;
+    }
+
+    /**
+     * Ensure this user has a referral_code (e.g. legacy accounts).
+     */
+    public function assignReferralCodeIfMissing(): void
+    {
+        if ($this->referral_code) {
+            return;
+        }
+
+        $this->forceFill(['referral_code' => static::generateUniqueReferralCode()])->save();
     }
 
     /**

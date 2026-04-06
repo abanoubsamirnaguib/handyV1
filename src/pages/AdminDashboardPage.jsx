@@ -72,6 +72,12 @@ const AdminDashboardPage = () => (
         link="/admin/messages" 
         icon={MessageCircle} 
       />
+      <AdminDashboardCard
+        title="الهدايا"
+        description="إدارة قيم هدايا الدعوات ومتابعة المستخدمين المستفيدين."
+        link="/admin/gifts"
+        icon={Gift}
+      />
       <AdminDashboardCard 
         title="إعدادات النظام" 
         description="تكوين إعدادات النظام العامة." 

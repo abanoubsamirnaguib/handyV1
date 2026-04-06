@@ -14,6 +14,7 @@ use App\Http\Resources\SellerResource;
 use App\Http\Resources\OrderResource;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use App\Services\ReferralGiftService;
 
 
 class AdminController extends Controller
@@ -190,6 +191,8 @@ class AdminController extends Controller
     public function updateProductStatus(Request $request, $id)
     {
         $product = Product::findOrFail($id);
+        $wasActive = $product->status === 'active';
+
         $validated = $request->validate([
             'status' => 'required|in:active,inactive,pending_review,rejected',
             'rejection_reason' => 'nullable|string|max:1000'
@@ -242,6 +245,11 @@ class AdminController extends Controller
                 productTitle: $product->title,
                 productType: $product->type ?? 'product'
             );
+
+            // Referral gift: first approved product for the referred user.
+            if (!$wasActive) {
+                ReferralGiftService::awardFirstApprovedProductGift($product);
+            }
         }
         
         // إذا تم رفض المنتج، نرسل إشعارًا للبائع مع سبب الرفض

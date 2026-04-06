@@ -41,6 +41,7 @@ use App\Http\Controllers\Api\PlatformProfitController;
 use App\Http\Controllers\Api\AIAssistantController;
 use App\Http\Controllers\Api\PushSubscriptionController;
 use App\Http\Controllers\Api\CommunityController;
+use App\Http\Controllers\Api\ReferralController;
 
 
 Broadcast::routes(['middleware' => ['broadcast.auth']]);
@@ -132,6 +133,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::middleware(['check.user.status'])->group(function () {
         Route::get('me', [AuthController::class, 'me']);
         Route::get('check-token', [AuthController::class, 'checkToken']);
+        Route::get('referrals/me', [ReferralController::class, 'me']);
     
     // Role switching endpoints
     Route::post('switch-role', [AuthController::class, 'switchRole']);
@@ -349,6 +351,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         // Admin site settings management
         Route::get('site-settings', [SiteSettingController::class, 'getAdminSettings']);
         Route::post('site-settings', [SiteSettingController::class, 'updateAdminSettings']);
+        Route::get('referrals/summary', [ReferralController::class, 'adminSummary']);
         
         // Admin chat management routes
         Route::prefix('chat')->group(function () {

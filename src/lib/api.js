@@ -442,6 +442,9 @@ export const api = {
       body: JSON.stringify(data),
     }),
 
+  // Referral gifts and summary for current user
+  getMyReferrals: () => apiFetch('referrals/me'),
+
   // Reviews API functions
   getProductReviews: (productId) => apiFetch(`products/${productId}/reviews`),
   getSellerReviews: (sellerId) => apiFetch(`sellers/${sellerId}/reviews`),
@@ -809,6 +812,7 @@ export const adminApi = {
       method: 'POST',
       body: JSON.stringify({ settingsType, settings }),
     }),
+  getReferralSummary: () => apiFetch('admin/referrals/summary'),
 
   // Contact Us management
   getContactMessages: (params = {}) => {

@@ -9,9 +9,8 @@ class ReferralReward extends Model
 {
     use HasFactory;
 
-    public const TYPE_SIGNUP = 'signup';
-    public const TYPE_FIRST_PRODUCT = 'first_product';
-    public const TYPE_FIRST_ORDER = 'first_order';
+    public const TYPE_COMPLETED_ORDER_GIFT = 'completed_order_gift';
+    public const TYPE_REFERRAL_SELLER_FIRST_PRODUCT_GIFT = 'referral_seller_first_product_gift';
 
     protected $table = 'referral_rewards';
 
@@ -42,9 +41,8 @@ class ReferralReward extends Model
     public static function rewardTypeLabels(): array
     {
         return [
-            self::TYPE_SIGNUP => 'تسجيل مستخدم جديد',
-            self::TYPE_FIRST_PRODUCT => 'اعتماد أول منتج',
-            self::TYPE_FIRST_ORDER => 'إكمال أول طلب',
+            self::TYPE_COMPLETED_ORDER_GIFT => 'هدية استكمال أوردر',
+            self::TYPE_REFERRAL_SELLER_FIRST_PRODUCT_GIFT => 'هدية أول منتج لبائع مسجل بالرابط',
         ];
     }
 
@@ -61,6 +59,16 @@ class ReferralReward extends Model
     public function referred()
     {
         return $this->belongsTo(User::class, 'referred_user_id');
+    }
+
+    public function sourceOrder()
+    {
+        return $this->belongsTo(Order::class, 'source_order_id');
+    }
+
+    public function sourceProduct()
+    {
+        return $this->belongsTo(Product::class, 'source_product_id');
     }
 }
 

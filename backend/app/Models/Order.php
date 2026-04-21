@@ -471,8 +471,8 @@ class Order extends Model
             "/orders/{$this->id}"
         );
 
-        // Referral gift: first completed order made by a referred user from their referrer.
-        ReferralGiftService::awardFirstCompletedOrderGift($this);
+        // Gift wallet bonus for seller on completed orders (subject to admin-configured limits).
+        ReferralGiftService::awardCompletedOrderGift($this);
     }
     
     public function cancel($userId, $reason = null)

@@ -115,20 +115,37 @@ class SiteSettingController extends Controller
             'deliveryMethod' => SiteSetting::where('setting_key', 'admin_notification_delivery')->value('setting_value') ?? 'both',
         ];
 
-        $signupGiftAmount = SiteSetting::where('setting_key', 'referral_signup_gift_amount')->value('setting_value');
-        if ($signupGiftAmount === null) {
-            $signupGiftAmount = SiteSetting::where('setting_key', 'referral_bonus_amount')->value('setting_value');
+        $orderGiftAmount = SiteSetting::where('setting_key', 'gift_order_completed_amount')->value('setting_value');
+        if ($orderGiftAmount === null) {
+            $orderGiftAmount = SiteSetting::where('setting_key', 'referral_first_order_gift_amount')->value('setting_value');
         }
 
-        // Referral gift settings
+        $orderGiftLimit = SiteSetting::where('setting_key', 'gift_order_completed_limit_per_seller')->value('setting_value');
+
+        $referralSellerGiftAmount = SiteSetting::where('setting_key', 'gift_referral_seller_first_product_amount')->value('setting_value');
+        if ($referralSellerGiftAmount === null) {
+            $referralSellerGiftAmount = SiteSetting::where('setting_key', 'referral_first_product_gift_amount')->value('setting_value');
+        }
+
+        $referralSellerLimit = SiteSetting::where('setting_key', 'gift_referral_seller_registration_limit')->value('setting_value');
+        if ($referralSellerLimit === null) {
+            $referralSellerLimit = SiteSetting::where('setting_key', 'referral_max_link_uses')->value('setting_value');
+        }
+
+        // Gift settings for seller wallet rewards.
         $referralSettings = [
             'enabled' => SiteSetting::where('setting_key', 'referral_enabled')->value('setting_value') !== 'false',
-            'registrationGiftAmount' => (float) ($signupGiftAmount ?? 0),
-            'firstProductGiftAmount' => (float) (SiteSetting::where('setting_key', 'referral_first_product_gift_amount')->value('setting_value') ?? 0),
-            'firstOrderGiftAmount' => (float) (SiteSetting::where('setting_key', 'referral_first_order_gift_amount')->value('setting_value') ?? 0),
-            'maxLinkUses' => (int) (SiteSetting::where('setting_key', 'referral_max_link_uses')->value('setting_value') ?? 0),
-            // Backward compatibility for any old frontend expecting bonusAmount.
-            'bonusAmount' => (float) ($signupGiftAmount ?? 0),
+            'orderGiftAmount' => (float) ($orderGiftAmount ?? 0),
+            'orderGiftLimitPerSeller' => (int) ($orderGiftLimit ?? 0),
+            'referralSellerGiftAmount' => (float) ($referralSellerGiftAmount ?? 0),
+            'referralSellerLimitPerSeller' => (int) ($referralSellerLimit ?? 0),
+
+            // Backward compatibility aliases for existing frontend screens.
+            'firstOrderGiftAmount' => (float) ($orderGiftAmount ?? 0),
+            'firstProductGiftAmount' => (float) ($referralSellerGiftAmount ?? 0),
+            'maxLinkUses' => (int) ($referralSellerLimit ?? 0),
+            'registrationGiftAmount' => 0,
+            'bonusAmount' => 0,
         ];
 
         $promoBannerSettings = [
@@ -218,10 +235,16 @@ class SiteSettingController extends Controller
                 ],
                 'referrals' => [
                     'enabled' => 'referral_enabled',
+                    'orderGiftAmount' => 'gift_order_completed_amount',
+                    'orderGiftLimitPerSeller' => 'gift_order_completed_limit_per_seller',
+                    'referralSellerGiftAmount' => 'gift_referral_seller_first_product_amount',
+                    'referralSellerLimitPerSeller' => 'gift_referral_seller_registration_limit',
+
+                    // Backward compatible aliases used by old frontend code.
+                    'firstOrderGiftAmount' => 'gift_order_completed_amount',
+                    'firstProductGiftAmount' => 'gift_referral_seller_first_product_amount',
+                    'maxLinkUses' => 'gift_referral_seller_registration_limit',
                     'registrationGiftAmount' => 'referral_signup_gift_amount',
-                    'firstProductGiftAmount' => 'referral_first_product_gift_amount',
-                    'firstOrderGiftAmount' => 'referral_first_order_gift_amount',
-                    'maxLinkUses' => 'referral_max_link_uses',
                     'bonusAmount' => 'referral_signup_gift_amount',
                 ],
                 'promoBanner' => [
@@ -258,12 +281,35 @@ class SiteSettingController extends Controller
                         ['setting_value' => is_string($value) ? $value : (string) $value, 'updated_at' => now()]
                     );
 
-                    // Keep legacy key in sync for older flows still reading it.
-                    if ($settingsType === 'referrals' && in_array($frontendKey, ['registrationGiftAmount', 'bonusAmount'], true)) {
-                        SiteSetting::updateOrCreate(
-                            ['setting_key' => 'referral_bonus_amount'],
-                            ['setting_value' => $value, 'updated_at' => now()]
-                        );
+                    if ($settingsType === 'referrals') {
+                        // Keep legacy keys in sync for older flows still reading them.
+                        if (in_array($frontendKey, ['registrationGiftAmount', 'bonusAmount'], true)) {
+                            SiteSetting::updateOrCreate(
+                                ['setting_key' => 'referral_bonus_amount'],
+                                ['setting_value' => $value, 'updated_at' => now()]
+                            );
+                        }
+
+                        if (in_array($frontendKey, ['orderGiftAmount', 'firstOrderGiftAmount'], true)) {
+                            SiteSetting::updateOrCreate(
+                                ['setting_key' => 'referral_first_order_gift_amount'],
+                                ['setting_value' => $value, 'updated_at' => now()]
+                            );
+                        }
+
+                        if (in_array($frontendKey, ['referralSellerGiftAmount', 'firstProductGiftAmount'], true)) {
+                            SiteSetting::updateOrCreate(
+                                ['setting_key' => 'referral_first_product_gift_amount'],
+                                ['setting_value' => $value, 'updated_at' => now()]
+                            );
+                        }
+
+                        if (in_array($frontendKey, ['referralSellerLimitPerSeller', 'maxLinkUses'], true)) {
+                            SiteSetting::updateOrCreate(
+                                ['setting_key' => 'referral_max_link_uses'],
+                                ['setting_value' => $value, 'updated_at' => now()]
+                            );
+                        }
                     }
                 }
             }

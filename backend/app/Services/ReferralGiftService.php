@@ -12,108 +12,161 @@ use Illuminate\Support\Facades\DB;
 class ReferralGiftService
 {
     private const SETTING_ENABLED = 'referral_enabled';
-    private const SETTING_SIGNUP_GIFT = 'referral_signup_gift_amount';
-    private const SETTING_SIGNUP_GIFT_LEGACY = 'referral_bonus_amount';
-    private const SETTING_FIRST_PRODUCT_GIFT = 'referral_first_product_gift_amount';
-    private const SETTING_FIRST_ORDER_GIFT = 'referral_first_order_gift_amount';
+    private const SETTING_ORDER_GIFT_AMOUNT = 'gift_order_completed_amount';
+    private const SETTING_ORDER_GIFT_AMOUNT_LEGACY = 'referral_first_order_gift_amount';
+    private const SETTING_ORDER_GIFT_LIMIT = 'gift_order_completed_limit_per_seller';
+    private const SETTING_REFERRAL_SELLER_GIFT_AMOUNT = 'gift_referral_seller_first_product_amount';
+    private const SETTING_REFERRAL_SELLER_GIFT_AMOUNT_LEGACY = 'referral_first_product_gift_amount';
+    private const SETTING_REFERRAL_SELLER_LIMIT = 'gift_referral_seller_registration_limit';
+    private const SETTING_REFERRAL_SELLER_LIMIT_LEGACY = 'referral_max_link_uses';
 
-    public static function awardSignupGift(User $referredUser): ?ReferralReward
+    public static function awardCompletedOrderGift(Order $order): ?ReferralReward
     {
-        $amount = self::getGiftAmountByType(ReferralReward::TYPE_SIGNUP);
-        $reason = "تسجيل مستخدم جديد عبر رابط دعوتك: {$referredUser->name}";
+        if (!self::isGiftEnabled()) {
+            return null;
+        }
 
-        return self::awardGift(
-            referredUser: $referredUser,
-            rewardType: ReferralReward::TYPE_SIGNUP,
+        $order->loadMissing(['seller.user', 'user']);
+
+        $sellerUser = $order->seller?->user;
+        $buyerUser = $order->user;
+
+        if (!$sellerUser || !$buyerUser || $sellerUser->id === $buyerUser->id) {
+            return null;
+        }
+
+        $amount = self::getOrderGiftAmount();
+        if ($amount <= 0) {
+            return null;
+        }
+
+        $allowedOrders = self::getOrderGiftLimit();
+        if ($allowedOrders <= 0) {
+            return null;
+        }
+
+        $currentCount = ReferralReward::where('referrer_user_id', $sellerUser->id)
+            ->where('reward_type', ReferralReward::TYPE_COMPLETED_ORDER_GIFT)
+            ->count();
+
+        if ($currentCount >= $allowedOrders) {
+            return null;
+        }
+
+        $reason = "هدية استكمال أوردر رقم #{$order->id} للمشتري {$buyerUser->name}";
+
+        return self::createGiftReward(
+            referrer: $sellerUser,
+            triggerUser: $buyerUser,
+            rewardType: ReferralReward::TYPE_COMPLETED_ORDER_GIFT,
             amount: $amount,
             reason: $reason,
+            sourceOrderId: (int) $order->id,
+            enforcePairUniqueness: false,
         );
     }
 
     public static function awardFirstApprovedProductGift(Product $product): ?ReferralReward
     {
+        if (!self::isGiftEnabled()) {
+            return null;
+        }
+
         $product->loadMissing('seller.user');
-        $referredUser = $product->seller?->user;
-        if (!$referredUser) {
+
+        $referredSellerUser = $product->seller?->user;
+        if (!$referredSellerUser || !$referredSellerUser->referred_by_user_id) {
             return null;
         }
 
-        $amount = self::getGiftAmountByType(ReferralReward::TYPE_FIRST_PRODUCT);
-        $reason = "تمت الموافقة على أول منتج للمستخدم المدعو {$referredUser->name}: {$product->title}";
+        $approvedProductsCount = Product::where('seller_id', $product->seller_id)
+            ->where('status', 'active')
+            ->count();
 
-        return self::awardGift(
-            referredUser: $referredUser,
-            rewardType: ReferralReward::TYPE_FIRST_PRODUCT,
+        if ($approvedProductsCount !== 1) {
+            return null;
+        }
+
+        $referrer = User::find($referredSellerUser->referred_by_user_id);
+        if (!$referrer || $referrer->id === $referredSellerUser->id) {
+            return null;
+        }
+
+        $amount = self::getReferralSellerGiftAmount();
+        if ($amount <= 0) {
+            return null;
+        }
+
+        $allowedRegistrations = self::getReferralSellerLimit();
+        if ($allowedRegistrations <= 0) {
+            return null;
+        }
+
+        $currentCount = ReferralReward::where('referrer_user_id', $referrer->id)
+            ->where('reward_type', ReferralReward::TYPE_REFERRAL_SELLER_FIRST_PRODUCT_GIFT)
+            ->count();
+
+        if ($currentCount >= $allowedRegistrations) {
+            return null;
+        }
+
+        $reason = "هدية قبول أول منتج للبائع المسجل عبر رابطك: {$referredSellerUser->name} ({$product->title})";
+
+        return self::createGiftReward(
+            referrer: $referrer,
+            triggerUser: $referredSellerUser,
+            rewardType: ReferralReward::TYPE_REFERRAL_SELLER_FIRST_PRODUCT_GIFT,
             amount: $amount,
             reason: $reason,
-            sourceProductId: $product->id,
+            sourceProductId: (int) $product->id,
+            enforcePairUniqueness: true,
         );
     }
 
-    public static function awardFirstCompletedOrderGift(Order $order): ?ReferralReward
-    {
-        $order->loadMissing(['user', 'seller.user']);
-
-        $referredUser = $order->user;
-        if (!$referredUser || !$referredUser->referred_by_user_id) {
-            return null;
-        }
-
-        $referrerUserId = (int) $referredUser->referred_by_user_id;
-        $orderSellerUserId = (int) ($order->seller?->user_id ?? 0);
-
-        // Gift is granted only when the referred user buys from the owner of the referral link.
-        if ($orderSellerUserId !== $referrerUserId) {
-            return null;
-        }
-
-        $amount = self::getGiftAmountByType(ReferralReward::TYPE_FIRST_ORDER);
-        $reason = "إكمال أول طلب من المستخدم المدعو {$referredUser->name} (طلب رقم #{$order->id})";
-
-        return self::awardGift(
-            referredUser: $referredUser,
-            rewardType: ReferralReward::TYPE_FIRST_ORDER,
-            amount: $amount,
-            reason: $reason,
-            sourceOrderId: $order->id,
-        );
-    }
-
-    private static function awardGift(
-        User $referredUser,
+    private static function createGiftReward(
+        User $referrer,
+        User $triggerUser,
         string $rewardType,
         float $amount,
         string $reason,
         ?int $sourceProductId = null,
         ?int $sourceOrderId = null,
+        bool $enforcePairUniqueness = false,
     ): ?ReferralReward {
-        if (!self::isReferralEnabled() || $amount <= 0) {
+        if (!self::isGiftEnabled() || $amount <= 0) {
             return null;
         }
 
-        if (!$referredUser->referred_by_user_id) {
+        if ($referrer->id === $triggerUser->id) {
             return null;
         }
 
-        $referrer = User::find($referredUser->referred_by_user_id);
-        if (!$referrer || $referrer->id === $referredUser->id) {
-            return null;
+        if ($sourceOrderId) {
+            $alreadyRewardedForOrder = ReferralReward::where('reward_type', $rewardType)
+                ->where('source_order_id', $sourceOrderId)
+                ->exists();
+
+            if ($alreadyRewardedForOrder) {
+                return null;
+            }
         }
 
-        $alreadyRewarded = ReferralReward::where('referrer_user_id', $referrer->id)
-            ->where('referred_user_id', $referredUser->id)
-            ->where('reward_type', $rewardType)
-            ->exists();
+        if ($enforcePairUniqueness) {
+            $alreadyRewardedForPair = ReferralReward::where('referrer_user_id', $referrer->id)
+                ->where('referred_user_id', $triggerUser->id)
+                ->where('reward_type', $rewardType)
+                ->exists();
 
-        if ($alreadyRewarded) {
-            return null;
+            if ($alreadyRewardedForPair) {
+                return null;
+            }
         }
 
         $currency = SiteSetting::where('setting_key', 'default_currency')->value('setting_value') ?? 'EGP';
 
         return DB::transaction(function () use (
             $referrer,
-            $referredUser,
+            $triggerUser,
             $rewardType,
             $amount,
             $currency,
@@ -123,7 +176,7 @@ class ReferralGiftService
         ) {
             $reward = ReferralReward::create([
                 'referrer_user_id' => $referrer->id,
-                'referred_user_id' => $referredUser->id,
+                'referred_user_id' => $triggerUser->id,
                 'reward_type' => $rewardType,
                 'amount' => $amount,
                 'currency' => $currency,
@@ -150,30 +203,44 @@ class ReferralGiftService
         });
     }
 
-    private static function isReferralEnabled(): bool
+    private static function isGiftEnabled(): bool
     {
         return SiteSetting::where('setting_key', self::SETTING_ENABLED)->value('setting_value') !== 'false';
     }
 
-    private static function getGiftAmountByType(string $rewardType): float
+    private static function getOrderGiftAmount(): float
     {
-        switch ($rewardType) {
-            case ReferralReward::TYPE_SIGNUP:
-                $value = SiteSetting::where('setting_key', self::SETTING_SIGNUP_GIFT)->value('setting_value');
-                if ($value === null) {
-                    $value = SiteSetting::where('setting_key', self::SETTING_SIGNUP_GIFT_LEGACY)->value('setting_value');
-                }
-
-                return (float) ($value ?? 0);
-
-            case ReferralReward::TYPE_FIRST_PRODUCT:
-                return (float) (SiteSetting::where('setting_key', self::SETTING_FIRST_PRODUCT_GIFT)->value('setting_value') ?? 0);
-
-            case ReferralReward::TYPE_FIRST_ORDER:
-                return (float) (SiteSetting::where('setting_key', self::SETTING_FIRST_ORDER_GIFT)->value('setting_value') ?? 0);
-
-            default:
-                return 0;
+        $value = SiteSetting::where('setting_key', self::SETTING_ORDER_GIFT_AMOUNT)->value('setting_value');
+        if ($value === null) {
+            $value = SiteSetting::where('setting_key', self::SETTING_ORDER_GIFT_AMOUNT_LEGACY)->value('setting_value');
         }
+
+        return (float) ($value ?? 0);
+    }
+
+    private static function getOrderGiftLimit(): int
+    {
+        $value = SiteSetting::where('setting_key', self::SETTING_ORDER_GIFT_LIMIT)->value('setting_value');
+        return max(0, (int) ($value ?? 0));
+    }
+
+    private static function getReferralSellerGiftAmount(): float
+    {
+        $value = SiteSetting::where('setting_key', self::SETTING_REFERRAL_SELLER_GIFT_AMOUNT)->value('setting_value');
+        if ($value === null) {
+            $value = SiteSetting::where('setting_key', self::SETTING_REFERRAL_SELLER_GIFT_AMOUNT_LEGACY)->value('setting_value');
+        }
+
+        return (float) ($value ?? 0);
+    }
+
+    private static function getReferralSellerLimit(): int
+    {
+        $value = SiteSetting::where('setting_key', self::SETTING_REFERRAL_SELLER_LIMIT)->value('setting_value');
+        if ($value === null) {
+            $value = SiteSetting::where('setting_key', self::SETTING_REFERRAL_SELLER_LIMIT_LEGACY)->value('setting_value');
+        }
+
+        return max(0, (int) ($value ?? 0));
     }
 }

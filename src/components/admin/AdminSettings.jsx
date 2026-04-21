@@ -122,7 +122,10 @@ const AdminSettings = () => {
   // إعدادات الإحالة (Referral)
   const [referralSettings, setReferralSettings] = useState({
     enabled: true,
-    bonusAmount: 0,
+    orderGiftAmount: 0,
+    orderGiftLimitPerSeller: 0,
+    referralSellerGiftAmount: 0,
+    referralSellerLimitPerSeller: 0,
   });
 
   const handleGeneralChange = (e) => {
@@ -225,9 +228,14 @@ const AdminSettings = () => {
 
         // Update referral settings
         if (response.settings.referrals) {
+          const incoming = response.settings.referrals;
           setReferralSettings(prev => ({
             ...prev,
-            ...response.settings.referrals
+            ...incoming,
+            orderGiftAmount: Number(incoming.orderGiftAmount ?? incoming.firstOrderGiftAmount ?? prev.orderGiftAmount ?? 0),
+            orderGiftLimitPerSeller: Number(incoming.orderGiftLimitPerSeller ?? prev.orderGiftLimitPerSeller ?? 0),
+            referralSellerGiftAmount: Number(incoming.referralSellerGiftAmount ?? incoming.firstProductGiftAmount ?? prev.referralSellerGiftAmount ?? 0),
+            referralSellerLimitPerSeller: Number(incoming.referralSellerLimitPerSeller ?? incoming.maxLinkUses ?? prev.referralSellerLimitPerSeller ?? 0),
           }));
         }
       }
@@ -518,15 +526,15 @@ const AdminSettings = () => {
 
         <TabsContent value="referrals">
           <SettingsSection
-            title="إعدادات الإحالة"
-            description="تحديد بونص الإحالة وإيقاف/تشغيل النظام"
+            title="إعدادات هدايا البائعين"
+            description="تحديد عدد وقيمة الهدايا للأوردرات المكتملة وللمسجلين الجدد عبر رابط البائع"
             icon={Users}
           >
             <div className="space-y-4">
               <div className="flex items-center justify-between gap-4">
                 <div className="text-right">
-                  <div className="font-medium text-gray-800">تفعيل نظام الإحالة</div>
-                  <div className="text-sm text-gray-500">عند التفعيل سيتم احتساب بونص عند التسجيل عبر رابط دعوة</div>
+                  <div className="font-medium text-gray-800">تفعيل نظام الهدايا</div>
+                  <div className="text-sm text-gray-500">عند الإيقاف لن يتم منح أي هدايا جديدة</div>
                 </div>
                 <Switch
                   checked={!!referralSettings.enabled}
@@ -534,19 +542,62 @@ const AdminSettings = () => {
                 />
               </div>
 
-              <div>
-                <Label htmlFor="referralBonusAmount">قيمة بونص الإحالة (رصيد هدية)</Label>
-                <Input
-                  id="referralBonusAmount"
-                  type="number"
-                  min="0"
-                  step="1"
-                  value={referralSettings.bonusAmount}
-                  onChange={(e) => setReferralSettings(prev => ({ ...prev, bonusAmount: Number(e.target.value || 0) }))}
-                  className="text-right"
-                  dir="rtl"
-                />
-                <p className="text-xs text-gray-500 mt-1">سيتم إضافة هذا الرصيد إلى محفظة الهدايا للمُحيل (لا يمكن سحبه)</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="orderGiftLimitPerSeller">عدد الأوردرات المسموحه لكل بائع</Label>
+                  <Input
+                    id="orderGiftLimitPerSeller"
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={referralSettings.orderGiftLimitPerSeller}
+                    onChange={(e) => setReferralSettings(prev => ({ ...prev, orderGiftLimitPerSeller: Number(e.target.value || 0) }))}
+                    className="text-right"
+                    dir="rtl"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="orderGiftAmount">قيمة الهدية لكل أوردر مكتمل</Label>
+                  <Input
+                    id="orderGiftAmount"
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={referralSettings.orderGiftAmount}
+                    onChange={(e) => setReferralSettings(prev => ({ ...prev, orderGiftAmount: Number(e.target.value || 0) }))}
+                    className="text-right"
+                    dir="rtl"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="referralSellerLimitPerSeller">عدد المسجلين المسموح لكل بائع</Label>
+                  <Input
+                    id="referralSellerLimitPerSeller"
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={referralSettings.referralSellerLimitPerSeller}
+                    onChange={(e) => setReferralSettings(prev => ({ ...prev, referralSellerLimitPerSeller: Number(e.target.value || 0) }))}
+                    className="text-right"
+                    dir="rtl"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="referralSellerGiftAmount">قيمة هدية المسجل الجديد</Label>
+                  <Input
+                    id="referralSellerGiftAmount"
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={referralSettings.referralSellerGiftAmount}
+                    onChange={(e) => setReferralSettings(prev => ({ ...prev, referralSellerGiftAmount: Number(e.target.value || 0) }))}
+                    className="text-right"
+                    dir="rtl"
+                  />
+                </div>
               </div>
 
               <div className="pt-2">
@@ -556,7 +607,7 @@ const AdminSettings = () => {
                   className="bg-blue-600 hover:bg-blue-700"
                 >
                   <Save className="ml-2 h-4 w-4" />
-                  {loading ? 'جاري الحفظ...' : 'حفظ إعدادات الإحالة'}
+                  {loading ? 'جاري الحفظ...' : 'حفظ إعدادات الهدايا'}
                 </Button>
               </div>
             </div>

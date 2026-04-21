@@ -8,7 +8,6 @@ use App\Models\UserDevice;
 use App\Models\Otp;
 use App\Services\EmailService;
 use App\Services\NotificationService;
-use App\Services\ReferralGiftService;
 use App\Traits\EmailTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -595,10 +594,6 @@ class AuthController extends Controller
                         'referred_by_user_id' => $referrerUserId,
                     ]);
 
-                    if ($referrerUserId && $referrerUserId !== $user->id) {
-                        ReferralGiftService::awardSignupGift($user);
-                    }
-
                     $this->registerUserDevice(
                         user: $user,
                         ipAddress: $ipAddress,
@@ -841,10 +836,6 @@ class AuthController extends Controller
                     }
                 }
 
-                if ($referrerUserId && $referrerUserId !== $user->id) {
-                    ReferralGiftService::awardSignupGift($user);
-                }
-
                 $this->registerUserDevice(
                     user: $user,
                     ipAddress: $ipAddress,
@@ -961,12 +952,17 @@ class AuthController extends Controller
             return null;
         }
 
-        $maxLinkUses = max(0, (int) (SiteSetting::where('setting_key', 'referral_max_link_uses')->value('setting_value') ?? 0));
+        $maxLinkUsesSetting = SiteSetting::where('setting_key', 'gift_referral_seller_registration_limit')->value('setting_value');
+        if ($maxLinkUsesSetting === null) {
+            $maxLinkUsesSetting = SiteSetting::where('setting_key', 'referral_max_link_uses')->value('setting_value');
+        }
+
+        $maxLinkUses = max(0, (int) ($maxLinkUsesSetting ?? 0));
         if ($maxLinkUses > 0) {
             $currentUses = User::where('referred_by_user_id', $referrerUserId)->count();
             if ($currentUses >= $maxLinkUses) {
                 throw ValidationException::withMessages([
-                    'referral_code' => ['تم الوصول إلى الحد الأقصى لاستخدام رابط الإحالة هذا.'],
+                    'referral_code' => ['عدد المسجلين انتهى لهذا البائع.'],
                 ]);
             }
         }

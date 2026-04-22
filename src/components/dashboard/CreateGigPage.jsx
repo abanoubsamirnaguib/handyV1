@@ -12,6 +12,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { sellerApi, api } from '@/lib/api';
 import { useCategories } from '@/hooks/useCache';
+import { FEATURE_FLAGS } from '@/lib/featureFlags';
 
 const CreateGigPage = () => {
   const navigate = useNavigate();
@@ -19,11 +20,14 @@ const CreateGigPage = () => {
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const preSelectedType = searchParams.get('type'); // 'product' or 'gig'
+  const gigsEnabled = FEATURE_FLAGS.enableGigs;
+  const initialType = gigsEnabled ? (preSelectedType || 'gig') : 'product';
 
   // Helper functions for dynamic text based on product type
-  const getItemTypeText = () => gigData.type === 'product' ? 'المنتج' : 'الحرفة';
-  const getItemTypeTextPlural = () => gigData.type === 'product' ? 'المنتجات' : 'الحرف';
-  const getItemTypeVerb = () => gigData.type === 'product' ? 'منتجك' : 'حرفتك';
+  // When gigs are disabled, always use product wording.
+  const getItemTypeText = () => (!gigsEnabled || gigData.type === 'product' ? 'المنتج' : 'الحرفة');
+  const getItemTypeTextPlural = () => (!gigsEnabled || gigData.type === 'product' ? 'المنتجات' : 'الحرف');
+  const getItemTypeVerb = () => (!gigsEnabled || gigData.type === 'product' ? 'منتجك' : 'حرفتك');
 
   const [categories, setCategories] = useState([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
@@ -41,7 +45,7 @@ const CreateGigPage = () => {
     tags: '',
     deliveryTime: '',
     images: [],
-    type: preSelectedType || 'gig', // use pre-selected type or default to gig
+    type: initialType, // products-only when gig feature is disabled
     quantity: '',
   });
   const [imagePreviews, setImagePreviews] = useState([]);
@@ -98,7 +102,7 @@ const CreateGigPage = () => {
         }
       } catch (error) {
         console.error('Error fetching seller gigs:', error);
-        setGigsError('فشل في تحميل الحرف');
+        setGigsError('فشل في تحميل المنتجات');
         setSellerGigs([]);
       } finally {
         setGigsLoading(false);
@@ -198,7 +202,7 @@ const CreateGigPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!user || user.active_role !== 'seller') {
-      toast({ variant: "destructive", title: "غير مصرح به", description: "يجب أن تكون في وضع البائع لإنشاء حرفة." });
+      toast({ variant: "destructive", title: "غير مصرح به", description: "يجب أن تكون في وضع البائع لإنشاء منتج." });
       return;
     }
     if (!gigData.title || !gigData.description || !gigData.price || !gigData.category) {
@@ -227,17 +231,17 @@ const CreateGigPage = () => {
         price: gigData.price,
         category_id: gigData.category,
         delivery_time: gigData.deliveryTime,
-        type: gigData.type,
+        type: gigsEnabled ? gigData.type : 'product',
         quantity: gigData.type === 'product' ? gigData.quantity : null,
         tags: gigData.tags.split(',').map(tag => tag.trim()).filter(tag => tag),
         images: gigData.images,
       });
       
       const newGig = response.product || response;
-      const notificationMessage = response.notification || `حرفة "${gigData.title}" أصبحت جاهزة.`;
+      const notificationMessage = response.notification || `تم نشر المنتج "${gigData.title}".`;
       
       toast({ 
-        title: "تم إنشاء الحرفة بنجاح!", 
+        title: "تم إنشاء المنتج بنجاح!", 
         description: notificationMessage,
         duration: 6000 // عرض الرسالة لمدة أطول
       });
@@ -254,7 +258,7 @@ const CreateGigPage = () => {
         tags: '',
         deliveryTime: '',
         images: [],
-        type: 'gig',
+        type: initialType,
         quantity: '',
       });
       setImagePreviews([]);
@@ -264,7 +268,7 @@ const CreateGigPage = () => {
       console.error('Error creating product:', err);
       
       // Handle specific error messages
-      let errorMessage = err.message || "حدث خطأ أثناء إنشاء الحرفة";
+      let errorMessage = err.message || "حدث خطأ أثناء إنشاء المنتج";
       
       // Check if the error is about reaching the active products limit
       if (err.message && err.message.includes('الحد الأقصى')) {
@@ -302,9 +306,9 @@ const CreateGigPage = () => {
         className="flex items-center justify-between mb-8"
       >
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">إنشاء حرفة جديدة</h1>
+          <h1 className="text-3xl font-bold text-gray-800">إنشاء منتج جديد</h1>
           <p className="text-gray-600 mt-2">
-            لديك {sellerGigs.length} حرفة منشورة
+            لديك {sellerGigs.length} منتج منشور
           </p>
         </div>
         <div className="flex items-center gap-4">
@@ -314,33 +318,33 @@ const CreateGigPage = () => {
             className="flex items-center gap-2"
           >
             <Eye className="h-4 w-4" />
-            عرض حرفي
+            عرض منتجاتي
           </Button>
           <PlusCircle className="h-8 w-8 text-primary" />
         </div>
       </motion.div>
 
-      {/* Quick preview of existing gigs */}
+      {/* Quick preview of existing products */}
       {sellerGigs.length > 0 && (
         <motion.div 
           initial={{ opacity: 0, y: 20 }} 
           animate={{ opacity: 1, y: 0 }} 
           className="mb-8"
         >
-          <h2 className="text-lg font-semibold text-gray-700 mb-4">حرفك الحالية</h2>
+          <h2 className="text-lg font-semibold text-gray-700 mb-4">منتجاتك الحالية</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {sellerGigs.slice(0, 4).map((gig) => (
               <div key={gig.id} className="bg-white border rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
                 <h3 className="font-medium text-gray-800 truncate">{gig.title}</h3>
                 <p className="text-sm text-gray-600 mt-1">{gig.price} جنيه</p>
                 <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded mt-2 inline-block">
-                  {gig.type === 'gig' ? 'حرفة' : 'منتج'}
+                  منتج
                 </span>
               </div>
             ))}
             {sellerGigs.length > 4 && (
               <div className="bg-gray-50 border rounded-lg p-4 flex items-center justify-center">
-                <span className="text-gray-500 text-sm">+{sellerGigs.length - 4} حرفة أخرى</span>
+                <span className="text-gray-500 text-sm">+{sellerGigs.length - 4} منتج آخر</span>
               </div>
             )}
           </div>
@@ -469,7 +473,7 @@ const CreateGigPage = () => {
                   <Label htmlFor="deliveryTime" className="flex items-center"><Clock className="ml-2 h-4 w-4 text-gray-500" />مدة التسليم المتوقعة</Label>
                   <Input id="deliveryTime" name="deliveryTime" value={gigData.deliveryTime} onChange={handleChange} placeholder="مثال: 7-10 أيام عمل" />
                 </div>
-                {!preSelectedType && (
+                {gigsEnabled && !preSelectedType && (
                   <div>
                     <Label htmlFor="type" className="flex items-center"><ArrowRight className="ml-2 h-4 w-4 text-gray-500" />نوع المنتج</Label>
                     <Select id="type" value={gigData.type} onValueChange={value => setGigData(prev => ({ ...prev, type: value }))} required dir="rtl">
@@ -550,7 +554,7 @@ const CreateGigPage = () => {
           >
             <div className="text-center">
               <Loader2 className="h-12 w-12 animate-spin text-green-500 mx-auto mb-4" />
-              <h3 className="text-xl font-bold text-gray-800 mb-2">جاري إنشاء الحرفة...</h3>
+              <h3 className="text-xl font-bold text-gray-800 mb-2">جاري إنشاء المنتج...</h3>
               <p className="text-gray-600 mb-4">يرجى الانتظار، جاري رفع البيانات والصور</p>
               <div className="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
                 <motion.div

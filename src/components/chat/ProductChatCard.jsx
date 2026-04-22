@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import DepositPaymentButton from './DepositPaymentButton';
 import { useAuth } from '@/contexts/AuthContext';
 import { assetUrl } from '@/lib/api';
+import { FEATURE_FLAGS, getEffectiveProductType } from '@/lib/featureFlags';
 
 const ProductChatCard = ({ 
   product, 
@@ -32,15 +33,16 @@ const ProductChatCard = ({
   };
 
   const getProductTypeLabel = (type) => {
+    const effectiveType = getEffectiveProductType(type);
     switch (type) {
       case 'product':
         return 'منتج';
       case 'gig':
-        return 'خدمة';
+        return FEATURE_FLAGS.enableGigs ? 'خدمة' : 'منتج';
       case 'service': // Keep backward compatibility
-        return 'خدمة';
+        return FEATURE_FLAGS.enableGigs ? 'خدمة' : 'منتج';
       default:
-        return 'عنصر';
+        return effectiveType === 'product' ? 'منتج' : 'عنصر';
     }
   };
 
@@ -88,7 +90,7 @@ const ProductChatCard = ({
               {isFromConversation ? formatPrice(productData.price) : `${productData.price} جنيه`}
             </div>
             
-            {!isFromConversation && user && user.role !== 'seller' && (
+            {!FEATURE_FLAGS.enableDeposit ? null : (!isFromConversation && user && user.role !== 'seller' && (
               <div className="mt-2">
                 <DepositPaymentButton
                   productId={productData.id}
@@ -99,7 +101,7 @@ const ProductChatCard = ({
                   onPaymentSuccess={onPaymentSuccess}
                 />
               </div>
-            )}
+            ))}
           </div>
         </div>
       </CardContent>

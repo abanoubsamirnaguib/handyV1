@@ -4,6 +4,7 @@ import { Package, Wrench, X } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { FEATURE_FLAGS } from '@/lib/featureFlags';
 
 const ProductGigSelectionModal = ({ isOpen, onClose, onSelectProduct, onSelectGig }) => {
   const handleProductSelect = () => {
@@ -21,12 +22,12 @@ const ProductGigSelectionModal = ({ isOpen, onClose, onSelectProduct, onSelectGi
       <DialogContent className="sm:max-w-[600px] p-0">
         <DialogHeader className="px-6 pt-6 pb-2">
           <DialogTitle className="text-2xl font-bold text-center text-gray-800">
-            ما نوع المنتج الذي تريد إضافته؟
+            {FEATURE_FLAGS.enableGigs ? 'ما نوع المنتج الذي تريد إضافته؟' : 'إضافة منتج'}
           </DialogTitle>
         </DialogHeader>
 
         <div className="px-6 pb-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className={`grid grid-cols-1 ${FEATURE_FLAGS.enableGigs ? 'md:grid-cols-2' : ''} gap-6`}>
             {/* Product Card - Left Side */}
             <motion.div
               initial={{ opacity: 0, x: -20 }}
@@ -58,35 +59,37 @@ const ProductGigSelectionModal = ({ isOpen, onClose, onSelectProduct, onSelectGi
               </Card>
             </motion.div>
 
-            {/* Gig Card - Right Side */}
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2 }}
-            >
-              <Card
-                className="cursor-pointer hover:shadow-lg transition-all duration-300 hover:border-blue-300 border-2 border-transparent group"
-                onClick={handleGigSelect}
+            {/* Gig Card - Right Side (temporarily hidden) */}
+            {FEATURE_FLAGS.enableGigs && (
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2 }}
               >
-                <CardHeader className="text-center pb-3">
-                  <div className="mx-auto mb-3 p-3 bg-blue-100 rounded-full w-fit group-hover:bg-blue-200 transition-colors">
-                    <Wrench className="h-8 w-8 text-blue-600" />
-                  </div>
-                  <CardTitle className="text-xl text-gray-800">حرفة</CardTitle>
-                </CardHeader>
-                <CardContent className="text-center">
-                  <CardDescription className="text-gray-600 mb-4">
-                      حرفة تقدمها للعملاء، مثل صنع قطعة مخصصة بشكل خاص
-                  </CardDescription>
-                  <ul className="text-sm text-gray-500 space-y-1 text-right">
-                    <li>• مميزات مخصصة للمشتري</li>
-                    <li>• مناقشة المشتري في تفاصيل وشكل الحرفة</li>
-                    <li>• يتم عمله مخصوص للمشتري</li>
-                    <li>• يوجد عربون يُحدد في الشات مع المشتري</li>
-                  </ul>
-                </CardContent>
-              </Card>
-            </motion.div>
+                <Card
+                  className="cursor-pointer hover:shadow-lg transition-all duration-300 hover:border-blue-300 border-2 border-transparent group"
+                  onClick={handleGigSelect}
+                >
+                  <CardHeader className="text-center pb-3">
+                    <div className="mx-auto mb-3 p-3 bg-blue-100 rounded-full w-fit group-hover:bg-blue-200 transition-colors">
+                      <Wrench className="h-8 w-8 text-blue-600" />
+                    </div>
+                    <CardTitle className="text-xl text-gray-800">حرفة</CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-center">
+                    <CardDescription className="text-gray-600 mb-4">
+                        حرفة تقدمها للعملاء، مثل صنع قطعة مخصصة بشكل خاص
+                    </CardDescription>
+                    <ul className="text-sm text-gray-500 space-y-1 text-right">
+                      <li>• مميزات مخصصة للمشتري</li>
+                      <li>• مناقشة المشتري في تفاصيل وشكل الحرفة</li>
+                      <li>• يتم عمله مخصوص للمشتري</li>
+                      <li>• يوجد عربون يُحدد في الشات مع المشتري</li>
+                    </ul>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
           </div>
 
           <div className="text-center mt-6">

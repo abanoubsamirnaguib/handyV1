@@ -19,6 +19,7 @@ import {
   DollarSign,
   HelpCircle,
   Megaphone,
+  Image,
   MapPin,
   Bell
 } from 'lucide-react';
@@ -67,6 +68,7 @@ const AdminSidebar = () => {
     { path: '/admin/community', label: 'منشورات المجتمع', icon: MessageCircle },
     { path: '/admin/contact-us', label: 'رسائل التواصل', icon: HelpCircle },
     { path: '/admin/announcements', label: 'الإعلانات', icon: Megaphone },
+    { path: '/admin/home-sliders', label: 'سلايدر الرئيسية', icon: Image },
     { path: '/admin/settings', label: 'إعدادات النظام', icon: Settings },
   ];
 
@@ -201,6 +203,7 @@ const AdminLayout = () => {
     { path: '/admin/messages', label: 'المحادثات', icon: MessageCircle },
     { path: '/admin/community', label: 'منشورات المجتمع', icon: MessageCircle },
     { path: '/admin/contact-us', label: 'رسائل التواصل', icon: HelpCircle },
+    { path: '/admin/home-sliders', label: 'سلايدر الرئيسية', icon: Image },
     { path: '/admin/settings', label: 'إعدادات النظام', icon: Settings },
   ];
   const { unreadCount = 0 } = useNotifications();

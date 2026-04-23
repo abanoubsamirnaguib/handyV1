@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -54,6 +55,12 @@ return new class extends Migration
             return;
         }
 
+        $referredUserForeignKey = $this->findForeignKeyName('referral_rewards', 'referred_user_id');
+
+        if ($referredUserForeignKey && $this->indexExists('referral_rewards', 'uq_referral_rewards_referred_type')) {
+            DB::statement("ALTER TABLE referral_rewards DROP FOREIGN KEY {$referredUserForeignKey}");
+        }
+
         if ($this->indexExists('referral_rewards', 'uq_referral_rewards_referred_type')) {
             DB::statement('ALTER TABLE referral_rewards DROP INDEX uq_referral_rewards_referred_type');
         }
@@ -64,6 +71,15 @@ return new class extends Migration
 
         if (!$this->indexExists('referral_rewards', 'idx_referral_rewards_referrer_type')) {
             DB::statement('ALTER TABLE referral_rewards ADD INDEX idx_referral_rewards_referrer_type (referrer_user_id, reward_type)');
+        }
+
+        if (!$this->findForeignKeyName('referral_rewards', 'referred_user_id')) {
+            Schema::table('referral_rewards', function (Blueprint $table) {
+                $table->foreign('referred_user_id')
+                    ->references('id')
+                    ->on('users')
+                    ->cascadeOnDelete();
+            });
         }
     }
 
@@ -80,6 +96,15 @@ return new class extends Migration
 
             if (!$this->indexExists('referral_rewards', 'uq_referral_rewards_referred_type')) {
                 DB::statement('ALTER TABLE referral_rewards ADD UNIQUE uq_referral_rewards_referred_type (referred_user_id, reward_type)');
+            }
+
+            if (!$this->findForeignKeyName('referral_rewards', 'referred_user_id')) {
+                Schema::table('referral_rewards', function (Blueprint $table) {
+                    $table->foreign('referred_user_id')
+                        ->references('id')
+                        ->on('users')
+                        ->cascadeOnDelete();
+                });
             }
         }
 
@@ -98,5 +123,28 @@ return new class extends Migration
             ->where('table_name', $table)
             ->where('index_name', $indexName)
             ->exists();
+    }
+
+    private function findForeignKeyName(string $table, string $column): ?string
+    {
+        $result = DB::selectOne(
+            'SELECT CONSTRAINT_NAME AS fk_name
+             FROM information_schema.key_column_usage
+             WHERE table_schema = DATABASE()
+               AND table_name = ?
+               AND column_name = ?
+               AND referenced_table_name IS NOT NULL
+             LIMIT 1',
+            [$table, $column]
+        );
+
+        if (!$result) {
+            return null;
+        }
+
+        return $result->fk_name
+            ?? $result->constraint_name
+            ?? $result->CONSTRAINT_NAME
+            ?? null;
     }
 };

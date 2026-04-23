@@ -10,7 +10,7 @@ class ReferralReward extends Model
     use HasFactory;
 
     public const TYPE_COMPLETED_ORDER_GIFT = 'completed_order_gift';
-    public const TYPE_REFERRAL_SELLER_FIRST_PRODUCT_GIFT = 'referral_seller_first_product_gift';
+    public const TYPE_REFERRAL_SELLER_FIRST_PRODUCT_GIFT = 'ref_seller_first_product_gift';
 
     protected $table = 'referral_rewards';
 

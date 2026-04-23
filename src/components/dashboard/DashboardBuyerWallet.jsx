@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { DollarSign, Gift, Users, ShoppingBag } from 'lucide-react';
+import { DollarSign, Gift, Users, ShoppingBag, Trophy, Star, Target, Sparkles } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -34,20 +34,83 @@ const formatMoney = (value) => `${Number(value || 0).toFixed(2)} جنيه`;
 
 const ProgressBar = ({ title, value, colorClass, details }) => {
   const safePercent = Math.max(0, Math.min(100, Number(value || 0)));
+  const isComplete = safePercent >= 100;
 
   return (
-    <div className="p-4 rounded-lg border bg-white space-y-3">
-      <div className="flex items-center justify-between">
-        <div className="text-sm font-semibold text-neutral-900">{title}</div>
-        <div className="text-xs text-neutral-600">{safePercent.toFixed(0)}%</div>
-      </div>
+    <motion.div 
+      whileHover={{ scale: 1.02, y: -2 }}
+      className={`relative p-5 rounded-2xl border-2 shadow-sm overflow-hidden transition-all ${
+        isComplete 
+          ? 'bg-gradient-to-br from-amber-50 to-orange-50 border-amber-300 shadow-amber-200/50' 
+          : 'bg-white border-neutral-100 hover:shadow-md'
+      }`}
+    >
+      {/* Background pattern for complete state */}
+      {isComplete && (
+        <div className="absolute inset-0 opacity-20 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#fbbf24 2px, transparent 2px)', backgroundSize: '20px 20px' }}></div>
+      )}
 
-      <div className="h-3 w-full rounded-full bg-neutral-100 overflow-hidden">
-        <div className={`h-full ${colorClass}`} style={{ width: `${safePercent}%` }} />
-      </div>
+      <div className="relative z-10 flex flex-col space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className={`flex items-center justify-center w-10 h-10 rounded-xl shadow-inner ${isComplete ? 'bg-amber-400 text-white' : 'bg-neutral-100 text-neutral-600'}`}>
+              {isComplete ? <Trophy className="h-5 w-5 animate-bounce" /> : <Target className="h-5 w-5" />}
+            </div>
+            <div className={`text-base font-bold ${isComplete ? 'text-amber-900' : 'text-neutral-800'}`}>
+              {title}
+            </div>
+          </div>
+          <div className={`text-xl font-black ${isComplete ? 'text-amber-500 drop-shadow-sm' : 'text-neutral-700'}`}>
+            {safePercent.toFixed(0)}%
+          </div>
+        </div>
 
-      <div className="text-xs text-neutral-700">{details}</div>
-    </div>
+        {/* Progress Bar Track */}
+        <div className={`h-6 w-full rounded-full p-1 shadow-inner relative overflow-hidden ${isComplete ? 'bg-amber-200/50' : 'bg-neutral-100'}`}>
+          <motion.div 
+            initial={{ width: 0 }}
+            animate={{ width: `${safePercent}%` }}
+            transition={{ duration: 1.5, ease: "easeOut", type: "spring", bounce: 0.4 }}
+            className={`h-full rounded-full relative overflow-hidden flex items-center justify-end pr-2 ${
+              isComplete ? 'bg-gradient-to-r from-amber-400 to-orange-500 shadow-sm' : colorClass
+            }`}
+          >
+            {/* Animated Shimmer */}
+            <motion.div 
+              animate={{ x: ['-100%', '200%'] }}
+              transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
+              className="absolute inset-0 w-1/2 bg-gradient-to-r from-transparent via-white/40 to-transparent skew-x-12"
+            />
+            
+            {/* Game-like stripes pattern */}
+            {!isComplete && (
+              <div className="absolute inset-0 opacity-20 bg-[linear-gradient(45deg,rgba(255,255,255,0.15)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.15)_50%,rgba(255,255,255,0.15)_75%,transparent_75%,transparent)]" style={{ backgroundSize: '1rem 1rem' }}></div>
+            )}
+            
+            {isComplete && <Star className="h-3 w-3 text-white/90 fill-white/90 animate-pulse" />}
+          </motion.div>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <div className={`text-xs font-semibold px-3 py-1.5 rounded-full ${
+            isComplete ? 'bg-amber-100 text-amber-700' : 'bg-neutral-100 text-neutral-600'
+          }`}>
+            {details}
+          </div>
+          {isComplete && (
+            <motion.div 
+              initial={{ scale: 0, rotate: -10 }} 
+              animate={{ scale: 1, rotate: 0 }} 
+              transition={{ type: 'spring', delay: 0.5 }}
+              className="flex items-center gap-1.5 text-xs font-bold text-orange-600 bg-orange-100 px-3 py-1.5 rounded-full shadow-sm"
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              إنجاز رائع!
+            </motion.div>
+          )}
+        </div>
+      </div>
+    </motion.div>
   );
 };
 
@@ -120,24 +183,24 @@ const SellerGiftsWallet = ({ user }) => {
       <Card>
         <CardHeader>
           <CardTitle className="text-xl flex items-center gap-2">
-            <Gift className="h-5 w-5 text-amber-600" />
+            <Gift className="h-5 w-5 text-roman-500" />
             محفظة هدايا البائع
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="p-4 rounded-lg bg-yellow-50 border border-yellow-100">
+            <div className="p-4 rounded-lg bg-success-50 border border-success-200">
               <div className="text-sm text-neutral-700">رصيد محفظة الهدايا</div>
               <div className="text-2xl font-bold text-neutral-900">{formatMoney(giftData.gift_wallet_balance)}</div>
               <div className="text-xs text-neutral-600 mt-1">للشراء فقط - غير قابل للسحب</div>
             </div>
 
-            <div className="p-4 rounded-lg bg-green-50 border border-green-100">
+            <div className="p-4 rounded-lg bg-success-50 border border-success-200">
               <div className="text-sm text-neutral-700">إجمالي الهدايا المكتسبة</div>
               <div className="text-2xl font-bold text-neutral-900">{formatMoney(giftData.total_earned_gift)}</div>
             </div>
 
-            <div className="p-4 rounded-lg bg-blue-50 border border-blue-100">
+            <div className="p-4 rounded-lg bg-success-50 border border-success-200">
               <div className="text-sm text-neutral-700">المسجلون عبر رابطك</div>
               <div className="text-2xl font-bold text-neutral-900">{giftData.referred_users_count}</div>
             </div>
@@ -164,13 +227,13 @@ const SellerGiftsWallet = ({ user }) => {
             <ProgressBar
               title="بار هدايا استكمال الأوردرات"
               value={orderProgress.percent}
-              colorClass="bg-green-500"
+              colorClass="bg-roman-500"
               details={`تم ${orderProgress.count} من ${orderProgress.allowed} | متبقي ${orderProgress.remaining}`}
             />
             <ProgressBar
               title="بار هدايا البائعين المسجلين"
               value={referralProgress.percent}
-              colorClass="bg-blue-500"
+              colorClass="bg-success-600"
               details={`تم ${referralProgress.count} من ${referralProgress.allowed} | متبقي ${referralProgress.remaining}`}
             />
           </div>
@@ -180,7 +243,7 @@ const SellerGiftsWallet = ({ user }) => {
       <Card>
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
-            <ShoppingBag className="h-5 w-5 text-green-600" />
+            <ShoppingBag className="h-5 w-5 text-roman-500" />
             جدول هدايا استكمال الأوردرات
           </CardTitle>
         </CardHeader>
@@ -188,10 +251,10 @@ const SellerGiftsWallet = ({ user }) => {
           {giftData.order_rewards.length === 0 ? (
             <div className="text-sm text-neutral-600">لا توجد هدايا أوردرات حتى الآن.</div>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto rounded-xl border border-success-200 bg-white">
               <table className="min-w-full text-sm text-right">
                 <thead>
-                  <tr className="border-b text-neutral-600">
+                  <tr className="border-b border-success-200 bg-success-50 text-neutral-700">
                     <th className="py-2 px-2">رقم الأوردر</th>
                     <th className="py-2 px-2">اسم المشتري</th>
                     <th className="py-2 px-2">قيمة الهدية</th>
@@ -200,10 +263,10 @@ const SellerGiftsWallet = ({ user }) => {
                 </thead>
                 <tbody>
                   {giftData.order_rewards.map((row) => (
-                    <tr key={row.id} className="border-b last:border-0">
+                    <tr key={row.id} className="border-b border-success-100 last:border-0 hover:bg-success-50/60 transition-colors">
                       <td className="py-2 px-2">#{row.order_id || '-'}</td>
                       <td className="py-2 px-2">{row?.buyer?.name || '-'}</td>
-                      <td className="py-2 px-2 font-semibold text-green-700">+{formatMoney(row.amount)}</td>
+                      <td className="py-2 px-2 font-semibold text-roman-500">+{formatMoney(row.amount)}</td>
                       <td className="py-2 px-2 text-neutral-600">{row.created_at ? new Date(row.created_at).toLocaleString('ar-EG') : '-'}</td>
                     </tr>
                   ))}
@@ -217,7 +280,7 @@ const SellerGiftsWallet = ({ user }) => {
       <Card>
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
-            <Users className="h-5 w-5 text-blue-600" />
+            <Users className="h-5 w-5 text-success-600" />
             جدول هدايا المسجلين الجدد
           </CardTitle>
         </CardHeader>
@@ -225,10 +288,10 @@ const SellerGiftsWallet = ({ user }) => {
           {giftData.referral_seller_rewards.length === 0 ? (
             <div className="text-sm text-neutral-600">لا توجد هدايا تسجيل بائعين جدد حتى الآن.</div>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto rounded-xl border border-success-200 bg-white">
               <table className="min-w-full text-sm text-right">
                 <thead>
-                  <tr className="border-b text-neutral-600">
+                  <tr className="border-b border-success-200 bg-success-50 text-neutral-700">
                     <th className="py-2 px-2">اسم البائع المسجل</th>
                     <th className="py-2 px-2">أول منتج مقبول</th>
                     <th className="py-2 px-2">قيمة الهدية</th>
@@ -237,10 +300,10 @@ const SellerGiftsWallet = ({ user }) => {
                 </thead>
                 <tbody>
                   {giftData.referral_seller_rewards.map((row) => (
-                    <tr key={row.id} className="border-b last:border-0">
+                    <tr key={row.id} className="border-b border-success-100 last:border-0 hover:bg-success-50/60 transition-colors">
                       <td className="py-2 px-2">{row?.registered_seller?.name || '-'}</td>
                       <td className="py-2 px-2">{row.product_title || `#${row.product_id || '-'}`}</td>
-                      <td className="py-2 px-2 font-semibold text-blue-700">+{formatMoney(row.amount)}</td>
+                      <td className="py-2 px-2 font-semibold text-success-600">+{formatMoney(row.amount)}</td>
                       <td className="py-2 px-2 text-neutral-600">{row.created_at ? new Date(row.created_at).toLocaleString('ar-EG') : '-'}</td>
                     </tr>
                   ))}
@@ -447,9 +510,19 @@ const BuyerWallet = ({ user, refreshUser }) => {
 const DashboardBuyerWallet = () => {
   const { user, refreshUser } = useAuth();
   const isSellerView = user?.active_role === 'seller';
+  const canViewSellerGifts = !!user?.is_seller;
 
   if (isSellerView) {
     return <SellerGiftsWallet user={user} />;
+  }
+
+  if (canViewSellerGifts) {
+    return (
+      <div className="space-y-6">
+        <BuyerWallet user={user} refreshUser={refreshUser} />
+        <SellerGiftsWallet user={user} />
+      </div>
+    );
   }
 
   return <BuyerWallet user={user} refreshUser={refreshUser} />;

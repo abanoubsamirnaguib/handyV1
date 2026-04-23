@@ -13,6 +13,7 @@ import PWAInstallSection from '@/components/PWAInstallSection';
 import GiftSections from '@/components/ui/GiftSections';
 import { useCategories } from '@/hooks/useCache';
 import { getStorageUrl } from '@/lib/assets';
+import { getEffectiveProductType } from '@/lib/featureFlags';
 
 const HomePage = () => {
   const navigate = useNavigate();
@@ -603,6 +604,7 @@ const HomePage = () => {
                 style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
               >
                 {featuredGigs.map((gig, index) => {
+                  const effectiveType = getEffectiveProductType(gig.type);
                   // Find category name from gig.category object if present
                   let categoryName = gig.category && gig.category.name ? gig.category.name : null;
                   if (!categoryName) {
@@ -640,8 +642,8 @@ const HomePage = () => {
                               </div>
                             </div>
                             <div className="absolute bottom-2 right-2 flex flex-col gap-1">
-                              <Badge variant="outline" className={`text-xs ${gig.type === 'gig' ? 'bg-warning-500/50 text-white border-warning-500' : 'bg-blue-100 text-blue-600 border-blue-300'}`}>
-                                {gig.type === 'gig' ? 'حرفة مخصصة' : 'منتج جاهز'}
+                              <Badge variant="outline" className={`text-xs ${effectiveType === 'gig' ? 'bg-warning-500/50 text-white border-warning-500' : 'bg-blue-100 text-blue-600 border-blue-300'}`}>
+                                {effectiveType === 'gig' ? 'حرفة مخصصة' : 'منتج جاهز'}
                               </Badge>
                             </div>
                           </div>
@@ -657,7 +659,7 @@ const HomePage = () => {
                                 <span className="whitespace-nowrap">{gig.rating} ({gig.reviewCount})</span>
                               </div>
                               <p className="text-sm font-bold text-roman-500 whitespace-nowrap">
-                                {gig.type === 'gig' && (gig.price === 0 || gig.price === '0' || gig.price === '0.00' || parseFloat(gig.price) === 0)
+                                {effectiveType === 'gig' && (gig.price === 0 || gig.price === '0' || gig.price === '0.00' || parseFloat(gig.price) === 0)
                                   ? 'قابل للتفاوض'
                                   : `${gig.price} ج`}
                               </p>

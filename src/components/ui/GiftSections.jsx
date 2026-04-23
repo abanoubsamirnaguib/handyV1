@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import WishlistButton from '@/components/ui/WishlistButton';
 import { api } from '@/lib/api';
 import { getStorageUrl } from '@/lib/assets';
+import { getEffectiveProductType } from '@/lib/featureFlags';
 
 const GiftSections = () => {
   const [sections, setSections] = useState([]);
@@ -129,6 +130,9 @@ const GiftSections = () => {
               style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
             >
               {section.products.map((product) => (
+                  (() => {
+                    const effectiveType = getEffectiveProductType(product.type);
+                    return (
                   <motion.div
                     key={product.id}
                     whileHover={{ y: -5 }}
@@ -165,8 +169,8 @@ const GiftSections = () => {
                             </div>
                           </div>
                           <div className="absolute bottom-2 right-2 flex flex-col gap-1">
-                            <Badge variant="outline" className={`text-xs ${product.type === 'gig' ? 'bg-warning-500/50 text-white border-warning-500' : 'bg-blue-100 text-blue-600 border-blue-300'}`}>
-                              {product.type === 'gig' ? 'حرفة مخصصة' : 'منتج جاهز'}
+                            <Badge variant="outline" className={`text-xs ${effectiveType === 'gig' ? 'bg-warning-500/50 text-white border-warning-500' : 'bg-blue-100 text-blue-600 border-blue-300'}`}>
+                              {effectiveType === 'gig' ? 'حرفة مخصصة' : 'منتج جاهز'}
                             </Badge>
                           </div>
                         </div>
@@ -184,10 +188,10 @@ const GiftSections = () => {
                               </span>
                             </div>
                             <p className="text-sm font-bold text-roman-500 whitespace-nowrap">
-                              {product.type === 'gig' && (product.price === '0.00' || product.price === 0)
+                              {effectiveType === 'gig' && (product.price === '0.00' || product.price === 0)
                                 ? 'قابل للتفاوض'
                                 : `${product.price} ج`}
-                              {product.type === 'product' && product.quantity !== null && product.quantity !== undefined && (
+                              {effectiveType === 'product' && product.quantity !== null && product.quantity !== undefined && (
                                 <span className={`block text-xs mt-1 ${product.quantity === 0 ? 'text-red-600' : product.quantity < 5 ? 'text-orange-600' : 'text-gray-600'}`}>
                                   {product.quantity === 0 ? 'نفذت الكمية' : `متوفر: ${product.quantity}`}
                                 </span>
@@ -198,6 +202,8 @@ const GiftSections = () => {
                       </Card>
                     </Link>
                   </motion.div>
+                    );
+                  })()
                 ))}
               </div>
             </div>

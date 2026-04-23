@@ -717,6 +717,7 @@ const ExplorePage = () => {
 
 
   const GigCard = ({ gig }) => {
+    const effectiveType = getEffectiveProductType(gig.type);
     // Find category name from gig.category object if present
     let categoryName = gig.category && gig.category.name ? gig.category.name : null;
     if (!categoryName) {
@@ -746,8 +747,8 @@ const ExplorePage = () => {
               </div>
             </div>
             <div className="absolute bottom-2 right-2 flex flex-col gap-1">
-              <Badge variant="outline" className={`text-xs ${gig.type === 'gig' ? 'bg-warning-500/50 text-white border-warning-500' : 'bg-blue-100 text-blue-600 border-blue-300'}`}>
-                {gig.type === 'gig' ? 'حرفة مخصصة' : 'منتج جاهز'}
+              <Badge variant="outline" className={`text-xs ${effectiveType === 'gig' ? 'bg-warning-500/50 text-white border-warning-500' : 'bg-blue-100 text-blue-600 border-blue-300'}`}>
+                {effectiveType === 'gig' ? 'حرفة مخصصة' : 'منتج جاهز'}
               </Badge>
             </div>
           </div>
@@ -764,10 +765,10 @@ const ExplorePage = () => {
                 <span className="whitespace-nowrap"></span>
               </div>
               <p className="text-sm font-bold text-roman-500 whitespace-nowrap">
-                {gig.type === 'gig' && (gig.price === '0.00')
+                {effectiveType === 'gig' && (gig.price === '0.00')
                   ? 'قابل للتفاوض'
                   : `${gig.price} ج`}
-                {gig.type === 'product' && gig.quantity !== null && gig.quantity !== undefined && (
+                {effectiveType === 'product' && gig.quantity !== null && gig.quantity !== undefined && (
                   <span className={`block text-xs mt-1 ${gig.quantity === 0 ? 'text-red-600' : gig.quantity < 5 ? 'text-orange-600' : 'text-gray-600'}`}>
                     {gig.quantity === 0 ? 'نفذت الكمية' : `متوفر: ${gig.quantity}`}
                   </span>
@@ -780,6 +781,7 @@ const ExplorePage = () => {
     );
   };
   const GigListItem = ({ gig }) => {
+    const effectiveType = getEffectiveProductType(gig.type);
     // Find category name from gig.category object if present
     let categoryName = gig.category && gig.category.name ? gig.category.name : null;
     if (!categoryName) {
@@ -809,8 +811,8 @@ const ExplorePage = () => {
               </div>
             </div>
             <div className="absolute bottom-2 right-2 flex flex-col gap-1">
-              <Badge variant="outline" className={`text-xs ${gig.type === 'gig' ? 'bg-warning-500/50 text-warning-500 border-warning-500' : 'bg-blue-10 text-blue-600 border-blue-300'}`}>
-                {gig.type === 'gig' ? 'حرفة مخصصة' : 'منتج جاهز'}
+              <Badge variant="outline" className={`text-xs ${effectiveType === 'gig' ? 'bg-warning-500/50 text-warning-500 border-warning-500' : 'bg-blue-10 text-blue-600 border-blue-300'}`}>
+                {effectiveType === 'gig' ? 'حرفة مخصصة' : 'منتج جاهز'}
               </Badge>
             </div>
           </div>
@@ -825,10 +827,10 @@ const ExplorePage = () => {
                 {gig.rating} ({gig.reviewCount} تقييمات) ({gig.ordersCount || 0} طلبات)
               </div>
               <p className="text-xl font-bold text-roman-500 mb-2">
-                {gig.type === 'gig' && (gig.price === 0 || gig.price === '0' || gig.price === '0.00' || parseFloat(gig.price) === 0)
+                {effectiveType === 'gig' && (gig.price === 0 || gig.price === '0' || gig.price === '0.00' || parseFloat(gig.price) === 0)
                   ? 'قابل للتفاوض'
                   : `${gig.price} جنيه`}
-                {gig.type === 'product' && gig.quantity !== null && gig.quantity !== undefined && (
+                {effectiveType === 'product' && gig.quantity !== null && gig.quantity !== undefined && (
                   <span className={`block text-sm mt-1 ${gig.quantity === 0 ? 'text-red-600' : gig.quantity < 5 ? 'text-orange-600' : 'text-gray-600'}`}>
                     {gig.quantity === 0 ? 'نفذت الكمية' : `متوفر: ${gig.quantity}`}
                   </span>
@@ -1100,19 +1102,21 @@ const ExplorePage = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                <div>
-                  <Label htmlFor="type-filter" className="text-neutral-900 block text-right">نوع المنتج</Label>
-                  <Select value={selectedType} onValueChange={value => setSelectedType(String(value))} dir="rtl">
-                    <SelectTrigger id="type-filter" className="mt-1 border-roman-500/30 focus:border-roman-500 focus:ring-roman-500/20 text-right">
-                      <SelectValue placeholder="اختر نوع المنتج" />
-                    </SelectTrigger>
-                    <SelectContent className="border-roman-500/30 text-right" dir="rtl">
-                      <SelectItem value="all">كل الأنواع</SelectItem>
-                      <SelectItem value="product">منتجات جاهزة</SelectItem>
-                      {gigsEnabled && <SelectItem value="gig">حرف مخصصة</SelectItem>}
-                    </SelectContent>
-                  </Select>
-                </div>
+                {gigsEnabled && (
+                  <div>
+                    <Label htmlFor="type-filter" className="text-neutral-900 block text-right">نوع المنتج</Label>
+                    <Select value={selectedType} onValueChange={value => setSelectedType(String(value))} dir="rtl">
+                      <SelectTrigger id="type-filter" className="mt-1 border-roman-500/30 focus:border-roman-500 focus:ring-roman-500/20 text-right">
+                        <SelectValue placeholder="اختر نوع المنتج" />
+                      </SelectTrigger>
+                      <SelectContent className="border-roman-500/30 text-right" dir="rtl">
+                        <SelectItem value="all">كل الأنواع</SelectItem>
+                        <SelectItem value="product">منتجات جاهزة</SelectItem>
+                        <SelectItem value="gig">حرف مخصصة</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
                 <div>
                   <Label htmlFor="gift-section-filter" className="text-neutral-900 block text-right">قسم الهدايا</Label>
                   <Select value={selectedGiftSection} onValueChange={value => setSelectedGiftSection(String(value))} dir="rtl">

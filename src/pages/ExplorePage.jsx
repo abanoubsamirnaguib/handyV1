@@ -17,6 +17,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
 import { useCategories, useGiftSections } from '@/hooks/useCache';
 import { getStorageUrl } from '@/lib/assets';
+import { FEATURE_FLAGS, getEffectiveProductType } from '@/lib/featureFlags';
 
 // Helper function to get category icon based on backend icon name
 const getCategoryIcon = (iconName) => {
@@ -123,6 +124,7 @@ const CategoryItem = ({ category, isSelected, onClick }) => {
 };
 
 const ExplorePage = () => {
+  const gigsEnabled = FEATURE_FLAGS.enableGigs;
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'products');
   const [gigs, setGigs] = useState([]);
@@ -228,16 +230,18 @@ const ExplorePage = () => {
     if (categories.length === 0) return; // Wait for categories
 
     const tab = searchParams.get('tab') || 'products';
+    const effectiveTab = (!gigsEnabled && tab === 'gigs') ? 'products' : tab;
     const query = searchParams.get('search') || '';
     const category = searchParams.get('category') || 'all';
-    const type = searchParams.get('type') || 'all';
+    const typeParam = searchParams.get('type') || 'all';
+    const type = (!gigsEnabled && typeParam === 'gig') ? 'all' : typeParam;
     const giftSection = searchParams.get('gift_section') || 'all';
     const minPrice = parseInt(searchParams.get('minPrice')) || 0;
     const maxPrice = parseInt(searchParams.get('maxPrice')) || 1000;
     const rating = parseInt(searchParams.get('rating')) || 0;
     const sort = searchParams.get('sort') || 'newest';
 
-    setActiveTab(tab);
+    setActiveTab(effectiveTab);
     setSearchTerm(query);
     setQuickSearchTerm(query); // Update quick search term from URL
     // If the category param is a name, convert to id; otherwise use as is
@@ -285,7 +289,7 @@ const ExplorePage = () => {
         reviewCount: prod.reviewCount || prod.review_count || 0,
         ordersCount: prod.ordersCount || prod.orders_count || prod.order_count || 0,
         sellerId: prod.sellerId || prod.seller_id || prod.seller?.id,
-        type: prod.type || 'product',
+        type: getEffectiveProductType(prod.type),
         in_wishlist: prod.in_wishlist || false, // Preserve wishlist status
       };
     };
@@ -306,7 +310,7 @@ const ExplorePage = () => {
       completedOrders: seller.completedOrders || 0,
     });
 
-    if (tab === 'products' || tab === 'gigs') {
+    if (effectiveTab === 'products' || effectiveTab === 'gigs') {
       // Build query params for products
       let params = [];
       params.push('page=1'); // Always start from page 1 when filters change
@@ -323,8 +327,8 @@ const ExplorePage = () => {
       if (giftSection !== 'all') {
         params.push(`gift_section=${encodeURIComponent(giftSection)}`);
       }
-      // For gigs tab force type=gig, otherwise use selected type
-      if (tab === 'gigs') {
+      // For gigs tab force type=gig (only when enabled), otherwise use selected type
+      if (effectiveTab === 'gigs' && gigsEnabled) {
         params.push(`type=gig`);
       } else if (type !== 'all') {
         params.push(`type=${encodeURIComponent(type)}`);
@@ -365,7 +369,7 @@ const ExplorePage = () => {
         })
         .catch(() => {
           setGigs([]);
-          setError(tab === 'gigs' ? 'تعذر تحميل الحرف (Gigs)' : 'تعذر تحميل المنتجات');
+          setError('تعذر تحميل المنتجات');
           setLoading(false);
         });
     } else if (tab === 'sellers') {
@@ -417,7 +421,19 @@ const ExplorePage = () => {
           setLoading(false);
         });
     }
-  }, [searchParams, categories]);
+  }, [searchParams, categories, gigsEnabled]);
+
+  // If someone opens explore with tab=gigs while gigs are disabled, normalize to products
+  useEffect(() => {
+    const tab = searchParams.get('tab') || 'products';
+    if (!gigsEnabled && tab === 'gigs') {
+      const params = new URLSearchParams(searchParams);
+      params.set('tab', 'products');
+      params.delete('type');
+      setSearchParams(params);
+      setActiveTab('products');
+    }
+  }, [gigsEnabled, searchParams, setSearchParams]);
 
   const handleFilterChange = () => {
     const params = new URLSearchParams();
@@ -510,9 +526,10 @@ const ExplorePage = () => {
   };
 
   const handleTabChange = (value) => {
-    setActiveTab(value);
+    const nextTab = (!gigsEnabled && value === 'gigs') ? 'products' : value;
+    setActiveTab(nextTab);
     const params = new URLSearchParams(searchParams);
-    params.set('tab', value);
+    params.set('tab', nextTab);
     setSearchParams(params);
   };
 
@@ -557,16 +574,18 @@ const ExplorePage = () => {
 
     try {
       const tab = searchParams.get('tab') || 'products';
+      const effectiveTab = (!gigsEnabled && tab === 'gigs') ? 'products' : tab;
       const query = searchParams.get('search') || '';
       const category = searchParams.get('category') || 'all';
-      const type = searchParams.get('type') || 'all';
+      const typeParam = searchParams.get('type') || 'all';
+      const type = (!gigsEnabled && typeParam === 'gig') ? 'all' : typeParam;
       const giftSection = searchParams.get('gift_section') || 'all';
       const minPrice = parseInt(searchParams.get('minPrice')) || 0;
       const maxPrice = parseInt(searchParams.get('maxPrice')) || 1000;
       const rating = parseInt(searchParams.get('rating')) || 0;
       const sort = searchParams.get('sort') || 'oldest';
 
-      if (tab === 'products' || tab === 'gigs') {
+      if (effectiveTab === 'products' || effectiveTab === 'gigs') {
         let params = [];
         params.push(`page=${nextPage}`);
         if (query) params.push(`search=${encodeURIComponent(query)}`);
@@ -579,7 +598,7 @@ const ExplorePage = () => {
         if (giftSection !== 'all') {
           params.push(`gift_section=${encodeURIComponent(giftSection)}`);
         }
-        if (tab === 'gigs') {
+        if (effectiveTab === 'gigs' && gigsEnabled) {
           params.push(`type=gig`);
         } else if (type !== 'all') {
           params.push(`type=${encodeURIComponent(type)}`);
@@ -611,7 +630,7 @@ const ExplorePage = () => {
             reviewCount: prod.reviewCount || prod.review_count || 0,
             ordersCount: prod.ordersCount || prod.orders_count || prod.order_count || 0,
             sellerId: prod.sellerId || prod.seller_id || prod.seller?.id,
-            type: prod.type || 'product',
+            type: getEffectiveProductType(prod.type),
             in_wishlist: prod.in_wishlist || false,
           };
         };
@@ -698,6 +717,7 @@ const ExplorePage = () => {
 
 
   const GigCard = ({ gig }) => {
+    const effectiveType = getEffectiveProductType(gig.type);
     // Find category name from gig.category object if present
     let categoryName = gig.category && gig.category.name ? gig.category.name : null;
     if (!categoryName) {
@@ -727,8 +747,8 @@ const ExplorePage = () => {
               </div>
             </div>
             <div className="absolute bottom-2 right-2 flex flex-col gap-1">
-              <Badge variant="outline" className={`text-xs ${gig.type === 'gig' ? 'bg-warning-500/50 text-white border-warning-500' : 'bg-blue-100 text-blue-600 border-blue-300'}`}>
-                {gig.type === 'gig' ? 'حرفة مخصصة' : 'منتج جاهز'}
+              <Badge variant="outline" className={`text-xs ${effectiveType === 'gig' ? 'bg-warning-500/50 text-white border-warning-500' : 'bg-blue-100 text-blue-600 border-blue-300'}`}>
+                {effectiveType === 'gig' ? 'حرفة مخصصة' : 'منتج جاهز'}
               </Badge>
             </div>
           </div>
@@ -745,10 +765,10 @@ const ExplorePage = () => {
                 <span className="whitespace-nowrap"></span>
               </div>
               <p className="text-sm font-bold text-roman-500 whitespace-nowrap">
-                {gig.type === 'gig' && (gig.price === '0.00')
+                {effectiveType === 'gig' && (gig.price === '0.00')
                   ? 'قابل للتفاوض'
                   : `${gig.price} ج`}
-                {gig.type === 'product' && gig.quantity !== null && gig.quantity !== undefined && (
+                {effectiveType === 'product' && gig.quantity !== null && gig.quantity !== undefined && (
                   <span className={`block text-xs mt-1 ${gig.quantity === 0 ? 'text-red-600' : gig.quantity < 5 ? 'text-orange-600' : 'text-gray-600'}`}>
                     {gig.quantity === 0 ? 'نفذت الكمية' : `متوفر: ${gig.quantity}`}
                   </span>
@@ -761,6 +781,7 @@ const ExplorePage = () => {
     );
   };
   const GigListItem = ({ gig }) => {
+    const effectiveType = getEffectiveProductType(gig.type);
     // Find category name from gig.category object if present
     let categoryName = gig.category && gig.category.name ? gig.category.name : null;
     if (!categoryName) {
@@ -790,8 +811,8 @@ const ExplorePage = () => {
               </div>
             </div>
             <div className="absolute bottom-2 right-2 flex flex-col gap-1">
-              <Badge variant="outline" className={`text-xs ${gig.type === 'gig' ? 'bg-warning-500/50 text-warning-500 border-warning-500' : 'bg-blue-10 text-blue-600 border-blue-300'}`}>
-                {gig.type === 'gig' ? 'حرفة مخصصة' : 'منتج جاهز'}
+              <Badge variant="outline" className={`text-xs ${effectiveType === 'gig' ? 'bg-warning-500/50 text-warning-500 border-warning-500' : 'bg-blue-10 text-blue-600 border-blue-300'}`}>
+                {effectiveType === 'gig' ? 'حرفة مخصصة' : 'منتج جاهز'}
               </Badge>
             </div>
           </div>
@@ -806,10 +827,10 @@ const ExplorePage = () => {
                 {gig.rating} ({gig.reviewCount} تقييمات) ({gig.ordersCount || 0} طلبات)
               </div>
               <p className="text-xl font-bold text-roman-500 mb-2">
-                {gig.type === 'gig' && (gig.price === 0 || gig.price === '0' || gig.price === '0.00' || parseFloat(gig.price) === 0)
+                {effectiveType === 'gig' && (gig.price === 0 || gig.price === '0' || gig.price === '0.00' || parseFloat(gig.price) === 0)
                   ? 'قابل للتفاوض'
                   : `${gig.price} جنيه`}
-                {gig.type === 'product' && gig.quantity !== null && gig.quantity !== undefined && (
+                {effectiveType === 'product' && gig.quantity !== null && gig.quantity !== undefined && (
                   <span className={`block text-sm mt-1 ${gig.quantity === 0 ? 'text-red-600' : gig.quantity < 5 ? 'text-orange-600' : 'text-gray-600'}`}>
                     {gig.quantity === 0 ? 'نفذت الكمية' : `متوفر: ${gig.quantity}`}
                   </span>
@@ -1004,9 +1025,11 @@ const ExplorePage = () => {
         </div>
       </motion.div>
 
-      <Tabs defaultValue={activeTab} onValueChange={handleTabChange} className="w-full mb-6">
-        <TabsList className="w-full grid grid-cols-3 mb-6 bg-neutral-100">
-          <TabsTrigger value="gigs" className="text-lg data-[state=active]:bg-roman-500 data-[state=active]:text-white">الحرف</TabsTrigger>
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full mb-6">
+        <TabsList className={`w-full grid ${gigsEnabled ? 'grid-cols-3' : 'grid-cols-2'} mb-6 bg-neutral-100`}>
+          {gigsEnabled && (
+            <TabsTrigger value="gigs" className="text-lg data-[state=active]:bg-roman-500 data-[state=active]:text-white">الحرف</TabsTrigger>
+          )}
           <TabsTrigger value="products" className="text-lg data-[state=active]:bg-roman-500 data-[state=active]:text-white">المنتجات</TabsTrigger>
           <TabsTrigger value="sellers" className="text-lg data-[state=active]:bg-roman-500 data-[state=active]:text-white">الحرفيين</TabsTrigger>
         </TabsList>
@@ -1022,9 +1045,7 @@ const ExplorePage = () => {
               placeholder={
                 activeTab === 'products'
                   ? 'بحث سريع في المنتجات...'
-                  : activeTab === 'gigs'
-                    ? 'بحث سريع في الحرف ...'
-                    : 'بحث سريع في الحرفيين...'
+                  : 'بحث سريع في الحرفيين...'
               }
               className="pl-10 pr-12 border-roman-500/30 focus:border-roman-500 focus:ring-roman-500/20 text-right text-base h-12 bg-white shadow-sm"
               dir="rtl"
@@ -1081,19 +1102,21 @@ const ExplorePage = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                <div>
-                  <Label htmlFor="type-filter" className="text-neutral-900 block text-right">نوع المنتج</Label>
-                  <Select value={selectedType} onValueChange={value => setSelectedType(String(value))} dir="rtl">
-                    <SelectTrigger id="type-filter" className="mt-1 border-roman-500/30 focus:border-roman-500 focus:ring-roman-500/20 text-right">
-                      <SelectValue placeholder="اختر نوع المنتج" />
-                    </SelectTrigger>
-                    <SelectContent className="border-roman-500/30 text-right" dir="rtl">
-                      <SelectItem value="all">كل الأنواع</SelectItem>
-                      <SelectItem value="product">منتجات جاهزة</SelectItem>
-                      <SelectItem value="gig">حرف مخصصة</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                {gigsEnabled && (
+                  <div>
+                    <Label htmlFor="type-filter" className="text-neutral-900 block text-right">نوع المنتج</Label>
+                    <Select value={selectedType} onValueChange={value => setSelectedType(String(value))} dir="rtl">
+                      <SelectTrigger id="type-filter" className="mt-1 border-roman-500/30 focus:border-roman-500 focus:ring-roman-500/20 text-right">
+                        <SelectValue placeholder="اختر نوع المنتج" />
+                      </SelectTrigger>
+                      <SelectContent className="border-roman-500/30 text-right" dir="rtl">
+                        <SelectItem value="all">كل الأنواع</SelectItem>
+                        <SelectItem value="product">منتجات جاهزة</SelectItem>
+                        <SelectItem value="gig">حرف مخصصة</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
                 <div>
                   <Label htmlFor="gift-section-filter" className="text-neutral-900 block text-right">قسم الهدايا</Label>
                   <Select value={selectedGiftSection} onValueChange={value => setSelectedGiftSection(String(value))} dir="rtl">
@@ -1243,6 +1266,7 @@ const ExplorePage = () => {
         </div>
         </TabsContent>
         {/* Gigs-only tab (filters pre-set to type=gig) */}
+        {gigsEnabled && (
         <TabsContent value="gigs" className="mt-0">          <div className="flex flex-col md:flex-row-reverse gap-8">
           {/* Filters Sidebar */}
           <motion.aside
@@ -1429,6 +1453,7 @@ const ExplorePage = () => {
           </main>
         </div>
         </TabsContent>
+        )}
         <TabsContent value="sellers" className="mt-0">
           <div className="flex flex-col md:flex-row-reverse gap-8">
             {/* Sellers Filters Sidebar */}

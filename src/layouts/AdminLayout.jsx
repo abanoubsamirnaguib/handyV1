@@ -19,6 +19,7 @@ import {
   DollarSign,
   HelpCircle,
   Megaphone,
+  Image,
   MapPin,
   Bell,
   Gift,
@@ -71,6 +72,7 @@ const AdminSidebar = () => {
     { path: '/admin/announcements', label: 'الإعلانات', icon: Megaphone },
     { path: '/admin/gifts', label: 'الهدايا', icon: Gift },
     { path: '/admin/promo-banner', label: 'البانر الترويجي', icon: Sparkles },
+    { path: '/admin/home-sliders', label: 'سلايدر الرئيسية', icon: Image },
     { path: '/admin/settings', label: 'إعدادات النظام', icon: Settings },
   ];
 
@@ -207,6 +209,7 @@ const AdminLayout = () => {
     { path: '/admin/contact-us', label: 'رسائل التواصل', icon: HelpCircle },
     { path: '/admin/gifts', label: 'الهدايا', icon: Gift },
     { path: '/admin/promo-banner', label: 'البانر الترويجي', icon: Sparkles },
+    { path: '/admin/home-sliders', label: 'سلايدر الرئيسية', icon: Image },
     { path: '/admin/settings', label: 'إعدادات النظام', icon: Settings },
   ];
   const { unreadCount = 0 } = useNotifications();

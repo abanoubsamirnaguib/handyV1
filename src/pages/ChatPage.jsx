@@ -11,6 +11,7 @@ import { useChat } from '@/contexts/ChatContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import { api } from '@/lib/api';
+import { FEATURE_FLAGS } from '@/lib/featureFlags';
 import SellerServiceOrderModal from '@/components/chat/SellerServiceOrderModal';
 import ProductChatCard from '@/components/chat/ProductChatCard';
 import MessageAttachment from '@/components/chat/MessageAttachment';
@@ -519,7 +520,7 @@ const ChatPage = () => {
               </div>
               <div className="flex items-center space-x-2 rtl:space-x-reverse">
                 {/* Check if current user is a seller with services */}
-                {user?.seller_id && user?.seller_id !== null && (
+                {FEATURE_FLAGS.enableDeposit && FEATURE_FLAGS.enableGigs && user?.seller_id && user?.seller_id !== null && (
                   <Button 
                     variant="outline" 
                     size="sm" 
@@ -740,14 +741,16 @@ const ChatPage = () => {
       </main>
 
       {/* Seller Service Order Modal */}
-      <SellerServiceOrderModal
-        isOpen={showSellerServiceModal}
-        onClose={() => setShowSellerServiceModal(false)}
-        buyerId={currentConversationDetails?.participant?.id}
-        buyerName={currentConversationDetails?.participant?.name}
-        buyerAvatar={currentConversationDetails?.participant?.avatar}
-        conversationId={activeConversation}
-      />
+      {FEATURE_FLAGS.enableDeposit && FEATURE_FLAGS.enableGigs && (
+        <SellerServiceOrderModal
+          isOpen={showSellerServiceModal}
+          onClose={() => setShowSellerServiceModal(false)}
+          buyerId={currentConversationDetails?.participant?.id}
+          buyerName={currentConversationDetails?.participant?.name}
+          buyerAvatar={currentConversationDetails?.participant?.avatar}
+          conversationId={activeConversation}
+        />
+      )}
     </div>
   );
 };

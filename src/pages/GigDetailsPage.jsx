@@ -17,6 +17,7 @@ import { useChat } from '@/contexts/ChatContext';
 import { api, apiFetch } from '@/lib/api';
 import WishlistButton from '@/components/ui/WishlistButton';
 import { getStorageUrl } from '@/lib/assets';
+import { getEffectiveProductType } from '@/lib/featureFlags';
 
 const GigDetailsPage = () => {
   const { id } = useParams();
@@ -105,7 +106,7 @@ const GigDetailsPage = () => {
           title: prod.title,
           description: prod.description,
           price: prod.price,
-          type : prod.type || 'gig',
+          type: getEffectiveProductType(prod.type),
           images,
           category: prod.category,
           rating: prod.rating || 0,
@@ -245,6 +246,8 @@ const GigDetailsPage = () => {
     return <div className="container mx-auto px-4 py-8 text-center">{error || 'تعذر تحميل تفاصيل المنتج'}</div>;
   }
 
+  const effectiveType = getEffectiveProductType(gig.type);
+
   const handleAddToCart = () => {
     const success = addToCart({ ...gig, quantity });
     if (!success) {
@@ -270,7 +273,7 @@ const GigDetailsPage = () => {
       // Prepare product info for the conversation
       const productInfo = {
         id: gig.id,
-        type: gig.type || 'gig', // 'gig' or 'product' - matching database values
+        type: getEffectiveProductType(gig.type), // 'gig' or 'product' - matching database values
         title: gig.title,
         image: gig.images && gig.images.length > 0 ? gig.images[0] : null,
         price: gig.price,
@@ -402,12 +405,10 @@ const GigDetailsPage = () => {
             <p className="text-neutral-900/80 leading-relaxed text-right">{gig.description}</p>
             
             <div className="text-2xl font-bold text-roman-500">
-              {(gig.type === 'gig') && (gig.price === '0.00') 
-                ? 'الحرفة قابلة للتفاوض'
-                : `${gig.price} جنيه`}
+              {`${gig.price} جنيه`}
             </div>
 
-            {gig.type !== 'gig' && (
+            {effectiveType !== 'gig' && (
               <div className="flex items-center space-x-3 space-x-reverse">
                 <Label htmlFor="quantity" className="text-neutral-900">الكمية المتوفرة:</Label>
                 <div className="flex items-center space-x-2 space-x-reverse text-neutral-900 font-medium">
@@ -417,7 +418,7 @@ const GigDetailsPage = () => {
             )}
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="flex gap-2 flex-1">
-                {gig.type === 'gig' ? (
+                {effectiveType === 'gig' ? (
                   <Button size="lg" onClick={handleContactSeller} className="bg-roman-500 hover:bg-roman-500/90 text-white flex-1">
                     <MessageSquare className="ml-2 h-5 w-5" /> اطلب الآن
                   </Button>

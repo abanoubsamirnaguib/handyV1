@@ -9,6 +9,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Broadcast;
 use App\Http\Controllers\Api\SellerController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\CategoryController;
@@ -36,6 +37,8 @@ use App\Http\Controllers\Api\WithdrawalRequestController;
 use App\Http\Controllers\Api\ContactController;
 use App\Http\Controllers\Api\AnnouncementController;
 use App\Http\Controllers\Api\AdminAnnouncementController;
+use App\Http\Controllers\Api\HomeSliderController;
+use App\Http\Controllers\Api\AdminHomeSliderController;
 use App\Http\Controllers\Api\CityCrudController;
 use App\Http\Controllers\Api\PlatformProfitController;
 use App\Http\Controllers\Api\AIAssistantController;
@@ -120,6 +123,9 @@ Route::get('site-settings/general', [SiteSettingController::class, 'getGeneralSe
 // Gift Sections - Public routes
 Route::get('gift-sections', [\App\Http\Controllers\GiftSectionController::class, 'index']);
 Route::get('gift-sections/{id}', [\App\Http\Controllers\GiftSectionController::class, 'show']);
+
+// Home Slider - Public routes
+Route::get('home-sliders', [HomeSliderController::class, 'index']);
 
 // AI Assistant routes (public - can be moved to protected if needed)
 Route::post('ai-assistant/chat', [AIAssistantController::class, 'chat']);
@@ -389,6 +395,15 @@ Route::middleware(['auth:sanctum'])->group(function () {
             Route::put('{id}', [\App\Http\Controllers\GiftSectionController::class, 'update']);
             Route::delete('{id}', [\App\Http\Controllers\GiftSectionController::class, 'destroy']);
             Route::post('update-order', [\App\Http\Controllers\GiftSectionController::class, 'updateOrder']);
+        });
+
+        // Home Slider Management for admin
+        Route::prefix('home-sliders')->group(function () {
+            Route::get('/', [AdminHomeSliderController::class, 'index']);
+            Route::post('/', [AdminHomeSliderController::class, 'store']);
+            Route::put('{id}', [AdminHomeSliderController::class, 'update']);
+            Route::delete('{id}', [AdminHomeSliderController::class, 'destroy']);
+            Route::post('update-order', [AdminHomeSliderController::class, 'updateOrder']);
         });
 
         // Platform profits (admin dashboard)

@@ -564,6 +564,9 @@ export const api = {
   // Gift Sections (public)
   getGiftSections: () => apiFetch('gift-sections'),
   getGiftSectionById: (id) => apiFetch(`gift-sections/${id}`),
+
+  // Home Slider (public)
+  getHomeSliders: () => apiFetch('home-sliders'),
 };
 
 // Admin API functions
@@ -915,6 +918,32 @@ export const adminApi = {
     apiFetch('admin/gift-sections/update-order', {
       method: 'POST',
       body: JSON.stringify(sectionsData),
+    }),
+
+  // Home Slider management
+  getHomeSliders: () => apiFetch('admin/home-sliders'),
+  createHomeSlider: (formData) =>
+    apiFormFetch('admin/home-sliders', {
+      method: 'POST',
+      body: formData,
+    }),
+  updateHomeSlider: (id, formData) => {
+    if (!(formData instanceof FormData)) {
+      throw new Error('updateHomeSlider expects FormData');
+    }
+    if (!formData.has('_method')) {
+      formData.append('_method', 'PUT');
+    }
+    return apiFormFetch(`admin/home-sliders/${id}`, {
+      method: 'POST',
+      body: formData,
+    });
+  },
+  deleteHomeSlider: (id) => apiFetch(`admin/home-sliders/${id}`, { method: 'DELETE' }),
+  updateHomeSlidersOrder: (slides) =>
+    apiFetch('admin/home-sliders/update-order', {
+      method: 'POST',
+      body: JSON.stringify({ slides }),
     }),
 };
 

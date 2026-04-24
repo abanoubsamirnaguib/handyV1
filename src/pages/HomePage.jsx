@@ -13,9 +13,14 @@ import PWAInstallSection from '@/components/PWAInstallSection';
 import GiftSections from '@/components/ui/GiftSections';
 import { useCategories } from '@/hooks/useCache';
 import { getStorageUrl } from '@/lib/assets';
+import { getEffectiveProductType } from '@/lib/featureFlags';
 
 const HomePage = () => {
   const navigate = useNavigate();
+
+  // Home slider (dynamic hero background)
+  const [homeSlides, setHomeSlides] = useState([]);
+  const [homeSlideIndex, setHomeSlideIndex] = useState(0);
 
   // Featured products from backend
   const [featuredGigs, setFeaturedGigs] = useState([]);
@@ -67,6 +72,57 @@ const HomePage = () => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchHomeSlides = async () => {
+      try {
+        const response = await api.getHomeSliders();
+        const slides = response?.data ?? [];
+        if (isMounted) {
+          setHomeSlides(Array.isArray(slides) ? slides : []);
+          setHomeSlideIndex(0);
+        }
+      } catch {
+        if (isMounted) {
+          setHomeSlides([]);
+          setHomeSlideIndex(0);
+        }
+      }
+    };
+
+    fetchHomeSlides();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!homeSlides || homeSlides.length <= 1) return;
+    const interval = window.setInterval(() => {
+      setHomeSlideIndex((prev) => (prev + 1) % homeSlides.length);
+    }, 6000);
+    return () => window.clearInterval(interval);
+  }, [homeSlides]);
+
+  const activeHomeSlide = homeSlides?.length ? homeSlides[homeSlideIndex % homeSlides.length] : null;
+
+  const handleSlideTarget = (targetUrl) => {
+    if (!targetUrl) return;
+    const url = String(targetUrl).trim();
+    if (!url) return;
+
+    if (url.startsWith('/')) {
+      navigate(url);
+      return;
+    }
+
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      window.location.href = url;
+    }
+  };
 
   // Use cached categories from React Query
   const { data: categoriesData, isLoading: isCategoriesLoading, isError: categoriesHasError } = useCategories();
@@ -276,28 +332,71 @@ const HomePage = () => {
   return (
     <div className="flex flex-col min-h-screen bg-neutral-100">
         <section className="relative bg-roman-500 text-white py-20 md:py-32 overflow-hidden flex items-center justify-center min-h-[90vh]">
-          <video
-            className="absolute inset-0 w-screen h-screen object-cover z-0"
-            style={{
-          objectPosition: window.innerWidth < 640 ? '-900px' : undefined
-            }}
-            autoPlay
-            loop
-            muted
-            playsInline
-            poster="https://images.unsplash.com/photo-1686825374490-663137bad061"
-            onError={e => {
-          e.target.style.display = 'none';
-          const img = document.createElement('img');
-          img.src = "https://images.unsplash.com/photo-1686825374490-663137bad061";
-          img.alt = "خلفية";  
-          img.className = "absolute inset-0 w-screen h-screen object-cover z-0";
-          e.target.parentNode.appendChild(img);
-            }}
-          >
-          <source src="/hero-bg2.webm" type="video/webm" />
-          </video>
-          <div className="absolute inset-0 bg-black/30 z-10"></div>
+          {activeHomeSlide ? (
+            <div
+              className={`absolute inset-0 w-screen h-screen z-0 ${activeHomeSlide.target_url ? 'cursor-pointer' : ''}`}
+              onClick={() => handleSlideTarget(activeHomeSlide.target_url)}
+              role={activeHomeSlide.target_url ? 'button' : undefined}
+              tabIndex={activeHomeSlide.target_url ? 0 : undefined}
+              onKeyDown={(e) => {
+                if (!activeHomeSlide.target_url) return;
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleSlideTarget(activeHomeSlide.target_url);
+                }
+              }}
+            >
+              {activeHomeSlide.media_type === 'video' ? (
+                <video
+                  key={activeHomeSlide.id}
+                  className="absolute inset-0 w-screen h-screen object-cover"
+                  style={{
+                    objectPosition: window.innerWidth < 640 ? '-900px' : undefined,
+                  }}
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  src={getImageUrl(activeHomeSlide.media_url || activeHomeSlide.media_path)}
+                />
+              ) : (
+                <img
+                  key={activeHomeSlide.id}
+                  className="absolute inset-0 w-screen h-screen object-cover"
+                  style={{
+                    objectPosition: window.innerWidth < 640 ? 'center' : undefined,
+                  }}
+                  src={getImageUrl(activeHomeSlide.media_url || activeHomeSlide.media_path)}
+                  alt="خلفية"
+                  loading="eager"
+                />
+              )}
+            </div>
+          ) : (
+            <video
+              className="absolute inset-0 w-screen h-screen object-cover z-0"
+              style={{
+                objectPosition: window.innerWidth < 640 ? '-900px' : undefined,
+              }}
+              autoPlay
+              loop
+              muted
+              playsInline
+              poster="https://images.unsplash.com/photo-1686825374490-663137bad061"
+              onError={e => {
+                e.target.style.display = 'none';
+                const img = document.createElement('img');
+                img.src = "https://images.unsplash.com/photo-1686825374490-663137bad061";
+                img.alt = "خلفية";
+                img.className = "absolute inset-0 w-screen h-screen object-cover z-0";
+                e.target.parentNode.appendChild(img);
+              }}
+            >
+              <source src="/hero-bg2.webm" type="video/webm" />
+            </video>
+          )}
+
+          <div className="absolute inset-0 bg-black/30 z-10 pointer-events-none"></div>
           <div className="container mx-auto px-4 relative z-20 flex flex-col items-center justify-center">
             <div className="flex flex-col items-center justify-center w-full">
           <motion.div 
@@ -505,6 +604,7 @@ const HomePage = () => {
                 style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
               >
                 {featuredGigs.map((gig, index) => {
+                  const effectiveType = getEffectiveProductType(gig.type);
                   // Find category name from gig.category object if present
                   let categoryName = gig.category && gig.category.name ? gig.category.name : null;
                   if (!categoryName) {
@@ -542,8 +642,8 @@ const HomePage = () => {
                               </div>
                             </div>
                             <div className="absolute bottom-2 right-2 flex flex-col gap-1">
-                              <Badge variant="outline" className={`text-xs ${gig.type === 'gig' ? 'bg-warning-500/50 text-white border-warning-500' : 'bg-blue-100 text-blue-600 border-blue-300'}`}>
-                                {gig.type === 'gig' ? 'حرفة مخصصة' : 'منتج جاهز'}
+                              <Badge variant="outline" className={`text-xs ${effectiveType === 'gig' ? 'bg-warning-500/50 text-white border-warning-500' : 'bg-blue-100 text-blue-600 border-blue-300'}`}>
+                                {effectiveType === 'gig' ? 'حرفة مخصصة' : 'منتج جاهز'}
                               </Badge>
                             </div>
                           </div>
@@ -559,7 +659,7 @@ const HomePage = () => {
                                 <span className="whitespace-nowrap">{gig.rating} ({gig.reviewCount})</span>
                               </div>
                               <p className="text-sm font-bold text-roman-500 whitespace-nowrap">
-                                {gig.type === 'gig' && (gig.price === 0 || gig.price === '0' || gig.price === '0.00' || parseFloat(gig.price) === 0)
+                                {effectiveType === 'gig' && (gig.price === 0 || gig.price === '0' || gig.price === '0.00' || parseFloat(gig.price) === 0)
                                   ? 'قابل للتفاوض'
                                   : `${gig.price} ج`}
                               </p>

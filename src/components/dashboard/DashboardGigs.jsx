@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Switch } from "@/components/ui/switch";
 import ProductGigSelectionModal from '@/components/ui/product-gig-selection-modal';
+import { FEATURE_FLAGS, getEffectiveProductType } from '@/lib/featureFlags';
 
 
 const DashboardGigs = () => {
@@ -60,15 +61,19 @@ const DashboardGigs = () => {
         const response = await sellerApi.getSellerProducts();
         
         // Handle different response structures
-        if (Array.isArray(response)) {
-          setUserGigs(response);
-        } else if (response && Array.isArray(response.data)) {
-          setUserGigs(response.data);
-        } else if (response && response.success && Array.isArray(response.data)) {
-          setUserGigs(response.data);
-        } else {
-          setUserGigs([]);
-        }
+        const rawItems = Array.isArray(response)
+          ? response
+          : (response && Array.isArray(response.data))
+            ? response.data
+            : (response && response.success && Array.isArray(response.data))
+              ? response.data
+              : [];
+
+        const normalizedItems = FEATURE_FLAGS.enableGigs
+          ? rawItems
+          : rawItems.map(item => ({ ...item, type: 'product' }));
+
+        setUserGigs(normalizedItems);
       } catch (error) {
         console.error('Error fetching seller gigs:', error);
         setError('فشل في تحميل الحرف. يرجى المحاولة مرة أخرى.');
@@ -88,7 +93,13 @@ const DashboardGigs = () => {
 
   // Apply type filter
   useEffect(() => {
-    if (typeFilter === 'all') {
+    if (!FEATURE_FLAGS.enableGigs) {
+      // Products-only mode (temporarily hide gig scenario)
+      if (typeFilter !== 'all') {
+        setTypeFilter('all');
+      }
+      setFilteredGigs(userGigs);
+    } else if (typeFilter === 'all') {
       setFilteredGigs(userGigs);
     } else {
       setFilteredGigs(userGigs.filter(gig => gig.type === typeFilter));
@@ -110,15 +121,15 @@ const DashboardGigs = () => {
       setUserGigs(prevGigs => prevGigs.filter(gig => gig.id !== gigId));
       
       toast({
-        title: "تم حذف الحرفة",
-        description: "تم حذف الحرفة بنجاح.",
+        title: "تم حذف المنتج",
+        description: "تم حذف المنتج بنجاح.",
       });
     } catch (error) {
       console.error('Error deleting gig:', error);
       toast({
         variant: "destructive",
         title: "خطأ في الحذف",
-        description: error.message || "فشل في حذف الحرفة. يرجى المحاولة مرة أخرى.",
+        description: error.message || "فشل في حذف المنتج. يرجى المحاولة مرة أخرى.",
       });
     } finally {
       // Remove gig from deleting set
@@ -175,6 +186,10 @@ const DashboardGigs = () => {
   };
 
   const handleAddNewClick = () => {
+    if (!FEATURE_FLAGS.enableGigs) {
+      navigate('/dashboard/gigs/new?type=product');
+      return;
+    }
     setShowSelectionModal(true);
   };
 
@@ -183,6 +198,11 @@ const DashboardGigs = () => {
   };
 
   const handleSelectGig = () => {
+    // Temporarily disabled when gig feature is off.
+    if (!FEATURE_FLAGS.enableGigs) {
+      navigate('/dashboard/gigs/new?type=product');
+      return;
+    }
     navigate('/dashboard/gigs/new?type=gig');
   };
 
@@ -201,14 +221,14 @@ const DashboardGigs = () => {
     return (
       <div className="p-6 md:p-8">
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold text-gray-800">حرفي</h1>
+          <h1 className="text-3xl font-bold text-gray-800">منتجاتي</h1>
           <Button disabled className="bg-green-500">
-            <PlusCircle className="ml-2 h-5 w-5" /> أضف حرفة جديدة
+            <PlusCircle className="ml-2 h-5 w-5" /> أضف منتج جديد
           </Button>
         </div>
         <div className="flex flex-col items-center justify-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
-          <p className="text-gray-600">جاري تحميل حرفك...</p>
+          <p className="text-gray-600">جاري تحميل منتجاتك...</p>
         </div>
       </div>
     );
@@ -219,9 +239,9 @@ const DashboardGigs = () => {
     return (
       <div className="p-6 md:p-8">
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold text-gray-800">حرفي</h1>
-          <Button onClick={() => navigate('/dashboard/gigs/new')} className="bg-green-500 hover:bg-green-600">
-            <PlusCircle className="ml-2 h-5 w-5" /> أضف منتج/حرفة جديدة
+          <h1 className="text-3xl font-bold text-gray-800">منتجاتي</h1>
+          <Button onClick={() => navigate('/dashboard/gigs/new?type=product')} className="bg-green-500 hover:bg-green-600">
+            <PlusCircle className="ml-2 h-5 w-5" /> أضف منتج جديد
           </Button>
         </div>
         <div className="flex flex-col items-center justify-center py-12">
@@ -243,27 +263,31 @@ const DashboardGigs = () => {
       setError(null);
       
       const response = await sellerApi.getSellerProducts();
-      
-      if (Array.isArray(response)) {
-        setUserGigs(response);
-      } else if (response && Array.isArray(response.data)) {
-        setUserGigs(response.data);
-      } else if (response && response.success && Array.isArray(response.data)) {
-        setUserGigs(response.data);      } else {
-        setUserGigs([]);
-      }
+      const rawItems = Array.isArray(response)
+        ? response
+        : (response && Array.isArray(response.data))
+          ? response.data
+          : (response && response.success && Array.isArray(response.data))
+            ? response.data
+            : [];
+
+      const normalizedItems = FEATURE_FLAGS.enableGigs
+        ? rawItems
+        : rawItems.map(item => ({ ...item, type: 'product' }));
+
+      setUserGigs(normalizedItems);
       
       toast({
-        title: "تم تحديث الحرف",
-        description: "تم تحديث قائمة حرفك بنجاح.",
+        title: "تم تحديث المنتجات",
+        description: "تم تحديث قائمة منتجاتك بنجاح.",
       });
     } catch (error) {
       console.error('Error refreshing gigs:', error);
-      setError('فشل في تحديث الحرف. يرجى المحاولة مرة أخرى.');
+      setError('فشل في تحديث المنتجات. يرجى المحاولة مرة أخرى.');
       toast({
         variant: "destructive",
         title: "خطأ في التحديث",
-        description: "فشل في تحديث حرفك. يرجى المحاولة مرة أخرى.",
+        description: "فشل في تحديث منتجاتك. يرجى المحاولة مرة أخرى.",
       });
     } finally {
       setLoading(false);
@@ -276,33 +300,35 @@ const DashboardGigs = () => {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
       >        <div>
-          <h1 className="text-3xl font-bold text-gray-800">حرفي</h1>
+          <h1 className="text-3xl font-bold text-gray-800">منتجاتي</h1>
           <p className="text-sm text-gray-600 mt-1">
             المنتجات النشطة: <span className="font-bold text-green-600">{activeProductsCount}</span> من <span className="font-bold">10</span>
           </p>
         </div>
         <div className="flex items-center gap-2">          
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="flex items-center gap-2">
-                <Filter className="h-4 w-4" />
-                {typeFilter === 'all' ? 'الكل' : typeFilter === 'gig' ? 'حرف' : 'منتجات'}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>تصفية حسب النوع</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => setTypeFilter('all')}>
-                الكل {typeFilter === 'all' && '✓'}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setTypeFilter('gig')}>
-                حرف {typeFilter === 'gig' && '✓'}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setTypeFilter('product')}>
-                منتجات {typeFilter === 'product' && '✓'}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {FEATURE_FLAGS.enableGigs && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="flex items-center gap-2">
+                  <Filter className="h-4 w-4" />
+                  {typeFilter === 'all' ? 'الكل' : typeFilter === 'gig' ? 'حرف' : 'منتجات'}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>تصفية حسب النوع</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => setTypeFilter('all')}>
+                  الكل {typeFilter === 'all' && '✓'}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setTypeFilter('gig')}>
+                  حرف {typeFilter === 'gig' && '✓'}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setTypeFilter('product')}>
+                  منتجات {typeFilter === 'product' && '✓'}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
 
           <Button 
             onClick={refreshGigs} 
@@ -314,7 +340,7 @@ const DashboardGigs = () => {
             تحديث
           </Button>
           <Button onClick={handleAddNewClick} className="bg-green-500 hover:bg-green-600">
-            <PlusCircle className="ml-2 h-5 w-5" /> أضف منتج/حرفة جديد
+            <PlusCircle className="ml-2 h-5 w-5" /> أضف منتج جديد
           </Button>
         </div>
       </motion.div>
@@ -328,17 +354,17 @@ const DashboardGigs = () => {
           <ShoppingBag className="h-24 w-24 text-gray-300 mx-auto mb-6" />
           <h2 className="text-2xl font-semibold text-gray-700 mb-2">
             {userGigs.length === 0 
-              ? 'ليس لديك حرف معروضة بعد'
-              : 'لا توجد حرف تطابق الفلتر المحدد'}
+              ? 'ليس لديك منتجات معروضة بعد'
+              : 'لا توجد منتجات تطابق الفلتر المحدد'}
           </h2>
           <p className="text-gray-500">
             {userGigs.length === 0 
-              ? 'ابدأ بإضافة حرفك ليراها العملاء!'
-              : 'اختر فلتر مختلف لعرض الحرف المتاحة.'}
+              ? 'ابدأ بإضافة منتجاتك ليراها العملاء!'
+              : 'اختر فلتر مختلف لعرض المنتجات المتاحة.'}
           </p>
           {userGigs.length === 0 && (
             <Button onClick={handleAddNewClick} className="mt-6 bg-roman-500 hover:bg-roman-500/90 text-white">
-              <PlusCircle className="ml-2 h-4 w-4" /> أضف منتجك/حرفتك الأول
+              <PlusCircle className="ml-2 h-4 w-4" /> أضف منتجك الأول
             </Button>
           )}
         </motion.div>
@@ -389,19 +415,19 @@ const DashboardGigs = () => {
                   <Badge 
                     variant="outline" 
                     className={`absolute top-2 left-2 ${
-                      gig.type === 'product' 
+                      getEffectiveProductType(gig.type) === 'product' 
                         ? 'bg-amber-100 text-amber-800 border-amber-200' 
                         : 'bg-blue-100 text-blue-800 border-blue-200'
                     }`}
                   >
-                    {gig.type === 'product' ? 'منتج' : 'حرفة'}
+                    {getEffectiveProductType(gig.type) === 'product' ? 'منتج' : 'حرفة'}
                   </Badge>
                 </div>
                 <CardHeader className="pb-2">
                   <CardTitle className="text-lg font-semibold text-gray-800 h-14 overflow-hidden">{gig.title}</CardTitle>
                   <CardDescription className="text-sm text-primary font-bold">
                     {gig.price} جنيه
-                    {gig.type === 'product' && gig.quantity !== null && gig.quantity !== undefined && (
+                    {getEffectiveProductType(gig.type) === 'product' && gig.quantity !== null && gig.quantity !== undefined && (
                       <span className={`mr-2 text-xs ${gig.quantity === 0 ? 'text-red-600' : gig.quantity < 3 ? 'text-orange-600' : 'text-gray-600'}`}>
                         • الكمية: {gig.quantity}
                         {gig.quantity === 0 && ' (نفذت الكمية)'}
@@ -468,16 +494,16 @@ const DashboardGigs = () => {
                       </Button>
                     </AlertDialogTrigger>                    <AlertDialogContent>
                       <AlertDialogHeader>
-                        <AlertDialogTitle>هل أنت متأكد من حذف هذه الحرفة؟</AlertDialogTitle>
+                        <AlertDialogTitle>هل أنت متأكد من حذف هذا المنتج؟</AlertDialogTitle>
                         <AlertDialogDescription className="space-y-2">
-                          <p>لا يمكن التراجع عن هذا الإجراء. سيتم حذف الحرفة "{gig.title}" نهائياً.</p>
+                          <p>لا يمكن التراجع عن هذا الإجراء. سيتم حذف المنتج "{gig.title}" نهائياً.</p>
                           <div className="bg-yellow-50 p-3 rounded-md">
                             <p className="text-sm text-yellow-800">
                               <strong>سيتم حذف:</strong>
                             </p>
                             <ul className="text-sm text-yellow-700 mt-1 list-disc list-inside">
-                              <li>جميع صور الحرفة</li>
-                              <li>تفاصيل الحرفة والوصف</li>
+                              <li>جميع صور المنتج</li>
+                              <li>تفاصيل المنتج والوصف</li>
                               <li>الكلمات المفتاحية المرتبطة</li>
                             </ul>
                           </div>
@@ -509,12 +535,14 @@ const DashboardGigs = () => {
         </div>
       )}
 
-      <ProductGigSelectionModal
-        isOpen={showSelectionModal}
-        onClose={() => setShowSelectionModal(false)}
-        onSelectProduct={handleSelectProduct}
-        onSelectGig={handleSelectGig}
-      />
+      {FEATURE_FLAGS.enableGigs && (
+        <ProductGigSelectionModal
+          isOpen={showSelectionModal}
+          onClose={() => setShowSelectionModal(false)}
+          onSelectProduct={handleSelectProduct}
+          onSelectGig={handleSelectGig}
+        />
+      )}
     </div>
   );
 };

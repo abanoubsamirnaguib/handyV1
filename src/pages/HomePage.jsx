@@ -373,27 +373,28 @@ const HomePage = () => {
               )}
             </div>
           ) : (
-            <video
-              className="absolute inset-0 w-screen h-screen object-cover z-0"
-              style={{
-                objectPosition: window.innerWidth < 640 ? '-900px' : undefined,
-              }}
-              autoPlay
-              loop
-              muted
-              playsInline
-              poster="https://images.unsplash.com/photo-1686825374490-663137bad061"
-              onError={e => {
-                e.target.style.display = 'none';
-                const img = document.createElement('img');
-                img.src = "https://images.unsplash.com/photo-1686825374490-663137bad061";
-                img.alt = "خلفية";
-                img.className = "absolute inset-0 w-screen h-screen object-cover z-0";
-                e.target.parentNode.appendChild(img);
-              }}
-            >
-              <source src="/hero-bg2.webm" type="video/webm" />
-            </video>
+            null
+            // <video
+            //   className="absolute inset-0 w-screen h-screen object-cover z-0"
+            //   style={{
+            //     objectPosition: window.innerWidth < 640 ? '-900px' : undefined,
+            //   }}
+            //   autoPlay
+            //   loop
+            //   muted
+            //   playsInline
+            //   poster="https://images.unsplash.com/photo-1686825374490-663137bad061"
+            //   onError={e => {
+            //     e.target.style.display = 'none';
+            //     const img = document.createElement('img');
+            //     img.src = "https://images.unsplash.com/photo-1686825374490-663137bad061";
+            //     img.alt = "خلفية";
+            //     img.className = "absolute inset-0 w-screen h-screen object-cover z-0";
+            //     e.target.parentNode.appendChild(img);
+            //   }}
+            // >
+            //   <source src="/hero-bg2.webm" type="video/webm" />
+            // </video>
           )}
 
           <div className="absolute inset-0 bg-black/30 z-10 pointer-events-none"></div>
@@ -642,9 +643,9 @@ const HomePage = () => {
                               </div>
                             </div>
                             <div className="absolute bottom-2 right-2 flex flex-col gap-1">
-                              <Badge variant="outline" className={`text-xs ${effectiveType === 'gig' ? 'bg-warning-500/50 text-white border-warning-500' : 'bg-blue-100 text-blue-600 border-blue-300'}`}>
+                              {/* <Badge variant="outline" className={`text-xs ${effectiveType === 'gig' ? 'bg-warning-500/50 text-white border-warning-500' : 'bg-blue-100 text-blue-600 border-blue-300'}`}>
                                 {effectiveType === 'gig' ? 'حرفة مخصصة' : 'منتج جاهز'}
-                              </Badge>
+                              </Badge> */}
                             </div>
                           </div>
                           <CardHeader className="pb-2 text-right p-1">

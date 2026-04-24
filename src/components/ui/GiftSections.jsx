@@ -169,9 +169,9 @@ const GiftSections = () => {
                             </div>
                           </div>
                           <div className="absolute bottom-2 right-2 flex flex-col gap-1">
-                            <Badge variant="outline" className={`text-xs ${effectiveType === 'gig' ? 'bg-warning-500/50 text-white border-warning-500' : 'bg-blue-100 text-blue-600 border-blue-300'}`}>
+                            {/* <Badge variant="outline" className={`text-xs ${effectiveType === 'gig' ? 'bg-warning-500/50 text-white border-warning-500' : 'bg-blue-100 text-blue-600 border-blue-300'}`}>
                               {effectiveType === 'gig' ? 'حرفة مخصصة' : 'منتج جاهز'}
-                            </Badge>
+                            </Badge> */}
                           </div>
                         </div>
                         <CardHeader className="pb-2 text-right p-1">

@@ -412,7 +412,7 @@ const DashboardGigs = () => {
                   <Badge variant="secondary" className="absolute top-2 right-2 bg-roman-500 text-white">
                     {gig.category_name || gig.category || 'غير محدد'}
                   </Badge>
-                  <Badge 
+                  {/* <Badge 
                     variant="outline" 
                     className={`absolute top-2 left-2 ${
                       getEffectiveProductType(gig.type) === 'product' 
@@ -421,7 +421,7 @@ const DashboardGigs = () => {
                     }`}
                   >
                     {getEffectiveProductType(gig.type) === 'product' ? 'منتج' : 'حرفة'}
-                  </Badge>
+                  </Badge> */}
                 </div>
                 <CardHeader className="pb-2">
                   <CardTitle className="text-lg font-semibold text-gray-800 h-14 overflow-hidden">{gig.title}</CardTitle>

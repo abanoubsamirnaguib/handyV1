@@ -76,12 +76,21 @@ class ExploreController extends Controller
             $query->orderByDesc('created_at');
         }
         $query->where('status', 'active'); // Only active products
+
+        if ($request->boolean('active_offer')) {
+            $query->withActiveDiscount();
+        }
         
         // Pagination support
         $perPage = $request->input('per_page', 40); // Default 40 items per page
         $page = $request->input('page', 1);
         
-        $productsQuery = $query->select(['id','title','description','price','category_id','seller_id','rating','review_count','featured','status','type','created_at'])
+        $productsQuery = $query->select([
+            'id', 'title', 'description', 'price', 'category_id', 'seller_id', 'rating', 'review_count',
+            'featured', 'status', 'type', 'quantity', 'created_at',
+            'discount_type', 'discount_percentage', 'discount_fixed_amount', 'discount_schedule',
+            'discount_starts_at', 'discount_ends_at',
+        ])
             ->with(['images:id,product_id,image_url', 'category:id,name', 'seller:id'])
             ->withCount('orderItems as orders_count');
         
@@ -116,6 +125,10 @@ class ExploreController extends Controller
                     'title' => $p->title,
                     'description' => $p->description,
                     'price' => $p->price,
+                    'sale_price' => $p->computeSalePrice(),
+                    'discount_active' => $p->isDiscountCurrentlyActive(),
+                    'discount_label' => $p->discountLabel(),
+                    'discount_type' => $p->discount_type ?? 'none',
                     'category_id' => $p->category_id,
                     'category' => $p->category ? ['id'=>$p->category->id, 'name'=>$p->category->name] : null,
                     'sellerId' => $p->seller_id,
@@ -126,6 +139,7 @@ class ExploreController extends Controller
                     'featured' => $p->featured,
                     'status' => $p->status,
                     'type' => $p->type ?? 'product', // Default to 'product' if type is null
+                    'quantity' => $p->quantity,
                     'in_wishlist' => isset($wishlistStatuses[$p->id]) ? true : false,
                 ];
             }),

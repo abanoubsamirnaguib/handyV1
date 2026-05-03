@@ -1023,6 +1023,13 @@ export const sellerApi = {
     });
   },
 
+  updateProductDiscount: async (id, payload) => {
+    return apiFetch(`seller/products/${id}/discount`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    });
+  },
+
   // Seller order management functions
   getSellerOrders: (params = {}) => {
     const searchParams = new URLSearchParams({ seller_orders: true, ...params });

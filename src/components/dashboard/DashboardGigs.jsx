@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ShoppingBag, PlusCircle, Edit, Trash2, Eye, BarChart2, Loader2, AlertCircle, RefreshCw, Filter, Power, PowerOff } from 'lucide-react';
+import { ShoppingBag, PlusCircle, Edit, Trash2, Eye, BarChart2, Loader2, AlertCircle, RefreshCw, Filter, Power, PowerOff, Percent } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Switch } from "@/components/ui/switch";
 import ProductGigSelectionModal from '@/components/ui/product-gig-selection-modal';
+import SellerProductDiscountDialog from '@/components/dashboard/SellerProductDiscountDialog';
 import { FEATURE_FLAGS, getEffectiveProductType } from '@/lib/featureFlags';
 
 
@@ -45,6 +46,8 @@ const DashboardGigs = () => {
   const [typeFilter, setTypeFilter] = useState('all'); // 'all', 'gig', or 'product'
   const [activeProductsCount, setActiveProductsCount] = useState(0);
   const [showSelectionModal, setShowSelectionModal] = useState(false);
+  const [discountProduct, setDiscountProduct] = useState(null);
+  const [offersOnly, setOffersOnly] = useState(false);
 
   // Fetch seller's gigs from backend
   useEffect(() => {
@@ -93,22 +96,28 @@ const DashboardGigs = () => {
 
   // Apply type filter
   useEffect(() => {
+    let next = userGigs;
     if (!FEATURE_FLAGS.enableGigs) {
-      // Products-only mode (temporarily hide gig scenario)
       if (typeFilter !== 'all') {
         setTypeFilter('all');
       }
-      setFilteredGigs(userGigs);
+      next = userGigs;
     } else if (typeFilter === 'all') {
-      setFilteredGigs(userGigs);
+      next = userGigs;
     } else {
-      setFilteredGigs(userGigs.filter(gig => gig.type === typeFilter));
+      next = userGigs.filter((gig) => gig.type === typeFilter);
     }
+    if (offersOnly) {
+      next = next.filter(
+        (g) => g.discount_type === 'percentage' || g.discount_type === 'fixed'
+      );
+    }
+    setFilteredGigs(next);
     
     // Count active products
     const activeCount = userGigs.filter(gig => gig.status === 'active').length;
     setActiveProductsCount(activeCount);
-  }, [userGigs, typeFilter]);
+  }, [userGigs, typeFilter, offersOnly]);
 
   const handleDeleteGig = async (gigId) => {
     try {
@@ -330,6 +339,15 @@ const DashboardGigs = () => {
             </DropdownMenu>
           )}
 
+          <Button
+            type="button"
+            variant={offersOnly ? 'default' : 'outline'}
+            className={`flex items-center gap-2 ${offersOnly ? 'bg-roman-500 hover:bg-roman-500/90 text-white' : ''}`}
+            onClick={() => setOffersOnly((v) => !v)}
+          >
+            <Percent className="h-4 w-4" />
+            عروض
+          </Button>
           <Button 
             onClick={refreshGigs} 
             variant="outline" 
@@ -355,7 +373,9 @@ const DashboardGigs = () => {
           <h2 className="text-2xl font-semibold text-gray-700 mb-2">
             {userGigs.length === 0 
               ? 'ليس لديك منتجات معروضة بعد'
-              : 'لا توجد منتجات تطابق الفلتر المحدد'}
+              : offersOnly
+                ? 'لا توجد منتجات عليها عرض حالياً'
+                : 'لا توجد منتجات تطابق الفلتر المحدد'}
           </h2>
           <p className="text-gray-500">
             {userGigs.length === 0 
@@ -425,8 +445,16 @@ const DashboardGigs = () => {
                 </div>
                 <CardHeader className="pb-2">
                   <CardTitle className="text-lg font-semibold text-gray-800 h-14 overflow-hidden">{gig.title}</CardTitle>
-                  <CardDescription className="text-sm text-primary font-bold">
-                    {gig.price} جنيه
+                  <CardDescription className="text-sm text-primary font-bold space-y-1">
+                    <div>{gig.price} جنيه</div>
+                    {(gig.discount_type === 'percentage' || gig.discount_type === 'fixed') && (
+                      <div className={`text-xs font-medium ${gig.discount_active ? 'text-green-600' : 'text-amber-700'}`}>
+                        عرض: {gig.discount_active ? 'نشط الآن' : 'مجدول / خارج الفترة'}
+                        {gig.sale_price != null && gig.discount_active && (
+                          <span className="mr-1"> — بعد الخصم: {Number(gig.sale_price).toFixed(2)} ج</span>
+                        )}
+                      </div>
+                    )}
                     {getEffectiveProductType(gig.type) === 'product' && gig.quantity !== null && gig.quantity !== undefined && (
                       <span className={`mr-2 text-xs ${gig.quantity === 0 ? 'text-red-600' : gig.quantity < 3 ? 'text-orange-600' : 'text-gray-600'}`}>
                         • الكمية: {gig.quantity}
@@ -475,16 +503,27 @@ const DashboardGigs = () => {
                     </p>
                   )}
                 </CardContent>
-                <CardFooter className="grid grid-cols-2 gap-2 pt-4 border-t">                  <Button 
+                <CardFooter className="flex flex-wrap gap-2 pt-4 border-t">
+                  <Button 
                     variant="outline" 
                     size="sm" 
                     onClick={() => navigate(`/dashboard/gigs/edit/${gig.id}`)}
-                    className="flex items-center"
+                    className="flex items-center flex-1 min-w-[100px]"
                   >
                     <Edit className="ml-1 h-4 w-4" /> تعديل
-                  </Button><AlertDialog>
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    className="flex items-center flex-1 min-w-[100px] bg-amber-50 text-amber-900 hover:bg-amber-100 border border-amber-200"
+                    onClick={() => setDiscountProduct(gig)}
+                  >
+                    <Percent className="ml-1 h-4 w-4" /> خصم
+                  </Button>
+                  <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button variant="destructive" size="sm" disabled={deletingGigs.has(gig.id)}>
+                      <Button variant="destructive" size="sm" disabled={deletingGigs.has(gig.id)} className="flex-1 min-w-[100px]">
                         {deletingGigs.has(gig.id) ? (
                           <Loader2 className="ml-1 h-4 w-4 animate-spin" />
                         ) : (
@@ -543,6 +582,21 @@ const DashboardGigs = () => {
           onSelectGig={handleSelectGig}
         />
       )}
+
+      <SellerProductDiscountDialog
+        open={!!discountProduct}
+        onOpenChange={(open) => {
+          if (!open) setDiscountProduct(null);
+        }}
+        product={discountProduct}
+        onSaved={(patch) => {
+          if (patch?.id) {
+            setUserGigs((prev) =>
+              prev.map((g) => (g.id === patch.id ? { ...g, ...patch } : g))
+            );
+          }
+        }}
+      />
     </div>
   );
 };

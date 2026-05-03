@@ -412,7 +412,7 @@ const CheckoutPage = () => {
                         <p className="text-neutral-900/60">الكمية: {item.quantity}</p>
                       </div>
                       <p className="font-medium text-roman-500">
-                        {item.price * item.quantity} جنيه
+                        {(Number(item.price) * item.quantity).toFixed(2)} جنيه
                       </p>
                     </div>
                   ))}

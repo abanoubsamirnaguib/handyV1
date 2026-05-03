@@ -417,6 +417,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::put('seller/products/{id}', [ProductController::class, 'update']);
     Route::delete('seller/products/{id}', [ProductController::class, 'destroy']);
     Route::post('seller/products/{id}/toggle-status', [ProductController::class, 'toggleStatus']);
+    Route::patch('seller/products/{id}/discount', [ProductController::class, 'updateDiscount']);
     
     // Withdrawal routes for sellers
     Route::get('withdrawals', [WithdrawalRequestController::class, 'index']);

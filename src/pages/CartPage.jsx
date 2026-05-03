@@ -97,7 +97,19 @@ const CartPage = () => {
                     </div>
                     <div className="flex-1 text-center sm:text-right">
                       <Link to={`/gigs/${item.id}`} className="text-lg font-semibold text-neutral-900 hover:text-roman-500 transition-colors">{item.title}</Link>
-                      <p className="text-sm text-neutral-900/70">السعر: {item.price} جنيه</p>
+                      <p className="text-sm text-neutral-900/70">
+                        السعر:
+                        {item.original_price != null && Number(item.original_price) !== Number(item.price) ? (
+                          <>
+                            {' '}
+                            <span className="line-through text-neutral-500 mr-1">{Number(item.original_price).toFixed(2)}</span>
+                            <span className="font-semibold text-roman-600">{Number(item.price).toFixed(2)} جنيه</span>
+                            <span className="text-xs text-green-700 mr-1">(عرض)</span>
+                          </>
+                        ) : (
+                          <> {Number(item.price).toFixed(2)} جنيه</>
+                        )}
+                      </p>
                       <div className="flex items-center justify-center sm:justify-start my-2 space-x-2 space-x-reverse">
                         <Button variant="outline" size="icon" onClick={() => updateQuantity(item.id, item.quantity - 1)} disabled={item.quantity <= 1} className="border-roman-500/50 text-roman-500">
                           <Minus className="h-4 w-4" />
@@ -109,7 +121,7 @@ const CartPage = () => {
                       </div>
                     </div>
                     <div className="flex flex-col items-center sm:items-end mt-4 sm:mt-0 sm:mr-auto">
-                      <p className="text-lg font-bold text-roman-500 mb-2">{item.price * item.quantity} جنيه</p>
+                      <p className="text-lg font-bold text-roman-500 mb-2">{(Number(item.price) * item.quantity).toFixed(2)} جنيه</p>
                       <Button variant="ghost" size="icon" onClick={() => removeFromCart(item.id)} className="text-roman-500 hover:bg-roman-500/10">
                         <Trash2 className="h-5 w-5" />
                       </Button>

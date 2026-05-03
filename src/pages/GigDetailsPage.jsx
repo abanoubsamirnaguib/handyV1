@@ -101,11 +101,20 @@ const GigDetailsPage = () => {
           });
         }
 
+        const sale =
+          prod.discount_active && prod.sale_price != null
+            ? Number(prod.sale_price)
+            : null;
+        const basePrice = Number(prod.price);
         const normalizedGig = {
           id: prod.id,
           title: prod.title,
           description: prod.description,
-          price: prod.price,
+          price: sale != null ? sale : basePrice,
+          original_price: sale != null ? basePrice : null,
+          discount_active: !!prod.discount_active,
+          discount_label: prod.discount_label ?? null,
+          sale_price: prod.sale_price != null ? Number(prod.sale_price) : null,
           type: getEffectiveProductType(prod.type),
           images,
           category: prod.category,
@@ -114,7 +123,7 @@ const GigDetailsPage = () => {
           sellerId: prod.sellerId || prod.seller_id || prod.seller?.id,
           deliveryTime: prod.delivery_time || prod.deliveryTime || 'غير محدد',
           tags: Array.isArray(prod.tags) ? prod.tags : (prod.tags ? [prod.tags] : []),
-          quantity: prod.quantity || 1,
+          quantity: prod.quantity ?? 1,
         };
         setGig(normalizedGig);
         // Fetch seller
@@ -277,6 +286,7 @@ const GigDetailsPage = () => {
         title: gig.title,
         image: gig.images && gig.images.length > 0 ? gig.images[0] : null,
         price: gig.price,
+        original_price: gig.original_price,
       };
       
       const conversationId = await startConversation(seller.user, productInfo);
@@ -404,8 +414,18 @@ const GigDetailsPage = () => {
 
             <p className="text-neutral-900/80 leading-relaxed text-right">{gig.description}</p>
             
-            <div className="text-2xl font-bold text-roman-500">
-              {`${gig.price} جنيه`}
+            <div className="space-y-2">
+              {gig.discount_active && gig.original_price != null ? (
+                <div className="flex flex-wrap items-center gap-2 justify-end">
+                  {gig.discount_label && (
+                    <Badge className="bg-red-600 hover:bg-red-600 text-white">{gig.discount_label}</Badge>
+                  )}
+                  <span className="text-lg text-neutral-500 line-through">{Number(gig.original_price).toFixed(2)} جنيه</span>
+                  <span className="text-2xl font-bold text-roman-600">{Number(gig.price).toFixed(2)} جنيه</span>
+                </div>
+              ) : (
+                <div className="text-2xl font-bold text-roman-500">{`${Number(gig.price).toFixed(2)} جنيه`}</div>
+              )}
             </div>
 
             {effectiveType !== 'gig' && (

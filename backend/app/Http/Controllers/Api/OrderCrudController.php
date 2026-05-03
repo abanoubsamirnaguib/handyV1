@@ -246,7 +246,8 @@ class OrderCrudController extends Controller
                         }
                     }
                     
-                    $totalPrice += $product->price * $item['quantity'];
+                    $unitPrice = $product->getEffectiveUnitPrice();
+                    $totalPrice += $unitPrice * $item['quantity'];
                     
                     // تأكد من أن جميع المنتجات من نفس البائع
                     if (!$sellerId) {
@@ -307,13 +308,14 @@ class OrderCrudController extends Controller
                 // إضافة عناصر الطلب
                 foreach ($validated['cart_items'] as $item) {
                     $product = \App\Models\Product::findOrFail($item['product_id']);
-                    
+                    $unitPrice = $product->getEffectiveUnitPrice();
+
                     OrderItem::create([
                         'order_id' => $order->id,
                         'product_id' => $item['product_id'],
                         'quantity' => $item['quantity'],
-                        'price' => $product->price,
-                        'subtotal' => $product->price * $item['quantity'],
+                        'price' => $unitPrice,
+                        'subtotal' => $unitPrice * $item['quantity'],
                         'created_at' => now(),
                     ]);
                     

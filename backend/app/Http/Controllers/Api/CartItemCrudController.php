@@ -37,8 +37,8 @@ class CartItemCrudController extends Controller
             ->where('user_id', Auth::id())
             ->get();
             
-        $total = $cartItems->sum(function($item) {
-            return $item->product->price * $item->quantity;
+        $total = $cartItems->sum(function ($item) {
+            return $item->product->getEffectiveUnitPrice() * $item->quantity;
         });
         
         return response()->json([

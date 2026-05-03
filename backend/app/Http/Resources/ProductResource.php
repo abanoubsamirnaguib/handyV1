@@ -17,12 +17,23 @@ class ProductResource extends JsonResource
             $inWishlist = WishlistItem::isInWishlist($userId, $this->id);
         }
 
+        $sale = $this->computeSalePrice();
+
         return [
             'id' => $this->id,
             'title' => $this->title,
             'name' => $this->title, // For frontend compatibility
             'description' => $this->description,
             'price' => $this->price,
+            'sale_price' => $sale,
+            'discount_active' => $this->isDiscountCurrentlyActive(),
+            'discount_label' => $this->discountLabel(),
+            'discount_type' => $this->discount_type ?? 'none',
+            'discount_percentage' => $this->discount_percentage !== null ? (float) $this->discount_percentage : null,
+            'discount_fixed_amount' => $this->discount_fixed_amount !== null ? (float) $this->discount_fixed_amount : null,
+            'discount_schedule' => $this->discount_schedule ?? 'always',
+            'discount_starts_at' => $this->discount_starts_at?->toIso8601String(),
+            'discount_ends_at' => $this->discount_ends_at?->toIso8601String(),
             'category_name' => $this->category->name?? '',
             'category' => new CategoryResource($this->whenLoaded('category')),
             'seller' => new SellerResource($this->whenLoaded('seller')),

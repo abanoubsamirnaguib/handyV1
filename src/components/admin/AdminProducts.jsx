@@ -50,6 +50,27 @@ import {
 import { adminApi, api } from '@/lib/api';
 import { useCategories } from '@/hooks/useCache';
 
+/** عرض التاريخ والوقت بالصيغة المصرية (تقويم ميلادي، منطقة القاهرة). */
+function formatEgyptianDateTime(iso) {
+  if (iso == null || iso === '') return '';
+  try {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return String(iso);
+    return new Intl.DateTimeFormat('ar-EG-u-ca-gregory', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+      timeZone: 'Africa/Cairo',
+    }).format(d);
+  } catch {
+    return String(iso);
+  }
+}
+
 const AdminProducts = () => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -458,6 +479,33 @@ const AdminProducts = () => {
                           <span className="font-semibold text-green-600">{product.price} جنيه</span>
                         )}
                       </div>
+                      {(product.discount_type === 'percentage' || product.discount_type === 'fixed') && (
+                        <div className="flex justify-between items-start gap-2">
+                          <span className="text-gray-600 flex-shrink-0">عرض / خصم:</span>
+                          <div className="text-left font-semibold text-sm">
+                            <Badge className={product.discount_active ? 'bg-green-600 hover:bg-green-600' : 'bg-amber-600 hover:bg-amber-600'}>
+                              {product.discount_active ? 'نشط الآن' : 'غير نشط في اللحظة'}
+                            </Badge>
+                            <div className="mt-1 text-gray-800">
+                              {product.discount_type === 'percentage'
+                                ? `نسبة: ${product.discount_percentage}%`
+                                : `مبلغ ثابت: ${product.discount_fixed_amount} ج`}
+                              {product.discount_schedule === 'scheduled' && (
+                                <span className="block text-xs font-normal text-gray-600 mt-0.5">
+                                  فترة محددة
+                                  {product.discount_starts_at && ` · من ${formatEgyptianDateTime(product.discount_starts_at)}`}
+                                  {product.discount_ends_at && ` إلى ${formatEgyptianDateTime(product.discount_ends_at)}`}
+                                </span>
+                              )}
+                              {product.sale_price != null && product.discount_active && (
+                                <span className="block text-xs text-green-700 mt-0.5">
+                                  سعر البيع الحالي: {product.sale_price} ج
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )}
                       <div className="flex justify-between">
                         <span className="text-gray-600">عدد الطلبات:</span>
                         <span className="font-semibold">{product.orders_count || 0}</span>

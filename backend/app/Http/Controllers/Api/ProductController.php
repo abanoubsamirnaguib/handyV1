@@ -5,6 +5,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use App\Http\Resources\ProductResource;
+use Illuminate\Validation\Rule;
 use App\Http\Resources\ReviewResource;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
@@ -423,6 +424,92 @@ class ProductController extends Controller
             'product' => $product,
             'active_count' => $activeCount,
             'total_slots' => 10
+        ]);
+    }
+
+    /**
+     * Update promotional discount only (does not reset product review status).
+     */
+    public function updateDiscount(Request $request, $id)
+    {
+        $product = Product::findOrFail($id);
+        if ($product->seller_id !== Auth::user()->seller_id) {
+            return response()->json(['message' => 'غير مصرح'], 403);
+        }
+
+        $request->validate([
+            'discount_type' => 'required|in:none,percentage,fixed',
+        ]);
+
+        $discountType = $request->discount_type;
+
+        if ($discountType === 'none') {
+            $product->update([
+                'discount_type' => 'none',
+                'discount_percentage' => null,
+                'discount_fixed_amount' => null,
+                'discount_schedule' => 'always',
+                'discount_starts_at' => null,
+                'discount_ends_at' => null,
+            ]);
+            $product->refresh();
+
+            return response()->json([
+                'message' => 'تم إزالة العرض',
+                'product' => new ProductResource($product->load(['images', 'tags', 'category'])),
+            ]);
+        }
+
+        $validated = $request->validate([
+            'discount_percentage' => [
+                Rule::requiredIf(fn () => $request->discount_type === 'percentage'),
+                'nullable',
+                'numeric',
+                'min:0.01',
+                'max:100',
+            ],
+            'discount_fixed_amount' => [
+                Rule::requiredIf(fn () => $request->discount_type === 'fixed'),
+                'nullable',
+                'numeric',
+                'min:0.01',
+            ],
+            'discount_schedule' => 'required|in:always,scheduled',
+            'discount_starts_at' => [
+                Rule::requiredIf(fn () => $request->discount_schedule === 'scheduled'),
+                'nullable',
+                'date',
+            ],
+            'discount_ends_at' => [
+                Rule::requiredIf(fn () => $request->discount_schedule === 'scheduled'),
+                'nullable',
+                'date',
+                'after:discount_starts_at',
+            ],
+        ]);
+
+        if ($discountType === 'fixed'
+            && (float) $validated['discount_fixed_amount'] >= (float) $product->price) {
+            return response()->json(['message' => 'قيمة الخصم الثابت يجب أن تكون أقل من سعر المنتج'], 422);
+        }
+
+        $product->discount_type = $discountType;
+        $product->discount_percentage = $discountType === 'percentage' ? $validated['discount_percentage'] : null;
+        $product->discount_fixed_amount = $discountType === 'fixed' ? $validated['discount_fixed_amount'] : null;
+        $product->discount_schedule = $validated['discount_schedule'];
+        if ($validated['discount_schedule'] === 'always') {
+            $product->discount_starts_at = null;
+            $product->discount_ends_at = null;
+        } else {
+            $product->discount_starts_at = $validated['discount_starts_at'];
+            $product->discount_ends_at = $validated['discount_ends_at'];
+        }
+        $product->save();
+        $product->load(['images', 'tags', 'category']);
+
+        return response()->json([
+            'message' => 'تم حفظ إعدادات الخصم',
+            'product' => new ProductResource($product),
         ]);
     }
 }

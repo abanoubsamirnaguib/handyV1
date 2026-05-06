@@ -19,6 +19,8 @@ import { useCategories, useGiftSections } from '@/hooks/useCache';
 import { getStorageUrl } from '@/lib/assets';
 import { FEATURE_FLAGS, getEffectiveProductType } from '@/lib/featureFlags';
 import ProductExploreTabPanel from '@/components/explore/ProductExploreTabPanel';
+import { hasScheduledDiscountPeriod } from '@/lib/discount';
+import OfferTimerLabel from '@/components/ui/OfferTimerLabel';
 
 // Helper function to get category icon based on backend icon name
 const getCategoryIcon = (iconName) => {
@@ -285,6 +287,10 @@ const ExplorePage = () => {
         sale_price: prod.sale_price ?? null,
         discount_active: !!prod.discount_active,
         discount_label: prod.discount_label ?? null,
+        discount_type: prod.discount_type ?? 'none',
+        discount_schedule: prod.discount_schedule ?? 'always',
+        discount_starts_at: prod.discount_starts_at ?? null,
+        discount_ends_at: prod.discount_ends_at ?? null,
         quantity: prod.quantity,
         images: Array.isArray(prod.images) && prod.images.length > 0
           ? prod.images.map(img => img.url || img.image_url)
@@ -636,6 +642,10 @@ const ExplorePage = () => {
             sale_price: prod.sale_price ?? null,
             discount_active: !!prod.discount_active,
             discount_label: prod.discount_label ?? null,
+            discount_type: prod.discount_type ?? 'none',
+            discount_schedule: prod.discount_schedule ?? 'always',
+            discount_starts_at: prod.discount_starts_at ?? null,
+            discount_ends_at: prod.discount_ends_at ?? null,
             quantity: prod.quantity,
             images: Array.isArray(prod.images) && prod.images.length > 0
               ? prod.images.map(img => img.url || img.image_url)
@@ -763,6 +773,11 @@ const ExplorePage = () => {
                 </Badge>
               </div>
             )}
+            {hasScheduledDiscountPeriod(gig) && (
+              <div className="absolute bottom-2 right-2 z-[1] pointer-events-none max-w-[90%]">
+                <OfferTimerLabel product={gig} variant="card" />
+              </div>
+            )}
             <div className="absolute top-2 left-2" onClick={(e) => e.stopPropagation()}>
               <div onClick={(e) => e.preventDefault()}>
                 <WishlistButton productId={gig.id} inWishlist={gig.in_wishlist} onWishlistChange={handleWishlistChange} size="md" />
@@ -838,6 +853,11 @@ const ExplorePage = () => {
                 <Badge className="bg-red-600 hover:bg-red-600 text-white text-xs px-2 py-0.5 shadow-md">
                   عرض {gig.discount_label}
                 </Badge>
+              </div>
+            )}
+            {hasScheduledDiscountPeriod(gig) && (
+              <div className="absolute bottom-2 right-2 z-[1] pointer-events-none max-w-[90%]">
+                <OfferTimerLabel product={gig} variant="card" />
               </div>
             )}
             <div className="absolute top-2 left-2" onClick={(e) => e.stopPropagation()}>

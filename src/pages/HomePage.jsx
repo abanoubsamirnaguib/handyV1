@@ -14,6 +14,8 @@ import GiftSections from '@/components/ui/GiftSections';
 import { useCategories } from '@/hooks/useCache';
 import { getStorageUrl } from '@/lib/assets';
 import { getEffectiveProductType } from '@/lib/featureFlags';
+import { hasScheduledDiscountPeriod } from '@/lib/discount';
+import OfferTimerLabel from '@/components/ui/OfferTimerLabel';
 
 const HomePage = () => {
   const navigate = useNavigate();
@@ -623,7 +625,7 @@ const HomePage = () => {
                       className="flex-shrink-0 w-[calc(50%-0.5rem)] md:w-72"
                     >
                       <Link to={`/gigs/${gig.id}`} className="block">
-                        <Card className="overflow-hidden transition-shadow duration-300 flex flex-col h-62 card-hover cursor-pointer" dir="rtl">
+                        <Card className={`overflow-hidden transition-shadow duration-300 flex flex-col h-62 card-hover cursor-pointer ${gig.discount_active ? 'ring-2 ring-roman-500/40 shadow-lg' : ''}`} dir="rtl">
                           <div className="relative h-56">
                             <img 
                               src={gig.images && gig.images.length > 0 
@@ -637,6 +639,18 @@ const HomePage = () => {
                             <div className="absolute top-2 right-2 flex flex-col gap-1">
                               <Badge variant="secondary" className="bg-roman-500 text-white">{categoryName}</Badge>
                             </div>
+                            {gig.discount_active && gig.discount_label && (
+                              <div className="absolute bottom-2 left-2 z-[1] pointer-events-none">
+                                <Badge className="bg-red-600 hover:bg-red-600 text-white text-[10px] px-2 py-0.5 shadow-md">
+                                  عرض {gig.discount_label}
+                                </Badge>
+                              </div>
+                            )}
+                            {hasScheduledDiscountPeriod(gig) && (
+                              <div className="absolute bottom-2 right-2 z-[1] pointer-events-none max-w-[90%]">
+                                <OfferTimerLabel product={gig} variant="card" />
+                              </div>
+                            )}
                             <div className="absolute top-2 left-2" onClick={(e) => e.stopPropagation()}>
                               <div onClick={(e) => e.preventDefault()}>
                                 <WishlistButton productId={gig.id} inWishlist={gig.in_wishlist} onWishlistChange={handleWishlistChange} size="md" />
@@ -659,11 +673,17 @@ const HomePage = () => {
                                 <Star className="h-3 w-3 text-warning-500 ml-1" />
                                 <span className="whitespace-nowrap">{gig.rating} ({gig.reviewCount})</span>
                               </div>
-                              <p className="text-sm font-bold text-roman-500 whitespace-nowrap">
+                              <div className="text-sm font-bold text-roman-500 whitespace-nowrap text-left flex flex-col items-end gap-0.5">
                                 {effectiveType === 'gig' && (gig.price === 0 || gig.price === '0' || gig.price === '0.00' || parseFloat(gig.price) === 0)
                                   ? 'قابل للتفاوض'
-                                  : `${gig.price} ج`}
-                              </p>
+                                  : gig.discount_active && gig.sale_price != null ? (
+                                    <>
+                                      <span className="text-xs font-normal text-neutral-500 line-through">{Number(gig.price).toFixed(2)} ج</span>
+                                      <span className="text-sm font-bold text-roman-600">{Number(gig.sale_price).toFixed(2)} ج</span>
+                                    </>
+                                  )
+                                  : `${Number(gig.price).toFixed(2)} ج`}
+                              </div>
                             </div>
                           </CardContent>
                         </Card>

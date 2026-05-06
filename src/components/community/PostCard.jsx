@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { EyeOff, Heart, Loader2, MessageCircle, MoreHorizontal, Pencil, Share2, ShoppingBag, Trash2, X } from 'lucide-react';
+import { hasScheduledDiscountPeriod } from '@/lib/discount';
+import OfferTimerLabel from '@/components/ui/OfferTimerLabel';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
@@ -95,6 +97,11 @@ const SharedProductCard = ({ product }) => {
           <p className="truncate text-sm font-semibold text-neutral-900">{product.title || product.name}</p>
           <p className="mt-1 text-xs text-neutral-700">{product.category_name || 'منتج من المتجر'}</p>
           <p className="mt-1 text-sm font-medium text-roman-500">{product.price} جنيه</p>
+          {hasScheduledDiscountPeriod(product) && (
+            <div className="mt-1">
+              <OfferTimerLabel product={product} variant="detail" />
+            </div>
+          )}
         </div>
       </div>
     </Link>

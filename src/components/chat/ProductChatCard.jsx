@@ -5,6 +5,8 @@ import DepositPaymentButton from './DepositPaymentButton';
 import { useAuth } from '@/contexts/AuthContext';
 import { assetUrl } from '@/lib/api';
 import { FEATURE_FLAGS, getEffectiveProductType } from '@/lib/featureFlags';
+import { hasScheduledDiscountPeriod } from '@/lib/discount';
+import OfferTimerLabel from '@/components/ui/OfferTimerLabel';
 
 const ProductChatCard = ({ 
   product, 
@@ -89,6 +91,12 @@ const ProductChatCard = ({
             <div className="text-base font-bold text-green-600 mt-1">
               {isFromConversation ? formatPrice(productData.price) : `${productData.price} جنيه`}
             </div>
+
+            {hasScheduledDiscountPeriod(productData) && (
+              <div className="mt-1 text-[11px] text-neutral-700">
+                <OfferTimerLabel product={productData} variant="detail" />
+              </div>
+            )}
             
             {!FEATURE_FLAGS.enableDeposit ? null : (!isFromConversation && user && user.role !== 'seller' && (
               <div className="mt-2">

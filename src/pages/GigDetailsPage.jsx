@@ -18,6 +18,8 @@ import { api, apiFetch } from '@/lib/api';
 import WishlistButton from '@/components/ui/WishlistButton';
 import { getStorageUrl } from '@/lib/assets';
 import { getEffectiveProductType } from '@/lib/featureFlags';
+import { hasScheduledDiscountPeriod } from '@/lib/discount';
+import OfferTimerLabel from '@/components/ui/OfferTimerLabel';
 
 const GigDetailsPage = () => {
   const { id } = useParams();
@@ -115,6 +117,10 @@ const GigDetailsPage = () => {
           discount_active: !!prod.discount_active,
           discount_label: prod.discount_label ?? null,
           sale_price: prod.sale_price != null ? Number(prod.sale_price) : null,
+          discount_type: prod.discount_type ?? 'none',
+          discount_schedule: prod.discount_schedule ?? 'always',
+          discount_starts_at: prod.discount_starts_at ?? null,
+          discount_ends_at: prod.discount_ends_at ?? null,
           type: getEffectiveProductType(prod.type),
           images,
           category: prod.category,
@@ -427,6 +433,12 @@ const GigDetailsPage = () => {
                 <div className="text-2xl font-bold text-roman-500">{`${Number(gig.price).toFixed(2)} جنيه`}</div>
               )}
             </div>
+
+            {hasScheduledDiscountPeriod(gig) && (
+              <div className="flex justify-end">
+                <OfferTimerLabel product={gig} variant="detail" />
+              </div>
+            )}
 
             {effectiveType !== 'gig' && (
               <div className="flex items-center space-x-3 space-x-reverse">

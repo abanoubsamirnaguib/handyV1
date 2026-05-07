@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, CreditCard, User, Phone, MapPin, FileText, ShoppingBag, Upload } from 'lucide-react';
+import { ArrowLeft, CreditCard, User, Phone, MapPin, FileText, ShoppingBag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -34,7 +34,6 @@ const CheckoutPage = () => {
 
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({});
-  const [paymentProofFile, setPaymentProofFile] = useState(null);
 
   // Cities state
   const [cities, setCities] = useState([]);
@@ -126,29 +125,13 @@ const CheckoutPage = () => {
         quantity: item.quantity
       }));
 
-      let response;
-      
-      if (paymentProofFile) {
-        const formDataToSend = new FormData();
-        formDataToSend.append('cart_items', JSON.stringify(cartItems));
-        Object.keys(formData).forEach(key => {
-          if (formData[key] !== undefined && formData[key] !== null && formData[key] !== '') {
-            formDataToSend.append(key, formData[key]);
-          }
-        });
-        formDataToSend.append('payment_proof', paymentProofFile);
+      const orderData = {
+        cart_items: cartItems,
+        ...formData
+      };
 
-        console.log('Creating order with payment proof file');
-        response = await api.createOrderWithFiles(formDataToSend);
-      } else {
-        const orderData = {
-          cart_items: cartItems,
-          ...formData
-        };
-
-        console.log('Creating order with data:', orderData);
-        response = await api.createOrder(orderData);
-      }
+      console.log('Creating order with data:', orderData);
+      const response = await api.createOrder(orderData);
       console.log('Full API response:', response);
       
       // Check if the response has the expected structure
@@ -297,9 +280,6 @@ const CheckoutPage = () => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="cash_on_delivery">الدفع عند الاستلام</SelectItem>
-                      <SelectItem value="bank_transfer">تحويل بنكي</SelectItem>
-                      <SelectItem value="vodafone_cash">فودافون كاش</SelectItem>
-                      <SelectItem value="instapay">انستاباي</SelectItem>
                       <SelectItem value="gift_wallet" disabled={!canPayWithGiftWallet}>
                         محفظة الهدايا (للشراء فقط) — المتاح: {giftBalance} ج.م
                       </SelectItem>
@@ -352,43 +332,6 @@ const CheckoutPage = () => {
                   />
                 </div>
 
-                {/* Payment Proof Upload */}
-                {(formData.payment_method !== 'cash_on_delivery' && formData.payment_method !== 'gift_wallet') && (
-                  <div className="space-y-2">
-                    <Label className="text-neutral-900 flex items-center">
-                      <Upload className="ml-2 h-4 w-4 text-roman-500" />
-                      صورة إثبات الدفع (اختياري)
-                    </Label>
-                    {settings.transactionNumber && (
-                      <div className="bg-roman-50 border border-roman-200 rounded-lg p-3 mb-3">
-                        <p className="text-sm font-semibold text-roman-800 mb-1">رقم الحساب/التحويل:</p>
-                        <p className="text-lg font-bold text-roman-900">{settings.transactionNumber}</p>
-                        <p className="text-xs text-roman-600 mt-1">يرجى التحويل إلى هذا الرقم عند الدفع</p>
-                      </div>
-                    )}
-                    <div className="border-2 border-dashed border-roman-500/30 rounded-lg p-4">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => setPaymentProofFile(e.target.files[0])}
-                        className="hidden"
-                        id="payment_proof"
-                      />
-                      <label
-                        htmlFor="payment_proof"
-                        className="cursor-pointer flex flex-col items-center justify-center space-y-2"
-                      >
-                        <Upload className="h-8 w-8 text-roman-500" />
-                        <span className="text-sm text-neutral-900">
-                          {paymentProofFile ? paymentProofFile.name : 'اضغط لاختيار صورة إثبات الدفع'}
-                        </span>
-                        <span className="text-xs text-neutral-900/60">
-                          يمكنك رفع الصورة الآن أو لاحقاً من صفحة تفاصيل الطلب
-                        </span>
-                      </label>
-                    </div>
-                  </div>
-                )}
               </CardContent>
             </Card>
           </div>

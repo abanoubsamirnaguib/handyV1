@@ -409,14 +409,14 @@ const HomePage = () => {
             transition={{ duration: 0.8 }}
           >
             <div className="flex items-center justify-center mb-6">
-              <h1 className="text-4xl md:text-6xl font-bold leading-tight">
+              <h1 className="text-4xl md:text-6xl font-bold leading-tight hidden">
                 اكتشف <span className="text-neutral-100">إبداعات</span> الحرفيين
               </h1>
             </div>
-            <p className="text-lg md:text-xl mb-8 text-neutral-100">
+            <p className="text-lg md:text-xl mb-8 text-neutral-100 hidden">
               منصتك الأولى للعثور على منتجات يدوية فريدة ومصنوعة بحب وشغف.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
+            <div className="flex flex-col sm:flex-row gap-4 items-center justify-center hidden">
               <Button
                 size="lg"
                 className="bg-roman-500 hover:bg-roman-500/90 text-white px-8 py-3 text-lg"
@@ -644,11 +644,6 @@ const HomePage = () => {
                                 <Badge className="bg-red-600 hover:bg-red-600 text-white text-[10px] px-2 py-0.5 shadow-md">
                                   عرض {gig.discount_label}
                                 </Badge>
-                              </div>
-                            )}
-                            {hasScheduledDiscountPeriod(gig) && (
-                              <div className="absolute bottom-2 right-2 z-[1] pointer-events-none max-w-[90%]">
-                                <OfferTimerLabel product={gig} variant="card" />
                               </div>
                             )}
                             <div className="absolute top-2 left-2" onClick={(e) => e.stopPropagation()}>

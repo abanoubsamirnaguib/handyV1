@@ -773,11 +773,7 @@ const ExplorePage = () => {
                 </Badge>
               </div>
             )}
-            {hasScheduledDiscountPeriod(gig) && (
-              <div className="absolute bottom-2 right-2 z-[1] pointer-events-none max-w-[90%]">
-                <OfferTimerLabel product={gig} variant="card" />
-              </div>
-            )}
+            
             <div className="absolute top-2 left-2" onClick={(e) => e.stopPropagation()}>
               <div onClick={(e) => e.preventDefault()}>
                 <WishlistButton productId={gig.id} inWishlist={gig.in_wishlist} onWishlistChange={handleWishlistChange} size="md" />
@@ -855,11 +851,7 @@ const ExplorePage = () => {
                 </Badge>
               </div>
             )}
-            {hasScheduledDiscountPeriod(gig) && (
-              <div className="absolute bottom-2 right-2 z-[1] pointer-events-none max-w-[90%]">
-                <OfferTimerLabel product={gig} variant="card" />
-              </div>
-            )}
+            
             <div className="absolute top-2 left-2" onClick={(e) => e.stopPropagation()}>
               <div onClick={(e) => e.preventDefault()}>
                 <WishlistButton productId={gig.id} inWishlist={gig.in_wishlist} onWishlistChange={handleWishlistChange} size="md" />

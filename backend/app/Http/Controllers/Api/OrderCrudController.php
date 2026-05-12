@@ -220,6 +220,37 @@ class OrderCrudController extends Controller
                         );
                     }
                 }
+
+                // If payment method is cash on delivery, auto-approve (admin_approved)
+                if (($order->payment_method ?? '') === 'cash_on_delivery') {
+                    $order->update([
+                        'status' => 'admin_approved',
+                        'admin_approved_at' => now(),
+                    ]);
+                    $order->addToHistory('admin_approved', null, 'auto_admin_approval', 'تمت الموافقة تلقائياً لطريقة الدفع عند الاستلام (COD)');
+
+                    // Notify buyer
+                    Notification::create([
+                        'user_id' => $order->user_id,
+                        'notification_type' => 'order_auto_approved',
+                        'message' => 'تمت الموافقة على طلبك تلقائياً بسبب اختيارك الدفع عند الاستلام. رقم الطلب: ' . $order->id,
+                        'is_read' => false,
+                        'link' => '/orders/' . $order->id,
+                        'created_at' => now(),
+                    ]);
+
+                    // Notify seller
+                    if ($order->seller && $order->seller->user_id) {
+                        Notification::create([
+                            'user_id' => $order->seller->user_id,
+                            'notification_type' => 'order_auto_approved',
+                            'message' => 'تمت الموافقة على الطلب #'.$order->id.' تلقائياً (COD).',
+                            'is_read' => false,
+                            'link' => '/orders/' . $order->id,
+                            'created_at' => now(),
+                        ]);
+                    }
+                }
                 
             } else {
                 // Handle regular product order
@@ -342,6 +373,37 @@ class OrderCrudController extends Controller
                 
                 // إضافة سجل في تاريخ الطلب
                 $order->addToHistory('pending', Auth::id(), 'order_created', 'تم إنشاء الطلب');
+
+                // If payment method is cash on delivery, auto-approve (admin_approved)
+                if (($order->payment_method ?? '') === 'cash_on_delivery') {
+                    $order->update([
+                        'status' => 'admin_approved',
+                        'admin_approved_at' => now(),
+                    ]);
+                    $order->addToHistory('admin_approved', null, 'auto_admin_approval', 'تمت الموافقة تلقائياً لطريقة الدفع عند الاستلام (COD)');
+
+                    // Notify buyer
+                    // Notification::create([
+                    //     'user_id' => $order->user_id,
+                    //     'notification_type' => 'order_auto_approved',
+                    //     'message' => 'تمت الموافقة على طلبك تلقائياً بسبب اختيارك الدفع عند الاستلام. رقم الطلب: ' . $order->id,
+                    //     'is_read' => false,
+                    //     'link' => '/orders/' . $order->id,
+                    //     'created_at' => now(),
+                    // ]);
+
+                    // // Notify seller
+                    // if ($order->seller && $order->seller->user_id) {
+                    //     Notification::create([
+                    //         'user_id' => $order->seller->user_id,
+                    //         'notification_type' => 'order_auto_approved',
+                    //         'message' => 'تمت الموافقة على الطلب #'.$order->id.' تلقائياً (COD).',
+                    //         'is_read' => false,
+                    //         'link' => '/orders/' . $order->id,
+                    //         'created_at' => now(),
+                    //     ]);
+                    // }
+                }
             }
             
             // بعد إنشاء الطلب، تعيين commission percent من المدينة

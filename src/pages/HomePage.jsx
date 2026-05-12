@@ -126,6 +126,10 @@ const HomePage = () => {
     }
   };
 
+  const goToSlide = (index) => {
+    setHomeSlideIndex(index);
+  };
+
   // Use cached categories from React Query
   const { data: categoriesData, isLoading: isCategoriesLoading, isError: categoriesHasError } = useCategories();
   
@@ -351,9 +355,10 @@ const HomePage = () => {
               {activeHomeSlide.media_type === 'video' ? (
                 <video
                   key={activeHomeSlide.id}
-                  className="absolute inset-0 w-screen h-screen object-cover"
+                  className="absolute inset-0 w-screen h-screen"
                   style={{
-                    objectPosition: window.innerWidth < 640 ? '-900px' : undefined,
+                    objectFit: window.innerWidth < 640 ? 'cover' : 'contain',
+                    objectPosition: window.innerWidth < 640 ? '-900px' : 'center',
                   }}
                   autoPlay
                   loop
@@ -364,9 +369,10 @@ const HomePage = () => {
               ) : (
                 <img
                   key={activeHomeSlide.id}
-                  className="absolute inset-0 w-screen h-screen object-cover"
+                  className="absolute inset-0 w-screen h-screen"
                   style={{
-                    objectPosition: window.innerWidth < 640 ? 'center' : undefined,
+                    objectFit: window.innerWidth < 640 ? 'cover' : 'contain',
+                    objectPosition: 'center',
                   }}
                   src={getImageUrl(activeHomeSlide.media_url || activeHomeSlide.media_path)}
                   alt="خلفية"
@@ -399,7 +405,23 @@ const HomePage = () => {
             // </video>
           )}
 
-          <div className="absolute inset-0 bg-black/30 z-10 pointer-events-none"></div>
+          {/* Carousel Dots */}
+          {homeSlides.length > 1 && (
+            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-30 flex gap-2">
+              {homeSlides.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => goToSlide(index)}
+                  className={`transition-all duration-300 rounded-full ${
+                    index === homeSlideIndex
+                      ? 'bg-black w-8 h-2'
+                      : 'bg-black/40 hover:bg-black/60 w-2 h-2'
+                  }`}
+                  aria-label={`Go to slide ${index + 1}`}
+                />
+              ))}
+            </div>
+          )}
           <div className="container mx-auto px-4 relative z-20 flex flex-col items-center justify-center">
             <div className="flex flex-col items-center justify-center w-full">
           <motion.div 

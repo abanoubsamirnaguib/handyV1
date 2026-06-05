@@ -391,22 +391,6 @@ class ProductController extends Controller
             ], 422);
         }
 
-        // If trying to activate the product, check the limit
-        if ($product->status === 'inactive') {
-            // Count currently active products for this seller
-            $activeCount = Product::where('seller_id', Auth::user()->seller_id)
-                ->where('status', 'active')
-                ->count();
-
-            if ($activeCount >= 10) {
-                return response()->json([
-                    'message' => 'لقد وصلت للحد الأقصى من المنتجات المفعلة (10 منتجات). يرجى تعطيل منتج آخر أولاً.',
-                    'active_count' => $activeCount,
-                    'limit' => 10
-                ], 422);
-            }
-        }
-
         // Toggle the status
         $newStatus = $product->status === 'active' ? 'inactive' : 'active';
         $product->status = $newStatus;
@@ -423,7 +407,6 @@ class ProductController extends Controller
                 : 'تم تعطيل المنتج بنجاح',
             'product' => $product,
             'active_count' => $activeCount,
-            'total_slots' => 10
         ]);
     }
 

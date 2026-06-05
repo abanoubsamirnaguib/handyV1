@@ -174,7 +174,7 @@ const DashboardGigs = () => {
       toast({
         title: response.message || "تم تحديث الحالة",
         description: response.active_count !== undefined 
-          ? `المنتجات النشطة: ${response.active_count} من ${response.total_slots || 10}`
+          ? `المنتجات النشطة: ${response.active_count}`
           : '',
       });
     } catch (error) {
@@ -311,7 +311,7 @@ const DashboardGigs = () => {
       >        <div>
           <h1 className="text-3xl font-bold text-gray-800">منتجاتي</h1>
           <p className="text-sm text-gray-600 mt-1">
-            المنتجات النشطة: <span className="font-bold text-green-600">{activeProductsCount}</span> من <span className="font-bold">10</span>
+            المنتجات النشطة: <span className="font-bold text-green-600">{activeProductsCount}</span>
           </p>
         </div>
         <div className="flex items-center gap-2">          

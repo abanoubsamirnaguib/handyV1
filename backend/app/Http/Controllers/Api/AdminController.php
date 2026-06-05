@@ -200,24 +200,6 @@ class AdminController extends Controller
 
         $isActivatingNow = $validated['status'] === 'active' && $product->status !== 'active';
         
-        // Check if admin is trying to approve (activate) the product
-        if ($isActivatingNow) {
-            // Check seller's active product count
-            $activeCount = Product::where('seller_id', $product->seller_id)
-                ->where('status', 'active')
-                ->count();
-            
-            if ($activeCount >= 10) {
-                return response()->json([
-                    'message' => 'لا يمكن الموافقة على هذا المنتج. البائع وصل للحد الأقصى من المنتجات المفعلة (10 منتجات).',
-                    'error' => 'seller_limit_reached',
-                    'active_count' => $activeCount,
-                    'limit' => 10,
-                    'seller_id' => $product->seller_id
-                ], 422);
-            }
-        }
-        
         $updateData = ['status' => $validated['status']];
         
         // إذا تم رفض المنتج، نحفظ سبب الرفض

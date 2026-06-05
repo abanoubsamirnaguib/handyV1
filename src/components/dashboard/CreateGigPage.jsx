@@ -270,13 +270,6 @@ const CreateGigPage = () => {
       // Handle specific error messages
       let errorMessage = err.message || "حدث خطأ أثناء إنشاء المنتج";
       
-      // Check if the error is about reaching the active products limit
-      if (err.message && err.message.includes('الحد الأقصى')) {
-        errorMessage = err.message;
-      } else if (err.message && err.message.includes('10 منتجات')) {
-        errorMessage = err.message;
-      }
-      
       toast({ 
         variant: "destructive", 
         title: "خطأ في الإنشاء", 

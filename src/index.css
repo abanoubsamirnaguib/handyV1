@@ -40,8 +40,8 @@
   --input: 42 13% 87%;       /* #f7f2ee - neutral-200 */
   --ring: 1 70% 62%;         /* #e85856 - roman-500 */
   
-  /* Other settings */
-  --radius: 0.5rem;
+  /* Other settings - Apple uses generous, continuous corner radii */
+  --radius: 0.875rem;
   --navbar-height: 66px;
   
   /* Roman color palette - Custom variables */
@@ -120,30 +120,46 @@
   border-color: hsl(var(--border));
 }
 
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
 body {
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
-  font-family: 'Tajawal', sans-serif;
+  /* Apple system font stack first, fall back to Tajawal for Arabic glyphs */
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text',
+    'Tajawal', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  letter-spacing: -0.011em;
 }
 
-/* Custom Scrollbar */
+/* Apple-like refined headings: tighter tracking, balanced weight */
+h1, h2, h3, h4, h5, h6 {
+  letter-spacing: -0.022em;
+}
+
+/* Custom Scrollbar - Apple style: thin, subtle, overlay-like */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 9px;
+  height: 9px;
 }
 
 ::-webkit-scrollbar-track {
-  background: hsl(var(--neutral-200));
-  border-radius: 4px;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: hsl(var(--roman-500) / 0.7);
-  border-radius: 4px;
+  background: hsl(var(--neutral-900) / 0.22);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--roman-600));
+  background: hsl(var(--neutral-900) / 0.38);
+  background-clip: padding-box;
 }
 
 /* Animation Classes */
@@ -191,39 +207,106 @@ body {
   }
 }
 
-/* Custom Utilities */
-.glass-effect {
-  background-color: rgba(239, 237, 230, 0.3); /* #EFEDE6 - light beige with opacity (primary) */
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(133, 149, 105, 0.2); /* #859569 - olive green with opacity (primary) */
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+/* =========================================================
+   Apple Material System (keeps site identity / Roman colors)
+   Translucent, blurred "materials" inspired by Apple HIG.
+   ========================================================= */
+
+/* Apple frosted-glass material (light, thin) */
+.glass-effect,
+.material-thin {
+  background-color: hsl(0 0% 100% / 0.62);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border: 1px solid hsl(0 0% 100% / 0.55);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05), 0 8px 24px rgba(0, 0, 0, 0.08);
 }
 
+/* Regular material - the standard Apple sheet/panel surface */
+.material-regular {
+  background-color: hsl(0 0% 100% / 0.78);
+  backdrop-filter: saturate(180%) blur(24px);
+  -webkit-backdrop-filter: saturate(180%) blur(24px);
+  border: 1px solid hsl(0 0% 100% / 0.6);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06), 0 14px 40px rgba(0, 0, 0, 0.1);
+}
+
+/* Thick material - opaque-ish, for prominent surfaces like navbars */
+.material-thick {
+  background-color: hsl(var(--background) / 0.85);
+  backdrop-filter: saturate(180%) blur(28px);
+  -webkit-backdrop-filter: saturate(180%) blur(28px);
+  border: 1px solid hsl(var(--border) / 0.6);
+}
+
+.dark .glass-effect,
+.dark .material-thin {
+  background-color: hsl(var(--neutral-900) / 0.55);
+  border-color: hsl(0 0% 100% / 0.08);
+}
+
+.dark .material-regular {
+  background-color: hsl(var(--neutral-900) / 0.7);
+  border-color: hsl(0 0% 100% / 0.08);
+}
+
+.dark .material-thick {
+  background-color: hsl(var(--neutral-900) / 0.85);
+  border-color: hsl(0 0% 100% / 0.08);
+}
+
+/* Apple "Liquid Glass" hairline highlight on the top edge */
+.material-thin,
+.material-regular {
+  position: relative;
+}
+
+/* Smooth, spring-y hover lift used across cards/buttons */
 .bounce-utility {
-  background-color: rgba(239, 237, 230, 0.3); /* #EFEDE6 - light beige with opacity (primary) */
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(133, 149, 105, 0.2); /* #859569 - olive green with opacity (primary) */
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
+  background-color: hsl(0 0% 100% / 0.62);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border: 1px solid hsl(0 0% 100% / 0.55);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05), 0 8px 24px rgba(0, 0, 0, 0.08);
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .bounce-utility:hover {
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  transform: translateY(-4px);
+  box-shadow: 0 8px 18px -3px rgba(0, 0, 0, 0.08), 0 24px 60px rgba(0, 0, 0, 0.14);
+  transform: translateY(-4px) scale(1.01);
 }
 
 .text-gradient {
   background-clip: text;
+  -webkit-background-clip: text;
   color: transparent;
-  background-color: #859569; /* Replaced gradient with primary olive green */
+  background-image: linear-gradient(
+    135deg,
+    hsl(var(--roman-500)),
+    hsl(var(--roman-600))
+  );
+}
+
+/* Apple-like interactive press feedback */
+.apple-press {
+  transition: transform 0.18s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    background-color 0.2s ease, opacity 0.2s ease;
+}
+
+.apple-press:active {
+  transform: scale(0.96);
 }
 
 .card-hover {
-  transition: all 0.3s ease;
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .card-hover:hover {
-  transform: translateY(-4px);
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: 0 8px 18px -3px rgba(0, 0, 0, 0.08), 0 24px 60px rgba(0, 0, 0, 0.14);
 }
 
 /* RTL Support */
@@ -387,8 +470,8 @@ input, textarea, select {
 }
 
 input:focus, textarea:focus, select:focus {
-  border-color: hsl(var(--primary));
-  box-shadow: 0 0 0 2px hsl(var(--ring) / 0.2);
+  border-color: hsl(var(--primary) / 0.6);
+  box-shadow: 0 0 0 4px hsl(var(--ring) / 0.18);
   outline: none;
 }
 

@@ -193,12 +193,12 @@ const RegisterPage = () => {
           transition={{ duration: 0.5 }}
           className="w-full max-w-lg"
         >
-          <Card className="shadow-2xl border-roman-500/20">
+          <Card className="material-regular shadow-apple-lg border-white/40 rounded-3xl">
             <CardHeader className="text-center">
-              <div className="mx-auto p-3 bg-yellow-500/10 rounded-full w-fit mb-4">
+              <div className="mx-auto p-4 bg-yellow-500/10 rounded-2xl w-fit mb-4">
                 <AlertCircle className="h-10 w-10 text-yellow-500" />
               </div>
-              <CardTitle className="text-3xl font-bold text-neutral-900">التسجيل غير متاح حالياً</CardTitle>
+              <CardTitle className="text-3xl font-bold text-neutral-900 tracking-tight">التسجيل غير متاح حالياً</CardTitle>
               <CardDescription className="text-neutral-900/70 mt-4">
                 نعتذر، التسجيل للمستخدمين الجدد غير متاح حالياً. يرجى المحاولة لاحقاً.
               </CardDescription>
@@ -230,12 +230,12 @@ const RegisterPage = () => {
         transition={{ duration: 0.5 }}
         className="w-full max-w-lg"
       >
-        <Card className="shadow-2xl border-roman-500/20">
+        <Card className="material-regular shadow-apple-lg border-white/40 rounded-3xl">
           <CardHeader className="text-center">
-             <div className="mx-auto p-3 bg-roman-500/10 rounded-full w-fit mb-4">
+             <div className="mx-auto p-4 bg-roman-500/10 rounded-2xl w-fit mb-4 shadow-apple-sm">
               <UserPlus className="h-10 w-10 text-roman-500" />
             </div>
-            <CardTitle className="text-3xl font-bold text-neutral-900">إنشاء حساب جديد</CardTitle>
+            <CardTitle className="text-3xl font-bold text-neutral-900 tracking-tight">إنشاء حساب جديد</CardTitle>
             <CardDescription className="text-neutral-900/70">انضم إلينا اليوم واكتشف عالم الإبداع اليدوي.</CardDescription>
           </CardHeader>
           <CardContent>
@@ -294,7 +294,7 @@ const RegisterPage = () => {
               </div>              <div className="space-y-4">
                 <Label className="text-neutral-900 text-base font-medium">أريد أن أكون:</Label>
                 <div className="space-y-4">
-                  <div className="flex items-center space-x-3 p-4 border border-roman-500/20 rounded-lg hover:bg-roman-500/5 transition-colors">
+                  <div className="flex items-center space-x-3 p-4 border border-roman-500/15 rounded-2xl bg-white/50 hover:bg-roman-500/5 hover:border-roman-500/30 transition-all duration-300 ease-apple">
                     <Checkbox
                       id="buyer"
                       checked={isBuyer}
@@ -314,7 +314,7 @@ const RegisterPage = () => {
                     </div>
                   </div>
                   
-                  <div className="flex items-center space-x-3 p-4 border border-roman-500/20 rounded-lg hover:bg-roman-500/5 transition-colors">
+                  <div className="flex items-center space-x-3 p-4 border border-roman-500/15 rounded-2xl bg-white/50 hover:bg-roman-500/5 hover:border-roman-500/30 transition-all duration-300 ease-apple">
                     <Checkbox
                       id="seller"
                       checked={isSeller}
@@ -336,7 +336,7 @@ const RegisterPage = () => {
                 </div>
                 
                 {(isBuyer && isSeller) && (
-                  <div className="p-3 bg-roman-500/10 rounded-lg border border-roman-500/20">
+                  <div className="p-4 bg-roman-500/10 rounded-2xl border border-roman-500/20">
                     <p className="text-sm text-roman-500">
                       ✨ رائع! ستتمكن من التبديل بين دوري المشتري والبائع في أي وقت من لوحة التحكم.
                     </p>
@@ -354,7 +354,7 @@ const RegisterPage = () => {
                 <div className="w-full border-t border-neutral-300"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-4 bg-white text-neutral-600">أو</span>
+                <span className="px-4 bg-card/90 backdrop-blur-sm rounded-full text-neutral-600">أو</span>
               </div>
             </div>
 

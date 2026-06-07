@@ -15,7 +15,28 @@ module.exports = {
 				'2xl': '1400px',
 			},
 		},
-		extend: {			colors: {
+		extend: {
+			fontFamily: {
+				sans: [
+					'-apple-system',
+					'BlinkMacSystemFont',
+					'SF Pro Display',
+					'SF Pro Text',
+					'Tajawal',
+					'Segoe UI',
+					'Helvetica Neue',
+					'Arial',
+					'sans-serif',
+				],
+				display: [
+					'-apple-system',
+					'BlinkMacSystemFont',
+					'SF Pro Display',
+					'Tajawal',
+					'sans-serif',
+				],
+			},
+			colors: {
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
 				ring: 'hsl(var(--ring))',
@@ -101,9 +122,28 @@ module.exports = {
 				},
 			},
 			borderRadius: {
+				xl: 'calc(var(--radius) + 6px)',
 				lg: 'var(--radius)',
 				md: 'calc(var(--radius) - 2px)',
 				sm: 'calc(var(--radius) - 4px)',
+				'2xl': 'calc(var(--radius) + 12px)',
+				'3xl': 'calc(var(--radius) + 22px)',
+			},
+			boxShadow: {
+				// Apple-style soft, layered, diffuse shadows
+				'apple-sm': '0 1px 2px rgba(0,0,0,0.04), 0 2px 6px rgba(0,0,0,0.05)',
+				apple: '0 2px 6px rgba(0,0,0,0.05), 0 8px 24px rgba(0,0,0,0.08)',
+				'apple-md': '0 4px 10px rgba(0,0,0,0.06), 0 14px 40px rgba(0,0,0,0.1)',
+				'apple-lg': '0 8px 18px rgba(0,0,0,0.08), 0 24px 60px rgba(0,0,0,0.14)',
+				'apple-inset': 'inset 0 1px 0 rgba(255,255,255,0.6)',
+			},
+			transitionTimingFunction: {
+				// Apple spring-like easing
+				spring: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
+				apple: 'cubic-bezier(0.4, 0, 0.2, 1)',
+			},
+			backdropBlur: {
+				apple: '20px',
 			},
 			keyframes: {
 				'accordion-down': {

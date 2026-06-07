@@ -15,7 +15,21 @@ module.exports = {
 				'2xl': '1400px',
 			},
 		},
-		extend: {			colors: {
+		extend: {
+			fontFamily: {
+				sans: [
+					'Roboto Flex',
+					'Roboto',
+					'Tajawal',
+					'system-ui',
+					'Segoe UI',
+					'Helvetica Neue',
+					'Arial',
+					'sans-serif',
+				],
+				display: ['Roboto Flex', 'Roboto', 'Tajawal', 'sans-serif'],
+			},
+			colors: {
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
 				ring: 'hsl(var(--ring))',
@@ -101,9 +115,34 @@ module.exports = {
 				},
 			},
 			borderRadius: {
+				// Material 3 shape scale
 				lg: 'var(--radius)',
-				md: 'calc(var(--radius) - 2px)',
-				sm: 'calc(var(--radius) - 4px)',
+				md: 'calc(var(--radius) - 4px)',
+				sm: 'calc(var(--radius) - 8px)',
+				'm3-xs': '4px',
+				'm3-sm': '8px',
+				'm3-md': '12px',
+				'm3-lg': '16px',
+				'm3-xl': '28px',
+			},
+			boxShadow: {
+				// Material Design 3 elevation levels (key + ambient shadow)
+				'elevation-1':
+					'0 1px 2px 0 rgba(0,0,0,0.30), 0 1px 3px 1px rgba(0,0,0,0.15)',
+				'elevation-2':
+					'0 1px 2px 0 rgba(0,0,0,0.30), 0 2px 6px 2px rgba(0,0,0,0.15)',
+				'elevation-3':
+					'0 4px 8px 3px rgba(0,0,0,0.15), 0 1px 3px 0 rgba(0,0,0,0.30)',
+				'elevation-4':
+					'0 6px 10px 4px rgba(0,0,0,0.15), 0 2px 3px 0 rgba(0,0,0,0.30)',
+				'elevation-5':
+					'0 8px 12px 6px rgba(0,0,0,0.15), 0 4px 4px 0 rgba(0,0,0,0.30)',
+			},
+			transitionTimingFunction: {
+				// Material 3 motion easing
+				'm3-standard': 'cubic-bezier(0.2, 0, 0, 1)',
+				'm3-emphasized': 'cubic-bezier(0.3, 0, 0.8, 0.15)',
+				'm3-decelerate': 'cubic-bezier(0.05, 0.7, 0.1, 1)',
 			},
 			keyframes: {
 				'accordion-down': {
@@ -114,10 +153,14 @@ module.exports = {
 					from: { height: 'var(--radix-accordion-content-height)' },
 					to: { height: 0 },
 				},
+				'm3-ripple': {
+					to: { transform: 'scale(4)', opacity: '0' },
+				},
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out',
+				'm3-ripple': 'm3-ripple 0.6s linear',
 			},
 		},
 	},

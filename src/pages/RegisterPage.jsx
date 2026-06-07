@@ -193,9 +193,9 @@ const RegisterPage = () => {
           transition={{ duration: 0.5 }}
           className="w-full max-w-lg"
         >
-          <Card className="shadow-2xl border-roman-500/20">
+          <Card className="surface-tint shadow-elevation-3 border-0 rounded-m3-xl">
             <CardHeader className="text-center">
-              <div className="mx-auto p-3 bg-yellow-500/10 rounded-full w-fit mb-4">
+              <div className="mx-auto p-4 bg-yellow-500/10 rounded-m3-lg w-fit mb-4">
                 <AlertCircle className="h-10 w-10 text-yellow-500" />
               </div>
               <CardTitle className="text-3xl font-bold text-neutral-900">التسجيل غير متاح حالياً</CardTitle>
@@ -230,9 +230,9 @@ const RegisterPage = () => {
         transition={{ duration: 0.5 }}
         className="w-full max-w-lg"
       >
-        <Card className="shadow-2xl border-roman-500/20">
+        <Card className="surface-tint shadow-elevation-3 border-0 rounded-m3-xl">
           <CardHeader className="text-center">
-             <div className="mx-auto p-3 bg-roman-500/10 rounded-full w-fit mb-4">
+             <div className="mx-auto p-4 bg-roman-500/10 rounded-m3-lg w-fit mb-4">
               <UserPlus className="h-10 w-10 text-roman-500" />
             </div>
             <CardTitle className="text-3xl font-bold text-neutral-900">إنشاء حساب جديد</CardTitle>
@@ -294,7 +294,7 @@ const RegisterPage = () => {
               </div>              <div className="space-y-4">
                 <Label className="text-neutral-900 text-base font-medium">أريد أن أكون:</Label>
                 <div className="space-y-4">
-                  <div className="flex items-center space-x-3 p-4 border border-roman-500/20 rounded-lg hover:bg-roman-500/5 transition-colors">
+                  <div className="flex items-center space-x-3 p-4 border border-roman-500/20 rounded-m3-md hover:bg-roman-500/[0.08] transition-colors duration-200 ease-m3-standard">
                     <Checkbox
                       id="buyer"
                       checked={isBuyer}
@@ -314,7 +314,7 @@ const RegisterPage = () => {
                     </div>
                   </div>
                   
-                  <div className="flex items-center space-x-3 p-4 border border-roman-500/20 rounded-lg hover:bg-roman-500/5 transition-colors">
+                  <div className="flex items-center space-x-3 p-4 border border-roman-500/20 rounded-m3-md hover:bg-roman-500/[0.08] transition-colors duration-200 ease-m3-standard">
                     <Checkbox
                       id="seller"
                       checked={isSeller}
@@ -336,7 +336,7 @@ const RegisterPage = () => {
                 </div>
                 
                 {(isBuyer && isSeller) && (
-                  <div className="p-3 bg-roman-500/10 rounded-lg border border-roman-500/20">
+                  <div className="p-4 bg-roman-500/10 rounded-m3-md border border-roman-500/20">
                     <p className="text-sm text-roman-500">
                       ✨ رائع! ستتمكن من التبديل بين دوري المشتري والبائع في أي وقت من لوحة التحكم.
                     </p>
